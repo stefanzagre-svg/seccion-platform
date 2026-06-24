@@ -1,0 +1,200 @@
+@import "tailwindcss";
+
+
+@theme inline {
+  --color-background:           var(--background);
+  --color-foreground:           var(--foreground);
+  --color-surface:              var(--surface);
+  
+  --color-primary:              var(--primary);
+  --color-primary-foreground:   var(--primary-foreground);
+  --color-secondary:            var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-accent:               var(--accent);
+  --color-accent-foreground:    var(--accent-foreground);
+  --color-destructive:          var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-success:              var(--success);
+  --color-muted:                var(--muted);
+  --color-muted-foreground:     var(--muted-foreground);
+  --color-border:               var(--border);
+
+  /* Relationship Gauge Colors — RLS v2.0 */
+  --color-gauge-1: #6B7280;   /* Gray      — Strangers      */
+  --color-gauge-2: #93C5FD;   /* Ice Blue  — Acquaintance   */
+  --color-gauge-3: #60A5FA;   /* Sky Blue  — Friendly       */
+  --color-gauge-4: #F59E0B;   /* Amber     — Close          */
+  --color-gauge-5: #F472B6;   /* Pink/Rose — Intimate (KYC) */
+  --color-gauge-6: #F97316;   /* Coral/Org — Passionate (KYC) */
+  --color-gauge-7: #10B981;   /* Emerald   — Committed (KYC) */
+  --color-gauge-8: #DC2626;   /* Crimson   — Soulmate (KYC)  */
+
+  --font-sans:    var(--font-outfit);
+  --font-display: var(--font-outfit);
+  --font-mono:    var(--font-mono);
+}
+
+:root {
+  /* ── Electric Sophistication — Dark Mode First ─────────────────── */
+  --background:           #0B0C10;          /* Deep Space Black     */
+  --foreground:           #FFFFFF;           /* Crisp White          */
+
+  --surface:              #1F2833;           /* Charcoal Surface     */
+
+  --primary:              #66FCF1;           /* Neon Cyan (CTA, UI)  */
+  --primary-foreground:   #0B0C10;           /* Dark on neon         */
+
+  --secondary:            #1F2833;           /* Charcoal             */
+  --secondary-foreground: #C5C6C7;           /* Light Gray           */
+
+  --accent:               #45A29E;           /* Electric Blue        */
+  --accent-foreground:    #FFFFFF;
+
+  --destructive:          #FF204E;           /* Neon Red             */
+  --destructive-foreground: #FFFFFF;
+
+  --success:              #39FF14;           /* Neon Green           */
+
+  --muted:                #1F2833;
+  --muted-foreground:     #C5C6C7;
+
+  --border:               rgba(197, 198, 199, 0.10);
+
+  --font-plus-jakarta-sans: 'Plus Jakarta Sans', sans-serif;
+  --font-hanken-grotesk: 'Hanken Grotesk', sans-serif;
+  --font-jetbrains-mono: 'JetBrains Mono', monospace;
+  --font-outfit: 'Outfit', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+
+/* ── Base ──────────────────────────────────────────────────────────── */
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans, 'Inter', system-ui, sans-serif);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, .font-display {
+  font-family: var(--font-display, 'Space Grotesk', system-ui, sans-serif);
+}
+
+/* ── Design Utility Classes ────────────────────────────────────────── */
+@layer utilities {
+
+  /* Glassmorphism */
+  .glass {
+    @apply bg-black/40 backdrop-blur-md border border-white/10;
+  }
+  .glass-card {
+    @apply bg-[#111827]/80 backdrop-blur-lg border border-white/5 rounded-2xl shadow-xl;
+  }
+  .surface-card {
+    background-color: var(--surface);
+    @apply border border-white/5 rounded-2xl;
+  }
+
+  /* Neon glow effects */
+  .glow-cyan {
+    box-shadow: 0 0 12px rgba(102, 252, 241, 0.5), 0 0 30px rgba(102, 252, 241, 0.2);
+  }
+  .glow-cyan-sm {
+    box-shadow: 0 0 6px rgba(102, 252, 241, 0.4);
+  }
+  .glow-blue {
+    box-shadow: 0 0 12px rgba(69, 162, 158, 0.5), 0 0 30px rgba(69, 162, 158, 0.2);
+  }
+  .neon-glow {
+    box-shadow: 0 0 15px var(--primary), 0 0 30px rgba(102, 252, 241, 0.3);
+  }
+  .neon-border {
+    border: 1px solid var(--primary);
+    box-shadow: 0 0 8px rgba(102, 252, 241, 0.3), inset 0 0 8px rgba(102, 252, 241, 0.05);
+  }
+
+  /* Typography glow */
+  .text-glow {
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+  }
+  .text-neon {
+    color: var(--primary);
+    text-shadow: 0 0 15px rgba(102, 252, 241, 0.6);
+  }
+
+  /* Ambient background orbs */
+  .orb-cyan {
+    background: radial-gradient(circle, rgba(102, 252, 241, 0.12) 0%, transparent 70%);
+  }
+  .orb-blue {
+    background: radial-gradient(circle, rgba(69, 162, 158, 0.10) 0%, transparent 70%);
+  }
+
+  /* Interactive states */
+  .interactive {
+    @apply transition-all duration-200 cursor-pointer;
+  }
+  .interactive:hover {
+    filter: brightness(1.08);
+    transform: scale(1.01);
+  }
+  .interactive:active {
+    transform: scale(0.98);
+  }
+}
+
+/* ── Scrollbar ─────────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--background); }
+::-webkit-scrollbar-thumb {
+  background: rgba(102, 252, 241, 0.2);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(102, 252, 241, 0.4);
+}
+
+/* ── Animations ────────────────────────────────────────────────────── */
+@keyframes pulse-cyan {
+  0%, 100% { box-shadow: 0 0 8px rgba(102, 252, 241, 0.3); }
+  50%       { box-shadow: 0 0 20px rgba(102, 252, 241, 0.7), 0 0 40px rgba(102, 252, 241, 0.3); }
+}
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-8px); }
+}
+@keyframes shimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+.animate-pulse-cyan { animation: pulse-cyan 2.5s ease-in-out infinite; }
+.animate-float      { animation: float 4s ease-in-out infinite; }
+.shimmer-text {
+  background: linear-gradient(90deg, #66FCF1 0%, #ffffff 40%, #66FCF1 80%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: shimmer 3s linear infinite;
+}
+
+/* ── Ambient Laser-Line Animations (global background) ────────────── */
+@keyframes float-laser {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50%      { transform: translateY(-30px) scale(1.02); }
+}
+@keyframes electric-pulse {
+  100% { stroke-dashoffset: 0; }
+}
+
+/* Hide mobile bottom navigation bar when inside active chat messenger view */
+body.mobile-chat-open .mobile-bottom-nav {
+  display: none !important;
+}
+
+/* Add padding-bottom for pages on mobile so they don't get covered by the bottom navbar */
+@media (max-width: 767px) {
+  body:not(.mobile-chat-open) {
+    padding-bottom: 72px;
+  }
+}
