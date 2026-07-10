@@ -6,7 +6,7 @@ const PUBLIC_ROUTES = ['/onboarding', '/onboarding/step-2', '/auth/callback', '/
 // Routes that authenticated users should be redirected away from
 const AUTH_ROUTES = ['/onboarding', '/onboarding/step-2'];
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
 
   const supabase = createServerClient(
@@ -76,7 +76,7 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  runtime: 'edge',
+  runtime: 'experimental-edge',
   matcher: [
     /*
      * Match all request paths except:
