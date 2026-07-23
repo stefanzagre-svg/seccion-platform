@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SECCIØN — Pre-Launch Presentation Deck</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800;900&family=JetBrains+Mono:wght@500;700&family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #070710;
+      --card-bg: rgba(15, 15, 26, 0.95);
+      --cyan: #00fbfb;
+      --pink: #ffabf3;
+      --green: #39ff14;
+      --text: #e2e2e2;
+      --muted: #b9cac9;
+    }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      overflow: hidden;
+      height: 100vh;
+      height: 100dvh;
+    }
+    .slide-deck {
+      width: 100vw;
+      height: 100vh;
+      height: 100dvh;
+      position: relative;
+    }
+    .slide {
+      width: 100%;
+      height: 100vh;
+      height: 100dvh;
+      overflow: hidden;
+      position: absolute;
+      top: 0;
+      left: 0;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.5s ease, transform 0.5s ease;
+      transform: scale(0.98);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: clamp(1rem, 4vh, 3rem) clamp(1rem, 5vw, 4rem);
+    }
+    .slide.active {
+      opacity: 1;
+      visibility: visible;
+      transform: scale(1);
+    }
+    /* Grid background */
+    .bg-grid {
+      position: absolute;
+      inset: 0;
+      background-image: linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events-none;
+      z-index: 0;
+    }
+    .container {
+      position: relative;
+      z-index: 10;
+      max-width: min(1100px, 90vw);
+      width: 100%;
+      text-align: center;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.35rem 1rem;
+      border-radius: 9999px;
+      border: 1px solid var(--cyan);
+      background: rgba(0, 251, 251, 0.1);
+      color: var(--cyan);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: clamp(0.65rem, 1.2vh, 0.85rem);
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: clamp(0.75rem, 2vh, 1.5rem);
+    }
+    h1, h2 {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: -0.02em;
+      line-height: 1.05;
+      margin-bottom: clamp(0.75rem, 2vh, 1.5rem);
+    }
+    h1 { font-size: clamp(2rem, 5vw, 4rem); }
+    h2 { font-size: clamp(1.75rem, 4vw, 3rem); }
+    .highlight-cyan { color: var(--cyan); text-shadow: 0 0 20px rgba(0, 251, 251, 0.4); }
+    .highlight-pink { color: var(--pink); text-shadow: 0 0 20px rgba(255, 171, 243, 0.4); }
+    p.desc {
+      font-size: clamp(0.85rem, 1.8vh, 1.15rem);
+      color: var(--muted);
+      max-width: 750px;
+      margin: 0 auto clamp(1rem, 3vh, 2rem);
+      line-height: 1.6;
+    }
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: clamp(0.75rem, 2vh, 1.5rem);
+      margin-top: clamp(1rem, 2.5vh, 2rem);
+      text-align: left;
+    }
+    .card {
+      background: var(--card-bg);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 1.5rem;
+      padding: clamp(1rem, 2.5vh, 1.75rem);
+      backdrop-filter: blur(12px);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+    }
+    .card h3 {
+      font-family: 'Outfit', sans-serif;
+      font-size: clamp(1rem, 2vh, 1.35rem);
+      margin-bottom: 0.5rem;
+      color: #fff;
+    }
+    .card p {
+      font-size: clamp(0.75rem, 1.5vh, 0.95rem);
+      color: var(--muted);
+      line-height: 1.5;
+    }
+    /* Controls */
+    .nav-controls {
+      position: fixed;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 50;
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+      background: rgba(10, 10, 24, 0.9);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      padding: 0.5rem 1.25rem;
+      border-radius: 9999px;
+      backdrop-filter: blur(20px);
+    }
+    .btn {
+      background: none;
+      border: none;
+      color: #fff;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.85rem;
+      font-weight: 700;
+      cursor: pointer;
+      padding: 0.4rem 0.8rem;
+      border-radius: 9999px;
+      transition: all 0.2s;
+    }
+    .btn:hover { background: rgba(0, 251, 251, 0.2); color: var(--cyan); }
+    .slide-counter { font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; color: var(--muted); }
+  </style>
+</head>
+<body>
+
+  <div class="bg-grid"></div>
+
+  <div class="slide-deck">
+    
+    <!-- SLIDE 1: Title -->
+    <div class="slide active" id="slide-1">
+      <div class="container">
+        <div class="badge">🔥 Exclusive Pre-Launch Phase</div>
+        <h1>SECCIØN <span class="highlight-cyan">Platform Strategy</span></h1>
+        <p class="desc">
+          Official roadmap for user pre-launch disclosure, temporary access locks, 90% creator payouts, and 1-Year Free AI Assistant distribution.
+        </p>
+      </div>
+    </div>
+
+    <!-- SLIDE 2: Pre-Launch Disclosure & Transparency -->
+    <div class="slide" id="slide-2">
+      <div class="container">
+        <div class="badge">📢 User Transparency</div>
+        <h2>Pre-Launch <span class="highlight-pink">Modal & Banner</span></h2>
+        <p class="desc">
+          Active transparency modal deployed on all public entry points informing users why SECCIØN is in pre-launch and highlighting exclusive early rewards.
+        </p>
+        <div class="cards-grid">
+          <div class="card">
+            <h3 class="highlight-cyan">Crown Perks for Creators</h3>
+            <p>90% direct revenue split on subscriptions & tips, plus 1-Year Free AI Assistant & Ops Pack.</p>
+          </div>
+          <div class="card">
+            <h3 class="highlight-pink">Early Member Rewards</h3>
+            <p>100% free matching forever, rare "Pioneer Vibe" founding badges, and 50% discount vouchers for creator VIP Subscriptions.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SLIDE 3: Gated Access & Security -->
+    <div class="slide" id="slide-3">
+      <div class="container">
+        <div class="badge">🔒 Access Control</div>
+        <h2>Gated <span class="highlight-cyan">Sign-Up & Demo Mode</span></h2>
+        <p class="desc">
+          Public self-registration and guest demo logins are temporarily locked to prioritize approved early creators and founding members.
+        </p>
+        <div class="cards-grid">
+          <div class="card">
+            <h3>Approved Creator Login</h3>
+            <p>Direct login interface reserved strictly for approved creators & founding admin team members.</p>
+          </div>
+          <div class="card">
+            <h3>Public Waitlist & Application</h3>
+            <p>General members join the prioritized waitlist while creators submit applications for pre-launch clearance.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SLIDE 4: VIP AI Passcode System -->
+    <div class="slide" id="slide-4">
+      <div class="container">
+        <div class="badge">🤖 AI Activation</div>
+        <h2>1-Year <span class="highlight-pink">Free AI Assistant Pack</span></h2>
+        <p class="desc">
+          Approved creators redeem unique VIP passcodes (e.g., VIP2026-AI-FREE) to unlock 24/7 AI chat, tax forecasting, and automated content operations.
+        </p>
+        <div class="cards-grid">
+          <div class="card">
+            <h3 class="highlight-cyan">Passcode Verification</h3>
+            <p>Secure API endpoint validates passcodes against creator IDs and grants a 12-month free AI operations pass.</p>
+          </div>
+          <div class="card">
+            <h3 class="highlight-pink">Content Ops Studio Integration</h3>
+            <p>Seamlessly unlocks AI Wingman and Studio Content Strategist inside the Creator Studio dashboard.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Slide Navigation Controls -->
+  <div class="nav-controls">
+    <button class="btn" id="prevBtn">PREV</button>
+    <span class="slide-counter" id="counter">1 / 4</span>
+    <button class="btn" id="nextBtn">NEXT</button>
+  </div>
+
+  <script>
+    let currentSlide = 0;
+    const slides = document.querySelectorAll('.slide');
+    const counter = document.getElementById('counter');
+
+    function updateSlides() {
+      slides.forEach((s, idx) => {
+        if (idx === currentSlide) {
+          s.classList.add('active');
+        } else {
+          s.classList.remove('active');
+        }
+      });
+      counter.textContent = `${currentSlide + 1} / ${slides.length}`;
+    }
+
+    document.getElementById('prevBtn').addEventListener('click', () => {
+      if (currentSlide > 0) { currentSlide--; updateSlides(); }
+    });
+
+    document.getElementById('nextBtn').addEventListener('click', () => {
+      if (currentSlide < slides.length - 1) { currentSlide++; updateSlides(); }
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight' || e.key === 'Space') {
+        if (currentSlide < slides.length - 1) { currentSlide++; updateSlides(); }
+      } else if (e.key === 'ArrowLeft') {
+        if (currentSlide > 0) { currentSlide--; updateSlides(); }
+      }
+    });
+  </script>
+</body>
+</html>

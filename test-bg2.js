@@ -1,0 +1,1 @@
+const sharp = require('sharp'); async function process() { const { data, info } = await sharp('public/images/new-logo-icon.jpg').raw().toBuffer({ resolveWithObject: true }); console.log(data.slice(0, 12)); } process();  

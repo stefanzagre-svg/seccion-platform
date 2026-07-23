@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import LandingPageHook from "@/components/onboarding/LandingPageHook";
 import RegistrationGate from "@/components/onboarding/RegistrationGate";
 import IntentSelector from "@/components/onboarding/IntentSelector";
+import ArchetypeSelector from "@/components/ArchetypeSelector";
 import ProfileProgressRing from "@/components/onboarding/ProfileProgressRing";
 import CompletionChecklist, {
   ChecklistItem,
@@ -28,6 +29,8 @@ import {
   Video,
   ShieldCheck,
   Lock,
+  Upload,
+  Image as ImageIcon,
 } from "lucide-react";
 
 type OnboardingStep =
@@ -103,10 +106,69 @@ const INSIGHT_PROMPTS = {
 
 
 export default function OnboardingFlow() {
-  const [step, setStep] = useState<OnboardingStep>("value-proposition");
+  const [step, setStep] = useState<OnboardingStep>("registration");
+  const [tutorialArchetype, setTutorialArchetype] = useState<string | null>(null);
+  const [tutorialRole, setTutorialRole] = useState<"member" | "creator" | null>(null);
   const [intents, setIntents] = useState<string[]>([]);
   const [userId, setUserId] = useState<string | null>(null);
   const [displayAge, setDisplayAge] = useState<number | null>(null);
+
+  const handleRegistrationComplete = async () => {
+    const isCreator = tutorialRole === "creator" || (typeof window !== "undefined" && !!sessionStorage.getItem("_onboarding_creator_archive_choice"));
+    const storedArchetype = tutorialArchetype || (typeof window !== "undefined"
+      ? (isCreator ? sessionStorage.getItem("_onboarding_creator_archive_choice") : sessionStorage.getItem("_onboarding_archetype_choice"))
+      : null);
+    const { data: { session } } = await supabase.auth.getSession();
+    const currentUserId = session?.user?.id;
+
+    if (currentUserId) {
+      try {
+        let updatePayload: any = {
+          favorite_languages: ["English"],
+          connection_points: 100,
+          sexual_preference: "Everyone",
+          role: isCreator ? "creator" : "member"
+        };
+
+        if (storedArchetype) {
+          updatePayload.archetype = storedArchetype;
+        }
+
+        if (isCreator && typeof window !== "undefined") {
+          const tierPrice = sessionStorage.getItem("_onboarding_creator_tier_price");
+          const faceBlur = sessionStorage.getItem("_onboarding_creator_face_blur");
+          const residence = sessionStorage.getItem("_onboarding_creator_residence");
+          if (tierPrice) {
+            updatePayload.base_subscription_price = parseFloat(tierPrice);
+          }
+          if (faceBlur) {
+            updatePayload.face_blur_active = faceBlur === "true";
+          }
+          if (residence) {
+            updatePayload.residence = residence;
+          }
+        }
+
+        await supabase
+          .from("profiles")
+          .update(updatePayload)
+          .eq("id", currentUserId);
+
+        setChecklist((prev) =>
+          prev.map((item) =>
+            item.id === "preferences" ? { ...item, completed: true } : item
+          )
+        );
+      } catch (err) {
+        console.error("Failed to save tutorial archetype on signup:", err);
+      }
+    }
+    if (isCreator) {
+      setStep("welcome");
+    } else {
+      setStep("intent");
+    }
+  };
 
   // Active item in detail checklist panel
   const [activeItem, setActiveItem] = useState<"photo" | "bio" | "preferences">(
@@ -131,6 +193,63 @@ export default function OnboardingFlow() {
   // Form submission status
   const [isSaving, setIsSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+
+  // File Upload states & handler
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+
+  const handleLocalFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      setFormError("Please select a valid image file (JPG, PNG, WebP, etc.).");
+      return;
+    }
+
+    setIsUploadingPhoto(true);
+    setFormError(null);
+
+    // 1. Convert to Data URL immediately for instant UI preview
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      const dataUrl = event.target?.result as string;
+      if (dataUrl) {
+        setAvatarUrl(dataUrl);
+        setLivenessVerified(false);
+        setLivenessStep(0);
+      }
+
+      // 2. Upload to Supabase Storage bucket 'avatars' if session exists
+      try {
+        const fileExt = file.name.split('.').pop() || 'jpg';
+        const fileName = `${userId || 'guest'}_${Date.now()}.${fileExt}`;
+        const filePath = `avatars/${fileName}`;
+
+        const { data, error } = await supabase.storage
+          .from('avatars')
+          .upload(filePath, file, {
+            cacheControl: '3600',
+            upsert: true
+          });
+
+        if (!error && data) {
+          const { data: { publicUrl } } = supabase.storage
+            .from('avatars')
+            .getPublicUrl(filePath);
+          if (publicUrl) {
+            setAvatarUrl(publicUrl);
+          }
+        }
+      } catch (err) {
+        console.warn("Storage upload fallback to Data URL:", err);
+      } finally {
+        setIsUploadingPhoto(false);
+      }
+    };
+
+    reader.readAsDataURL(file);
+  };
 
   // Biometric Liveness Check states
   const [cameraActive, setCameraActive] = useState(false);
@@ -189,7 +308,7 @@ export default function OnboardingFlow() {
 
       setLivenessStep(5);
       setLivenessVerified(true);
-      setLivenessLog("✓ Verified! Biometric match: 99.4% confidence.");
+      setLivenessLog("✓ Verified! You're legit — identity locked in.");
       setCameraActive(false);
     } catch (err) {
       console.error(err);
@@ -207,7 +326,7 @@ export default function OnboardingFlow() {
     { id: "bio", label: "Answer 2 Relational Prompts", completed: false },
     {
       id: "preferences",
-      label: "Set your match preferences",
+      label: "Discover your Archetype",
       completed: false,
     },
   ]);
@@ -260,6 +379,21 @@ export default function OnboardingFlow() {
       }
     }
     checkSession();
+  }, []);
+
+  // Check URL parameters for tutorial routing
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const tutorial = params.get("tutorial");
+      if (tutorial === "creator") {
+        setTutorialRole("creator");
+        setStep("registration");
+      } else if (tutorial === "member") {
+        setTutorialRole("member");
+        setStep("registration");
+      }
+    }
   }, []);
 
   useEffect(() => {
@@ -371,7 +505,7 @@ export default function OnboardingFlow() {
           throw new Error("Please select a prompt category, a question, and write an answer.");
         
         if (promptAnswer.trim().length < 10) {
-          throw new Error("Your response should be at least 10 characters to allow psychological analysis.");
+          throw new Error("Write a bit more so our AI can read your vibe properly.");
         }
 
         const res = await fetch("/api/v2/profile/analyze-prompt", {
@@ -465,6 +599,8 @@ export default function OnboardingFlow() {
         />
       </div>
 
+      {/* Floating Toggles for Tutorials removed */}
+
       <div className="flex-1 relative z-10 flex flex-col items-center justify-center p-4">
         <AnimatePresence mode="wait">
           {step === "value-proposition" && (
@@ -473,14 +609,20 @@ export default function OnboardingFlow() {
               className="w-full flex-1 flex flex-col justify-center"
               exit={{ opacity: 0, scale: 0.9 }}
             >
-              <LandingPageHook onAccept={() => setStep("registration")} />
+              <LandingPageHook
+                onAccept={() => setStep("registration")}
+                onBecomeCreator={() => {
+                  setTutorialRole("creator");
+                  setStep("registration");
+                }}
+              />
             </motion.div>
           )}
 
           {step === "registration" && (
             <RegistrationGate
               key="registration"
-              onComplete={() => setStep("intent")}
+              onComplete={handleRegistrationComplete}
             />
           )}
 
@@ -493,7 +635,7 @@ export default function OnboardingFlow() {
               exit={{ opacity: 0, x: -50 }}
             >
               <IntentSelector
-                onContinue={async (selected, chosenAge) => {
+                onContinue={async (selected, chosenAge, corePassion) => {
                   setIntents(selected);
                   setDisplayAge(chosenAge);
                   if (userId) {
@@ -506,6 +648,7 @@ export default function OnboardingFlow() {
                     await supabase
                       .from("profiles")
                       .update({
+                        core_passion: corePassion,
                         privacy_settings: {
                           ...settings,
                           display_age: chosenAge,
@@ -533,7 +676,7 @@ export default function OnboardingFlow() {
                     Build Your Identity
                   </h2>
                   <p className="text-white/40 text-xs font-bold uppercase tracking-wider mt-1">
-                    Configure your matchmaking parameters.
+                    Set up your vibe profile.
                   </p>
                 </div>
 
@@ -616,11 +759,64 @@ export default function OnboardingFlow() {
                             </h3>
                           </div>
 
-                          <p className="text-xs text-white/50 leading-relaxed font-medium">
-                            Choose one of our premium stylistic presets or enter
-                            a custom photo link to calibrate your matchmaking
-                            visual parameters.
-                          </p>
+                          {/* Hidden File Input */}
+                          <input
+                            type="file"
+                            ref={fileInputRef}
+                            accept="image/*"
+                            onChange={handleLocalFileUpload}
+                            className="hidden"
+                          />
+
+                          {/* Primary Action: Device / Computer File Upload */}
+                          <div className="space-y-3">
+                            <label className="text-[9px] uppercase tracking-widest font-black text-white/50 block text-left">
+                              Option 1: Upload from Computer or Phone Folder
+                            </label>
+                            <button
+                              type="button"
+                              onClick={() => fileInputRef.current?.click()}
+                              disabled={isUploadingPhoto}
+                              className="w-full py-4 px-5 bg-gradient-to-r from-[#00fbfb]/20 via-[#a855f7]/15 to-[#ffabf3]/20 hover:from-[#00fbfb]/30 hover:to-[#ffabf3]/30 border border-[#00fbfb]/50 hover:border-[#00fbfb] rounded-2xl text-xs font-black text-white uppercase tracking-wider flex items-center justify-center gap-3 transition-all shadow-[0_0_25px_rgba(0,251,251,0.25)] hover:shadow-[0_0_35px_rgba(0,251,251,0.4)] group cursor-pointer active:scale-98"
+                            >
+                              {isUploadingPhoto ? (
+                                <>
+                                  <Loader2 className="w-5 h-5 animate-spin text-[#00fbfb]" />
+                                  <span>Uploading Image File...</span>
+                                </>
+                              ) : (
+                                <>
+                                  <Upload className="w-5 h-5 text-[#00fbfb] group-hover:scale-110 transition-transform" />
+                                  <span>Choose File from Computer / Folder</span>
+                                </>
+                              )}
+                            </button>
+                          </div>
+
+                          {/* Selected Photo Live Preview */}
+                          {avatarUrl && (
+                            <div className="p-3 bg-white/5 border border-[#00fbfb]/30 rounded-2xl flex items-center gap-4">
+                              <div className="w-14 h-14 rounded-xl overflow-hidden border border-[#00fbfb]/60 relative shrink-0">
+                                <img src={avatarUrl} alt="Selected Avatar" className="w-full h-full object-cover" />
+                              </div>
+                              <div className="flex-1 text-left">
+                                <span className="text-xs font-black text-[#00fbfb] uppercase tracking-wider block">
+                                  Photo Ready
+                                </span>
+                                <span className="text-[10px] text-white/50 block truncate max-w-[220px]">
+                                  {avatarUrl.startsWith("data:") ? "Image loaded from computer" : avatarUrl}
+                                </span>
+                              </div>
+                              <Check className="w-5 h-5 text-green-400 shrink-0" />
+                            </div>
+                          )}
+
+                          {/* Divider */}
+                          <div className="flex items-center gap-3 my-2">
+                            <div className="h-[1px] flex-1 bg-white/10" />
+                            <span className="text-[9px] font-mono uppercase tracking-widest text-white/30">OR CHOOSE PRESET / URL</span>
+                            <div className="h-[1px] flex-1 bg-white/10" />
+                          </div>
 
                           <div className="grid grid-cols-4 gap-3">
                             {MOCK_AVATARS.map((av) => (
@@ -679,7 +875,7 @@ export default function OnboardingFlow() {
                               </span>
                             </div>
                             <p className="text-[10px] text-white/50 leading-relaxed font-medium">
-                              To keep Session safe, you must complete a quick
+                              To keep Seccion safe, you must complete a quick
                               biometric liveness check to match your face with
                               the selected photo.
                             </p>
@@ -766,7 +962,7 @@ export default function OnboardingFlow() {
 
                           <p className="text-xs text-white/50 leading-relaxed font-medium">
                             Choose a prompt category and question. Write a simple answer (min 10 chars). 
-                            Gemini will analyze your response to calibrate your **Relational Personality Insights** (Vulnerability, Introspection, Defensiveness).
+                            Gemini will analyze your response to unlock your **Relational Aura** — how you connect, open up, and protect your energy.
                           </p>
 
                           {completedPrompt1 && (
@@ -780,7 +976,7 @@ export default function OnboardingFlow() {
                           {/* Category Selector Tabs */}
                           <div className="space-y-1.5">
                             <label className="text-[9px] uppercase tracking-widest font-black text-white/40">
-                              1. Select Vector Category
+                              1. Pick Your Vibe Zone
                             </label>
                             <div className="flex flex-wrap gap-1">
                               {Object.entries(INSIGHT_PROMPTS).map(([key, data]) => {
@@ -871,7 +1067,7 @@ export default function OnboardingFlow() {
                             {isSaving ? (
                               <>
                                 <Loader2 className="w-4 h-4 animate-spin text-black" />
-                                <span>AI Calibrating Relational Scores...</span>
+                                <span>AI reading your vibes...</span>
                               </>
                             ) : (
                               promptStep === 1 ? "Analyze & Save Prompt 1" : "Analyze & Save Prompt 2"
@@ -888,162 +1084,42 @@ export default function OnboardingFlow() {
                         initial={{ opacity: 0, x: 10 }}
                         animate={{ opacity: 1, x: 0 }}
                         exit={{ opacity: 0, x: -10 }}
-                        className="flex-1 flex flex-col justify-between"
+                        className="flex-1 flex flex-col justify-between h-full"
                       >
-                        <div className="space-y-5">
-                          <div className="flex items-center gap-3">
-                            <Heart className="w-6 h-6 text-primary" />
-                            <h3 className="text-lg font-black uppercase tracking-wider">
-                              Set Match Preferences
-                            </h3>
-                          </div>
-
-                          <p className="text-xs text-white/50 leading-relaxed font-medium">
-                            Set your primary constraints. The Fusion Match Engine filters profiles based on your alignment desires.
-                            <br/><br/>
-                            <span className="text-primary font-bold">Choose your sexual preference and relationship options. Selected values can be changed at any time from your profile.</span>
-                          </p>
-
-                          {/* Sexual Preference */}
-                          <div className="space-y-2.5">
-                            <label className="text-[9px] uppercase tracking-widest font-black text-white/40">
-                              Sexual Preference
-                            </label>
-                            <div className="flex flex-col gap-2 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
-                              {SEXUAL_ORIENTATIONS.map((pref) => (
-                                <button
-                                  key={pref.id}
-                                  onClick={() => {
-                                    setSexPrefs([pref.id]);
-                                  }}
-                                  className={`p-4 rounded-xl border transition text-left flex flex-col gap-1.5 ${
-                                    sexPrefs.includes(pref.id)
-                                      ? "bg-white/10 border-primary shadow-[0_0_15px_rgba(255,0,127,0.2)]"
-                                      : "bg-white/5 border-white/10 hover:bg-white/10"
-                                  }`}
-                                >
-                                  <div className="flex items-center justify-between w-full">
-                                    <span
-                                      className={`text-[11px] font-black uppercase tracking-widest ${sexPrefs.includes(pref.id) ? "text-primary" : "text-white"}`}
-                                    >
-                                      {pref.label}
-                                    </span>
-                                    {sexPrefs.includes(pref.id) && (
-                                      <Check className="w-4 h-4 text-primary" />
-                                    )}
-                                  </div>
-                                  <p className="text-[10px] text-white/50 leading-relaxed">
-                                    {pref.description}
-                                  </p>
-                                </button>
-                              ))}
-                            </div>
-                          </div>
-
-                          {/* Relationship Goal */}
-                          <div className="space-y-2.5">
-                            <label className="text-[9px] uppercase tracking-widest font-black text-white/40">
-                              Relationship Goal
-                            </label>
-                            <div className="flex flex-wrap gap-1.5">
-                              {RELATIONSHIP_GOALS.map((goal) => (
-                                <button
-                                  key={goal}
-                                  onClick={() => {
-                                    setRelGoals(prev => {
-                                      if (prev.includes(goal)) {
-                                        return prev.length > 1 ? prev.filter(g => g !== goal) : prev;
-                                      }
-                                      if (prev.length >= 5) return prev;
-                                      return [...prev, goal];
-                                    });
-                                  }}
-                                  className={`px-3 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest border transition ${
-                                    relGoals.includes(goal)
-                                      ? "bg-primary border-primary text-black font-black"
-                                      : "bg-white/5 border-white/10 text-white/50 hover:bg-white/10 hover:text-white"
-                                  }`}
-                                >
-                                  {goal}
-                                </button>
-                              ))}
-                            </div>
-                          </div>
-
-                          {/* Relationship Type */}
-                          <div className="space-y-2.5">
-                            <label className="text-[9px] uppercase tracking-widest font-black text-white/40">
-                              Relationship Type
-                            </label>
-                            <div className="flex flex-wrap gap-1.5">
-                              {RELATIONSHIP_TYPES.map((type) => (
-                                <button
-                                  key={type}
-                                  onClick={() => {
-                                    setRelTypes(prev => {
-                                      if (prev.includes(type)) {
-                                        return prev.length > 1 ? prev.filter(t => t !== type) : prev;
-                                      }
-                                      if (prev.length >= 5) return prev;
-                                      return [...prev, type];
-                                    });
-                                  }}
-                                  className={`px-3 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest border transition ${
-                                    relTypes.includes(type)
-                                      ? "bg-primary border-primary text-black font-black"
-                                      : "bg-white/5 border-white/10 text-white/50 hover:bg-white/10 hover:text-white"
-                                  }`}
-                                >
-                                  {type}
-                                </button>
-                              ))}
-                            </div>
-                          </div>
-
-                          {/* Favorite Language */}
-                          <div className="space-y-2.5 mt-6">
-                            <label className="text-[9px] uppercase tracking-widest font-black text-white/40">
-                              Favorite Language (Required minimum 1 choice) <span className="text-primary">*</span>
-                            </label>
-                            <div className="flex flex-wrap gap-1.5">
-                              {LANGUAGES.map((lang) => (
-                                <button
-                                  key={lang}
-                                  onClick={() => {
-                                    setFavoriteLanguages(prev => {
-                                      if (prev.includes(lang)) {
-                                        return prev.filter(l => l !== lang);
-                                      }
-                                      if (prev.length >= 3) return prev;
-                                      return [...prev, lang];
-                                    });
-                                  }}
-                                  className={`px-3 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest border transition ${
-                                    favoriteLanguages.includes(lang)
-                                      ? "bg-primary border-primary text-black font-black"
-                                      : "bg-white/5 border-white/10 text-white/50 hover:bg-white/10 hover:text-white"
-                                  }`}
-                                >
-                                  {lang}
-                                </button>
-                              ))}
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="pt-6">
-                          <button
-                            onClick={() => handleSaveDetails("preferences")}
-                            disabled={isSaving}
-                            className="w-full bg-primary text-black font-black uppercase tracking-widest py-4 rounded-xl hover:shadow-[0_0_20px_rgba(102,252,241,0.4)] transition disabled:opacity-50 text-xs flex items-center justify-center gap-2"
-                          >
-                            {isSaving ? (
-                              <Loader2 className="w-4 h-4 animate-spin text-black" />
-                            ) : (
-                              "Save Details"
-                            )}
-                          </button>
-                        </div>
+                        <ArchetypeSelector
+                          onSelect={async (archetype, data) => {
+                            if (!userId) return;
+                            setIsSaving(true);
+                            try {
+                              const updatePayload = {
+                                archetype: archetype,
+                                hobbies: data.hobbies,
+                                lifestyle_habits: data.lifestyle_habits,
+                                relationship_goals: data.relationship_goals,
+                                connection_points: 100,
+                                sexual_preference: "Everyone",
+                                favorite_languages: ["English"]
+                              };
+                              const { error } = await supabase
+                                .from("profiles")
+                                .update(updatePayload)
+                                .eq("id", userId);
+                              if (error) throw error;
+                            } catch (err: any) {
+                              setFormError(err.message || "Failed to save archetype.");
+                            } finally {
+                              setIsSaving(false);
+                            }
+                          }}
+                          onProceed={() => {
+                            setChecklist((prev) =>
+                              prev.map((item) =>
+                                item.id === "preferences" ? { ...item, completed: true } : item
+                              )
+                            );
+                            setTimeout(() => setStep("welcome"), 1000);
+                          }}
+                        />
                       </motion.div>
                     )}
                   </AnimatePresence>

@@ -69,7 +69,7 @@ describe('Project Fusion Engine Core Tests', () => {
 
     it('splits escrow payouts 20/80 and handles guaranteed/variable tranches', () => {
       const payouts = calculatePayouts(mockRequest);
-      expect(payouts.totalRevenue).toBe(39.00);
+      expect(payouts.grossRevenue).toBe(39.00);
       expect(payouts.platformCut).toBeCloseTo(7.80, 2);
       expect(payouts.totalCreatorEscrow).toBeCloseTo(31.20, 2);
 

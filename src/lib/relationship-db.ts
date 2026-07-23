@@ -1,5 +1,6 @@
 import { supabase } from './supabase';
-import { applyInteractionEvent, scoreToLevel, resolveSharedScore } from './relationship-engine';
+import { applyInteractionEvent, scoreToLevel, resolveSharedScore, POINT_VALUES } from './relationship-engine';
+import { awardXp } from './xp-service';
 
 export interface Profile {
   id: string;
@@ -18,6 +19,9 @@ export interface Profile {
   bio_analysis?: any;
   face_blur_active?: boolean;
   avatar_face_coordinates?: any;
+  native_town?: string;
+  residence?: string;
+  current_location?: string;
 }
 
 export interface MatchInfo {
@@ -84,6 +88,9 @@ export async function recordInteraction(
 
     if (intError) throw intError;
 
+    // Award Swipe XP (+2 XP)
+    await awardXp(actorId, 2);
+
     if (type === 'heart') {
       // 1.5 Fetch profiles to check roles (Business Rule: Creators cannot match between creators)
       const { data: profiles, error: profError } = await supabase
@@ -140,6 +147,10 @@ export async function recordInteraction(
 
         if (rel2Error) throw rel2Error;
 
+        // Award Match XP (+100 XP to both matched users)
+        await awardXp(actorId, 100);
+        await awardXp(targetId, 100);
+
         return { matched: true };
       }
     }
@@ -182,6 +193,54 @@ export async function fetchMatches(userId: string): Promise<MatchInfo[]> {
     return [];
   }
 }
+
+/**
+ * Fetch profiles of users who have liked the current user,
+ * but the current user has not yet interacted with them.
+ */
+export async function fetchPendingMatches(currentUserId: string): Promise<Profile[]> {
+  try {
+    // 1. Get list of user IDs that the current user has already interacted with (swiped heart or broken_heart)
+    const { data: interactions, error: intError } = await supabase
+      .from('interactions')
+      .select('target_id')
+      .eq('actor_id', currentUserId);
+
+    if (intError) throw intError;
+
+    const interactedIds = (interactions || []).map(i => i.target_id);
+    interactedIds.push(currentUserId); // Exclude self
+
+    // 2. Get list of user IDs that have liked the current user
+    const { data: likesReceived, error: likesError } = await supabase
+      .from('interactions')
+      .select('actor_id')
+      .eq('target_id', currentUserId)
+      .eq('type', 'heart');
+
+    if (likesError) throw likesError;
+
+    const likerIds = (likesReceived || []).map(i => i.actor_id);
+
+    // Filter out likers that the current user has already interacted with
+    const pendingLikerIds = Array.from(new Set(likerIds.filter(id => !interactedIds.includes(id))));
+
+    if (pendingLikerIds.length === 0) return [];
+
+    // 3. Fetch profiles of those pending likers
+    const { data: profiles, error: profError } = await supabase
+      .from('profiles')
+      .select('*')
+      .in('id', pendingLikerIds);
+
+    if (profError) throw profError;
+    return profiles || [];
+  } catch (err) {
+    console.error('Error fetching pending matches:', err);
+    return [];
+  }
+}
+
 
 /**
  * Fetch relationship metrics between two users (symmetric/harmonic RLS metrics).
@@ -248,6 +307,37 @@ export async function updateRelationshipScore(
       }, { onConflict: 'user_id,target_id' });
 
     if (updateError) throw updateError;
+
+    // 3. Award Connection Points to the active user (actor)
+    const pointsAwarded = POINT_VALUES[eventType as keyof typeof POINT_VALUES] || 0;
+    if (pointsAwarded > 0) {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('connection_points, quest_stage')
+        .eq('id', userId)
+        .maybeSingle();
+      
+      if (profile) {
+        const currentPoints = profile.connection_points || 0;
+        const newPoints = currentPoints + pointsAwarded;
+        let newStage = profile.quest_stage || 1;
+        
+        // Auto-advance quest_stage if crossing thresholds
+        if (newPoints >= 500 && newStage < 3) {
+          newStage = 3;
+        } else if (newPoints >= 250 && newStage < 2) {
+          newStage = 2;
+        }
+        
+        await supabase
+          .from('profiles')
+          .update({
+            connection_points: newPoints,
+            quest_stage: newStage
+          })
+          .eq('id', userId);
+      }
+    }
     return newScore;
   } catch (err) {
     console.error('Error updating relationship score:', err);
@@ -313,6 +403,9 @@ export async function sendMessage(
 
     if (sendError) throw sendError;
 
+    // Award Message XP (+5 XP to sender)
+    await awardXp(senderId, 5);
+
     // 2. Update relationship gauge
     const newScore = await updateRelationshipScore(senderId, receiverId, 'message_sent');
 
@@ -328,6 +421,9 @@ export async function sendMessage(
  */
 export async function updateProfileArchetype(userId: string, data: any) {
   try {
+    // Award Profile Completion XP (+250 XP)
+    await awardXp(userId, 250);
+
     const { error } = await supabase
       .from('profiles')
       .update({

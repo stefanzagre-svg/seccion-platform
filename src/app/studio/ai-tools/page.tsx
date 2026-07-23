@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { 
   Zap, 
@@ -12,14 +13,65 @@ import {
   Lock, 
   CheckCircle,
   Gift,
-  ArrowRight
+  ArrowRight,
+  LayoutGrid,
+  Video,
+  ListOrdered,
+  Users,
+  Crown,
+  BarChart3,
+  Settings,
+  Shield
 } from 'lucide-react';
 import Link from 'next/link';
 
 export default function AIToolsHub() {
+  const router = useRouter();
   const [profile, setProfile] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTool, setActiveTool] = useState<string | null>(null);
+
+  const renderDashboardBar = () => {
+    const tabs = [
+      { id: 'content', icon: LayoutGrid, label: 'Content' },
+      { id: 'live', icon: Video, label: 'Stream Station' },
+      { id: 'orders', icon: ListOrdered, label: 'Custom Requests' },
+      { id: 'consent_inbox', icon: Users, label: 'Consent Box' },
+      { id: 'goals', icon: Crown, label: 'Goals' },
+      { id: 'analytics', icon: BarChart3, label: 'Vibe Insights' },
+      { id: 'settings', icon: Settings, label: 'Profile Settings' },
+      { id: 'safety_ops', icon: Shield, label: 'Safety Patrol' },
+      { id: 'ai_tools', icon: Zap, label: 'AI Tools' },
+    ];
+
+    return (
+      <div className="flex items-center gap-2 bg-white/5 p-1.5 rounded-2xl border border-white/5 w-fit mb-8 max-w-full overflow-x-auto scrollbar-hide shrink-0">
+        {tabs.map((tab) => {
+          const isActive = tab.id === 'ai_tools';
+          return (
+            <button
+              key={tab.id}
+              onClick={() => {
+                if (tab.id === 'ai_tools') {
+                  setActiveTool(null);
+                } else {
+                  router.push(`/studio?activeTab=${tab.id}`);
+                }
+              }}
+              className={`flex items-center gap-3 px-6 py-3 rounded-xl transition-all duration-300 ${
+                isActive 
+                  ? 'bg-white/10 text-white shadow-xl' 
+                  : 'text-white/40 hover:text-white/60 hover:bg-white/[0.02]'
+              }`}
+            >
+              <tab.icon className={`w-4 h-4 ${isActive ? 'text-primary' : ''}`} />
+              <span className="text-[10px] font-black uppercase tracking-widest">{tab.label}</span>
+            </button>
+          );
+        })}
+      </div>
+    );
+  };
 
   useEffect(() => {
     async function loadProfile() {
@@ -71,12 +123,17 @@ export default function AIToolsHub() {
   // --- LOCKED PITCH SCREEN ---
   if (!isUnlocked) {
     return (
-      <div className="min-h-screen bg-transparent text-white pt-24 px-4 md:px-12 relative">
-        <div className="max-w-4xl mx-auto text-center">
-          <div className="inline-flex items-center justify-center p-4 bg-[#ffabf3]/10 rounded-full mb-6 border border-[#ffabf3]/30">
-            <Zap className="w-12 h-12 text-[#ffabf3]" />
+      <div className="min-h-screen bg-transparent text-white pt-16 pb-24 md:pb-0 relative overflow-hidden">
+        {/* Neon accent meshes */}
+        <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-[#ffabf3]/10 blur-[150px] rounded-full pointer-events-none" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-purple-500/5 blur-[150px] rounded-full pointer-events-none animate-pulse" />
+
+        <div className="max-w-7xl mx-auto px-6 md:px-12 pt-12 pb-8 space-y-12 relative z-10 flex flex-col items-center">
+          {renderDashboardBar()}
+          <div className="inline-flex items-center justify-center p-4 bg-gradient-to-r from-[#ffabf3]/15 to-purple-500/15 rounded-full mb-6 border border-[#ffabf3]/30 shadow-[0_0_50px_rgba(255,171,243,0.2)]">
+            <Zap className="w-12 h-12 text-[#ffabf3] animate-pulse" />
           </div>
-          <h1 className="text-4xl md:text-6xl font-black mb-4 uppercase tracking-tighter">Creator Ultimate Pack</h1>
+          <h1 className="text-4xl md:text-6xl font-black mb-4 uppercase tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-white via-white to-[#ffabf3]">Creator Ultimate Pack</h1>
           <p className="text-lg text-white/70 mb-8 max-w-2xl mx-auto">
             Supercharge your workflow with our exclusive suite of AI tools. Automate, analyze, and dominate.
           </p>
@@ -89,26 +146,26 @@ export default function AIToolsHub() {
               { icon: BarChart, title: 'Content Strategy', desc: 'Data-driven analysis of your feed to suggest what you should post next.' },
               { icon: Mic, title: 'Speech-to-Speech Live Translation', desc: 'Real-time voice cloning in 14 languages for international voice notes.' }
             ].map((tool, i) => (
-              <div key={i} className="glass-card p-6 rounded-2xl flex gap-4">
+              <div key={i} className="glass-card p-6 rounded-2xl flex gap-4 border border-white/5 hover:border-[#ffabf3]/25 transition duration-500 hover:scale-[1.01] hover:bg-white/[0.03]">
                 <div className="mt-1">
                   <tool.icon className="w-6 h-6 text-[#ffabf3]" />
                 </div>
                 <div>
                   <h3 className="font-bold text-lg">{tool.title}</h3>
-                  <p className="text-sm text-white/50">{tool.desc}</p>
+                  <p className="text-sm text-white/50 mt-1 leading-relaxed">{tool.desc}</p>
                 </div>
               </div>
             ))}
           </div>
 
-          <div className="glass-card p-8 rounded-3xl border border-[#ffabf3]/30 max-w-lg mx-auto relative overflow-hidden">
+          <div className="glass-card p-8 rounded-3xl border border-[#ffabf3]/30 max-w-lg mx-auto relative overflow-hidden shadow-[0_30px_60px_-15px_rgba(0,0,0,0.8)]">
             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-[#ffabf3] to-transparent" />
             <h2 className="text-3xl font-black mb-2">€69<span className="text-xl text-white/50">/month</span></h2>
             <p className="text-sm text-white/60 mb-6 font-bold uppercase tracking-widest">Cancel anytime</p>
             
             <button 
               onClick={handleSubscribe}
-              className="w-full py-4 bg-[#ffabf3] text-black font-black uppercase tracking-widest rounded-xl hover:bg-white transition"
+              className="w-full py-4 bg-gradient-to-r from-[#ffabf3] via-[#ffc6f6] to-[#ffabf3] bg-[length:200%_auto] text-black font-black uppercase tracking-widest rounded-xl hover:shadow-[0_0_30px_rgba(255,171,243,0.5)] transition duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] active:scale-95"
             >
               Unlock Ultimate Pack
             </button>
@@ -124,10 +181,10 @@ export default function AIToolsHub() {
 
   // --- UNLOCKED DASHBOARD ---
   return (
-    <div className="min-h-screen bg-transparent text-white pt-24 px-4 md:px-12 relative overflow-hidden">
+    <div className="min-h-screen bg-transparent text-white pt-16 pb-24 md:pb-0 relative overflow-hidden">
       <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-[#ffabf3]/10 blur-[120px] rounded-full pointer-events-none" />
       
-      <div className="max-w-6xl mx-auto relative z-10">
+      <div className="max-w-7xl mx-auto px-6 md:px-12 pt-12 pb-8 space-y-12 relative z-10">
         <div className="flex flex-col md:flex-row md:items-center justify-between mb-12">
           <div>
             <h1 className="text-3xl md:text-5xl font-black mb-2 uppercase tracking-tighter flex items-center gap-3">
@@ -143,6 +200,8 @@ export default function AIToolsHub() {
             </p>
           </div>
         </div>
+
+        {renderDashboardBar()}
 
         {activeTool ? (
           <div className="glass-card p-6 md:p-10 rounded-3xl relative">
@@ -228,6 +287,7 @@ export default function AIToolsHub() {
               icon={MessageSquare} 
               title="Auto-Messaging" 
               color="text-[#ffabf3]"
+              glowClass="from-[#ffabf3]/10 to-transparent"
               desc="Draft mass PPV messages instantly."
               onClick={() => setActiveTool('messaging')}
             />
@@ -235,6 +295,7 @@ export default function AIToolsHub() {
               icon={Scale} 
               title="Legal Copilot" 
               color="text-[#00ffff]"
+              glowClass="from-[#00ffff]/10 to-transparent"
               desc="DMCA takedowns and contract analysis."
               onClick={() => setActiveTool('legal')}
             />
@@ -242,6 +303,7 @@ export default function AIToolsHub() {
               icon={TrendingUp} 
               title="Options Ops" 
               color="text-green-400"
+              glowClass="from-green-500/10 to-transparent"
               desc="Pricing prediction models."
               onClick={() => setActiveTool('options')}
             />
@@ -249,11 +311,12 @@ export default function AIToolsHub() {
               icon={BarChart} 
               title="Content Strategy" 
               color="text-[#ffd700]"
+              glowClass="from-[#ffd700]/10 to-transparent"
               desc="Data-backed posting advice."
               onClick={() => setActiveTool('content')}
             />
             <Link href="/messages" className="block group">
-              <div className="glass-card p-6 rounded-2xl border border-white/5 hover:border-white/20 transition h-full flex flex-col cursor-pointer relative overflow-hidden">
+              <div className="glass-card p-6 rounded-2xl border border-white/5 hover:border-white/20 transition h-full flex flex-col cursor-pointer relative overflow-hidden text-left hover:scale-[1.02] active:scale-[0.98]">
                 <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 to-transparent opacity-0 group-hover:opacity-100 transition" />
                 <Mic className="w-8 h-8 text-purple-400 mb-4" />
                 <h3 className="font-bold text-lg mb-2">Live Translation</h3>
@@ -270,17 +333,17 @@ export default function AIToolsHub() {
   );
 }
 
-function ToolCard({ icon: Icon, title, desc, color, onClick }: any) {
+function ToolCard({ icon: Icon, title, desc, color, glowClass, onClick }: any) {
   return (
     <div 
       onClick={onClick}
-      className="glass-card p-6 rounded-2xl border border-white/5 hover:border-white/20 transition h-full flex flex-col cursor-pointer group relative overflow-hidden"
+      className="glass-card p-6 rounded-2xl border border-white/5 hover:border-white/20 transition-all duration-500 hover:scale-[1.02] active:scale-[0.98] h-full flex flex-col cursor-pointer group relative overflow-hidden text-left"
     >
-      <div className={`absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition`} />
-      <Icon className={`w-8 h-8 ${color} mb-4`} />
-      <h3 className="font-bold text-lg mb-2">{title}</h3>
-      <p className="text-sm text-white/50 mb-4 flex-grow">{desc}</p>
-      <div className="flex justify-end">
+      <div className={`absolute inset-0 bg-gradient-to-br ${glowClass} opacity-0 group-hover:opacity-100 transition duration-500`} />
+      <Icon className={`w-8 h-8 ${color} mb-4 relative z-10`} />
+      <h3 className="font-bold text-lg mb-2 relative z-10">{title}</h3>
+      <p className="text-sm text-white/50 mb-4 flex-grow relative z-10 leading-relaxed">{desc}</p>
+      <div className="flex justify-end relative z-10">
         <ArrowRight className="w-5 h-5 text-white/30 group-hover:text-white transition" />
       </div>
     </div>

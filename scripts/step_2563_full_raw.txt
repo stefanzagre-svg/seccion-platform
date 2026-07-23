@@ -1,0 +1,39 @@
+Created At: 2026-07-23T11:14:59+02:00
+Completed At: 2026-07-23T11:14:59+02:00
+File Path: `file:///c:/Users/USER/Documents/AI/PROJECT%20CONTENT%20PLATFORM/SESSION/web/scripts/extract_vibe_radar_from_logs.js`
+Total Lines: 31
+Total Bytes: 1256
+Showing lines 1 to 31
+The following code has been modified to include a line number before every line, in the format: <line_number>: <original_line>. Please note that any changes targeting the original code should remove the line number, colon, and leading space.
+1: import fs from 'fs';
+2: import path from 'path';
+3: 
+4: const logsDir = 'C:\\Users\\USER\\.gemini\\antigravity\\brain\\81787c0d-920d-4865-b133-c77db70489d5\\.system_generated\\tasks';
+5: 
+6: if (fs.existsSync(logsDir)) {
+7:   const files = fs.readdirSync(logsDir);
+8:   for (const file of files) {
+9:     if (file.endsWith('.log')) {
+10:       const fullPath = path.join(logsDir, file);
+11:       const content = fs.readFileSync(fullPath, 'utf8');
+12:       if (content.includes('SpecializationFilter') && content.includes('export default function VibeRadarPage')) {
+13:         console.log(`FOUND in log file: ${file}`);
+14:         // Let's parse the file and extract the code block
+15:         const regex = /("CodeContent":\s*|CodeContent:\s*)`([\s\S]*?)`/g;
+16:         let match;
+17:         let idx = 1;
+18:         while ((match = regex.exec(content)) !== null) {
+19:           const code = match[2];
+20:           if (code.includes('SpecializationFilter') && code.includes('export default function VibeRadarPage')) {
+21:             const outPath = `src/app/vibe-radar/page.recovered_${file}_${idx}.tsx`;
+22:             fs.writeFileSync(outPath, code, 'utf8');
+23:             console.log(`  Extracted code block to ${outPath} (${code.split('\n').length} lines)`);
+24:             idx++;
+25:           }
+26:         }
+27:       }
+28:     }
+29:   }
+30: }
+31: 
+The above content shows the entire, complete file contents of the requested file.

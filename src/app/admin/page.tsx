@@ -9,10 +9,13 @@ import {
   Radio, 
   CreditCard,
   Languages,
-  Activity
+  Activity,
+  Bell,
+  Sparkles
 } from 'lucide-react';
 import KPICard from '@/components/admin/KPICard';
 import AdminChart from '@/components/admin/AdminChart';
+import { createClient } from '@/lib/supabase/client';
 
 interface DashboardData {
   kpis: {
@@ -49,6 +52,7 @@ export default function DashboardOverview() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [latestRealtimeSignup, setLatestRealtimeSignup] = useState<{ username: string; role: string } | null>(null);
 
   useEffect(() => {
     async function fetchDashboard() {
@@ -67,6 +71,30 @@ export default function DashboardOverview() {
       }
     }
     fetchDashboard();
+
+    // Option A: Realtime signup alert listener
+    const supabase = createClient();
+    const channel = supabase
+      .channel('admin-dashboard-realtime-signups')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'profiles' },
+        (payload: any) => {
+          const newProfile = payload.new;
+          if (newProfile && newProfile.username) {
+            setLatestRealtimeSignup({
+              username: newProfile.username,
+              role: newProfile.role || 'member',
+            });
+            fetchDashboard();
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   if (error) {
@@ -142,6 +170,31 @@ export default function DashboardOverview() {
 
   return (
     <div className="space-y-8">
+      {/* Real-time Signup Alert Banner (Option A) */}
+      {latestRealtimeSignup && (
+        <div className="p-4 rounded-2xl bg-gradient-to-r from-cyan-500/20 via-blue-500/20 to-purple-500/20 border border-cyan-500/40 text-white flex items-center justify-between shadow-xl shadow-cyan-500/10 animate-in slide-in-from-top duration-300">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-full bg-cyan-500/30 border border-cyan-400 flex items-center justify-center text-cyan-300 shrink-0">
+              <Bell className="w-4 h-4 animate-bounce" />
+            </div>
+            <div>
+              <h4 className="text-xs font-bold font-mono tracking-tight flex items-center gap-2">
+                🎉 Real-Time Signup Alert (Option A Active)
+              </h4>
+              <p className="text-[11px] text-cyan-200">
+                <strong className="text-white">@{latestRealtimeSignup.username}</strong> just registered as a <span className="uppercase font-mono font-bold text-cyan-300">{latestRealtimeSignup.role}</span>!
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => setLatestRealtimeSignup(null)}
+            className="px-3 py-1 rounded-lg bg-black/40 border border-white/10 hover:bg-black/60 text-xs font-mono text-white/70"
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
+
       {/* Welcome header info */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>

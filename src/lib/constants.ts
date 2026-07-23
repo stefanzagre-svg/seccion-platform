@@ -1,5 +1,5 @@
 /**
- * Platform Constants — Project Fusion / Session
+ * Platform Constants — Project Fusion / Seccion
  * Single source of truth for all categorical data, quest configs, and archetypes.
  */
 
@@ -207,6 +207,42 @@ export const ARCHETYPE_PROFILES = {
     relationshipStyle: 'Dynamic, ever-evolving connections fueled by shared curiosity and new experiences.',
     defaultHabits: { traveling: 'Every Week', 'adventure seek': 'High Adrenaline', socializing: 'Often' },
   },
+  creator: {
+    id: 'creator',
+    name: 'The Creator',
+    emoji: '🎭',
+    tagline: 'You light up the stage.',
+    description: 'Expressive, magnetic, and born to captivate. You channel your passions into art, streams, and unforgettable moments.',
+    color: '#F59E0B',
+    accentColor: 'rgba(245, 158, 11, 0.15)',
+    traits: ['Expressive', 'Magnetic', 'Charismatic', 'Artistic', 'Captivating', 'Social'],
+    relationshipStyle: 'Dynamic, collaborative partnerships with mutual spotlight and creative chemistry.',
+    defaultHabits: { 'social media': 'Influencer status', 'creative flow': 'Every Day', socializing: 'Often' },
+  },
+  alchemist: {
+    id: 'alchemist',
+    name: 'The Alchemist',
+    emoji: '🧪',
+    tagline: 'You master inner & outer equilibrium.',
+    description: 'Introspective, bio-optimized, and spiritually grounded. You transform raw energy into health, mindfulness, and evolution.',
+    color: '#A855F7',
+    accentColor: 'rgba(168, 85, 247, 0.15)',
+    traits: ['Mindful', 'Bio-optimized', 'Introspective', 'Balanced', 'Transformative', 'Intuitive'],
+    relationshipStyle: 'Conscious, high-vibration partnerships centered on personal evolution and presence.',
+    defaultHabits: { workout: 'Often', 'healthy eating': 'Every Day', reading: 'Daily' },
+  },
+  hedonist: {
+    id: 'hedonist',
+    name: 'The Hedonist',
+    emoji: '🥂',
+    tagline: 'You savor every drop of life.',
+    description: 'Sophisticated, pleasure-seeking, and unapologetically sensual. You appreciate fine dining, luxury aesthetics, and indulgence.',
+    color: '#E11D48',
+    accentColor: 'rgba(225, 29, 72, 0.15)',
+    traits: ['Sensual', 'Sophisticated', 'Pleasure-seeking', 'Aesthetic-driven', 'Passionate', 'Indulgent'],
+    relationshipStyle: 'Passionate, sensory-rich connections anchored in indulgence, intimacy, and shared luxury.',
+    defaultHabits: { drinking: 'Socially', partying: 'Sometimes', socializing: 'Often' },
+  },
 } as const;
 
 export type ArchetypeId = keyof typeof ARCHETYPE_PROFILES;
@@ -306,3 +342,120 @@ export const FREQUENCY_LEVELS: Record<string, number> = {
   'Investor': 2,
   'Spender': 0,
 };
+
+// ─── Creator Specialization & Visibility Moats ────────────────────────────────
+
+export interface CreatorSpecialization {
+  id: string;
+  title: string;
+  badge: string;
+  icon: string;
+  color: string;
+  description: string;
+  sampleTags: string[];
+  isAdult: boolean;
+}
+
+export const CREATOR_SPECIALIZATIONS: CreatorSpecialization[] = [
+  {
+    id: 'beauty',
+    title: 'Makeup & Beauty Artistry',
+    badge: 'Beauty Architect 💄',
+    icon: '💄',
+    color: 'from-[#ffabf3]/20 to-pink-500/20 border-[#ffabf3]/40 text-[#ffabf3]',
+    description: 'Expert makeup tutorials, skincare routines, date-night glam & product audits.',
+    sampleTags: ['#MakeupGlowUp', '#SkincareTips', '#EveningGlam', '#BeautyAdvice', '#GRWM'],
+    isAdult: false,
+  },
+  {
+    id: 'style',
+    title: 'Style & Fashion Architecture',
+    badge: 'Style Advisor 👠',
+    icon: '👠',
+    color: 'from-amber-400/20 to-orange-500/20 border-amber-400/40 text-amber-300',
+    description: '1:1 outfit feedback, date-night fit checks, capsule wardrobe styling & color advice.',
+    sampleTags: ['#DateStyle', '#WardrobeAudit', '#FitCheck', '#OutfitAdvice', '#CapsuleStyle'],
+    isAdult: false,
+  },
+  {
+    id: 'culinary',
+    title: 'Culinary & Romantic Dining',
+    badge: 'Culinary Master 👨‍🍳',
+    icon: '👨‍🍳',
+    color: 'from-emerald-400/20 to-teal-500/20 border-emerald-400/40 text-emerald-300',
+    description: 'Live cook-along streams, romantic dinner recipes, wine pairing & custom menus.',
+    sampleTags: ['#RomanticRecipes', '#CookAlong', '#ImpressionDinner', '#WinePairing', '#ChefSecret'],
+    isAdult: false,
+  },
+  {
+    id: 'dating',
+    title: 'Dating & Relationship Coach',
+    badge: 'Dating Wingman 🔮',
+    icon: '🔮',
+    color: 'from-purple-400/20 to-indigo-500/20 border-purple-400/40 text-purple-300',
+    description: 'Icebreaker openers, profile optimization, chemistry reading & confidence coaching.',
+    sampleTags: ['#DatingCoach', '#OpenerAdvice', '#ChemistryCoach', '#FlirtMaster', '#ConfidenceCode'],
+    isAdult: false,
+  },
+  {
+    id: 'fitness',
+    title: 'Fitness & Vitality Coaching',
+    badge: 'Fitness Coach 🏋️',
+    icon: '🏋️',
+    color: 'from-[#00fbfb]/20 to-cyan-500/20 border-[#00fbfb]/40 text-[#00fbfb]',
+    description: 'Workout routines, posture audits, bio-hacking habits & active lifestyle goals.',
+    sampleTags: ['#FitnessMotivation', '#PostureAudit', '#WorkoutRoutine', '#BioHacking', '#Vitality'],
+    isAdult: false,
+  },
+  {
+    id: 'creative',
+    title: 'Art, Performance & Creative Flow',
+    badge: 'Creative Alchemist 🎨',
+    icon: '🎨',
+    color: 'from-rose-400/20 to-red-500/20 border-rose-400/40 text-rose-300',
+    description: 'Live acoustic sets, visual art commissions, photography & creative workshops.',
+    sampleTags: ['#LiveMusic', '#ArtCommission', '#CreativeFlow', '#AcousticSet', '#Photography'],
+    isAdult: false,
+  },
+  {
+    id: 'career',
+    title: 'Career & Ambition Coach',
+    badge: 'Career Strategist 💼',
+    icon: '💼',
+    color: 'from-blue-500/20 to-indigo-600/20 border-blue-400/40 text-blue-300',
+    description: 'Resume & LinkedIn audits, interview prep, salary negotiation & executive presence coaching.',
+    sampleTags: ['#CareerCoach', '#LinkedInAudit', '#ExecutivePresence', '#SalaryNegotiation', '#InterviewPrep'],
+    isAdult: false,
+  },
+  {
+    id: 'wellness',
+    title: 'Mindfulness & Holistic Wellness',
+    badge: 'Wellness Guide 🌿',
+    icon: '🌿',
+    color: 'from-teal-400/20 to-emerald-500/20 border-teal-400/40 text-teal-300',
+    description: 'Stress management, breathwork, sleep optimization, mindfulness & burnout recovery.',
+    sampleTags: ['#WellnessGuide', '#Mindfulness', '#Breathwork', '#BurnoutRecovery', '#HolisticHealth'],
+    isAdult: false,
+  },
+  {
+    id: 'financial',
+    title: 'Financial & Wealth Architect',
+    badge: 'Financial Architect 💰',
+    icon: '💰',
+    color: 'from-amber-500/20 to-yellow-500/20 border-amber-400/40 text-amber-300',
+    description: 'Personal budgeting, investment fundamentals, wealth building & financial independence goals.',
+    sampleTags: ['#FinancialCoach', '#WealthBuilding', '#Budgeting101', '#InvestmentTips', '#FinancialFreedom'],
+    isAdult: false,
+  },
+  {
+    id: 'adult',
+    title: 'Sensual & Explicit Creator (18+)',
+    badge: '18+ Sensual Creator 🔞',
+    icon: '🔞',
+    color: 'from-red-600/30 to-pink-600/30 border-red-500/50 text-red-400',
+    description: 'Private 18+ VIP content, behind-closed-doors streams & sensual art.',
+    sampleTags: ['#SensualContent', '#18PlusVIP', '#PrivateStream', '#BehindClosedDoors'],
+    isAdult: true,
+  },
+];
+

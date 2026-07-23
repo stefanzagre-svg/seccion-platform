@@ -1,0 +1,563 @@
+"use client";
+
+import React, { useState, useEffect, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Sparkles, Volume2, VolumeX, Shield, Play } from "lucide-react";
+import RevenueEngineDemo from "./RevenueEngineDemo";
+import StreamStationDemo from "./StreamStationDemo";
+import MonetizationSuiteDemo from "./MonetizationSuiteDemo";
+
+// Localization Matrix
+const LOCALIZED_TEXTS = {
+  en: {
+    lobby_title: "Welcome to SECCIØN Studio Tour",
+    lobby_sub: "A monetization-focused welcome experience built for professional creators.",
+    lobby_p1: "Before you sign up or configure anything, we want to prove how SECCIØN maximizes your revenue. No management agencies taking 40%. No commission traps.",
+    lobby_p2: "Let's explore your vibe, test our streaming cockpit, and review your 7 built-in revenue streams. Right now. No account needed.",
+    lobby_cta: "Enter The Studio Tour",
+    vibe_title: "Choose Your Mode",
+    vibe_sub: "Verify if you are here as a creator or member.",
+    hub_cta_creator: "Launch Creator Tour",
+    hub_cta_member: "Switch to Member Quest",
+    profile_title: "Profile & Portfolio Setup",
+    profile_sub: "Configure custom monetization tiers and privacy locks.",
+    profile_blur_label: "Face Blur Privacy Gate Enabled",
+    profile_cta: "Save and Go Live",
+    secret_title: "Studio Tour Complete",
+    secret_p1: "Everything you've seen is mapped dynamically to protect and monetize your audience. SECCIØN does the heavy lifting for you.",
+    secret_p2: "This is the level of automation and protection creators get every day. We don't guess your value; we unlock it.",
+    secret_cta: "Claim Your SECCIØN Studio",
+    secret_cta_home: "Go Back to Home Page",
+    subtitles_active: "Subtitles Active"
+  },
+  es: {
+    lobby_title: "Bienvenido al SECCIØN Studio Tour",
+    lobby_sub: "Una experiencia de bienvenida enfocada en monetización para creadores profesionales.",
+    lobby_p1: "Antes de registrarte o configurar algo, queremos demostrar cómo SECCIØN maximiza tus ingresos. Sin agencias que se queden con el 40%. Sin trampas de comisión.",
+    lobby_p2: "Explora tu estilo, prueba la cabina de streaming y revisa tus 7 flujos de ingresos integrados. Ahora mismo. Sin cuenta.",
+    lobby_cta: "Iniciar Studio Tour",
+    vibe_title: "Elige tu Modo",
+    vibe_sub: "Confirma si estás aquí como creador o miembro.",
+    hub_cta_creator: "Iniciar Tour de Creador",
+    hub_cta_member: "Cambiar a Búsqueda de Miembro",
+    profile_title: "Configuración de Perfil y Portafolio",
+    profile_sub: "Configura niveles de monetización personalizados y bloqueos de privacidad.",
+    profile_blur_label: "Filtro de Privacidad Face Blur Activo",
+    profile_cta: "Guardar e Ir en Vivo",
+    secret_title: "Studio Tour Completado",
+    secret_p1: "Todo lo que has visto se mapea dinámicamente para proteger y monetizar tu audiencia. SECCIØN hace el trabajo pesado por ti.",
+    secret_p2: "Este es el nivel de automatización y protección que los creadores obtienen todos los días. No adivinamos tu valor; lo desbloqueamos.",
+    secret_cta: "Reclamar tu Estudio de SECCIØN",
+    secret_cta_home: "Volver a la Página de Inicio",
+    subtitles_active: "Subtítulos Activos"
+  },
+  fr: {
+    lobby_title: "Bienvenue au SECCIØN Studio Tour",
+    lobby_sub: "Une expérience d'intégration axée sur la monétisation pour les créateurs professionnels.",
+    lobby_p1: "Avant de vous inscrire, nous voulons prouver comment SECCIØN maximise vos revenus. Pas d'agences de gestion prélevant 40%. Pas de pièges de commission.",
+    lobby_p2: "Explorons votre style, testons notre cockpit de streaming et passons en revue vos 7 sources de revenus. Dès maintenant. Sans compte.",
+    lobby_cta: "Lancer le Studio Tour",
+    vibe_title: "Choisissez Votre Mode",
+    vibe_sub: "Confirmez si vous êtes ici en tant que créateur ou membre.",
+    hub_cta_creator: "Lancer le Tour Créateur",
+    hub_cta_member: "Passer à la Quête Membre",
+    profile_title: "Profil & Configuration du Portfolio",
+    profile_sub: "Configurez des niveaux de monétisation personnalisés et des verrous de confidentialité.",
+    profile_blur_label: "Protection Face Blur Activée",
+    profile_cta: "Enregistrer et Lancer le Live",
+    secret_title: "Studio Tour Terminé",
+    secret_p1: "Tout ce que vous avez vu est configuré pour protéger et monétiser votre audience. SECCIØN fait le travail difficile pour vous.",
+    secret_p2: "C'est le niveau d'automatisation et de protection que les créateurs obtiennent chaque jour. Nous ne devinons pas votre valeur ; nous la libérons.",
+    secret_cta: "Réclamer Votre Studio SECCIØN",
+    secret_cta_home: "Retourner à la Page d'Accueil",
+    subtitles_active: "Sous-titres Actifs"
+  }
+};
+
+const CREATOR_ARCHETYPES = [
+  { id: "STREAMER", emoji: "🎙️", name: "Live Broadcaster", desc: "Monetizes high-interaction streams and community goals." },
+  { id: "PORTFOLIO", emoji: "📸", name: "Exclusive Artist", desc: "Builds premium tiers, custom requests, and ephemeral catalogs." },
+  { id: "HYBRID", emoji: "⚡", name: "Hybrid Creator", desc: "Mixes free DMs, AI auto-upsells, and private consultations." }
+];
+
+interface CreatorQuestProps {
+  onSignUp: (data: { archetype: string; role: string }) => void;
+  onSwitchToMember: () => void;
+  onClose: () => void;
+}
+
+export default function CreatorQuest({ onSignUp, onSwitchToMember, onClose }: CreatorQuestProps) {
+  const [lang, setLang] = useState<"en" | "es" | "fr">("en");
+  const [step, setStep] = useState<
+    "lobby" | "mode-select" | "revenue-engine" | "profile-setup" | "stream-station" | "monetization-suite" | "secret"
+  >("lobby");
+  const [selectedVibe, setSelectedVibe] = useState("STREAMER");
+  const [faceBlurActive, setFaceBlurActive] = useState(true);
+  const [tierPrice, setTierPrice] = useState(9.99);
+  const [residence, setResidence] = useState("");
+  const [residenceError, setResidenceError] = useState(false);
+
+  // Audio Synthesis & Subtitle states
+  const [speechSupported, setSpeechSupported] = useState(false);
+  const [isMuted, setIsMuted] = useState(false);
+  const [subtitles, setSubtitles] = useState("");
+  const synthRef = useRef<SpeechSynthesis | null>(null);
+  const currentUtteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
+
+  useEffect(() => {
+    if (typeof window !== "undefined" && window.speechSynthesis) {
+      synthRef.current = window.speechSynthesis;
+      setSpeechSupported(true);
+    }
+  }, []);
+
+  // Sync vocal text synthesis on step changes
+  useEffect(() => {
+    speakStepText();
+    return () => stopVoice();
+  }, [step, lang]);
+
+  const stopVoice = () => {
+    if (synthRef.current) {
+      synthRef.current.cancel();
+    }
+  };
+
+  const speak = (text: string) => {
+    if (!speechSupported || isMuted || !synthRef.current) {
+      setSubtitles(text);
+      return;
+    }
+    stopVoice();
+    
+    const utterance = new SpeechSynthesisUtterance(text);
+    if (lang === "es") utterance.lang = "es-ES";
+    else if (lang === "fr") utterance.lang = "fr-FR";
+    else utterance.lang = "en-US";
+
+    utterance.rate = 1.05;
+    
+    utterance.onboundary = (event) => {
+      // Approximate subtitle highlights word by word
+      const words = text.split(" ");
+      const charIndex = event.charIndex;
+      let cumulativeLength = 0;
+      let wordIndex = 0;
+      
+      for (let i = 0; i < words.length; i++) {
+        cumulativeLength += words[i].length + 1;
+        if (cumulativeLength > charIndex) {
+          wordIndex = i;
+          break;
+        }
+      }
+      const contextWords = words.slice(Math.max(0, wordIndex - 3), Math.min(words.length, wordIndex + 8));
+      setSubtitles(contextWords.join(" ") + (wordIndex + 8 < words.length ? "..." : ""));
+    };
+
+    utterance.onend = () => {
+      setSubtitles("");
+    };
+
+    currentUtteranceRef.current = utterance;
+    synthRef.current.speak(utterance);
+  };
+
+  const t = LOCALIZED_TEXTS[lang];
+
+  const speakStepText = () => {
+    if (step === "lobby") {
+      speak(`${t.lobby_title}. ${t.lobby_sub}. ${t.lobby_p1}`);
+    } else if (step === "mode-select") {
+      speak(`${t.vibe_title}. ${t.vibe_sub}`);
+    } else if (step === "revenue-engine") {
+      speak("Look at our Revenue Payout Math. Most platforms or agencies take up to 40% or more. SECCIØN keeps it flat: you retain 80% of all earnings.");
+    } else if (step === "profile-setup") {
+      speak(`${t.profile_title}. ${t.profile_sub}`);
+    } else if (step === "stream-station") {
+      speak("Observe the Stream Station cockpit. Monitor simulated viewers and check out our Face Blur privacy and ephemeral media gates.");
+    } else if (step === "monetization-suite") {
+      speak("Review the 7 built-in streams. Additionally, see how our built-in AI Replacement Agent automates fan interactions 24/7.");
+    } else if (step === "secret") {
+      speak(`${t.secret_title}. ${t.secret_p1} ${t.secret_p2}`);
+    }
+  };
+
+  const toggleMute = () => {
+    if (isMuted) {
+      setIsMuted(false);
+      // Wait for state sync
+      setTimeout(() => {
+        speakStepText();
+      }, 50);
+    } else {
+      stopVoice();
+      setIsMuted(true);
+      setSubtitles("");
+    }
+  };
+
+  const getSubmitsData = () => {
+    // Cache values in sessionStorage
+    const data = {
+      archetype: selectedVibe,
+      role: "creator",
+      language: lang,
+      monetization_tier_price: tierPrice,
+      privacy_face_blur: faceBlurActive,
+      residence: residence.trim()
+    };
+    sessionStorage.setItem("_onboarding_creator_archive_choice", selectedVibe);
+    sessionStorage.setItem("_onboarding_creator_tier_price", tierPrice.toString());
+    sessionStorage.setItem("_onboarding_creator_face_blur", faceBlurActive ? "true" : "false");
+    sessionStorage.setItem("_onboarding_creator_residence", residence.trim());
+    return data;
+  };
+
+  return (
+    <div className="w-full max-w-4xl mx-auto flex flex-col justify-between min-h-[85vh] p-4 md:p-8 bg-black/80 border border-white/10 rounded-3xl backdrop-blur-xl relative overflow-hidden shadow-2xl">
+      {/* Laser line effect */}
+      <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-primary to-transparent animate-pulse" />
+
+      {/* Top Header Row */}
+      <div className="flex justify-between items-center border-b border-white/5 pb-4 z-10">
+        <div className="flex items-center gap-2">
+          <Sparkles className="w-5 h-5 text-primary text-glow" />
+          <span className="text-sm font-black uppercase tracking-widest Outfit text-glow text-white">
+            SECCIØN Studio Quest
+          </span>
+        </div>
+
+        <div className="flex items-center gap-2">
+          {/* Language Selector */}
+          <select
+            value={lang}
+            onChange={(e) => setLang(e.target.value as any)}
+            className="bg-white/5 border border-white/15 rounded-lg px-2 py-1 text-[10px] font-black uppercase text-white tracking-wider outline-none hover:bg-white/10 transition"
+          >
+            <option value="en" className="bg-neutral-900 text-white">EN</option>
+            <option value="es" className="bg-neutral-900 text-white">ES</option>
+            <option value="fr" className="bg-neutral-900 text-white">FR</option>
+          </select>
+
+          {/* Mute Button */}
+          <button
+            onClick={toggleMute}
+            className="p-1.5 bg-white/5 border border-white/15 rounded-lg hover:bg-white/10 transition text-white"
+            title="Toggle Voice Synthesizer"
+          >
+            {isMuted ? <VolumeX className="w-4 h-4 text-red-400" /> : <Volume2 className="w-4 h-4 text-primary" />}
+          </button>
+        </div>
+      </div>
+
+      {/* Step Contents */}
+      <div className="flex-1 flex flex-col items-center justify-center py-6 md:py-8 z-10 w-full">
+        <AnimatePresence mode="wait">
+          {/* LOBBY ENTRY */}
+          {step === "lobby" && (
+            <motion.div
+              key="lobby"
+              initial={{ opacity: 0, scale: 0.98 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.98 }}
+              className="text-center space-y-6 max-w-lg"
+            >
+              <h1 className="text-3xl md:text-4xl font-black uppercase Outfit text-glow leading-tight">
+                {t.lobby_title}
+              </h1>
+              <p className="text-xs text-white/60 leading-relaxed font-medium">
+                {t.lobby_p1}
+              </p>
+              <p className="text-[11px] text-primary/80 font-bold uppercase tracking-wider">
+                {t.lobby_p2}
+              </p>
+              <button
+                onClick={() => setStep("mode-select")}
+                className="px-8 py-4 bg-primary text-black font-black uppercase tracking-widest rounded-xl hover:shadow-[0_0_20px_rgba(102,252,241,0.4)] transition text-xs inline-flex items-center gap-2"
+              >
+                <Play className="w-4 h-4 fill-black text-black" />
+                {t.lobby_cta}
+              </button>
+            </motion.div>
+          )}
+
+          {/* CHOOSE MODE */}
+          {step === "mode-select" && (
+            <motion.div
+              key="mode-select"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="w-full space-y-6 text-center max-w-lg"
+            >
+              <h3 className="text-2xl font-black uppercase Outfit">{t.vibe_title}</h3>
+              <p className="text-xs text-white/50">{t.vibe_sub}</p>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Switch to Member */}
+                <div
+                  onClick={onSwitchToMember}
+                  className="glass-card p-5 rounded-2xl border border-white/10 hover:border-pink-500/35 bg-white/2 hover:bg-pink-500/5 cursor-pointer text-left transition flex flex-col justify-between min-h-[160px]"
+                >
+                  <div>
+                    <span className="text-2xl block mb-2">💘</span>
+                    <h5 className="text-sm font-black uppercase text-white">Member Mode</h5>
+                    <p className="text-[10px] text-white/40 mt-1 leading-normal font-medium">
+                      Simulate dual Chemistry Meters, chat dynamics, and find compatible matches.
+                    </p>
+                  </div>
+                  <span className="text-[9px] font-black uppercase text-pink-400 tracking-wider mt-4">
+                    {t.hub_cta_member} &rarr;
+                  </span>
+                </div>
+
+                {/* Continue as Creator */}
+                <div
+                  onClick={() => setStep("revenue-engine")}
+                  className="glass-card p-5 rounded-2xl border border-primary/20 bg-primary/5 hover:bg-primary/10 cursor-pointer text-left transition flex flex-col justify-between min-h-[160px] shadow-[0_0_15px_rgba(0,255,255,0.05)]"
+                >
+                  <div>
+                    <span className="text-2xl block mb-2">👑</span>
+                    <h5 className="text-sm font-black uppercase text-white">Creator Mode</h5>
+                    <p className="text-[10px] text-white/40 mt-1 leading-normal font-medium">
+                      Configure custom monetization, test progressive Face Blur, and explore 80% payout streams.
+                    </p>
+                  </div>
+                  <span className="text-[9px] font-black uppercase text-primary tracking-wider mt-4">
+                    {t.hub_cta_creator} &rarr;
+                  </span>
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          {/* REVENUE MODEL */}
+          {step === "revenue-engine" && (
+            <motion.div
+              key="revenue"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="w-full"
+            >
+              <RevenueEngineDemo onComplete={() => setStep("profile-setup")} />
+            </motion.div>
+          )}
+
+          {/* PROFILE SETUP */}
+          {step === "profile-setup" && (
+            <motion.div
+              key="profile"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="w-full space-y-6 max-w-lg"
+            >
+              <div className="text-center">
+                <span className="text-[10px] uppercase tracking-widest font-black text-primary bg-primary/10 px-2 py-0.5 rounded-full border border-primary/20">
+                  Profile Customizer
+                </span>
+                <h4 className="text-2xl font-black tracking-tight mt-2 uppercase Outfit">
+                  {t.profile_title}
+                </h4>
+                <p className="text-xs text-white/50 mt-1">{t.profile_sub}</p>
+              </div>
+
+              <div className="space-y-4 text-left">
+                {/* Select Creator Archetype */}
+                <div className="space-y-2">
+                  <span className="text-[9px] font-black uppercase text-white/40 tracking-wider">
+                    Select Creator Persona
+                  </span>
+                  <div className="grid grid-cols-3 gap-2">
+                    {CREATOR_ARCHETYPES.map((a) => (
+                      <button
+                        key={a.id}
+                        onClick={() => setSelectedVibe(a.id)}
+                        className={`p-3 rounded-xl border text-center transition flex flex-col items-center gap-1 ${
+                          selectedVibe === a.id
+                            ? "bg-primary border-primary text-black"
+                            : "bg-white/5 border-white/10 text-white hover:bg-white/10"
+                        }`}
+                      >
+                        <span className="text-lg">{a.emoji}</span>
+                        <span className="text-[8px] font-black uppercase tracking-wider block">{a.name}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Sub price slider */}
+                <div className="glass-card p-4 rounded-xl border border-white/10 bg-white/2 space-y-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-[9px] font-black uppercase text-white/50 tracking-wider">
+                      Custom Subscription Price
+                    </span>
+                    <span className="text-xs font-mono font-bold text-primary">
+                      ${tierPrice.toFixed(2)}/mo
+                    </span>
+                  </div>
+                  <input
+                    type="range"
+                    min="4.99"
+                    max="49.99"
+                    step="1.00"
+                    value={tierPrice}
+                    onChange={(e) => setTierPrice(parseFloat(e.target.value))}
+                    className="w-full accent-primary bg-white/10 rounded-lg cursor-pointer"
+                  />
+                </div>
+
+                {/* Privacy toggle */}
+                <div className="flex justify-between items-center glass-card p-4 rounded-xl border border-white/10 bg-white/2">
+                  <div className="space-y-0.5">
+                    <span className="text-[10px] font-black uppercase text-white tracking-wider block">
+                      {t.profile_blur_label}
+                    </span>
+                    <span className="text-[9px] text-white/40 font-medium block">
+                      Blurs your face stream for users below Chemistry Level 3 automatically.
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => setFaceBlurActive(!faceBlurActive)}
+                    className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-wider border transition ${
+                      faceBlurActive
+                        ? "bg-primary border-primary text-black"
+                        : "bg-white/5 border-white/10 text-white/40"
+                    }`}
+                  >
+                    {faceBlurActive ? "Active" : "Inactive"}
+                  </button>
+                </div>
+
+                {/* Residence Input */}
+                <div className="glass-card p-4 rounded-xl border border-white/10 bg-white/2 space-y-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-[9px] font-black uppercase text-white/50 tracking-wider">
+                      Tax Residence Country / State (Required)
+                    </span>
+                  </div>
+                  <input
+                    type="text"
+                    placeholder="e.g. Alicante, Spain"
+                    value={residence}
+                    onChange={(e) => {
+                      setResidence(e.target.value);
+                      if (e.target.value.trim()) setResidenceError(false);
+                    }}
+                    className={`w-full px-4 py-3 bg-black/40 border rounded-xl text-xs text-white placeholder-white/20 focus:border-primary focus:outline-none transition ${
+                      residenceError ? "border-red-500/50" : "border-white/10"
+                    }`}
+                  />
+                  {residenceError && (
+                    <span className="text-[9px] font-bold text-red-400 uppercase tracking-wide block mt-1">
+                      Residence is required for tax and legal compliance.
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              <button
+                onClick={() => {
+                  if (!residence.trim()) {
+                    setResidenceError(true);
+                    return;
+                  }
+                  setResidenceError(false);
+                  setStep("stream-station");
+                }}
+                className="w-full bg-primary text-black font-black uppercase tracking-widest py-4 rounded-xl hover:shadow-[0_0_20px_rgba(102,252,241,0.4)] transition text-xs flex items-center justify-center gap-2"
+              >
+                {t.profile_cta}
+              </button>
+            </motion.div>
+          )}
+
+          {/* STREAM COCKPIT */}
+          {step === "stream-station" && (
+            <motion.div
+              key="stream"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="w-full"
+            >
+              <StreamStationDemo onComplete={() => setStep("monetization-suite")} />
+            </motion.div>
+          )}
+
+          {/* MONETIZATION SUITE */}
+          {step === "monetization-suite" && (
+            <motion.div
+              key="monetization"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="w-full"
+            >
+              <MonetizationSuiteDemo onComplete={() => setStep("secret")} />
+            </motion.div>
+          )}
+
+          {/* SECRET PIVOT / RECAP */}
+          {step === "secret" && (
+            <motion.div
+              key="secret"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="text-center space-y-6 max-w-lg"
+            >
+              <div className="flex justify-center mb-2">
+                <div className="p-3 bg-primary/10 border border-primary/20 rounded-full text-primary animate-pulse">
+                  <Shield className="w-8 h-8" />
+                </div>
+              </div>
+              <h1 className="text-3xl font-black uppercase Outfit text-glow">
+                {t.secret_title}
+              </h1>
+              <div className="space-y-4 text-white/60 text-xs md:text-sm leading-relaxed font-medium">
+                <p>{t.secret_p1}</p>
+                <p>{t.secret_p2}</p>
+              </div>
+
+              <div className="flex flex-col gap-3 max-w-xs mx-auto mt-8">
+                <button
+                  onClick={() => onSignUp(getSubmitsData())}
+                  className="w-full bg-primary text-black font-black uppercase tracking-widest py-4 rounded-xl hover:shadow-[0_0_20px_rgba(102,252,241,0.4)] transition text-xs flex items-center justify-center gap-2"
+                >
+                  {t.secret_cta}
+                </button>
+                <button
+                  onClick={() => {
+                    stopVoice();
+                    window.location.href = "/";
+                  }}
+                  className="w-full py-4 bg-white/5 border border-white/10 hover:bg-white/10 rounded-xl text-xs font-black uppercase tracking-widest text-white transition"
+                >
+                  {t.secret_cta_home}
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+
+      {/* Subtitles Overlay Footer */}
+      <div className="w-full max-w-4xl mx-auto border-t border-white/5 pt-4 text-center">
+        <div className="min-h-[40px] flex flex-col items-center justify-center">
+          {subtitles ? (
+            <p className="text-xs font-bold text-primary max-w-2xl px-4 text-center leading-normal animate-fadeIn">
+              "{subtitles}"
+            </p>
+          ) : (
+            <p className="text-[10px] font-mono text-white/20 uppercase tracking-widest">
+              Audio Synthesis Subtitles
+            </p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}

@@ -1,7 +1,9 @@
 "use client";
 
+import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Heart, MessageSquare, Repeat2, Sparkles, Crown, MoreHorizontal } from 'lucide-react';
+import { Heart, MessageSquare, Repeat2, Sparkles, Crown, MoreHorizontal, Flag } from 'lucide-react';
+import ReportModal from '@/components/modals/ReportModal';
 
 interface Creator {
   id: string;
@@ -47,6 +49,8 @@ const FEED_IMAGES = [
 ];
 
 export default function MasterMixFeed({ creators }: MasterMixFeedProps) {
+  const [reportingContent, setReportingContent] = useState<{ id: string, type: 'platform_content' | 'profile' | 'message' } | null>(null);
+
   // If no creators, show default mock
   const activeCreators = creators.length > 0 ? creators : [];
 
@@ -96,6 +100,12 @@ export default function MasterMixFeed({ creators }: MasterMixFeedProps) {
 
   return (
     <div className="w-full space-y-6 pb-24">
+      <ReportModal 
+        isOpen={!!reportingContent} 
+        onClose={() => setReportingContent(null)} 
+        contentId={reportingContent?.id || ''} 
+        contentType={reportingContent?.type || 'platform_content'} 
+      />
       {/* Feed Header */}
       <div className="flex items-center justify-between px-2">
         <div>
@@ -153,9 +163,18 @@ export default function MasterMixFeed({ creators }: MasterMixFeedProps) {
                   <span className="text-[9px] uppercase tracking-widest text-white/40 font-bold">{post.timestamp}</span>
                 </div>
               </div>
-              <button className="text-white/30 hover:text-white transition">
-                <MoreHorizontal className="w-5 h-5" />
-              </button>
+              <div className="flex items-center gap-1">
+                <button 
+                  onClick={() => setReportingContent({ id: post.id, type: 'platform_content' })}
+                  className="p-1.5 text-white/30 hover:text-[#dc143c] bg-white/5 hover:bg-[#dc143c]/10 rounded-full transition"
+                  title="Report Post"
+                >
+                  <Flag className="w-4 h-4" />
+                </button>
+                <button className="p-1.5 text-white/30 hover:text-white transition">
+                  <MoreHorizontal className="w-5 h-5" />
+                </button>
+              </div>
             </div>
 
             {/* Content */}

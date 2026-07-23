@@ -27,7 +27,7 @@ export default function ValuePropositionCard({ onAccept }: { onAccept: () => voi
   };
 
   return (
-    <div className="relative w-full max-w-md mx-auto h-[750px] flex flex-col items-center justify-center overflow-visible">
+    <div className="relative w-full max-w-md mx-auto h-[80vh] min-h-[500px] max-h-[720px] flex flex-col items-center justify-center overflow-visible">
       {!swiped && (
         <motion.div
           drag="x"

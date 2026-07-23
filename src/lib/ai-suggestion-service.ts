@@ -1,5 +1,5 @@
 /**
- * AI Suggestion Service — Project Fusion / Session
+ * AI Suggestion Service — Project Fusion / Seccion
  *
  * Implements the Intelligence Layer (Phase 0 + Phase 2) from the backlog:
  *   AI-SVC-001 – Facade endpoint logic
@@ -41,6 +41,8 @@ export interface PredictionPayload {
   match_probability: number;   // Raw PME score
   momentum_score: number;      // Simulated engagement momentum (0-100)
   opportunity_gap: number;     // Distance-to-next-level (0-100)
+  archetype?: string;
+  core_passion?: string;
 }
 
 export interface SuggestionRequest {
@@ -311,12 +313,15 @@ const CATEGORY_ACTION: Record<SuggestionCategory, string> = {
 export function generateLocalSuggestions(
   currentUserProfile: UserProfile,
   contextData: SuggestionRequest['context_data'],
+  candidatesPool?: CandidateProfile[],
   limit = 5
 ): PredictionPayload[] {
   // Estimate my gauge toward each candidate from quest stage & connection points
   const baseGauge = Math.min(50, contextData.connection_points / 2 + contextData.quest_stage * 5);
 
-  const bundles: SignalBundle[] = SUGGESTION_CANDIDATES.map((candidate) =>
+  const pool = candidatesPool && candidatesPool.length > 0 ? candidatesPool : SUGGESTION_CANDIDATES;
+
+  const bundles: SignalBundle[] = pool.map((candidate) =>
     computeSignals(currentUserProfile, candidate, baseGauge + Math.random() * 15)
   );
 
@@ -335,6 +340,8 @@ export function generateLocalSuggestions(
     match_probability: b.matchProbability,
     momentum_score: b.candidate.momentum,
     opportunity_gap: b.opportunityGap,
+    archetype: b.candidate.profile.archetype,
+    core_passion: b.candidate.profile.corePassion,
   }));
 }
 

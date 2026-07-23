@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles, MessageSquare, X, Send, Lock, Loader2, CreditCard, CheckCircle2, AlertCircle } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { usePathname } from 'next/navigation';
+import { useTranslation } from '@/context/LanguageContext';
 
 
 interface Message {
@@ -16,6 +17,7 @@ interface Message {
 
 export default function AIWingmanBubble() {
   const pathname = usePathname();
+  const { locale } = useTranslation();
 
   const [isOpen, setIsOpen] = useState(false);
   const [user, setUser] = useState<any>(null);
@@ -24,7 +26,7 @@ export default function AIWingmanBubble() {
     {
       id: 'welcome',
       sender: 'wingman',
-      text: "Hey! I'm your AI Wingman & Match Coach. Ask me how to level up your chemistry meters, start conversations, or get personalized compatibility tips based on member profiles!",
+      text: "¡Hola! Soy tu AI Wingman y Coach de Química. Pregúntame cómo elevar tus medidores de afinidad, iniciar conversaciones o recibir consejos de compatibilidad personalizados.",
       timestamp: new Date()
     }
   ]);
@@ -63,56 +65,25 @@ export default function AIWingmanBubble() {
 
         if (profileData) {
           setProfile(profileData);
-
-          // Calculate trial
-          const joinedDate = new Date(profileData.created_at);
-          const daysDiff = (Date.now() - joinedDate.getTime()) / (1000 * 60 * 60 * 24);
-          const activeTrial = daysDiff <= 30;
-          setIsTrial(activeTrial);
-          setTrialDaysLeft(Math.max(0, Math.ceil(30 - daysDiff)));
-
-          // Credits
-          let currentCredits = profileData.privacy_settings?.wingman_credits ?? 10;
-          setCredits(currentCredits);
+          if (profileData.privacy_settings?.wingman_credits !== undefined) {
+            setCredits(profileData.privacy_settings.wingman_credits);
+          }
+          if (profileData.created_at) {
+            const ageInMs = Date.now() - new Date(profileData.created_at).getTime();
+            const daysDiff = ageInMs / (1000 * 60 * 60 * 24);
+            setIsTrial(daysDiff <= 30);
+            setTrialDaysLeft(Math.max(0, Math.ceil(30 - daysDiff)));
+          }
         }
       }
     }
 
     loadUser();
+  }, []);
 
-    // Subscribe to profile changes for real-time credits sync
-    const channel = supabase
-      .channel('wingman_profile_sync')
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'profiles',
-        },
-        (payload) => {
-          if (user && payload.new.id === user.id) {
-            const updated = payload.new;
-            let currentCredits = updated.privacy_settings?.wingman_credits ?? 10;
-            setCredits(currentCredits);
-          }
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [user?.id]);
-
-  // If user is not logged in, is a creator, or is on onboarding/auth/admin routes, completely hide the widget
-  if (
-    pathname?.startsWith('/onboarding') ||
-    pathname?.startsWith('/auth') ||
-    pathname?.startsWith('/admin') ||
-    !profile ||
-    profile.role !== 'member'
-  ) return null;
+  if (pathname?.startsWith('/admin') || pathname?.startsWith('/auth')) {
+    return null;
+  }
 
 
   const handleSend = async (e: React.FormEvent) => {
@@ -134,36 +105,38 @@ export default function AIWingmanBubble() {
     setIsTyping(true);
 
     try {
-      // 2. Call chat endpoint
-      const response = await fetch('/api/v2/assistant/chat', {
+      // 2. Call appropriate endpoint based on auth state
+      const endpoint = (profile && profile.role === 'member')
+        ? '/api/v2/assistant/chat'
+        : '/api/v2/onboarding/specialist';
+
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: userMessageText })
+        body: JSON.stringify({ message: userMessageText, locale }),
       });
-
       const data = await response.json();
 
-      if (response.status === 402) {
-        // Gated / Paywall Triggered
+      if (data.needsPurchase) {
         setShowPaywall(true);
         setIsTyping(false);
         return;
       }
 
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to communicate with Wingman');
+        throw new Error(data.error || 'Failed to communicate with SECCIØN Agent');
       }
 
-      // Update local state metrics
-      setIsTrial(data.isTrial);
-      setTrialDaysLeft(data.trialDaysLeft);
-      setCredits(data.credits);
+      // Update local state metrics if member
+      if (data.isTrial !== undefined) setIsTrial(data.isTrial);
+      if (data.trialDaysLeft !== undefined) setTrialDaysLeft(data.trialDaysLeft);
+      if (data.credits !== undefined) setCredits(data.credits);
 
-      // Add wingman response
+      // Add agent response
       const wingmanMsg: Message = {
         id: `wingman-${Date.now()}`,
         sender: 'wingman',
-        text: data.reply,
+        text: data.reply || data.response || "I'm here to help you explore SECCIØN!",
         timestamp: new Date()
       };
       setMessages((prev) => [...prev, wingmanMsg]);
@@ -216,7 +189,7 @@ export default function AIWingmanBubble() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 50, scale: 0.95 }}
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            className="absolute bottom-20 right-0 w-[calc(100vw-3rem)] sm:w-[350px] md:w-[380px] h-[520px] bg-black/80 border border-white/10 rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,251,251,0.15)] flex flex-col overflow-hidden backdrop-blur-2xl"
+            className="fixed bottom-20 right-4 left-4 sm:left-auto sm:right-6 sm:bottom-20 z-50 w-auto sm:w-[360px] h-[480px] max-h-[75vh] bg-black/95 border border-white/10 rounded-[2rem] sm:rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,251,251,0.2)] flex flex-col overflow-hidden backdrop-blur-2xl"
           >
             {/* Header */}
             <header className="p-4 border-b border-white/5 bg-gradient-to-r from-cyan-950/20 to-purple-950/20 flex items-center justify-between">
@@ -383,28 +356,29 @@ export default function AIWingmanBubble() {
         )}
       </AnimatePresence>
 
-      {/* Floating Bubble Button */}
+      {/* Floating Icon-Only Agent Button */}
       <motion.button
         onClick={() => setIsOpen(!isOpen)}
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
-        className={`w-14 h-14 rounded-full flex items-center justify-center text-black shadow-lg relative border transition-all ${
+        whileHover={{ scale: 1.08 }}
+        whileTap={{ scale: 0.92 }}
+        aria-label="Ask SECCIØN Agent"
+        title="Ask SECCIØN Agent"
+        className={`w-13 h-13 sm:w-14 sm:h-14 rounded-full flex items-center justify-center text-black shadow-xl relative border transition-all duration-300 ${
           isOpen
-            ? 'bg-white border-white'
-            : 'bg-primary border-primary shadow-[0_0_15px_rgba(102,252,241,0.4)]'
+            ? 'bg-white border-white text-black shadow-[0_0_20px_rgba(255,255,255,0.5)]'
+            : 'bg-gradient-to-br from-[#00fbfb] via-purple-500 to-[#ec4899] border-white/20 shadow-[0_0_25px_rgba(0,251,251,0.5)]'
         }`}
       >
         {isOpen ? (
           <X className="w-6 h-6 text-black" />
         ) : (
-          <MessageSquare className="w-6 h-6 text-black" />
-        )}
-        
-        {/* Trial Days or Credits Floating Badge (Unobtrusive) */}
-        {!isOpen && (
-          <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-purple-500 text-[8px] font-black text-white ring-2 ring-black">
-            {isTrial ? 'T' : credits}
-          </span>
+          <div className="relative flex items-center justify-center">
+            <Sparkles className="w-6 h-6 text-black fill-black" />
+            <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-pink-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-pink-500"></span>
+            </span>
+          </div>
         )}
       </motion.button>
     </div>

@@ -1,5 +1,5 @@
 /**
- * Creator & Member Rating Engine — Session Platform
+ * Creator & Member Rating Engine — Seccion Platform
  * ───────────────────────────────────────────────────
  * Implements a high-fidelity rating score out of 20.00.
  * Includes eligibility gates and dynamic decay averaging.
@@ -23,7 +23,7 @@ export interface RateeProfile {
 }
 
 /**
- * Checks if a rater is eligible to rate a ratee based on Session platform rules.
+ * Checks if a rater is eligible to rate a ratee based on Seccion platform rules.
  */
 export function canRate(
   rater: RaterProfile,

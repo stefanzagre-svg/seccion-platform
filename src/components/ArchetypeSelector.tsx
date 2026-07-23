@@ -2,7 +2,8 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sparkles, Heart, Compass, Award, Rocket, ShieldCheck, Globe } from 'lucide-react';
+import { Sparkles, Heart, Compass, Award, Rocket, ShieldCheck, Globe, Video, Zap, Wine } from 'lucide-react';
+import { useTranslation } from '@/context/LanguageContext';
 
 interface ArchetypeSelectorProps {
   onSelect: (archetype: string, data: any) => Promise<void>;
@@ -75,10 +76,44 @@ const ARCHETYPES = [
     hobbies: ['Travel', 'Hiking', 'Culture', 'Languages', 'Photography'],
     lifestyle: { traveling: 'Every Week', 'adventure seek': 'High Adrenaline', socializing: 'Often' },
     relationship_goals: ['Adventure partner', 'Open to possibilities']
+  },
+  {
+    id: 'creator',
+    title: 'The Creator',
+    icon: <Video className="w-12 h-12 text-[#F59E0B]" />,
+    description: 'Expressive, magnetic, and born to captivate. You channel your passions into art, streams, and unforgettable moments.',
+    color: 'from-[#F59E0B]/20 to-amber-500/20 border-[#F59E0B]/30 shadow-[#F59E0B]/10',
+    accentColor: '#F59E0B',
+    hobbies: ['Streaming', 'Performing', 'Fashion', 'Video Production', 'Content Creation'],
+    lifestyle: { 'social media': 'Influencer status', 'creative flow': 'Every Day', socializing: 'Often' },
+    relationship_goals: ['Creative partnership', 'Shared spotlight']
+  },
+  {
+    id: 'alchemist',
+    title: 'The Alchemist',
+    icon: <Zap className="w-12 h-12 text-[#A855F7]" />,
+    description: 'Introspective, bio-optimized, and spiritually grounded. You transform raw energy into health, mindfulness, and evolution.',
+    color: 'from-[#A855F7]/20 to-purple-600/20 border-[#A855F7]/30 shadow-[#A855F7]/10',
+    accentColor: '#A855F7',
+    hobbies: ['Yoga', 'Biohacking', 'Mindfulness', 'Astrology', 'Plant Medicine'],
+    lifestyle: { workout: 'Often', 'healthy eating': 'Every Day', reading: 'Daily' },
+    relationship_goals: ['Conscious partnership', 'Mindful evolution']
+  },
+  {
+    id: 'hedonist',
+    title: 'The Hedonist',
+    icon: <Wine className="w-12 h-12 text-[#E11D48]" />,
+    description: 'Sophisticated, pleasure-seeking, and unapologetically sensual. You appreciate fine dining, luxury aesthetics, and indulgence.',
+    color: 'from-[#E11D48]/20 to-rose-600/20 border-[#E11D48]/30 shadow-[#E11D48]/10',
+    accentColor: '#E11D48',
+    hobbies: ['Fine Dining', 'Mixology', 'Luxury Travel', 'Spa & Wellness', 'High Fashion'],
+    lifestyle: { drinking: 'Socially', partying: 'Sometimes', socializing: 'Often' },
+    relationship_goals: ['Sensual connection', 'Unapologetic luxury']
   }
 ];
 
 export default function ArchetypeSelector({ onSelect, onProceed }: ArchetypeSelectorProps) {
+  const { t } = useTranslation();
   const [selected, setSelected] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [rewardData, setRewardData] = useState<any | null>(null);
@@ -101,7 +136,7 @@ export default function ArchetypeSelector({ onSelect, onProceed }: ArchetypeSele
       try {
         await onSelect(arc.id, data);
         setRewardData({
-          title: arc.title,
+          title: t(`archetypes.${arc.id}.title`, arc.title),
           points: 100,
           badge: 'Explorer Badge 🏅'
         });
@@ -120,9 +155,11 @@ export default function ArchetypeSelector({ onSelect, onProceed }: ArchetypeSele
             <span className="text-[10px] font-black uppercase tracking-widest text-primary bg-primary/10 px-3 py-1.5 rounded-full mb-3 inline-block">
               Quest: Discover Your Archetype
             </span>
-            <h1 className="text-3xl sm:text-4xl font-black tracking-tighter text-glow mb-3">SELECT YOUR ARCHETYPE</h1>
+            <h1 className="text-3xl sm:text-4xl font-black tracking-tighter text-glow mb-3">
+              {t("archetypes.title", "SELECT YOUR ARCHETYPE")}
+            </h1>
             <p className="text-muted-foreground text-sm max-w-md mx-auto">
-              Select the persona that aligns with your true nature. We will pre-configure your profile to kickstart your connections.
+              {t("archetypes.subtitle", "Select the persona that aligns with your true nature. We will pre-configure your profile to kickstart your connections.")}
             </p>
           </div>
 
@@ -130,12 +167,15 @@ export default function ArchetypeSelector({ onSelect, onProceed }: ArchetypeSele
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 w-full mb-12">
             {ARCHETYPES.map((arc) => {
               const isSelected = selected === arc.id;
+              const title = t(`archetypes.${arc.id}.title`, arc.title);
+              const description = t(`archetypes.${arc.id}.desc`, arc.description);
+
               return (
                 <motion.button
                   key={arc.id}
                   whileHover={{ y: -5 }}
                   onClick={() => setSelected(arc.id)}
-                  className={`relative p-5 rounded-3xl border bg-gradient-to-b text-left transition-all duration-300 shadow-xl flex flex-col justify-between h-[280px] ${
+                  className={`relative p-5 pb-6 rounded-3xl border bg-gradient-to-b text-left transition-all duration-300 shadow-xl flex flex-col justify-between min-h-[300px] h-full ${
                     isSelected 
                     ? `border-primary bg-primary/5 ring-1 ring-primary` 
                     : `border-white/10 ${arc.color} hover:border-white/20`
@@ -143,8 +183,8 @@ export default function ArchetypeSelector({ onSelect, onProceed }: ArchetypeSele
                 >
                   <div>
                     <div className="mb-6">{arc.icon}</div>
-                    <h2 className="text-2xl font-bold text-white mb-2">{arc.title}</h2>
-                    <p className="text-white/60 text-xs leading-relaxed">{arc.description}</p>
+                    <h2 className="text-2xl font-bold text-white mb-2">{title}</h2>
+                    <p className="text-white/60 text-xs leading-relaxed">{description}</p>
                   </div>
                   
                   <div className="mt-4 flex flex-wrap gap-1">

@@ -2,12 +2,19 @@ import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
 // Routes that don't require authentication
-const PUBLIC_ROUTES = ['/onboarding', '/onboarding/step-2', '/auth/callback', '/api'];
+const PUBLIC_ROUTES = ['/admin', '/onboarding', '/onboarding/step-2', '/auth/callback', '/api', '/how-we-do', '/become-creator', '/vibe-radar', '/login', '/now-streaming', '/privacy', '/rules', '/creator-hub', '/hit-us-up', '/early-access'];
 // Routes that authenticated users should be redirected away from
 const AUTH_ROUTES = ['/onboarding', '/onboarding/step-2'];
 
 export async function middleware(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
+
+  const { pathname } = request.nextUrl;
+
+  // Dedicated Admin Route Exemption: Pass all /admin requests directly to AdminLayout (zero redirects!)
+  if (pathname.startsWith('/admin')) {
+    return supabaseResponse;
+  }
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -30,12 +37,9 @@ export async function middleware(request: NextRequest) {
     }
   );
 
-  // Refresh session — IMPORTANT: do not add logic between createServerClient and getUser
   const {
     data: { user },
   } = await supabase.auth.getUser();
-
-  const { pathname } = request.nextUrl;
 
   // Redirect unauthenticated users away from protected routes
   const isPublic = PUBLIC_ROUTES.some(route => pathname.startsWith(route));

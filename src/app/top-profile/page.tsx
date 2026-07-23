@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { Crown, Heart, Star, TrendingUp, Users } from 'lucide-react';
+import { Crown, Heart, Star, TrendingUp, Users, MessageSquare } from 'lucide-react';
 import Link from 'next/link';
 
 // Mock data fallback if Supabase is not fully connected yet
@@ -25,6 +25,8 @@ export default function TopProfilePage() {
   const [members, setMembers] = useState<any[]>(MOCK_MEMBERS);
   const [creators, setCreators] = useState<any[]>(MOCK_CREATORS);
   const [isLoading, setIsLoading] = useState(true);
+  const [currentUser, setCurrentUser] = useState<any | null>(null);
+  const [matchedIds, setMatchedIds] = useState<string[]>(['c2', 'c3', '2', '3']); // default fallbacks for visual test DMs
 
   useEffect(() => {
     async function fetchTopProfiles() {
@@ -59,11 +61,32 @@ export default function TopProfilePage() {
       }
     }
 
+    async function loadSessionAndMatches() {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user) {
+          setCurrentUser(session.user);
+          const { data: rels } = await supabase
+            .from('relationships')
+            .select('target_id')
+            .eq('user_id', session.user.id)
+            .eq('is_matched', true);
+          if (rels) {
+            const ids = rels.map((r: any) => r.target_id);
+            setMatchedIds(prev => Array.from(new Set([...prev, ...ids])));
+          }
+        }
+      } catch (e) {
+        console.error('Error loading session or matches:', e);
+      }
+    }
+
     fetchTopProfiles();
+    loadSessionAndMatches();
   }, []);
 
   return (
-    <div className="min-h-screen bg-transparent text-white pt-20 px-4 md:px-12 relative overflow-hidden">
+    <div className="min-h-screen bg-transparent text-white pt-20 pb-24 md:pb-12 px-4 md:px-12 relative overflow-hidden">
       {/* Background glow */}
       <div className="absolute top-[-10%] right-[-10%] w-[500px] h-[500px] bg-[#ffd700]/10 blur-[120px] rounded-full pointer-events-none" />
 
@@ -150,9 +173,20 @@ export default function TopProfilePage() {
                             </div>
                           )}
                         </div>
-                        <Link href={`/profile/member/${member.member_id}`} className="font-bold text-sm sm:text-lg hover:text-primary transition tracking-tight truncate">
-                          @{member.username}
-                        </Link>
+                        <div className="flex items-center gap-2 min-w-0">
+                          <Link href={`/profile/member/${member.member_id}`} className="font-bold text-sm sm:text-lg hover:text-primary transition tracking-tight truncate">
+                            @{member.username}
+                          </Link>
+                          {matchedIds.includes(member.member_id) && (
+                            <Link 
+                              href={`/messages?id=${member.member_id}`}
+                              className="p-1 bg-primary/10 hover:bg-primary/25 border border-primary/20 hover:border-primary/50 text-primary rounded-lg transition shrink-0 animate-pulse"
+                              title="Direct Message"
+                            >
+                              <MessageSquare className="w-3.5 h-3.5" />
+                            </Link>
+                          )}
+                        </div>
                       </div>
 
                       <div className="col-span-4 md:col-span-3 text-right flex flex-col justify-center items-end">
@@ -228,9 +262,20 @@ export default function TopProfilePage() {
                             </div>
                           )}
                         </div>
-                        <Link href={`/profile/creator/${creator.creator_id}`} className="font-bold text-sm sm:text-lg hover:text-[#ffabf3] transition tracking-tight truncate">
-                          @{creator.username}
-                        </Link>
+                        <div className="flex items-center gap-2 min-w-0">
+                          <Link href={`/profile/creator/${creator.creator_id}`} className="font-bold text-sm sm:text-lg hover:text-[#ffabf3] transition tracking-tight truncate">
+                            @{creator.username}
+                          </Link>
+                          {matchedIds.includes(creator.creator_id) && (
+                            <Link 
+                              href={`/messages?id=${creator.creator_id}`}
+                              className="p-1 bg-[#ffabf3]/10 hover:bg-[#ffabf3]/25 border border-[#ffabf3]/20 hover:border-[#ffabf3]/50 text-[#ffabf3] rounded-lg transition shrink-0 animate-pulse"
+                              title="Direct Message"
+                            >
+                              <MessageSquare className="w-3.5 h-3.5" />
+                            </Link>
+                          )}
+                        </div>
                       </div>
 
                       <div className="col-span-4 md:col-span-3 text-right flex flex-col justify-center items-end">

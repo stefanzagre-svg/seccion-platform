@@ -136,7 +136,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({
         error: 'Quota Exceeded',
         code: 'QUOTA_EXCEEDED',
-        message: 'You have consumed your 5 free minutes of speech translation for today. Please authorize a Stripe card hold to continue (€0.10/min) or upgrade to VIP/MASTER for unlimited translation.',
+        message: 'You have consumed your 5 free minutes of speech translation for today. Please authorize a Segpay card authorization to continue (€0.10/min) or upgrade to VIP/MASTER for unlimited translation.',
         secondsUsed
       }, { status: 402 });
     }

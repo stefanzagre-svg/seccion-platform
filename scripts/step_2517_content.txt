@@ -1,0 +1,208 @@
+Created At: 2026-07-23T11:13:32+02:00
+Completed At: 2026-07-23T11:13:33+02:00
+File Path: `file:///c:/Users/USER/Documents/AI/PROJECT%20CONTENT%20PLATFORM/SESSION/web/src/app/vibe-radar/page.tsx`
+Total Lines: 999
+Total Bytes: 51477
+Showing lines 1 to 200
+The following code has been modified to include a line number before every line, in the format: <line_number>: <original_line>. Please note that any changes targeting the original code should remove the line number, colon, and leading space.
+1: "use client";
+2: 
+3: import React, { useState, useEffect } from "react";
+4: import Link from "next/link";
+5: import { useRouter } from "next/navigation";
+6: import { motion, AnimatePresence } from "framer-motion";
+7: import PublicNavbar from "@/components/PublicNavbar";
+8: import MemberTourModal from "@/components/onboarding/MemberTourModal";
+9: import { SpecializationFilter } from "@/components/SpecializationFilter";
+10: import { 
+11:   Sparkles, 
+12:   ShieldCheck, 
+13:   EyeOff, 
+14:   Lock, 
+15:   Unlock, 
+16:   TrendingUp, 
+17:   Gift, 
+18:   Key, 
+19:   ChevronRight, 
+20:   Check, 
+21:   AlertTriangle,
+22:   HelpCircle,
+23:   Heart,
+24:   ArrowUpRight,
+25:   UserCheck,
+26:   Compass,
+27:   Activity,
+28:   Bot
+29: } from "lucide-react";
+30: import { useTranslation } from "@/context/LanguageContext";
+31: 
+32: // Double-Bezel Card wrapper matching SECCIØN design guidelines
+33: function DoubleBezelCard({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+34:   return (
+35:     <div className={`rounded-[2.5rem] p-1 bg-white/[0.04] border border-white/10 shadow-[0_24px_48px_-12px_rgba(0,0,0,0.6)] backdrop-blur-xl relative overflow-visible ${className}`}>
+36:       <div className="absolute inset-0 border border-white/5 rounded-[2.5rem] pointer-events-none" />
+37:       <div className="rounded-[calc(2.5rem-0.25rem)] bg-[#0F0F1A]/95 p-6 md:p-8 border border-white/5 relative z-10 overflow-visible">
+38:         {children}
+39:       </div>
+40:     </div>
+41:   );
+42: }
+43: 
+44: const mockCreators = [
+45:   {
+46:     id: "elena",
+47:     name: "Elena Vance",
+48:     specialization: "beauty",
+49:     image: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&q=80",
+50:     badge: "Beauty Architect 💄",
+51:     badgeColor: "bg-[#ffabf3]/15 border-[#ffabf3]/40 text-[#ffabf3]",
+52:     borderColor: "border-[#ffabf3]",
+53:     sampleActivity: "Makeup Glow-Up",
+54:     description: "I help members create glowing date-night makeup looks and personalized skincare routines.",
+55:     tags: ["#EveningGlam", "#GRWM"],
+56:     actionLabel: "Request Style Order ($15)",
+57:     buttonHoverColor: "hover:bg-[#ffabf3]/20 hover:border-[#ffabf3]/50",
+58:     isAdult: false
+59:   },
+60:   {
+61:     id: "sofia",
+62:     name: "Sofia Rossi",
+63:     specialization: "style",
+64:     image: "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150&q=80",
+65:     badge: "Style Advisor 👠",
+66:     badgeColor: "bg-amber-400/15 border-amber-400/40 text-amber-300",
+67:     borderColor: "border-amber-400",
+68:     sampleActivity: "Outfit Fit Check",
+69:     description: "Send me 2 outfit choices before your date - I'll tell you which fit check gets the best vibe.",
+70:     tags: ["#DateStyle", "#FitCheck"],
+71:     actionLabel: "Request Fit Audit ($15)",
+72:     buttonHoverColor: "hover:bg-amber-400/20 hover:border-amber-400/50",
+73:     isAdult: false
+74:   },
+75:   {
+76:     id: "marco",
+77:     name: "Marco Bellini",
+78:     specialization: "culinary",
+79:     image: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&q=80",
+80:     badge: "Culinary Master 👨‍🍳",
+81:     badgeColor: "bg-emerald-400/15 border-emerald-400/40 text-emerald-300",
+82:     borderColor: "border-emerald-400",
+83:     sampleActivity: "Cook-Along Session",
+84:     description: "Learn 20-minute gourmet recipes that impress dates every single time. Cook live with me!",
+85:     tags: ["#RomanticRecipes", "#ImpressionDinner"],
+86:     actionLabel: "Request Cooking Class ($20)",
+87:     buttonHoverColor: "hover:bg-emerald-400/20 hover:border-emerald-400/50",
+88:     isAdult: false
+89:   },
+90:   {
+91:     id: "chloe_liam",
+92:     name: "Chloe & Liam",
+93:     specialization: "dating",
+94:     image: "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=150&q=80",
+95:     badge: "Dating Wingman 🔮",
+96:     badgeColor: "bg-purple-400/15 border-purple-400/40 text-purple-300",
+97:     borderColor: "border-purple-400",
+98:     sampleActivity: "Opener Optimization",
+99:     description: "We analyze your match's archetype and craft tailored icebreaker openers that convert into real dates.",
+100:     tags: ["#OpenerAdvice", "#ConfidenceCode"],
+101:     actionLabel: "Request Opener Audit ($10)",
+102:     buttonHoverColor: "hover:bg-purple-400/20 hover:border-purple-400/50",
+103:     isAdult: false
+104:   },
+105:   {
+106:     id: "lucas",
+107:     name: "Lucas Rivera",
+108:     specialization: "fitness",
+109:     image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&q=80",
+110:     badge: "Fitness Coach 🏋️",
+111:     badgeColor: "bg-[#00fbfb]/15 border-[#00fbfb]/40 text-[#00fbfb]",
+112:     borderColor: "border-[#00fbfb]",
+113:     sampleActivity: "Posture Check",
+114:     description: "Level up your physical presence, posture, and energy levels for high-impact first dates.",
+115:     tags: ["#FitnessMotivation", "#BioHacking"],
+116:     actionLabel: "Request Posture Check ($15)",
+117:     buttonHoverColor: "hover:bg-[#00fbfb]/20 hover:border-[#00fbfb]/50",
+118:     isAdult: false
+119:   },
+120:   {
+121:     id: "david",
+122:     name: "David Chen",
+123:     specialization: "career",
+124:     image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&q=80",
+125:     badge: "Career Strategist 💼",
+126:     badgeColor: "bg-blue-500/15 border-blue-400/40 text-blue-300",
+127:     borderColor: "border-blue-400",
+128:     sampleActivity: "LinkedIn Audit",
+129:     description: "I audit your LinkedIn, refine your executive presence, and coach salary negotiation strategy.",
+130:     tags: ["#CareerCoach", "#ExecutivePresence"],
+131:     actionLabel: "Request LinkedIn Audit ($25)",
+132:     buttonHoverColor: "hover:bg-blue-500/20 hover:border-blue-400/50",
+133:     isAdult: false
+134:   },
+135:   {
+136:     id: "amara",
+137:     name: "Amara Okafor",
+138:     specialization: "wellness",
+139:     image: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&q=80",
+140:     badge: "Wellness Guide 🌿",
+141:     badgeColor: "bg-teal-500/15 border-teal-400/40 text-teal-300",
+142:     borderColor: "border-teal-400",
+143:     sampleActivity: "Mindfulness Workshop",
+144:     description: "Breathwork sessions, sleep optimization protocols, and stress resilience for high achievers.",
+145:     tags: ["#WellnessGuide", "#Mindfulness"],
+146:     actionLabel: "Join Breathwork Session ($15)",
+147:     buttonHoverColor: "hover:bg-teal-500/20 hover:border-teal-400/50",
+148:     isAdult: false
+149:   },
+150:   {
+151:     id: "alexandre",
+152:     name: "Alexandre Dubois",
+153:     specialization: "financial",
+154:     image: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&q=80",
+155:     badge: "Financial Architect 💰",
+156:     badgeColor: "bg-amber-500/15 border-amber-400/40 text-amber-300",
+157:     borderColor: "border-amber-400",
+158:     sampleActivity: "Budget Audit",
+159:     description: "Build financial independence, master automated investing, and plan long-term wealth goals.",
+160:     tags: ["#FinancialCoach", "#WealthBuilding"],
+161:     actionLabel: "Request Financial Plan ($30)",
+162:     buttonHoverColor: "hover:bg-amber-500/20 hover:border-amber-400/50",
+163:     isAdult: false
+164:   },
+165:   {
+166:     id: "valeria",
+167:     name: "Valeria Night",
+168:     specialization: "adult",
+169:     image: "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=150&q=80",
+170:     badge: "18+ Sensual Creator 🔞",
+171:     badgeColor: "bg-red-500/20 border-red-500/50 text-red-300",
+172:     borderColor: "border-red-500",
+173:     sampleActivity: "Private VIP Stream",
+174:     description: "Private 18+ VIP content, behind-closed-doors streams, and intimate artistic shoots.",
+175:     tags: ["#SensualContent", "#PrivateStream"],
+176:     actionLabel: "Request VIP Access ($50)",
+177:     buttonHoverColor: "hover:bg-red-600/50",
+178:     isAdult: true
+179:   }
+180: ];
+181: 
+182: export default function VibeRadarPage() {
+183:   const router = useRouter();
+184:   const { t } = useTranslation();
+185:   const [isTourOpen, setIsTourOpen] = useState(false);
+186:   const [selectedSpecialization, setSelectedSpecialization] = useState<string>("all");
+187:   const [includeAdultContent, setIncludeAdultContent] = useState<boolean>(false);
+188:   
+189:   // Reveal progression simulation states
+190:   const [peekCountdown, setPeekCountdown] = useState<number | null>(null);
+191:   const [hasUnblurKey, setHasUnblurKey] = useState<boolean>(false);
+192:   const [isFaceBlurred, setIsFaceBlurred] = useState<boolean>(true);
+193:   
+194:   // Dynamic FAQ state
+195:   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(null);
+196: 
+197:   // Limited Peek simulation timer
+198:   useEffect(() => {
+199:     let interval: NodeJS.Timeout;
+200:     if (peekCountdown !== null && peekCountdown > 0) {
+The above content does NOT show the entire file contents. If you need to view any lines of the file which were not shown to complete your task, call this tool again to view those lines.

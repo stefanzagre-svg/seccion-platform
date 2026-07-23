@@ -51,6 +51,8 @@ import {
   Brain,
   FileText,
   Image,
+  Flag,
+  Globe,
 } from "lucide-react";
 
 export interface PrivacySettings {
@@ -64,6 +66,7 @@ export interface PrivacySettings {
   };
 }
 import SafetyWarning from "@/components/SafetyWarning";
+import ProfileDetailsModal from "@/components/ProfileDetailsModal";
 import {
   HABIT_CHOICES,
   FAMILY_GOALS,
@@ -71,6 +74,7 @@ import {
   RELATIONSHIP_TYPES,
   SEXUAL_PREFERENCES,
   LANGUAGES,
+  HOBBIES,
 } from "@/lib/constants";
 import MatchGate from "@/components/MatchGate";
 import LivePulseHub from "@/components/LivePulseHub";
@@ -109,6 +113,7 @@ import CreatorGoalProgress from "@/components/CreatorGoalProgress";
 import ContributeModal from "@/components/ContributeModal";
 import MultiSelectModal from "@/components/MultiSelectModal";
 import BlurredFaceImage from "@/components/BlurredFaceImage";
+import ReportModal from "@/components/modals/ReportModal";
 
 const LIFESTYLE_ICONS: Record<string, any> = {
   drinking: Wine,
@@ -368,7 +373,7 @@ const INSIGHT_PROMPTS = {
 export default function MemberProfile() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<
-    "status" | "calendar" | "livestream" | "track" | "master" | "insights" | "media"
+    "status" | "calendar" | "livestream" | "track" | "master" | "insights" | "media" | "preferences"
   >("status");
 
   // Profile Album Media States
@@ -550,6 +555,7 @@ export default function MemberProfile() {
   // Live Relationship cockpit states
   const [liveMatches, setLiveMatches] = useState<any[]>([]);
   const [selectedMatchId, setSelectedMatchId] = useState<string>("");
+  const [selectedProfileId, setSelectedProfileId] = useState<string | null>(null);
   const [selectedMatchState, setSelectedMatchState] = useState<any | null>(
     null,
   );
@@ -573,9 +579,79 @@ export default function MemberProfile() {
     any | null
   >(null);
   const [isContribModalOpen, setIsContribModalOpen] = useState(false);
+  const [reportingContent, setReportingContent] = useState<{ id: string, type: 'platform_content' | 'profile' | 'message' } | null>(null);
 
   // Load matches
   const loadMatches = async (userId: string) => {
+    // Guard for mock user sessions
+    if (!userId || userId === "mock-user-id" || !userId.match(/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/)) {
+      const fallbackMatches = [
+        {
+          relationship_id: "mock-rel-elena",
+          target_profile: {
+            id: "elena",
+            username: "Elena",
+            display_name: "Elena",
+            avatar_url:
+              "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=200&q=80",
+            role: "creator",
+            bio: "Fitness & lifestyle enthusiast",
+            hobbies: ["Fitness", "Music", "Traveling"],
+            lifestyle_habits: [],
+            astro_sign: "Leo",
+            relationship_goals: ["Good Vibe Instant Crush"],
+          },
+          current_level: "friendly",
+          gauge_score: 22,
+          is_matched: true,
+        },
+        {
+          relationship_id: "mock-rel-sofia",
+          target_profile: {
+            id: "sofia",
+            username: "Sofia",
+            display_name: "Sofia",
+            avatar_url:
+              "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&q=80",
+            role: "creator",
+            bio: "Tech & gaming enthusiast",
+            hobbies: ["Tech", "Gaming", "Art"],
+            lifestyle_habits: [],
+            astro_sign: "Gemini",
+            relationship_goals: ["Open to possibilities"],
+          },
+          current_level: "close",
+          gauge_score: 35,
+          is_matched: true,
+        },
+        {
+          relationship_id: "mock-rel-valentina",
+          target_profile: {
+            id: "valentina",
+            username: "Valentina",
+            display_name: "Valentina",
+            avatar_url:
+              "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=200&q=80",
+            role: "creator",
+            bio: "Music & fashion enthusiast",
+            hobbies: ["Music", "Yoga", "Fashion"],
+            lifestyle_habits: [],
+            astro_sign: "Libra",
+            relationship_goals: ["Casual"],
+          },
+          current_level: "soulmate",
+          gauge_score: 95,
+          is_matched: true,
+        },
+      ];
+      setLiveMatches(fallbackMatches);
+      await selectMatch(
+        userId,
+        fallbackMatches[0].target_profile.id,
+        fallbackMatches,
+      );
+      return;
+    }
     try {
       const matchesData = await fetchMatches(userId);
       if (matchesData && matchesData.length > 0) {
@@ -680,6 +756,39 @@ export default function MemberProfile() {
   }, [activeTab, currentUser]);
 
   const loadCreatorGoals = async (creatorId: string) => {
+    // Intercept short mock IDs or non-UUID strings to prevent Supabase 400 errors
+    if (!creatorId || creatorId === "elena" || creatorId === "sofia" || creatorId === "valentina" || !creatorId.match(/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/)) {
+      setIsLoadingGoals(true);
+      if (creatorId === "elena") {
+        setCreatorGoals([
+          {
+            id: "mock-goal-elena",
+            creator_id: "elena",
+            title: "Upgrade Live Stream Camera Setup",
+            description: "Help me fund a new Sony A7S III camera for ultra-high-definition 4K broadcasts!",
+            target_amount: 1200.0,
+            current_amount: 850.0,
+            is_completed: false,
+          },
+        ]);
+      } else if (creatorId === "sofia") {
+        setCreatorGoals([
+          {
+            id: "mock-goal-sofia",
+            creator_id: "sofia",
+            title: "Photo Book: Neon Nights",
+            description: "Pre-order my exclusive digital/physical art book capturing the cyberpunk Tokyo vibe.",
+            target_amount: 2500.0,
+            current_amount: 1850.0,
+            is_completed: false,
+          },
+        ]);
+      } else {
+        setCreatorGoals([]);
+      }
+      setIsLoadingGoals(false);
+      return;
+    }
     try {
       setIsLoadingGoals(true);
       const { data, error } = await supabase
@@ -1506,6 +1615,9 @@ export default function MemberProfile() {
           currentUserProfile.corePassion ||
           undefined,
         origins: currentUserProfile.origins || undefined,
+        nativeTown: currentUserProfile.native_town || currentUserProfile.nativeTown || undefined,
+        residence: currentUserProfile.residence || undefined,
+        currentLocation: currentUserProfile.current_location || currentUserProfile.currentLocation || undefined,
         isKycVerified:
           currentUserProfile.is_kyc_verified ||
           currentUserProfile.isKycVerified ||
@@ -1535,6 +1647,7 @@ export default function MemberProfile() {
         bioPromptAnswer2: currentUserProfile.bio_prompt_answer_2 || "",
         bioAnalysis2: currentUserProfile.bio_analysis_2 || null,
         bio: currentUserProfile.bio || "",
+        face_blur_active: currentUserProfile.face_blur_active || false,
       }
     : {
         ...MOCK_USER,
@@ -1624,7 +1737,7 @@ export default function MemberProfile() {
   };
 
   return (
-    <div className="min-h-screen bg-transparent text-white pt-20 px-4 md:px-12 relative overflow-hidden">
+    <div className="min-h-screen bg-transparent text-white pt-20 pb-24 md:pb-12 px-4 md:px-12 relative overflow-hidden">
       {/* Privacy Settings Modal */}
       {activePrivacyField && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
@@ -1659,6 +1772,13 @@ export default function MemberProfile() {
           </div>
         </div>
       )}
+
+      <ReportModal 
+        isOpen={!!reportingContent} 
+        onClose={() => setReportingContent(null)} 
+        contentId={reportingContent?.id || ''} 
+        contentType={reportingContent?.type || 'profile'} 
+      />
 
       {/* Background neon accent mesh orbs */}
       <div className="absolute top-[-10%] right-[-10%] w-[500px] h-[500px] bg-primary/10 blur-[150px] rounded-full pointer-events-none animate-pulse-cyan" />
@@ -1706,24 +1826,11 @@ export default function MemberProfile() {
               >
                 {mappedCurrentUser.username}
                 {mappedCurrentUser.isKycVerified && (
-                  <span title="KYC Verified">
+                  <span title="Verified Face">
                     <ShieldCheck className="w-5 h-5 text-green-500" />
                   </span>
                 )}
               </h1>
-              <div className="mt-2 flex flex-wrap items-center justify-center gap-2">
-                {(mappedCurrentUser.relationshipGoals || []).map((goal: string, idx: number) => (
-                  <div key={idx} className="flex items-center gap-1">
-                    <p
-                      className="text-muted-foreground text-[10px] font-black uppercase tracking-[0.2em] cursor-pointer hover:text-primary transition bg-white/5 px-2 py-1 rounded border border-white/10"
-                      onClick={() => handleOpenMultiSelect("relationship_goals", "Relationship Goals", RELATIONSHIP_GOALS, mappedCurrentUser.relationshipGoals || [])}
-                    >
-                      {goal}
-                    </p>
-                    {renderPrivacyToggle("relationship_goals", goal)}
-                  </div>
-                ))}
-              </div>
 
               <div className="mt-6 w-full space-y-4">
                 <div className="space-y-2">
@@ -1739,115 +1846,6 @@ export default function MemberProfile() {
                     />
                   </div>
                 </div>
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between text-[9px] font-black uppercase tracking-widest text-white/40 px-2">
-                    <span>Matching Probability</span>
-                    <span className="text-primary">AI Powered</span>
-                  </div>
-                  <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden border border-white/5">
-                    <framerMotion.div
-                      initial={{ width: 0 }}
-                      animate={{ width: "94%" }}
-                      className="h-full bg-gradient-to-r from-primary to-accent shadow-[0_0_10px_rgba(255,0,127,0.5)]"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div className="mt-4 flex flex-col items-center gap-2">
-                <div className="flex flex-wrap items-center justify-center gap-2">
-                  {(mappedCurrentUser.relationshipTypes || []).map((type: string, idx: number) => (
-                    <div key={idx} className="flex items-center gap-1">
-                      <p
-                        className="text-[10px] text-primary font-black uppercase tracking-[0.2em] cursor-pointer hover:text-accent transition bg-primary/10 px-2 py-1 rounded border border-primary/20"
-                        onClick={() => handleOpenMultiSelect("relationship_types", "Relationship Types", RELATIONSHIP_TYPES, mappedCurrentUser.relationshipTypes || [])}
-                      >
-                        {type}
-                      </p>
-                      {renderPrivacyToggle("relationship_types", type)}
-                    </div>
-                  ))}
-                </div>
-                <div className="flex items-center gap-1 mt-2">
-                  <div
-                    className="flex items-center gap-2 text-[9px] text-white/60 font-black uppercase tracking-widest bg-white/5 px-4 py-1.5 rounded-full border border-white/10 cursor-pointer hover:text-accent transition"
-                    onClick={handleCycleFamilyGoals}
-                  >
-                    <Users className="w-3.5 h-3.5 text-accent" />{" "}
-                    {mappedCurrentUser.familyGoals}
-                  </div>
-                </div>
-                
-                {/* Sexual Preferences */}
-                <div className="flex flex-wrap gap-2 justify-center mt-2">
-                  {(mappedCurrentUser.sexualPreferences || []).map((pref: string) => (
-                    <div key={pref} className="flex items-center gap-1">
-                      <span 
-                        className="text-[9px] text-accent font-black uppercase tracking-widest bg-white/5 px-3 py-1 rounded-full border border-white/10 cursor-pointer hover:border-accent transition"
-                        onClick={() => handleOpenMultiSelect("sexual_preferences", "Sexual Preferences", SEXUAL_PREFERENCES, mappedCurrentUser.sexualPreferences)}
-                      >
-                        {pref}
-                      </span>
-                      {renderPrivacyToggle("sexual_preferences", pref)}
-                    </div>
-                  ))}
-                </div>
-
-                {/* Languages */}
-                <div className="flex flex-col gap-2 justify-center mt-4">
-                  <div className="flex flex-wrap items-center justify-center gap-2">
-                    <span className="text-[9px] font-black uppercase text-white/40 tracking-widest">Favorite:</span>
-                    {(mappedCurrentUser.favoriteLanguages?.length > 0 ? mappedCurrentUser.favoriteLanguages : ["Add Favorite Language"]).map((lang: string) => (
-                      <div key={lang} className="flex items-center gap-1">
-                        <span 
-                          className="text-[9px] text-primary font-black uppercase tracking-widest bg-white/5 px-3 py-1 rounded-full border border-white/10 cursor-pointer hover:border-primary transition"
-                          onClick={() => handleOpenMultiSelect("favorite_languages", "Favorite Language(s)", LANGUAGES, mappedCurrentUser.favoriteLanguages)}
-                        >
-                          {lang}
-                        </span>
-                        {lang !== "Add Favorite Language" && renderPrivacyToggle("favorite_languages", lang)}
-                      </div>
-                    ))}
-                  </div>
-                  
-                  <div className="flex flex-wrap items-center justify-center gap-2 mt-1">
-                    <span className="text-[9px] font-black uppercase text-white/40 tracking-widest">Additional:</span>
-                    {(mappedCurrentUser.additionalLanguages?.length > 0 ? mappedCurrentUser.additionalLanguages : ["Add Additional Language"]).map((lang: string) => (
-                      <div key={lang} className="flex items-center gap-1">
-                        <span 
-                          className="text-[9px] text-white/70 font-black uppercase tracking-widest bg-white/5 px-3 py-1 rounded-full border border-white/10 cursor-pointer hover:border-white transition"
-                          onClick={() => handleOpenMultiSelect("additional_languages", "Additional Language(s)", LANGUAGES, mappedCurrentUser.additionalLanguages)}
-                        >
-                          {lang}
-                        </span>
-                        {lang !== "Add Additional Language" && renderPrivacyToggle("additional_languages", lang)}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                
-                {/* Hidden info badge */}
-                {privacySettings?.hidden_values && Object.keys(privacySettings.hidden_values).length > 0 && (
-                  <div className="mt-4 flex justify-center">
-                    <div className="flex items-center gap-2 bg-[#dc143c]/10 border border-[#dc143c]/30 px-4 py-2 rounded-full shadow-[0_0_15px_rgba(220,20,60,0.15)]">
-                      <Lock className="w-3.5 h-3.5 text-[#dc143c]" />
-                      <span className="text-[10px] font-black uppercase tracking-widest text-[#dc143c]">
-                        {Object.values(privacySettings.hidden_values).reduce((acc, field) => acc + Object.keys(field).length, 0)}+ Hidden Info
-                      </span>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              <div className="flex flex-wrap gap-2 justify-center mt-6">
-                {MOCK_USER.hobbies.map((hobby) => (
-                  <span
-                    key={hobby}
-                    className="px-3 py-1 bg-white/5 border border-white/10 rounded-xl text-[9px] font-black uppercase tracking-widest text-white/40 hover:text-white hover:border-primary transition-all"
-                  >
-                    {hobby}
-                  </span>
-                ))}
               </div>
             </div>
           </framerMotion.div>
@@ -1867,6 +1865,7 @@ export default function MemberProfile() {
                 { id: "livestream", label: "Live Pulse Hub", icon: Video },
                 { id: "master", label: "My Sponsored Creators", icon: Crown },
                 { id: "media", label: "My Media Album", icon: Image },
+                { id: "preferences", label: "Edit Preferences", icon: Settings },
               ].map((tab) => {
                 const Icon = tab.icon;
                 const isSelected = activeTab === tab.id;
@@ -1903,6 +1902,196 @@ export default function MemberProfile() {
             className="bg-white/[0.02] border border-white/5 p-2 rounded-[2.5rem] shadow-[0_30px_60px_-15px_rgba(0,0,0,0.8)] backdrop-blur-xl min-h-[500px]"
           >
             <div className="bg-black/40 border border-white/5 rounded-[2rem] p-6 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)] h-full min-h-[484px]">
+            {activeTab === "preferences" && (
+              <div className="space-y-6 text-left">
+                <div className="flex items-center justify-between border-b border-white/5 pb-4">
+                  <div>
+                    <h2 className="text-2xl font-bold uppercase tracking-tighter flex items-center gap-2 text-white">
+                      <Settings className="text-primary w-6 h-6" /> Edit Profile & Preferences
+                    </h2>
+                    <p className="text-[10px] text-white/40 uppercase font-bold tracking-widest mt-1">
+                      Configure your relationship goals, orientations, family plans, hobbies, and languages.
+                    </p>
+                  </div>
+                  <p className="text-[9px] font-black text-primary uppercase tracking-[0.2em] bg-primary/10 px-3 py-1 rounded border border-primary/20 shrink-0">
+                    Configuration Cockpit
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Card 1: Core Relationship Preferences */}
+                  <div className="glass-card p-6 bg-white/2 border border-white/5 rounded-3xl space-y-4">
+                    <h3 className="text-xs font-bold uppercase tracking-widest text-primary flex items-center gap-2">
+                      <Heart className="w-4 h-4" /> Connection Settings
+                    </h3>
+                    
+                    <div className="space-y-4">
+                      <div>
+                        <p className="text-[10px] font-black uppercase text-white/80 tracking-widest mb-1.5 flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-white" /> Relationship Goals</p>
+                        <div className="flex flex-wrap gap-1.5">
+                          {(mappedCurrentUser.relationshipGoals || []).map((goal: string, idx: number) => (
+                            <span 
+                              key={idx}
+                              onClick={() => handleOpenMultiSelect("relationship_goals", "Relationship Goals", RELATIONSHIP_GOALS, mappedCurrentUser.relationshipGoals || [])}
+                              className="text-[10px] bg-white/5 hover:bg-white/10 text-white font-bold uppercase tracking-widest px-3 py-1.5 rounded-xl border border-white/10 cursor-pointer hover:border-primary transition"
+                            >
+                              {goal}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div>
+                        <p className="text-[10px] font-black uppercase text-primary tracking-widest mb-1.5 flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-primary" /> Relationship Types</p>
+                        <div className="flex flex-wrap gap-1.5">
+                          {(mappedCurrentUser.relationshipTypes || []).map((type: string, idx: number) => (
+                            <span 
+                              key={idx}
+                              onClick={() => handleOpenMultiSelect("relationship_types", "Relationship Types", RELATIONSHIP_TYPES, mappedCurrentUser.relationshipTypes || [])}
+                              className="text-[10px] bg-primary/10 hover:bg-primary/20 text-primary font-bold uppercase tracking-widest px-3 py-1.5 rounded-xl border border-primary/25 cursor-pointer hover:border-primary transition"
+                            >
+                              {type}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div>
+                        <p className="text-[10px] font-black uppercase text-accent tracking-widest mb-1.5 flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-accent" /> Sexual Preferences</p>
+                        <div className="flex flex-wrap gap-1.5">
+                          {(mappedCurrentUser.sexualPreferences || []).map((pref: string, idx: number) => (
+                            <span 
+                              key={idx}
+                              onClick={() => handleOpenMultiSelect("sexual_preferences", "Sexual Preferences", SEXUAL_PREFERENCES, mappedCurrentUser.sexualPreferences)}
+                              className="text-[10px] bg-accent/10 hover:bg-accent/20 text-accent font-bold uppercase tracking-widest px-3 py-1.5 rounded-xl border border-accent/25 cursor-pointer hover:border-accent transition"
+                            >
+                              {pref}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Card 2: Lifestyle & Social Preferences */}
+                  <div className="glass-card p-6 bg-white/2 border border-white/5 rounded-3xl space-y-4">
+                    <h3 className="text-xs font-bold uppercase tracking-widest text-primary flex items-center gap-2">
+                      <Users className="w-4 h-4" /> Lifestyle & Family
+                    </h3>
+
+                    <div className="space-y-4">
+                      <div>
+                        <p className="text-[10px] font-black uppercase text-accent tracking-widest mb-1.5 flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-accent" /> Family Goals</p>
+                        <button
+                          onClick={handleCycleFamilyGoals}
+                          className="flex items-center gap-2 text-[10px] text-white/80 font-bold uppercase tracking-widest bg-white/5 px-4 py-2 rounded-xl border border-white/10 cursor-pointer hover:text-accent hover:border-accent transition"
+                        >
+                          <Users className="w-4 h-4 text-accent" />
+                          {mappedCurrentUser.familyGoals}
+                        </button>
+                      </div>
+
+                      <div>
+                        <p className="text-[10px] font-black uppercase text-white/80 tracking-widest mb-1.5 flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-white/45" /> Hobbies & Interests</p>
+                        <div className="flex flex-wrap gap-1.5">
+                          {(mappedCurrentUser.hobbies && mappedCurrentUser.hobbies.length > 0 ? mappedCurrentUser.hobbies : ["Add Hobbies"]).map((hobby: string) => (
+                            <span 
+                              key={hobby}
+                              onClick={() => handleOpenMultiSelect("hobbies", "Hobbies & Interests", HOBBIES, mappedCurrentUser.hobbies)}
+                              className="text-[10px] bg-white/5 hover:bg-white/10 text-white/80 font-bold uppercase tracking-widest px-3 py-1.5 rounded-xl border border-white/10 cursor-pointer hover:border-primary transition"
+                            >
+                              {hobby}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Card 3: Languages */}
+                  <div className="glass-card p-6 bg-white/2 border border-white/5 rounded-3xl space-y-4 md:col-span-2">
+                    <h3 className="text-xs font-bold uppercase tracking-widest text-primary flex items-center gap-2">
+                      <Globe className="w-4 h-4" /> Languages Configuration
+                    </h3>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div>
+                        <p className="text-[10px] font-black uppercase text-primary tracking-widest mb-1.5 flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-primary" /> Favorite Languages (Primary)</p>
+                        <div className="flex flex-wrap gap-1.5">
+                          {(mappedCurrentUser.favoriteLanguages?.length > 0 ? mappedCurrentUser.favoriteLanguages : ["Add Favorite Language"]).map((lang: string) => (
+                            <span 
+                              key={lang}
+                              onClick={() => handleOpenMultiSelect("favorite_languages", "Favorite Language(s)", LANGUAGES, mappedCurrentUser.favoriteLanguages)}
+                              className="text-[10px] text-primary font-bold uppercase tracking-widest bg-white/5 px-3 py-1.5 rounded-xl border border-white/10 cursor-pointer hover:border-primary transition"
+                            >
+                              {lang}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div>
+                        <p className="text-[10px] font-black uppercase text-white/80 tracking-widest mb-1.5 flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-white/45" /> Additional Languages</p>
+                        <div className="flex flex-wrap gap-1.5">
+                          {(mappedCurrentUser.additionalLanguages?.length > 0 ? mappedCurrentUser.additionalLanguages : ["Add Additional Language"]).map((lang: string) => (
+                            <span 
+                              key={lang}
+                              onClick={() => handleOpenMultiSelect("additional_languages", "Additional Language(s)", LANGUAGES, mappedCurrentUser.additionalLanguages)}
+                              className="text-[10px] text-white/70 font-bold uppercase tracking-widest bg-white/5 px-3 py-1.5 rounded-xl border border-white/10 cursor-pointer hover:border-white transition"
+                            >
+                              {lang}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Card 4: Face Blur Settings */}
+                  <div className="glass-card p-6 bg-white/2 border border-white/5 rounded-3xl space-y-4 md:col-span-2">
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-1 pr-4 text-left">
+                        <h3 className="text-xs font-bold uppercase tracking-widest text-primary flex items-center gap-2">
+                          <Lock className="w-4 h-4" /> Face Blur Privacy
+                        </h3>
+                        <p className="text-[10px] text-white/50 leading-relaxed font-semibold">
+                          When active, your profile images will remain encrypted (blurred) for connections until you reach Level 3 relationship status.
+                        </p>
+                      </div>
+
+                      <button
+                        onClick={async () => {
+                          const nextVal = !mappedCurrentUser.face_blur_active;
+                          if (currentUser) {
+                            const { error } = await supabase
+                              .from("profiles")
+                              .update({ face_blur_active: nextVal })
+                              .eq("id", currentUser.id);
+                            if (error) {
+                              console.error("Error updating face blur:", error);
+                              return;
+                            }
+                          }
+                          setCurrentUserProfile((prev: any) => ({
+                            ...prev,
+                            face_blur_active: nextVal
+                          }));
+                        }}
+                        className={`px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-300 shrink-0 ${
+                          mappedCurrentUser.face_blur_active
+                            ? "bg-primary text-black shadow-[0_0_15px_rgba(102,252,241,0.4)] border border-primary/20"
+                            : "bg-white/5 text-white/40 border border-white/10 hover:bg-white/10"
+                        }`}
+                      >
+                        {mappedCurrentUser.face_blur_active ? "Blur: Enabled" : "Blur: Disabled"}
+                      </button>
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+            )}
+
             {activeTab === "media" && (
               <div className="space-y-8 text-left">
                 <div>
@@ -2339,7 +2528,7 @@ export default function MemberProfile() {
                         <div className="md:col-span-2 bg-white/[0.02] border border-white/5 p-1 rounded-[2rem] shadow-lg relative overflow-hidden transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] hover:scale-[1.01] hover:border-primary/20">
                           <div className="bg-black/60 border border-white/5 rounded-[calc(2rem-0.25rem)] p-5 shadow-[inset_0_1px_1px_rgba(255,255,255,0.03)] h-full space-y-4">
                             <h4 className="text-[10px] font-black uppercase tracking-wider text-white/50 border-b border-white/5 pb-2">
-                              Emotional Vectors
+                              Emotional Aura
                             </h4>
                             <div className="space-y-3.5">
                               <div className="space-y-1.5">
@@ -2406,7 +2595,7 @@ export default function MemberProfile() {
                             </h4>
                             <div className="flex flex-col gap-2.5 flex-grow justify-center py-2">
                               <div className="p-3.5 rounded-2xl border border-white/10 bg-white/2 flex flex-col gap-1 hover:bg-white/5 transition-all">
-                                <span className="text-[8px] font-black uppercase text-white/40 tracking-wider">Directness Vector</span>
+                                <span className="text-[8px] font-black uppercase text-white/40 tracking-wider">Directness Signal</span>
                                 <span className="text-sm font-black text-white">{mappedCurrentUser.bioAnalysis.Interaction_Style?.Directness || "Moderate"}</span>
                               </div>
                               <div className="p-3.5 rounded-2xl border border-white/10 bg-white/2 flex flex-col gap-1 hover:bg-white/5 transition-all">
@@ -2479,7 +2668,7 @@ export default function MemberProfile() {
                         <div className="md:col-span-2 bg-white/[0.02] border border-white/5 p-1 rounded-[2rem] shadow-lg relative overflow-hidden transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] hover:scale-[1.01] hover:border-primary/20">
                           <div className="bg-black/60 border border-white/5 rounded-[calc(2rem-0.25rem)] p-5 shadow-[inset_0_1px_1px_rgba(255,255,255,0.03)] h-full space-y-4">
                             <h4 className="text-[10px] font-black uppercase tracking-wider text-white/50 border-b border-white/5 pb-2">
-                              Emotional Vectors
+                              Emotional Aura
                             </h4>
                             <div className="space-y-3.5">
                               <div className="space-y-1.5">
@@ -2546,7 +2735,7 @@ export default function MemberProfile() {
                             </h4>
                             <div className="flex flex-col gap-2.5 flex-grow justify-center py-2">
                               <div className="p-3.5 rounded-2xl border border-white/10 bg-white/2 flex flex-col gap-1 hover:bg-white/5 transition-all">
-                                <span className="text-[8px] font-black uppercase text-white/40 tracking-wider">Directness Vector</span>
+                                <span className="text-[8px] font-black uppercase text-white/40 tracking-wider">Directness Signal</span>
                                 <span className="text-sm font-black text-white">{mappedCurrentUser.bioAnalysis2.Interaction_Style?.Directness || "Moderate"}</span>
                               </div>
                               <div className="p-3.5 rounded-2xl border border-white/10 bg-white/2 flex flex-col gap-1 hover:bg-white/5 transition-all">
@@ -2619,7 +2808,7 @@ export default function MemberProfile() {
                     {/* Match list sidebar */}
                     <div className="lg:col-span-1 glass-card p-5 bg-white/2 border border-white/5 flex flex-col gap-4">
                       <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/50 border-b border-white/5 pb-2">
-                        Active Matches ({liveMatches.length})
+                        Active Connections ({liveMatches.length})
                       </p>
 
                       <div className="space-y-2 max-h-[400px] overflow-y-auto pr-1 scrollbar-hide">
@@ -2627,9 +2816,8 @@ export default function MemberProfile() {
                           const isSelected =
                             selectedMatchId === match.target_profile.id;
                           const levelObj = scoreToLevel(match.gauge_score);
-
                           return (
-                            <button
+                            <div
                               key={match.target_profile.id}
                               onClick={() =>
                                 selectMatch(
@@ -2637,27 +2825,36 @@ export default function MemberProfile() {
                                   match.target_profile.id,
                                 )
                               }
-                              className={`w-full p-3 rounded-2xl border text-left flex items-center gap-3 transition ${
+                              className={`w-full p-3 rounded-2xl border text-left flex items-start gap-3 transition cursor-pointer relative ${
                                 isSelected
-                                  ? "border-primary/50 bg-primary/5"
+                                  ? "border-primary/50 bg-primary/5 shadow-[0_0_15px_rgba(102,252,241,0.06)]"
                                   : "border-white/5 bg-white/2 hover:border-white/20"
                               }`}
                             >
-                              <div className="w-10 h-10 rounded-xl overflow-hidden border border-white/10 shadow-md relative">
+                              <div 
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  router.push(`/profile/${match.target_profile.id}`);
+                                }}
+                                className="w-10 h-10 rounded-xl overflow-hidden border border-white/10 shadow-md relative cursor-pointer hover:border-primary/40 transition shrink-0"
+                                title="View Profile Details"
+                              >
                                 <BlurredFaceImage
                                   src={match.target_profile.avatar_url}
                                   alt={match.target_profile.username}
                                   sharedScore={match.gauge_score ?? 0}
                                   isEnabledByOwner={match.target_profile.face_blur_active || false}
                                   faceCoordinates={match.target_profile.avatar_face_coordinates}
-                                  className="w-full h-full"
+                                  className="w-full h-full object-cover"
                                 />
                               </div>
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center justify-between gap-1.5">
-                                  <p className="text-xs font-black text-white truncate">
+
+                              <div className="flex-1 min-w-0 flex flex-col gap-1">
+                                {/* First row: username + rating badge */}
+                                <div className="flex items-center justify-between gap-1 w-full">
+                                  <span className="text-xs font-black text-white truncate">
                                     @{match.target_profile.username}
-                                  </p>
+                                  </span>
                                   <span className="text-[8px] font-bold text-yellow-500 bg-yellow-500/10 px-1.5 py-0.5 rounded border border-yellow-500/20 shrink-0">
                                     ⭐{" "}
                                     {calculateCreatorRating(
@@ -2665,14 +2862,30 @@ export default function MemberProfile() {
                                     ).toFixed(2)}
                                   </span>
                                 </div>
-                                <span
-                                  className="text-[8px] font-black uppercase tracking-wider block mt-1"
-                                  style={{ color: levelObj.color }}
-                                >
-                                  {levelObj.label} ({match.gauge_score} pts)
-                                </span>
+
+                                {/* Second row: connection level + view profile action */}
+                                <div className="flex items-center justify-between gap-1.5 w-full mt-0.5">
+                                  <span
+                                    className="text-[8px] font-black uppercase tracking-wider truncate"
+                                    style={{ color: levelObj.color }}
+                                    title={`${levelObj.label} (${match.gauge_score} XP)`}
+                                  >
+                                    {levelObj.label} ({match.gauge_score} XP)
+                                  </span>
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      router.push(`/profile/${match.target_profile.id}`);
+                                    }}
+                                    className="p-1 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-white/40 hover:text-white transition shrink-0"
+                                    title="View Profile Details"
+                                  >
+                                    <Eye className="w-2.5 h-2.5" />
+                                  </button>
+                                </div>
                               </div>
-                            </button>
+                            </div>
                           );
                         })}
                       </div>
@@ -2685,7 +2898,7 @@ export default function MemberProfile() {
                           <div className="flex items-center justify-between glass-card p-4 bg-white/2 border border-white/5 rounded-2xl">
                             <div className="flex items-center gap-2">
                               <span className="text-[10px] font-black uppercase text-white/60 tracking-wider">
-                                Relationship Balance:
+                                Chemistry Spark:
                               </span>
                               <SparkHint tension={selectedMatchState.tension} />
                             </div>
@@ -2698,17 +2911,25 @@ export default function MemberProfile() {
                                   Rate Connection
                                 </button>
                               )}
-                              <button
-                                onClick={() => setIsMoveModalOpen(true)}
-                                className="px-4 py-2.5 bg-primary hover:bg-primary/90 text-white rounded-xl text-[9px] font-black uppercase tracking-widest transition shadow-lg shadow-primary/15"
-                              >
-                                Propose Action Move
-                              </button>
-                            </div>
+                                <button
+                                  onClick={() => setIsMoveModalOpen(true)}
+                                  className="px-4 py-2.5 bg-primary hover:bg-primary/90 text-white rounded-xl text-[9px] font-black uppercase tracking-widest transition shadow-lg shadow-primary/15"
+                                >
+                                  Propose Action Move
+                                </button>
+                                <button
+                                  onClick={() => setReportingContent({ id: selectedMatchId, type: 'profile' })}
+                                  className="px-4 py-2.5 bg-[#dc143c]/10 hover:bg-[#dc143c]/25 text-[#dc143c] border border-[#dc143c]/30 rounded-xl flex items-center justify-center transition shadow-lg shadow-[#dc143c]/15"
+                                  title="Report Profile"
+                                >
+                                  <Flag className="w-4 h-4" />
+                                </button>
+                              </div>
                           </div>
 
                           <RelationshipStory
                             gaugeState={selectedMatchState}
+                            isKycVerified={currentUserProfile?.is_kyc_verified ?? false}
                             onMoveClick={(move) =>
                               handleSelectMove(move.id, move.label)
                             }
@@ -2787,40 +3008,186 @@ export default function MemberProfile() {
                   )}
                 </div>
 
+
+                {/* CONNECTION HORIZON MODE PREFERENCE CARD */}
+                <div className="mt-10 p-6 bg-[#0c1017] border border-[#00fbfb]/30 rounded-3xl shadow-xl space-y-4 text-white">
+                  <div className="flex items-center justify-between flex-wrap gap-2">
+                    <div>
+                      <h3 className="text-base font-black uppercase tracking-wider text-[#00fbfb] flex items-center gap-2">
+                        <span>⚡ Connection Horizon Preference</span>
+                      </h3>
+                      <p className="text-[11px] text-[#b9cac9] mt-0.5">
+                        Customize what type of matches and streams appear in your feed and vibe radar. You can change this anytime.
+                      </p>
+                    </div>
+
+                    <div className="group relative cursor-pointer">
+                      <span className="text-[10px] text-white/60 hover:text-white font-mono bg-white/5 px-2.5 py-1 rounded-xl border border-white/10 flex items-center gap-1">
+                        <span>ℹ️ Mode Explainer</span>
+                      </span>
+                      <div className="absolute right-0 bottom-full mb-2 w-72 p-3.5 bg-[#0F0F1A] border border-[#00fbfb]/40 rounded-2xl shadow-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50 text-[11px] text-[#b9cac9] leading-relaxed font-sans">
+                        <strong className="text-[#00fbfb] block mb-1 text-xs">Horizon Modes Explained:</strong>
+                        <ul className="space-y-1.5 list-disc pl-3">
+                          <li><strong className="text-white">Career & Lifestyle:</strong> Connect solely for skill masterclasses, 1-on-1 mentorship, career coaching & wellness guidance without romantic/intimate vibes.</li>
+                          <li><strong className="text-white">Social & Intimate:</strong> Connect for dating, romance, nightlife & exclusive VIP streams.</li>
+                          <li><strong className="text-white">Dual-Horizon:</strong> Enjoy both career growth & romantic/social vibes side-by-side!</li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Mode Toggles */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-2">
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        if (currentUser) {
+                          await supabase.from('profiles').update({ connection_horizon: 'growth' }).eq('id', currentUser.id);
+                        }
+                        setCurrentUserProfile((prev: any) => ({ ...prev, connection_horizon: 'growth' }));
+                      }}
+                      className={`p-4 rounded-2xl border text-left transition-all duration-200 flex flex-col gap-1.5 ${
+                        (currentUserProfile?.connection_horizon || 'dual') === 'growth'
+                          ? 'bg-[#00fbfb]/15 border-[#00fbfb] text-[#00fbfb] shadow-[0_0_15px_rgba(0,251,251,0.2)]'
+                          : 'bg-white/5 border-white/10 text-white/50 hover:text-white hover:bg-white/10'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="text-2xl">🎓</span>
+                        <span className="text-[9px] font-mono uppercase font-bold tracking-widest bg-black/40 px-2 py-0.5 rounded border border-white/10">Mode 1</span>
+                      </div>
+                      <span className="text-xs font-bold uppercase tracking-wider text-white">Career & Growth</span>
+                      <p className="text-[10px] text-white/60 leading-snug">Mentorship, masterclasses, business & wellness.</p>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        if (currentUser) {
+                          await supabase.from('profiles').update({ connection_horizon: 'intimate' }).eq('id', currentUser.id);
+                        }
+                        setCurrentUserProfile((prev: any) => ({ ...prev, connection_horizon: 'intimate' }));
+                      }}
+                      className={`p-4 rounded-2xl border text-left transition-all duration-200 flex flex-col gap-1.5 ${
+                        (currentUserProfile?.connection_horizon || 'dual') === 'intimate'
+                          ? 'bg-[#ffabf3]/15 border-[#ffabf3] text-[#ffabf3] shadow-[0_0_15px_rgba(255,171,243,0.2)]'
+                          : 'bg-white/5 border-white/10 text-white/50 hover:text-white hover:bg-white/10'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="text-2xl">💜</span>
+                        <span className="text-[9px] font-mono uppercase font-bold tracking-widest bg-black/40 px-2 py-0.5 rounded border border-white/10">Mode 2</span>
+                      </div>
+                      <span className="text-xs font-bold uppercase tracking-wider text-white">Social & Intimate</span>
+                      <p className="text-[10px] text-white/60 leading-snug">Dating, romance, nightlife & private streams.</p>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        if (currentUser) {
+                          await supabase.from('profiles').update({ connection_horizon: 'dual' }).eq('id', currentUser.id);
+                        }
+                        setCurrentUserProfile((prev: any) => ({ ...prev, connection_horizon: 'dual' }));
+                      }}
+                      className={`p-4 rounded-2xl border text-left transition-all duration-200 flex flex-col gap-1.5 ${
+                        (currentUserProfile?.connection_horizon || 'dual') === 'dual'
+                          ? 'bg-gradient-to-br from-[#00fbfb]/20 to-[#ffabf3]/20 border-white text-white shadow-lg'
+                          : 'bg-white/5 border-white/10 text-white/50 hover:text-white hover:bg-white/10'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="text-2xl">✨</span>
+                        <span className="text-[9px] font-mono uppercase font-bold tracking-widest bg-black/40 px-2 py-0.5 rounded border border-white/10">Mode 3</span>
+                      </div>
+                      <span className="text-xs font-bold uppercase tracking-wider text-white">Dual-Horizon (Both)</span>
+                      <p className="text-[10px] text-white/60 leading-snug">Enjoy both professional growth & social vibes!</p>
+                    </button>
+                  </div>
+                </div>
+
                 <div className="mt-12 pt-12 border-t border-white/5">
-                  <h2 className="text-2xl font-black mb-6 flex items-center gap-2">
+                  <h2 className="text-2xl font-black mb-2 flex items-center gap-2">
                     <Activity className="text-primary" /> LIFESTYLE & HABITS
                   </h2>
                   <p className="text-[10px] text-white/40 uppercase font-bold tracking-[0.2em] mb-8">
-                    Match-Depth depends on your lifestyle frequency
-                    synchronization.
+                    Connection depth depends on your lifestyle vibe sync.
                   </p>
 
                   <div className="space-y-6">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
                       {HABIT_CATEGORIES.map((category) => {
                         const Icon = LIFESTYLE_ICONS[category] || Activity;
                         const currentValue = (mappedCurrentUser.lifestyle as any)[category] || "";
+                        const HABIT_LABELS: Record<string, string> = {
+                          workout: 'Workout',
+                          traveling: 'Traveling',
+                          partying: 'Partying',
+                          'healthy eating': 'Healthy Eating',
+                          socializing: 'Socializing',
+                          reading: 'Reading',
+                          sleep: 'Sleep',
+                          smoking: 'Smoking',
+                          drinking: 'Drinking',
+                          'social media': 'Social Media',
+                          pets: 'Pet Lover',
+                          'morning/night': 'Morning / Night',
+                          'creative flow': 'Creative Flow',
+                          'adventure seek': 'Adventure',
+                          'love style': 'Love Style',
+                          communication: 'Communication',
+                        };
+                        const label = HABIT_LABELS[category] ?? category;
+                        const hasValue = !!currentValue;
                         return (
-                          <div key={category} className="p-3 bg-white/[0.02] border border-white/5 rounded-2xl hover:border-white/10 transition flex items-center justify-between gap-3">
-                            <div className="flex items-center gap-2 min-w-0">
-                              <div className="w-7 h-7 bg-white/5 border border-white/10 rounded-xl flex items-center justify-center shrink-0">
-                                <Icon className="w-3.5 h-3.5 text-primary" />
+                          <div
+                            key={category}
+                            className={`relative p-4 rounded-2xl border transition-all duration-200 flex flex-col gap-3 group ${
+                              hasValue
+                                ? 'bg-primary/[0.04] border-primary/20 hover:border-primary/40'
+                                : 'bg-white/[0.02] border-white/5 hover:border-white/15'
+                            }`}
+                          >
+                            {/* Category header */}
+                            <div className="flex items-center gap-2">
+                              <div className={`w-7 h-7 rounded-xl flex items-center justify-center shrink-0 border transition-all ${
+                                hasValue
+                                  ? 'bg-primary/20 border-primary/30'
+                                  : 'bg-white/5 border-white/10'
+                              }`}>
+                                <Icon className={`w-3.5 h-3.5 transition-colors ${hasValue ? 'text-primary' : 'text-white/40'}`} />
                               </div>
-                              <span className="text-[10px] font-black uppercase tracking-widest text-white/60 truncate">{category}</span>
+                              <p className={`text-[10px] font-black uppercase tracking-widest leading-tight transition-colors ${
+                                hasValue ? 'text-white/80' : 'text-white/40'
+                              }`}>
+                                {label}
+                              </p>
                             </div>
-                            <select
-                              value={currentValue}
-                              onChange={(e) => handleUpdateHabit(category, e.target.value)}
-                              className="bg-black/50 border border-white/10 rounded-xl px-2 py-1 text-[9px] font-black uppercase outline-none focus:border-primary text-white/80 shrink-0 max-w-[110px] cursor-pointer"
-                            >
-                              <option value="" disabled>Select...</option>
-                              {(HABIT_CHOICES as any)[category].map((option: string) => (
-                                <option key={option} value={option} className="bg-[#11111A] text-white">
-                                  {option}
-                                </option>
-                              ))}
-                            </select>
+
+                            {/* Selected value display + dropdown */}
+                            <div className="flex flex-col gap-1.5">
+                              {hasValue && (
+                                <span className="text-[9px] font-black uppercase tracking-widest text-primary bg-primary/10 border border-primary/20 px-2 py-1 rounded-lg leading-none w-fit">
+                                  {currentValue}
+                                </span>
+                              )}
+                              <select
+                                value={currentValue}
+                                onChange={(e) => handleUpdateHabit(category, e.target.value)}
+                                className={`w-full bg-black/40 border rounded-xl px-2.5 py-2 text-[9px] font-black uppercase outline-none focus:border-primary transition-colors cursor-pointer appearance-none ${
+                                  hasValue
+                                    ? 'border-white/10 text-white/60 focus:text-white'
+                                    : 'border-white/10 text-white/40 focus:text-white'
+                                }`}
+                              >
+                                <option value="" disabled>— Select —</option>
+                                {(HABIT_CHOICES as any)[category].map((option: string) => (
+                                  <option key={option} value={option} className="bg-[#11111A] text-white">
+                                    {option}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
                           </div>
                         );
                       })}
@@ -2872,7 +3239,7 @@ export default function MemberProfile() {
                     <Activity className="text-primary" /> Pulse Track Record
                   </h2>
                   <div className="text-[10px] font-black uppercase tracking-[0.2em] bg-white/5 px-4 py-2 rounded-xl border border-white/10">
-                    Confidence Score: 85%
+                    Vibe Confidence: Strong 🔥
                   </div>
                 </div>
 
@@ -3287,7 +3654,7 @@ export default function MemberProfile() {
                             {cand.name}
                           </h4>
                           <p className="text-[9px] uppercase tracking-widest text-primary font-black mt-0.5">
-                            {matchScore}% Match
+                            {matchScore}% Synergy
                           </p>
                         </div>
                       </div>
@@ -3437,7 +3804,7 @@ export default function MemberProfile() {
 
                 <div className="pt-4 border-t border-white/5 flex flex-col gap-3">
                   <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-wider text-white/60">
-                    <span>Estimated Rating Score:</span>
+                    <span>Estimated Vibe Rating:</span>
                     <span className="text-yellow-500 font-bold text-sm">
                       {(selectedMatch.target_profile.role === "creator"
                         ? (ratingC1 +
@@ -3457,7 +3824,7 @@ export default function MemberProfile() {
                     disabled={isSavingRating}
                     className="w-full py-4 bg-gradient-to-r from-primary to-accent text-black font-black uppercase tracking-widest text-xs rounded-2xl hover:shadow-[0_0_20px_rgba(102,252,241,0.4)] transition disabled:opacity-50"
                   >
-                    {isSavingRating ? "Submitting Score..." : "Submit Rating"}
+                    {isSavingRating ? "Submitting Rating..." : "Submit Rating"}
                   </button>
                 </div>
               </div>
@@ -3564,7 +3931,7 @@ export default function MemberProfile() {
                     className="w-full bg-black/50 border border-white/10 rounded-2xl px-4 py-3 text-xs font-semibold focus:border-primary focus:outline-none transition-colors resize-none leading-relaxed text-white"
                   />
                   <p className="text-[8px] text-white/30">
-                    ℹ️ Tips: Write at least 2 sentences. Mentioning specific stories, emotions, or boundaries triggers richer AI profile vectors.
+                    ℹ️ Tips: Write at least 2 sentences. Mentioning specific stories, emotions, or boundaries unlocks deeper AI personality reads.
                   </p>
                 </div>
 
@@ -3620,6 +3987,14 @@ export default function MemberProfile() {
           minSelections={1}
           maxSelections={multiSelectConfig.fieldKey === "sexual_preferences" ? 1 : 5}
           onSave={handleSaveMultiSelect}
+        />
+      )}
+      {/* Profile Details Modal */}
+      {selectedProfileId && (
+        <ProfileDetailsModal
+          profileId={selectedProfileId}
+          onClose={() => setSelectedProfileId(null)}
+          currentUserId={currentUser?.id}
         />
       )}
     </div>

