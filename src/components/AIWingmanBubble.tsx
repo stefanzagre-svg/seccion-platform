@@ -81,7 +81,12 @@ export default function AIWingmanBubble() {
     loadUser();
   }, []);
 
-  if (pathname?.startsWith('/admin') || pathname?.startsWith('/auth')) {
+  if (
+    !user ||
+    profile?.role !== 'member' ||
+    pathname?.startsWith('/admin') ||
+    pathname?.startsWith('/auth')
+  ) {
     return null;
   }
 
@@ -373,7 +378,7 @@ export default function AIWingmanBubble() {
           <X className="w-6 h-6 text-black" />
         ) : (
           <div className="relative flex items-center justify-center">
-            <Sparkles className="w-6 h-6 text-black fill-black" />
+            <MessageSquare className="w-6 h-6 text-black fill-black" />
             <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-pink-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-pink-500"></span>

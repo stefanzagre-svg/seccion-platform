@@ -358,11 +358,11 @@ export default function VibeRadarPage() {
       <PublicNavbar activeTab="vibe-radar" />
 
       {/* Hero Section */}
-      <header className="relative z-10 pt-36 pb-20 px-6 md:px-[84px] max-w-[1440px] mx-auto w-full flex-grow flex flex-col justify-center">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 items-center w-full">
+      <header className="relative z-10 pt-28 sm:pt-36 pb-20 px-4 sm:px-6 md:px-12 lg:px-20 max-w-[1280px] mx-auto w-full flex-grow flex flex-col justify-center">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center w-full">
           
           {/* Left Column: Core pitch */}
-          <div className="col-span-12 lg:col-span-7 space-y-8 text-left">
+          <div className="col-span-12 lg:col-span-6 space-y-8 text-left">
             <span className="text-[10px] font-mono font-bold text-[#00fbfb] bg-[#00fbfb]/5 border border-[#00fbfb]/25 px-3 py-1 rounded-full uppercase tracking-wider">
               A New Era of Connection
             </span>
@@ -391,7 +391,7 @@ export default function VibeRadarPage() {
           </div>
 
           {/* Right Column: TOP Profile Preview Card */}
-          <div className="col-span-12 lg:col-span-5 flex justify-center">
+          <div className="col-span-12 lg:col-span-6 flex justify-center">
             <DoubleBezelCard className="w-full max-w-[380px]">
               <div className="space-y-6">
                 <div className="flex justify-between items-center">
@@ -458,7 +458,7 @@ export default function VibeRadarPage() {
 
 
       {/* Creators by Specialization Section */}
-      <section className="relative z-10 py-24 px-6 md:px-[84px] max-w-[1440px] mx-auto w-full border-t border-white/5 bg-[#050505]/20">
+      <section className="relative z-10 py-24 px-4 sm:px-6 md:px-12 lg:px-20 max-w-[1280px] mx-auto w-full border-t border-white/5 bg-[#050505]/20">
         <div className="max-w-6xl mx-auto space-y-12 text-center">
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 text-left">
             <div className="space-y-4">
@@ -539,7 +539,7 @@ export default function VibeRadarPage() {
       </section>
 
       {/* Swipe Recession / Sociological Section */}
-      <section className="relative z-10 py-24 px-6 md:px-[84px] max-w-[1440px] mx-auto w-full border-t border-white/5 bg-[#050505]/20">
+      <section className="relative z-10 py-24 px-4 sm:px-6 md:px-12 lg:px-20 max-w-[1280px] mx-auto w-full border-t border-white/5 bg-[#050505]/20">
         <div className="max-w-4xl mx-auto space-y-12 text-center">
           <div className="space-y-4">
             <span className="text-[10px] font-mono font-bold text-[#ffabf3] bg-[#ffabf3]/5 border border-[#ffabf3]/25 px-3 py-1 rounded-full uppercase tracking-wider">
@@ -594,8 +594,8 @@ export default function VibeRadarPage() {
       </section>
 
       {/* Reveal Progression Interactive Simulator */}
-      <section className="relative z-10 py-24 px-6 md:px-[84px] max-w-[1440px] mx-auto w-full border-t border-white/5">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 items-center w-full">
+      <section className="relative z-10 py-24 px-4 sm:px-6 md:px-12 lg:px-20 max-w-[1280px] mx-auto w-full border-t border-white/5">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center w-full">
           
           {/* Simulator copy */}
           <div className="col-span-12 lg:col-span-6 space-y-6 text-left">
@@ -731,7 +731,7 @@ export default function VibeRadarPage() {
       </section>
 
       {/* Dating Coach / Wingman AI Section */}
-      <section className="relative z-10 py-24 px-6 md:px-[84px] max-w-[1440px] mx-auto w-full border-t border-white/5 bg-[#050505]/20">
+      <section className="relative z-10 py-24 px-4 sm:px-6 md:px-12 lg:px-20 max-w-[1280px] mx-auto w-full border-t border-white/5 bg-[#050505]/20">
         <div className="max-w-4xl mx-auto space-y-12 text-center">
           <div className="space-y-4">
             <span className="text-[10px] font-mono font-bold text-[#00fbfb] bg-[#00fbfb]/5 border border-[#00fbfb]/25 px-3 py-1 rounded-full uppercase tracking-wider">
@@ -780,8 +780,8 @@ export default function VibeRadarPage() {
       </section>
 
       {/* Date Plans & Chemistry Levels */}
-      <section className="relative z-10 py-24 px-6 md:px-[84px] max-w-[1440px] mx-auto w-full border-t border-white/5">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 items-center w-full">
+      <section className="relative z-10 py-24 px-4 sm:px-6 md:px-12 lg:px-20 max-w-[1280px] mx-auto w-full border-t border-white/5">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center w-full">
           
           {/* Left Column: Chemistry meter timeline */}
           <div className="col-span-12 lg:col-span-5 space-y-6 text-left">
@@ -842,7 +842,7 @@ export default function VibeRadarPage() {
       </section>
 
       {/* Competitor Matrix Section */}
-      <section className="relative z-10 py-24 px-6 md:px-[84px] max-w-[1440px] mx-auto w-full border-t border-white/5 bg-[#050505]/20">
+      <section className="relative z-10 py-24 px-4 sm:px-6 md:px-12 lg:px-20 max-w-[1280px] mx-auto w-full border-t border-white/5 bg-[#050505]/20">
         <div className="max-w-4xl mx-auto space-y-12 text-center">
           <div className="space-y-4">
             <span className="text-[10px] font-mono font-bold text-[#00fbfb] bg-[#00fbfb]/5 border border-[#00fbfb]/25 px-3 py-1 rounded-full uppercase tracking-wider">
@@ -881,7 +881,7 @@ export default function VibeRadarPage() {
       </section>
 
       {/* Security & KYC (Identity Attestation) */}
-      <section className="relative z-10 py-24 px-6 md:px-[84px] max-w-[1440px] mx-auto w-full border-t border-white/5">
+      <section className="relative z-10 py-24 px-4 sm:px-6 md:px-12 lg:px-20 max-w-[1280px] mx-auto w-full border-t border-white/5">
         <div className="max-w-4xl mx-auto space-y-8 text-center">
           <div className="w-12 h-12 rounded-full bg-[#39FF14]/10 border border-[#39FF14]/25 flex items-center justify-center mx-auto">
             <ShieldCheck className="w-6 h-6 text-[#39FF14]" />
@@ -901,7 +901,7 @@ export default function VibeRadarPage() {
       </section>
 
       {/* Member FAQ Section */}
-      <section className="relative z-10 py-24 px-6 md:px-[84px] max-w-[840px] mx-auto w-full border-t border-white/5">
+      <section className="relative z-10 py-24 px-4 sm:px-6 md:px-12 lg:px-20 max-w-[840px] mx-auto w-full border-t border-white/5">
         <div className="space-y-12">
           
           <div className="text-center space-y-4">
@@ -957,7 +957,7 @@ export default function VibeRadarPage() {
       </section>
 
       {/* Post FAQ Call To Action (As requested) */}
-      <section className="relative z-10 pb-24 pt-4 px-6 md:px-[84px] max-w-[1440px] mx-auto w-full flex flex-col items-center justify-center">
+      <section className="relative z-10 pb-24 pt-4 px-4 sm:px-6 md:px-12 lg:px-20 max-w-[1280px] mx-auto w-full flex flex-col items-center justify-center">
         <DoubleBezelCard className="w-full max-w-[640px] text-center">
           <div className="space-y-6">
             <h3 className="font-display text-2xl font-black text-white tracking-tight">Ready to Begin Your Quest?</h3>
