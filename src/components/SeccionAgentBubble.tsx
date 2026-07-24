@@ -61,7 +61,7 @@ export default function SeccionAgentBubble() {
     checkUser();
   }, []);
 
-  // Hide SECCIØN Agent if user is a logged-in member or on admin/auth routes
+  // Hide SECCION Agent if user is a logged-in member or on admin/auth routes
   if (
     isMemberLoggedIn ||
     pathname?.startsWith('/admin') ||
@@ -119,7 +119,7 @@ export default function SeccionAgentBubble() {
   return (
     <div className="fixed bottom-4 right-4 sm:right-6 sm:bottom-6 z-[9990] font-sans">
       <AnimatePresence>
-        {/* Expanded SECCIØN Agent Chat Box */}
+        {/* Expanded SECCION Agent Chat Box */}
         {isOpen && (
           <motion.div
             initial={{ opacity: 0, y: 30, scale: 0.95 }}
@@ -141,7 +141,7 @@ export default function SeccionAgentBubble() {
                     Steve <Sparkles className="w-3 h-3 text-[#00fbfb]" />
                   </h3>
                   <span className="text-[9px] font-mono font-bold text-[#00fbfb] uppercase tracking-wider block">
-                    SECCIØN Agent & Guide
+                    SECCION Agent & Guide
                   </span>
                 </div>
               </div>
@@ -219,8 +219,8 @@ export default function SeccionAgentBubble() {
         onClick={() => setIsOpen(!isOpen)}
         whileHover={{ scale: 1.08 }}
         whileTap={{ scale: 0.92 }}
-        aria-label="Ask SECCIØN Agent"
-        title="Ask SECCIØN Agent"
+        aria-label="Ask SECCION Agent"
+        title="Ask SECCION Agent"
         className={`w-13 h-13 sm:w-14 sm:h-14 rounded-full flex items-center justify-center text-black shadow-xl relative border transition-all duration-300 cursor-pointer ${
           isOpen
             ? 'bg-white border-white text-black shadow-[0_0_20px_rgba(255,255,255,0.5)]'

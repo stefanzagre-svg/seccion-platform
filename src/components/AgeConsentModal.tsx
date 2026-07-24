@@ -29,7 +29,7 @@ export const AgeConsentModal: React.FC<AgeConsentModalProps> = ({
             <h3 className="text-base font-bold text-white font-mono tracking-tight flex items-center gap-2">
               🔞 18+ Age & Content Consent
             </h3>
-            <p className="text-xs text-white/50">SECCIØN Safety & Compliance Guard</p>
+            <p className="text-xs text-white/50">SECCION Safety & Compliance Guard</p>
           </div>
         </div>
 

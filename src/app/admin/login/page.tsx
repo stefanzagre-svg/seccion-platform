@@ -67,7 +67,7 @@ export default function AdminLoginPage() {
             <ShieldCheck className="w-8 h-8 animate-pulse" />
           </div>
           <h1 className="text-2xl font-black font-['Outfit'] tracking-tight text-white uppercase mt-2">
-            SECCIØN ADMIN LOGIN
+            SECCION ADMIN LOGIN
           </h1>
           <p className="text-xs text-white/50 font-mono">
             Dedicated Founder & Operations Station Portal
@@ -141,7 +141,7 @@ export default function AdminLoginPage() {
 
         <div className="text-center border-t border-white/10 pt-4">
           <p className="text-[10px] text-white/40 font-mono">
-            SECCIØN Platform Operations — Authorized Personnel Only
+            SECCION Platform Operations — Authorized Personnel Only
           </p>
         </div>
 

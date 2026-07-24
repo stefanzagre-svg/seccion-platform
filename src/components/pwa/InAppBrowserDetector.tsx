@@ -76,7 +76,7 @@ export default function InAppBrowserDetector() {
           </div>
 
           <p className="text-xs text-gray-300 mt-1 leading-relaxed">
-            You are viewing SECCIØN inside <span className="text-purple-300 font-medium">{inAppInfo.appName}</span>. Open in {inAppInfo.isAndroid ? "Chrome" : "Safari"} to install the native SECCIØN app.
+            You are viewing SECCION inside <span className="text-purple-300 font-medium">{inAppInfo.appName}</span>. Open in {inAppInfo.isAndroid ? "Chrome" : "Safari"} to install the native SECCION app.
           </p>
 
           <div className="mt-3 flex items-center gap-2">

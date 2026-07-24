@@ -139,7 +139,7 @@ export default function ChemistryMeterDemo({ onComplete }: ChemistryMeterDemoPro
               ⚡ Live Spark Nudge
             </span>
             <p className="text-[10px] text-white/70 leading-relaxed font-medium">
-              SECCIØN will nudge you when connection dynamics shift.
+              SECCION will nudge you when connection dynamics shift.
             </p>
             <div className="flex gap-4 mt-2">
               <span className={`flex items-center gap-1 text-[9px] font-bold ${activeSpark === "flame" ? "text-orange-400" : "text-white/30"}`}>

@@ -56,7 +56,7 @@ export default function PrivacyPage() {
             {t("privacy.subtitle", "We protect your personal data, face, and preferences with high security standards.")}
           </p>
           <div className="p-3 bg-[#ffabf3]/5 border border-[#ffabf3]/20 rounded-xl text-left text-[10px] text-[#ffabf3]">
-            💡 **{t("creatorHub.badge", "LEGAL STANDARDS & MONETIZATION")}**: {t("creatorHub.subtitle", "Terms, legal guidelines, and monetization tools for creators on SECCIØN.")} <Link href="/creator-hub" className="underline font-bold">[Creator Hub]</Link>
+            💡 **{t("creatorHub.badge", "LEGAL STANDARDS & MONETIZATION")}**: {t("creatorHub.subtitle", "Terms, legal guidelines, and monetization tools for creators on SECCION.")} <Link href="/creator-hub" className="underline font-bold">[Creator Hub]</Link>
           </div>
         </div>
 
@@ -192,7 +192,7 @@ export default function PrivacyPage() {
         <div className="flex justify-center">
           <img 
             src="/assets/logo/logo-mark.png" 
-            alt="SECCIØN Icon" 
+            alt="SECCION Icon" 
             className="w-12 h-12 md:w-14 md:h-14 drop-shadow-[0_0_20px_rgba(0,251,251,0.4)] object-contain" 
           />
         </div>
@@ -209,10 +209,10 @@ export default function PrivacyPage() {
         <div className="flex flex-col items-center gap-3">
           <img 
             src="/assets/logo/logo-wordmark.png" 
-            alt="SECCIØN Logo" 
+            alt="SECCION Logo" 
             className="h-8 md:h-10 drop-shadow-[0_0_25px_rgba(0,251,251,0.4)] object-contain" 
           />
-          <p className="font-mono text-[11px] font-medium tracking-widest text-[#b9cac9] opacity-40 pt-2">© 2026 SECCIØN. {t("footer.rights").toUpperCase()}</p>
+          <p className="font-mono text-[11px] font-medium tracking-widest text-[#b9cac9] opacity-40 pt-2">© 2026 SECCION. {t("footer.rights").toUpperCase()}</p>
         </div>
       </footer>
 

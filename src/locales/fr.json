@@ -60,7 +60,7 @@
     "creatorFeature6Desc": "Scans your brand contracts in seconds — flags shady sunset commissions and unauthorized likeness grabs before you sign."
   },
   "howWeDo": {
-    "title": "How We Do SECCIØN",
+    "title": "How We Do SECCION",
     "subtitle": "100% free matching funded by creator monetization. Forget paying to see who liked your profile.",
     "badge": "WARM PAYWALL PHILOSOPHY",
     "backHome": "Back to Home",
@@ -82,9 +82,9 @@
     "bizInABox": "Biz-in-a-Box",
     "calculatorTitle": "Creator Earnings & Payout Calculator",
     "calculatorSubtitle": "100% transparency: 80% direct to creators, 20% to keep dating free for members.",
-    "tableTitle": "COMPARISON: SECCIØN vs. Industry Standards",
+    "tableTitle": "COMPARISON: SECCION vs. Industry Standards",
     "tableHeaderFeature": "Feature",
-    "tableHeaderSeccion": "SECCIØN",
+    "tableHeaderSeccion": "SECCION",
     "tableHeaderOthers": "Traditional Apps",
     "matchingCost": "Matching Cost",
     "creatorPayout": "Creator Payout",
@@ -110,8 +110,8 @@
     "peekTitle": "Progressive Face Unblurring",
     "peekDesc": "Privacy is earned through chemistry. Faces unblur automatically when reaching Level 4 Chemistry.",
     "faqTitle": "Frequently Asked Questions",
-    "faq1Q": "Is SECCIØN really 100% free for members?",
-    "faq1A": "Yes. All matchmaking, communication channels, compatibility radar checks, and our Dating Coach assistant are free. Unlike other platforms that lock visibility behind monthly fees because they have too many profiles of one gender, SECCIØN is funded by our creator monetization layers. This means we value you as a partner in connection, not as a customer to be billed.",
+    "faq1Q": "Is SECCION really 100% free for members?",
+    "faq1A": "Yes. All matchmaking, communication channels, compatibility radar checks, and our Dating Coach assistant are free. Unlike other platforms that lock visibility behind monthly fees because they have too many profiles of one gender, SECCION is funded by our creator monetization layers. This means we value you as a partner in connection, not as a customer to be billed.",
     "faq2Q": "How does the Synergy matching engine connect me with matches?",
     "faq2A": "Instead of just sorting by proximity or photos, our engine reads your personal style, vibe preferences, and current mood to suggest matches. It provides a simple, direct explanation of why a match fits your vibe, skipping boring spreadsheets and formulas to focus on real compatibility.",
     "faq3Q": "How does the Chemistry Meter work?",
@@ -126,12 +126,12 @@
     "faq7A": "Yes. Members can create one customized Date Plan (a concrete, time-bound date proposal) per month for free, and you get unlimited applications to apply to dates posted by other members or creators. Confirming a date boosts your Chemistry Meter, helping you skip situationship limbo and meet in person.",
     "faq8Q": "How does the Dating Coach AI help me connect?",
     "faq8A": "Our built-in AI Wingman acts as a digital relationship coach and platform assistant. It reads chat flow momentum (Connection Gravity), suggests warm icebreakers, and highlights the best moments to invite a partner on a coffee date based on their lifestyle archetypes.",
-    "faq9Q": "How does SECCIØN verify profile safety without storing my ID documents?",
-    "faq9A": "To unlock real-world dating moves (Level 4+), users complete a secure face verification and liveness check to confirm they match their profile photos. To respect your privacy, SECCIØN does not store any official identity documents. Once the check succeeds, all ID media is permanently deleted.",
+    "faq9Q": "How does SECCION verify profile safety without storing my ID documents?",
+    "faq9A": "To unlock real-world dating moves (Level 4+), users complete a secure face verification and liveness check to confirm they match their profile photos. To respect your privacy, SECCION does not store any official identity documents. Once the check succeeds, all ID media is permanently deleted.",
     "faq10Q": "Can I connect and talk with matches in other countries?",
     "faq10A": "Absolutely. Our platform is built for global vibes (matching US, UK, EU, and South America). Our Live Translation gateway automatically translates text and voice messages in real-time, allowing you to speak and listen in your native languages seamlessly.",
     "ctaTitle": "Ready to Begin Your Quest?",
-    "ctaDesc": "Step into a premium, transparent dating landscape funded by the creator economy. Join SECCIØN today and unlock free premium matchmaking.",
+    "ctaDesc": "Step into a premium, transparent dating landscape funded by the creator economy. Join SECCION today and unlock free premium matchmaking.",
     "ctaButton": "Join Onboarding Quest"
   },
   "becomeCreator": {
@@ -153,12 +153,12 @@
     "traditionalPlatformFee": "Platform Cut (20%)",
     "traditionalAgencyFee": "Agency Manager Cut (40%)",
     "traditionalKeeps": "What You Keep (40%)",
-    "seccionSpace": "SECCIØN space",
+    "seccionSpace": "SECCION space",
     "seccionRate": "Founding Creator Rate (10%)",
     "seccionAiFree": "AI Assistant Year 1 (0%)",
     "seccionKeeps": "What You Keep (90%)",
     "seccionFreeLabel": "FREE",
-    "savingsAnnounce": "By running your channel independently on SECCIØN, you save",
+    "savingsAnnounce": "By running your channel independently on SECCION, you save",
     "calculatorDisclaimer": "After your free year, using the AI Assistant is just 69€/month, or you can choose to manage your space manually at our free standard platform rate. You always retain 80% of your subscription and tip revenues. After Year 1, the standard platform rate is 20% (you keep 80%). No hidden fees.",
     "reclaimBadge": "Reclaim Your Freedom",
     "reclaimTitle": "Your Agency in a Single Toggle",
@@ -194,7 +194,7 @@
   },
   "creatorHub": {
     "title": "Creator Hub & Legal Guidelines",
-    "subtitle": "Terms, monetization tools, and legal protections designed specifically for creators on SECCIØN.",
+    "subtitle": "Terms, monetization tools, and legal protections designed specifically for creators on SECCION.",
     "badge": "LEGAL GUIDANCE & MONETIZATION",
     "splitTitle": "Transparent 80 / 20 Revenue Split",
     "splitDesc": "Keep 80% of all subscriptions, tips, and PPV sales with zero hidden deductions.",
@@ -202,10 +202,10 @@
     "law2557Desc": "Strict age verification and legal compliance record-keeping for all content creators."
   },
   "agent": {
-    "welcome": "Hi! I'm Steve, your SECCIØN agent and guide 🔮 Ask me about our hybrid platform (Dating + Live Streaming + Creators), chemistry matchmaking, or how to begin your quest.",
+    "welcome": "Hi! I'm Steve, your SECCION agent and guide 🔮 Ask me about our hybrid platform (Dating + Live Streaming + Creators), chemistry matchmaking, or how to begin your quest.",
     "thinking": "Steve is thinking...",
-    "placeholder": "Ask Steve about SECCIØN...",
-    "fallback": "I'm here to guide your SECCIØN experience!"
+    "placeholder": "Ask Steve about SECCION...",
+    "fallback": "I'm here to guide your SECCION experience!"
   },
   "contact": {
     "title": "Hit Us Up",

@@ -107,13 +107,13 @@ export default function PWAInstallPrompt() {
           <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-500 p-0.5 shadow-lg shadow-purple-500/30 shrink-0">
             <img
               src="/assets/logo/logo-mark.png"
-              alt="SECCIØN Logo"
+              alt="SECCION Logo"
               className="w-full h-full object-contain p-1"
             />
           </div>
           <div>
             <div className="flex items-center gap-1.5">
-              <h3 className="font-bold text-base text-white">Install SECCIØN App</h3>
+              <h3 className="font-bold text-base text-white">Install SECCION App</h3>
               <Sparkles className="w-4 h-4 text-pink-400 fill-pink-400/20" />
             </div>
             <p className="text-xs text-gray-300">

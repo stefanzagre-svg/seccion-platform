@@ -53,7 +53,7 @@ export default function AdminAuthGate() {
             <ShieldCheck className="w-7 h-7" />
           </div>
           <h1 className="text-xl font-black font-['Outfit'] tracking-tight text-white uppercase mt-2">
-            SECCIØN ADMIN AUTH
+            SECCION ADMIN AUTH
           </h1>
           <p className="text-xs text-white/50 font-mono">
             Founder Super Admin Verification Required
@@ -127,7 +127,7 @@ export default function AdminAuthGate() {
 
         <div className="text-center border-t border-white/10 pt-4">
           <p className="text-[10px] text-white/40 font-mono">
-            SECCIØN Platform Operations — Authorized Personnel Only
+            SECCION Platform Operations — Authorized Personnel Only
           </p>
         </div>
 

@@ -50,7 +50,7 @@ export function WaitlistSignup({ variant = 'inline' }: WaitlistSignupProps) {
           Join the Member's Early Access list
         </h3>
         <p className="text-sm md:text-base text-gray-400 font-mono">
-          Secure early access to SECCIØN
+          Secure early access to SECCION
         </p>
       </div>
 

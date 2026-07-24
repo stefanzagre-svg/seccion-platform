@@ -71,7 +71,7 @@ export default function MonetizationSuiteDemo({ onComplete }: MonetizationSuiteD
             >
               <div className="space-y-1">
                 <span className="text-[9px] font-black uppercase text-primary tracking-widest">Revenue Comparison</span>
-                <h5 className="text-sm font-black uppercase text-white tracking-wide">SECCIØN vs Competitors</h5>
+                <h5 className="text-sm font-black uppercase text-white tracking-wide">SECCION vs Competitors</h5>
               </div>
 
               {/* Grid of Streams */}

@@ -118,7 +118,7 @@ export default function LoginPage() {
             <div className="text-center space-y-2">
               <img 
                 src="/assets/logo/logo-wordmark.png" 
-                alt="SECCIØN" 
+                alt="SECCION" 
                 className="h-8 mx-auto object-contain drop-shadow-[0_0_20px_rgba(0,251,251,0.4)]"
               />
               <p className="text-[10px] font-mono font-bold text-[#ffabf3] uppercase tracking-widest">

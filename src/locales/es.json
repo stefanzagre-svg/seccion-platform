@@ -60,7 +60,7 @@
     "creatorFeature6Desc": "Escanea contratos de marcas en segundos: detecta comisiones abusivas y cesiones no autorizadas antes de firmar."
   },
   "howWeDo": {
-    "title": "Cómo Funciona SECCIØN",
+    "title": "Cómo Funciona SECCION",
     "subtitle": "Citas 100% gratuitas financiadas por la economía de creadores. Olvídate de pagar por ver quién te dio like.",
     "badge": "FILOSOFÍA DEL MURO CÁLIDO",
     "backHome": "Volver al Inicio",
@@ -82,9 +82,9 @@
     "bizInABox": "Biz-in-a-Box",
     "calculatorTitle": "Calculadora de Creadores & Payouts",
     "calculatorSubtitle": "Transparencia total: 80% directo a creadores, 20% para mantener la plataforma gratis para miembros.",
-    "tableTitle": "COMPARACIÓN: SECCIØN vs. Estándares de la Industria",
+    "tableTitle": "COMPARACIÓN: SECCION vs. Estándares de la Industria",
     "tableHeaderFeature": "Característica",
-    "tableHeaderSeccion": "SECCIØN",
+    "tableHeaderSeccion": "SECCION",
     "tableHeaderOthers": "Apps Tradicionales",
     "matchingCost": "Costo de Match",
     "creatorPayout": "Pago a Creadores",
@@ -110,8 +110,8 @@
     "peekTitle": "Desbloqueo Progresivo de Rostros",
     "peekDesc": "La privacidad se gana con la química. Los rostros se desencriptan al alcanzar el Nivel 4 de relación.",
     "faqTitle": "Preguntas Frecuentes",
-    "faq1Q": "¿SECCIØN es realmente 100% gratis para miembros?",
-    "faq1A": "Sí. Todo el emparejamiento, los canales de comunicación, los controles del radar de compatibilidad y nuestro asistente de citas (Dating Coach AI) son gratuitos. A diferencia de otras plataformas que bloquean la visibilidad detrás de tarifas mensuales debido al desbalance de género, SECCIØN se financia a través de las herramientas de monetización de creadores. Esto significa que te valoramos como un socio en la conexión, no como un cliente al que cobrar.",
+    "faq1Q": "¿SECCION es realmente 100% gratis para miembros?",
+    "faq1A": "Sí. Todo el emparejamiento, los canales de comunicación, los controles del radar de compatibilidad y nuestro asistente de citas (Dating Coach AI) son gratuitos. A diferencia de otras plataformas que bloquean la visibilidad detrás de tarifas mensuales debido al desbalance de género, SECCION se financia a través de las herramientas de monetización de creadores. Esto significa que te valoramos como un socio en la conexión, no como un cliente al que cobrar.",
     "faq2Q": "¿Cómo funciona el motor de emparejamiento por sinergia?",
     "faq2A": "En lugar de simplemente ordenar por proximidad o fotos, nuestro motor analiza tu estilo personal, preferencias de vibra y estado de ánimo actual para sugerir conexiones. Ofrece una explicación simple y directa de por qué un match se alinea con tu vibra, omitiendo fórmulas aburridas para enfocarse en la compatibilidad visceral.",
     "faq3Q": "¿Cómo funciona el Medidor de Química?",
@@ -126,12 +126,12 @@
     "faq7A": "Sí. Los miembros pueden crear un Plan de Cita personalizado (una propuesta de cita concreta y con límite de tiempo) al mes de forma gratuita, y obtienes aplicaciones ilimitadas para postularte a citas publicadas por otros miembros o creadores. Confirmar una cita impulsa tu Medidor de Química, ayudándote a salir del limbo de las situaciones y conocerse en persona.",
     "faq8Q": "¿Cómo me ayuda a conectar la Inteligencia Artificial del Wingman?",
     "faq8A": "Nuestro Wingman IA integrado actúa como un coach de relaciones digital y asistente de la plataforma. Analiza el impulso del flujo de chat (Gravedad de la Conexión), sugiere abridores cálidos y resalta los mejores momentos para invitar a alguien a tomar un café según sus arquetipos de estilo de vida.",
-    "faq9Q": "¿Cómo verifica SECCIØN la seguridad del perfil sin almacenar ID?",
-    "faq9A": "Para desbloquear movimientos de citas del mundo real (Nivel 4+), los usuarios completan una verificación facial y prueba de vida seguras para confirmar que coinciden con sus fotos. Para respetar tu privacidad, SECCIØN no almacena ningún documento oficial de identidad. Once la verificación tiene éxito, todas las imágenes originales son eliminadas de forma permanente.",
+    "faq9Q": "¿Cómo verifica SECCION la seguridad del perfil sin almacenar ID?",
+    "faq9A": "Para desbloquear movimientos de citas del mundo real (Nivel 4+), los usuarios completan una verificación facial y prueba de vida seguras para confirmar que coinciden con sus fotos. Para respetar tu privacidad, SECCION no almacena ningún documento oficial de identidad. Once la verificación tiene éxito, todas las imágenes originales son eliminadas de forma permanente.",
     "faq10Q": "¿Puedo conectarme y hablar con personas en otros países?",
     "faq10A": "Por supuesto. Nuestra plataforma está construida para vibras globales (conectando EE.UU., Reino Unido, Unión Europea y América del Sur). Nuestra pasarela de traducción en vivo traduce automáticamente mensajes de texto y voz en tiempo real, permitiéndote hablar y escuchar en tu idioma nativo sin problemas.",
     "ctaTitle": "¿Listo para comenzar tu quest?",
-    "ctaDesc": "Adéntrate en un panorama de citas premium y transparente financiado por la economía de creadores. Únete a SECCIØN hoy y desbloquea el emparejamiento premium gratuito.",
+    "ctaDesc": "Adéntrate en un panorama de citas premium y transparente financiado por la economía de creadores. Únete a SECCION hoy y desbloquea el emparejamiento premium gratuito.",
     "ctaButton": "Unirse a la Misión de Registro"
   },
   "becomeCreator": {
@@ -153,12 +153,12 @@
     "traditionalPlatformFee": "Corte de Plataforma (20%)",
     "traditionalAgencyFee": "Corte del Mánager (40%)",
     "traditionalKeeps": "Lo Que Conservas (40%)",
-    "seccionSpace": "Espacio SECCIØN",
+    "seccionSpace": "Espacio SECCION",
     "seccionRate": "Tarifa Creador Fundador (10%)",
     "seccionAiFree": "Asistente IA Año 1 (0%)",
     "seccionKeeps": "Lo Que Conservas (90%)",
     "seccionFreeLabel": "GRATIS",
-    "savingsAnnounce": "Al gestionar tu canal de forma independiente en SECCIØN, ahorras",
+    "savingsAnnounce": "Al gestionar tu canal de forma independiente en SECCION, ahorras",
     "calculatorDisclaimer": "Después de tu año gratis, usar el Asistente de IA cuesta solo 69€/mes, o puedes optar por gestionar tu espacio manualmente con nuestra tarifa de plataforma estándar gratuita. Siempre conservas el 80% de tus ingresos por suscripción y propinas. Después del Año 1, la tarifa estándar de la plataforma es del 20% (tú te quedas con el 80%). Sin cargos ocultos.",
     "reclaimBadge": "Reclama Tu Libertad",
     "reclaimTitle": "Tu Agencia en un Solo Interruptor",
@@ -194,7 +194,7 @@
   },
   "creatorHub": {
     "title": "Hub de Creadores y Pautas Legales",
-    "subtitle": "Términos, herramientas de monetización y protecciones legales diseñadas específicamente para creadores en SECCIØN.",
+    "subtitle": "Términos, herramientas de monetización y protecciones legales diseñadas específicamente para creadores en SECCION.",
     "badge": "DIRECTRICES LEGALES Y MONETIZACIÓN",
     "splitTitle": "Reparto Transparente 80 / 20",
     "splitDesc": "Conserva el 80% de todas tus suscripciones, propinas y ventas PPV sin deducciones opacas.",
@@ -202,10 +202,10 @@
     "law2557Desc": "Verificación de edad estricta y registro de conformidad legal para todos los creadores de contenido."
   },
   "agent": {
-    "welcome": "¡Hola! Soy Steve, tu agente y guía de SECCIØN 🔮 Pregúntame sobre nuestra plataforma híbrida (Citas + Live Streaming + Creadores), compatibilidad de química o cómo comenzar tu quest.",
+    "welcome": "¡Hola! Soy Steve, tu agente y guía de SECCION 🔮 Pregúntame sobre nuestra plataforma híbrida (Citas + Live Streaming + Creadores), compatibilidad de química o cómo comenzar tu quest.",
     "thinking": "Steve está pensando...",
-    "placeholder": "Pregúntale a Steve sobre SECCIØN...",
-    "fallback": "¡Estoy aquí para guiar tu experiencia en SECCIØN!"
+    "placeholder": "Pregúntale a Steve sobre SECCION...",
+    "fallback": "¡Estoy aquí para guiar tu experiencia en SECCION!"
   },
   "contact": {
     "title": "Contáctanos",

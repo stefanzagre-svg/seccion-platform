@@ -107,7 +107,7 @@ export default function StudioTourModal({ isOpen, onClose, onClaimOffer }: Studi
   // Step Data
   const steps = [
     {
-      title: "SECCIØN Studio Cockpit",
+      title: "SECCION Studio Cockpit",
       description: "Experience your unified dashboard. View active earnings, subscriber rosters, and toggle your AI autopilot chatter on or off instantly.",
       tip: "Your studio dashboard gives you a high-density control center without visual clutter."
     },
@@ -323,7 +323,7 @@ export default function StudioTourModal({ isOpen, onClose, onClaimOffer }: Studi
                           <span className="font-mono text-[#00fbfb]">12,840.50 €</span>
                         </h3>
                       </div>
-                      <InfoBubble title="Earnings Tracker" content="Your real-time net earnings. There are no hidden cuts—SECCIØN takes only a 20% platform share." />
+                      <InfoBubble title="Earnings Tracker" content="Your real-time net earnings. There are no hidden cuts—SECCION takes only a 20% platform share." />
                     </div>
                     <div className="mt-3 flex items-center gap-1 text-[9px] text-[#39FF14] font-semibold">
                       <TrendingUp className="w-3 h-3" />

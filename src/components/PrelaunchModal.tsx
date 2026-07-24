@@ -82,7 +82,7 @@ export default function PrelaunchModal({ isOpen, onClose }: PrelaunchModalProps)
           <div className="text-center space-y-3 relative z-10">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-[#00fbfb]/40 bg-[#00fbfb]/10 text-[#00fbfb] font-mono text-[10px] font-black uppercase tracking-widest">
               <Flame className="w-3.5 h-3.5 fill-current animate-pulse text-[#00fbfb]" />
-              <span>SECCIØN PRE-LAUNCH PHASE</span>
+              <span>SECCION PRE-LAUNCH PHASE</span>
             </div>
 
             <h2 className="font-['Outfit'] text-2xl sm:text-4xl font-black uppercase tracking-tight text-white leading-tight">
@@ -90,7 +90,7 @@ export default function PrelaunchModal({ isOpen, onClose }: PrelaunchModalProps)
             </h2>
 
             <p className="text-xs sm:text-sm text-[#b9cac9] max-w-lg mx-auto leading-relaxed">
-              SECCIØN is currently in an exclusive pre-launch stage. Public registration & general demo logins are temporarily locked to prioritize approved early creators and founding members.
+              SECCION is currently in an exclusive pre-launch stage. Public registration & general demo logins are temporarily locked to prioritize approved early creators and founding members.
             </p>
           </div>
 

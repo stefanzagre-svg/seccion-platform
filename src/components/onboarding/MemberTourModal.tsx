@@ -915,7 +915,7 @@ export default function MemberTourModal({ isOpen, onClose, onStartQuest }: Membe
                     To make real-world intimacy moves (Level 4+), both partners complete a secure **liveness and face verification check** to ensure they match their photos.
                   </p>
                   <p className="text-xs text-[#b9cac9] leading-relaxed font-medium">
-                    Your privacy is protected: **SECCIØN does not store any official ID documents**. Checks happen in real-time, and all ID media is permanently deleted.
+                    Your privacy is protected: **SECCION does not store any official ID documents**. Checks happen in real-time, and all ID media is permanently deleted.
                   </p>
                   <div className="pt-2">
                     <InfoBubble 

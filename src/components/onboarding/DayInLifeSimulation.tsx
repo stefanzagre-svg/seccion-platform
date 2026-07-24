@@ -78,10 +78,10 @@ export default function DayInLifeSimulation({ onComplete }: DayInLifeSimulationP
     <div className="space-y-6 w-full max-w-lg mx-auto p-1">
       <div className="text-center">
         <span className="text-[10px] uppercase tracking-widest font-black text-primary bg-primary/10 px-2 py-0.5 rounded-full border border-primary/20">
-          Part 2: SECCIØN Day-In-The-Life
+          Part 2: SECCION Day-In-The-Life
         </span>
         <h4 className="text-2xl font-black tracking-tight mt-2 uppercase Outfit">
-          Experience a Day on SECCIØN
+          Experience a Day on SECCION
         </h4>
       </div>
 

@@ -379,7 +379,7 @@ export default function IntentSelector({ onContinue }: { onContinue: (intents: s
                 className="w-full py-4 rounded-2xl bg-gradient-to-r from-primary to-emerald-400 text-black font-bold uppercase tracking-wider disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_0_20px_rgba(102,252,241,0.4)] transition-transform active:scale-95 flex items-center justify-center gap-2"
               >
                 <span>Enter the</span>
-                <img src="/assets/logo/logo-wordmark.png" alt="SECCIØN" className="h-5 object-contain inline-block brightness-0" />
+                <img src="/assets/logo/logo-wordmark.png" alt="SECCION" className="h-5 object-contain inline-block brightness-0" />
               </button>
             </motion.div>
           )}

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useLanguage } from '@/context/LanguageContext';
+import LanguageSelector from '@/components/LanguageSelector';
 import { usePathname, useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/lib/supabase';
@@ -11,12 +11,6 @@ import { Shield, Sparkles, MessageSquare, Trophy, RefreshCw, LogIn, LogOut, User
 export default function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
-  const { locale, changeLanguage } = useLanguage();
-  
-  const cycleLanguage = () => {
-    const nextLang = locale === 'en' ? 'es' : locale === 'es' ? 'fr' : 'en';
-    changeLanguage(nextLang);
-  };
   
   const [user, setUser] = useState<any>(null);
   const [profile, setProfile] = useState<any>(null);
@@ -179,7 +173,7 @@ export default function Navbar() {
         <Link href="/" className="flex items-center cursor-pointer hover:opacity-90 transition-opacity group">
           <img 
             src="/assets/logo/logo-wordmark.png" 
-            alt="SECCIØN" 
+            alt="SECCION" 
             className="h-7 sm:h-8 md:h-9 object-contain drop-shadow-[0_0_20px_rgba(0,240,255,0.4)] group-hover:drop-shadow-[0_0_30px_rgba(0,240,255,0.7)] transition-all duration-300" 
           />
         </Link>
@@ -247,14 +241,8 @@ export default function Navbar() {
 
         {/* CTA / Auth / Profile Section */}
         <div className="flex items-center gap-4">
-          {/* Language Switcher */}
-          <button
-            onClick={cycleLanguage}
-            className="px-2 py-1.5 border border-white/10 hover:border-primary/45 bg-white/5 rounded-xl font-['JetBrains_Mono'] text-[10px] font-bold uppercase tracking-wider text-white/80 hover:text-white transition-all duration-300 w-8 h-8 flex items-center justify-center shrink-0"
-            title={`Switch Language (Current: ${locale.toUpperCase()})`}
-          >
-            {locale}
-          </button>
+          {/* Language Selector */}
+          <LanguageSelector />
           <AnimatePresence mode="wait">
             {isLoading ? (
               <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />

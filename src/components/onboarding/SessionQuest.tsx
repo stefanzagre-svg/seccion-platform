@@ -10,9 +10,9 @@ import DayInLifeSimulation from "./DayInLifeSimulation";
 // Localization Matrix
 const LOCALIZED_TEXTS = {
   en: {
-    lobby_title: "Welcome to SECCIØN",
+    lobby_title: "Welcome to SECCION",
     lobby_sub: "A gamified welcome experience built on real psychology.",
-    lobby_p1: "Before we ask you for a username or password, we want to prove why SECCIØN is different. No endless swiping. No fake connections.",
+    lobby_p1: "Before we ask you for a username or password, we want to prove why SECCION is different. No endless swiping. No fake connections.",
     lobby_p2: "Let's explore your vibe, build connection chemistry, and unlock moves. Right now. No account needed.",
     lobby_cta: "Enter The Quest",
     vibe_title: "What's Your Vibe?",
@@ -22,22 +22,22 @@ const LOCALIZED_TEXTS = {
     synergy_title: "Predictive Matching",
     synergy_sub: "Merging your Synergy Auras in real-time.",
     hub_title: "Part 1 Complete!",
-    hub_p1: "You've selected your archetype and explored the Chemistry Meter. You can join SECCIØN now to activate your profile, or continue to Part 2 for a full platform simulation.",
-    hub_cta_signup: "Join SECCIØN Now",
+    hub_p1: "You've selected your archetype and explored the Chemistry Meter. You can join SECCION now to activate your profile, or continue to Part 2 for a full platform simulation.",
+    hub_cta_signup: "Join SECCION Now",
     hub_cta_continue: "Go Deeper (Part 2)",
     quiz_title: "Insight Generator",
     quiz_sub: "Reveal your digital habits to tune your Synergy Aura.",
     secret_title: "The Pivot",
-    secret_p1: "Everything you've seen? That wasn't pre-saved. SECCIØN mapped it dynamically from your interactions.",
+    secret_p1: "Everything you've seen? That wasn't pre-saved. SECCION mapped it dynamically from your interactions.",
     secret_p2: "This is the level of depth members get every day. We don't guess compatibility; we build it.",
-    secret_cta: "Claim Your SECCIØN Profile",
+    secret_cta: "Claim Your SECCION Profile",
     secret_cta_home: "Go Back to Home Page",
     subtitles_active: "Subtitles Active"
   },
   es: {
-    lobby_title: "Bienvenido a SECCIØN",
+    lobby_title: "Bienvenido a SECCION",
     lobby_sub: "Una experiencia de bienvenida gamificada basada en psicología real.",
-    lobby_p1: "Antes de pedirte un usuario o contraseña, queremos demostrar por qué SECCIØN es diferente. Sin deslizamientos infinitos. Sin conexiones falsas.",
+    lobby_p1: "Antes de pedirte un usuario o contraseña, queremos demostrar por qué SECCION es diferente. Sin deslizamientos infinitos. Sin conexiones falsas.",
     lobby_p2: "Exploremos tu estilo, construyamos química de conexión y desbloqueemos movimientos. Ahora mismo. Sin cuenta.",
     lobby_cta: "Comenzar Búsqueda",
     vibe_title: "¿Cuál es tu Estilo?",
@@ -47,22 +47,22 @@ const LOCALIZED_TEXTS = {
     synergy_title: "Emparejamiento Predictivo",
     synergy_sub: "Fusión de tus Auras de Sinergia en tiempo real.",
     hub_title: "¡Parte 1 Completada!",
-    hub_p1: "Has seleccionado tu arquetipo y explorado el Medidor de Química. Puedes unirte a SECCIØN ahora para activar tu perfil, o continuar a la Parte 2 para una simulación completa.",
-    hub_cta_signup: "Unirse a SECCIØN Ahora",
+    hub_p1: "Has seleccionado tu arquetipo y explorado el Medidor de Química. Puedes unirte a SECCION ahora para activar tu perfil, o continuar a la Parte 2 para una simulación completa.",
+    hub_cta_signup: "Unirse a SECCION Ahora",
     hub_cta_continue: "Ir más profundo (Parte 2)",
     quiz_title: "Generador de Insights",
     quiz_sub: "Revela tus hábitos digitales para sintonizar tu Aura.",
     secret_title: "El Pivote",
-    secret_p1: "¿Todo lo que has visto? No estaba preguardado. SECCIØN lo mapeó dinámicamente a partir de tus interacciones.",
+    secret_p1: "¿Todo lo que has visto? No estaba preguardado. SECCION lo mapeó dinámicamente a partir de tus interacciones.",
     secret_p2: "Este es el nivel de profundidad que los miembros obtienen todos los días. No adivinamos la compatibilidad; la construimos.",
-    secret_cta: "Reclamar tu Perfil de SECCIØN",
+    secret_cta: "Reclamar tu Perfil de SECCION",
     secret_cta_home: "Volver a la Página de Inicio",
     subtitles_active: "Subtítulos Activos"
   },
   fr: {
-    lobby_title: "Bienvenue sur SECCIØN",
+    lobby_title: "Bienvenue sur SECCION",
     lobby_sub: "Une expérience d'intégration ludique basée sur la psychologie réelle.",
-    lobby_p1: "Avant de vous demander un identifiant ou un mot de passe, nous voulons prouver pourquoi SECCIØN est différent. Pas de balayage infini. Pas de fausses connexions.",
+    lobby_p1: "Avant de vous demander un identifiant ou un mot de passe, nous voulons prouver pourquoi SECCION est différent. Pas de balayage infini. Pas de fausses connexions.",
     lobby_p2: "Explorons votre style, construisons une alchimie de connexion et débloquons des actions. Dès maintenant. Sans compte.",
     lobby_cta: "Lancer la Quête",
     vibe_title: "Quel est Votre Style?",
@@ -72,15 +72,15 @@ const LOCALIZED_TEXTS = {
     synergy_title: "Matchmaking Prédictif",
     synergy_sub: "Fusion de vos Auras de Synergie en temps réel.",
     hub_title: "Partie 1 Terminée !",
-    hub_p1: "Vous avez sélectionné votre archétype et exploré l'Alchimètre. Vous pouvez rejoindre SECCIØN maintenant pour activer votre profil, ou continuer à la Partie 2 pour une simulation complète.",
-    hub_cta_signup: "Rejoindre SECCIØN Maintenant",
+    hub_p1: "Vous avez sélectionné votre archétype et exploré l'Alchimètre. Vous pouvez rejoindre SECCION maintenant pour activer votre profil, ou continuer à la Partie 2 pour une simulation complète.",
+    hub_cta_signup: "Rejoindre SECCION Maintenant",
     hub_cta_continue: "Aller plus loin (Partie 2)",
     quiz_title: "Générateur d'Insights",
     quiz_sub: "Révélez vos habitudes pour accorder votre Aura.",
     secret_title: "Le Pivot",
-    secret_p1: "Tout ce que vous avez vu ? Rien n'était pré-enregistré. SECCIØN l'a cartographié dynamiquement à partir de vos interactions.",
+    secret_p1: "Tout ce que vous avez vu ? Rien n'était pré-enregistré. SECCION l'a cartographié dynamiquement à partir de vos interactions.",
     secret_p2: "C'est le niveau de profondeur que les membres obtiennent chaque jour. Nous ne devinons pas la compatibilité ; nous la construisons.",
-    secret_cta: "Réclamer Votre Profil SECCIØN",
+    secret_cta: "Réclamer Votre Profil SECCION",
     secret_cta_home: "Retourner à la Page d'Accueil",
     subtitles_active: "Sous-titres Actifs"
   }
@@ -216,7 +216,7 @@ export default function SessionQuest({ onSignUp, onClose }: SessionQuestProps) {
         speak(`${t.vibe_title}. ${t.vibe_sub}`);
         break;
       case "chemistry-meter":
-        speak("Observe the Chemistry Gauge. In SECCIØN, compatibility is calculated symmetrically using a harmonic mean. Both sides must invest to level up.");
+        speak("Observe the Chemistry Gauge. In SECCION, compatibility is calculated symmetrically using a harmonic mean. Both sides must invest to level up.");
         break;
       case "synergy-engine":
         speak("Here is our Synergy Engine metrics engine. We analyze personality compatibility, recent momentum, and schedule opportunities.");
@@ -225,7 +225,7 @@ export default function SessionQuest({ onSignUp, onClose }: SessionQuestProps) {
         speak(t.hub_p1);
         break;
       case "day-in-life":
-        speak("Let's simulate a typical day on SECCIØN. Observe how notifications, matchmaking sweeps, and conversational metrics flow.");
+        speak("Let's simulate a typical day on SECCION. Observe how notifications, matchmaking sweeps, and conversational metrics flow.");
         break;
       case "quiz":
         speak("Answer these simple questions. We'll build a live archetype vector without making you fill an actual profile form.");
@@ -270,7 +270,7 @@ export default function SessionQuest({ onSignUp, onClose }: SessionQuestProps) {
       {/* Top Header Controls */}
       <div className="flex justify-between items-center w-full max-w-4xl mx-auto border-b border-white/5 pb-4">
         <h3 className="text-xl font-black tracking-widest text-glow text-white Outfit uppercase">
-          SECCIØN Quest
+          SECCION Quest
         </h3>
 
         <div className="flex items-center gap-3">

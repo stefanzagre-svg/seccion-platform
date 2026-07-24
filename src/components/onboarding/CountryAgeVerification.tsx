@@ -127,7 +127,7 @@ export default function CountryAgeVerification({ onVerified, isCreatorMode = fal
   const handleVerify = (e: React.FormEvent) => {
     e.preventDefault();
     if (isUnderage) {
-      setErrorMsg(`You must be at least ${reg.minAge} years old to access SECCIØN under ${reg.lawName}.`);
+      setErrorMsg(`You must be at least ${reg.minAge} years old to access SECCION under ${reg.lawName}.`);
       return;
     }
     if (!isChecked) {
@@ -271,7 +271,7 @@ export default function CountryAgeVerification({ onVerified, isCreatorMode = fal
           className="w-full py-3 rounded-xl bg-[#00fbfb] hover:bg-[#00fbfb]/90 text-black font-extrabold font-mono text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed shadow-lg shadow-[#00fbfb]/20"
         >
           <CheckCircle2 className="w-4 h-4" />
-          <span>Confirm & Enter SECCIØN</span>
+          <span>Confirm & Enter SECCION</span>
         </button>
       </form>
     </div>

@@ -1025,7 +1025,7 @@ export default function HowWeDoPage() {
         <div className="flex justify-center">
           <img 
             src="/assets/logo/logo-mark.png" 
-            alt="SECCIØN Icon" 
+            alt="SECCION Icon" 
             className="w-12 h-12 md:w-14 md:h-14 drop-shadow-[0_0_20px_rgba(0,251,251,0.4)] object-contain" 
           />
         </div>
@@ -1042,10 +1042,10 @@ export default function HowWeDoPage() {
         <div className="flex flex-col items-center gap-3">
           <img 
             src="/assets/logo/logo-wordmark.png" 
-            alt="SECCIØN Logo" 
+            alt="SECCION Logo" 
             className="h-8 md:h-10 drop-shadow-[0_0_25px_rgba(0,251,251,0.4)] object-contain" 
           />
-          <p className="font-mono text-[11px] font-medium tracking-widest text-[#b9cac9] opacity-40 pt-2">© 2026 SECCIØN. ALL RIGHTS RESERVED.</p>
+          <p className="font-mono text-[11px] font-medium tracking-widest text-[#b9cac9] opacity-40 pt-2">© 2026 SECCION. ALL RIGHTS RESERVED.</p>
         </div>
       </footer>
 

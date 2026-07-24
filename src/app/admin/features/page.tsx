@@ -160,7 +160,7 @@ export default function FeatureAnalyticsPage() {
             SPEECH-TO-SPEECH (S2ST) PRICING & LIMIT RULES
           </h3>
           <p className="text-xs text-white/60 leading-relaxed">
-            SECCIØN implements a premium translation system for international matches. Regular text translation is included, while real-time S2ST streaming utilizes high-performance endpoints charged at a billing rate of <span className="text-primary font-bold">€0.10 per minute</span>, with a default free quota of <span className="text-primary font-bold">300 seconds (5 minutes)</span> per user account every 24 hours.
+            SECCION implements a premium translation system for international matches. Regular text translation is included, while real-time S2ST streaming utilizes high-performance endpoints charged at a billing rate of <span className="text-primary font-bold">€0.10 per minute</span>, with a default free quota of <span className="text-primary font-bold">300 seconds (5 minutes)</span> per user account every 24 hours.
           </p>
         </div>
         <div className="bg-primary/5 border border-primary/20 p-4 rounded-xl text-center">

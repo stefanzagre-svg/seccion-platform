@@ -61,14 +61,14 @@ export default function RevenueEngineDemo({ onComplete }: RevenueEngineDemoProps
           </div>
         </div>
 
-        {/* SECCIØN Model */}
+        {/* SECCION Model */}
         <div className="glass-card p-5 rounded-2xl border border-primary/20 bg-primary/5 relative overflow-hidden flex flex-col justify-between min-h-[220px] shadow-[0_0_15px_rgba(0,255,255,0.05)]">
           <div className="absolute inset-0 bg-gradient-to-tr from-cyan-500/5 to-purple-500/5 pointer-events-none" />
           
           <div className="space-y-2">
             <div className="flex items-center gap-1.5 text-primary">
               <Sparkles className="w-4 h-4" />
-              <span className="text-[10px] font-black uppercase tracking-wider">SECCIØN Model</span>
+              <span className="text-[10px] font-black uppercase tracking-wider">SECCION Model</span>
             </div>
             <p className="text-[10px] text-white/50 leading-relaxed font-medium">
               We charge a flat 20% platform fee. AI replaces the management agency for DMs and scheduling at $0 cost.

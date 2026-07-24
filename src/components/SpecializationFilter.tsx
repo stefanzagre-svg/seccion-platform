@@ -68,7 +68,7 @@ export const SpecializationFilter: React.FC<SpecializationFilterProps> = ({
               </span>
             </div>
             <p className="text-xs text-[#b9cac9] leading-relaxed max-w-2xl font-medium">
-              SECCIØN keeps public discovery feeds 100% SFW by default with SafeSearch <strong>ON</strong>. To find 18+ Sensual Creators, unlock private PPV content, and access behind-closed-doors live streams nationwide, use the SafeSearch toggle below to verify age and enable explicit content.
+              SECCION keeps public discovery feeds 100% SFW by default with SafeSearch <strong>ON</strong>. To find 18+ Sensual Creators, unlock private PPV content, and access behind-closed-doors live streams nationwide, use the SafeSearch toggle below to verify age and enable explicit content.
             </p>
           </div>
         </div>

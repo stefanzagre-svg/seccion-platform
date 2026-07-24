@@ -262,7 +262,7 @@ export default function BecomeCreatorPage() {
                       <div className="w-full h-full rounded-[10px] bg-[#0A0A14] flex items-center justify-center text-xs font-black text-[#00fbfb]">S</div>
                     </div>
                     <div className="text-left">
-                      <h4 className="text-[11px] sm:text-[12px] font-bold text-white leading-none">SECCIØN Studio</h4>
+                      <h4 className="text-[11px] sm:text-[12px] font-bold text-white leading-none">SECCION Studio</h4>
                       <span className="text-[8px] font-mono text-[#ffabf3] uppercase tracking-wider">Live Station</span>
                     </div>
                   </div>
@@ -373,10 +373,10 @@ export default function BecomeCreatorPage() {
                   </div>
                 </div>
 
-                {/* SECCIØN */}
+                {/* SECCION */}
                 <div className="p-5 bg-[#00fbfb]/[0.02] border border-[#00fbfb]/20 rounded-2xl space-y-4 text-left relative overflow-hidden">
                   <div className="absolute top-0 right-0 w-[120px] h-[120px] rounded-full bg-[#00fbfb]/5 blur-2xl pointer-events-none" />
-                  <h4 className="text-[10px] font-mono font-bold text-[#00fbfb] uppercase tracking-widest">SECCIØN space</h4>
+                  <h4 className="text-[10px] font-mono font-bold text-[#00fbfb] uppercase tracking-widest">SECCION space</h4>
                   <div className="space-y-2">
                     <div className="flex justify-between text-xs text-[#b9cac9]">
                       <span>Founding Creator Rate (10%)</span>
@@ -397,7 +397,7 @@ export default function BecomeCreatorPage() {
               {/* Savings Announcement */}
               <div className="p-4 bg-[#39FF14]/5 border border-[#39FF14]/20 rounded-2xl text-center">
                 <p className="text-xs text-[#b9cac9] font-medium leading-relaxed">
-                  By running your channel independently on SECCIØN, you save <MonoNumber value={monthlySavings.toLocaleString()} suffix=" €/month" />
+                  By running your channel independently on SECCION, you save <MonoNumber value={monthlySavings.toLocaleString()} suffix=" €/month" />
                 </p>
               </div>
 
@@ -852,7 +852,7 @@ export default function BecomeCreatorPage() {
                     <div className="space-y-3">
                       <h3 className="font-display text-2xl font-black text-white">Application Received</h3>
                       <p className="text-xs sm:text-sm text-[#b9cac9] leading-relaxed">
-                        Welcome to SECCIØN, <span className="text-[#00fbfb] font-bold">{formData.fullName || "Creator"}</span>! Your profile status is now set to <span className="font-bold text-white uppercase font-mono bg-white/5 border border-white/10 px-2 py-0.5 rounded-md">UNDER REVIEW</span>.
+                        Welcome to SECCION, <span className="text-[#00fbfb] font-bold">{formData.fullName || "Creator"}</span>! Your profile status is now set to <span className="font-bold text-white uppercase font-mono bg-white/5 border border-white/10 px-2 py-0.5 rounded-md">UNDER REVIEW</span>.
                       </p>
                       <p className="text-xs text-[#b9cac9]/75 leading-relaxed">
                         Our curation team will personally review your profile links within 48 hours. Once approved, we will trigger your welcome message and studio invite directly on your Telegram username (<span className="text-[#00fbfb]">{formData.telegram}</span>) and WhatsApp.
@@ -921,7 +921,7 @@ export default function BecomeCreatorPage() {
                 What is the Free Year Pack AI offer, and how do I qualify?
               </h4>
               <p className="text-xs text-[#b9cac9] leading-relaxed pl-6">
-                The Year-Pack AI offer gives our creators complete, free access to our AI Operations Assistant for their entire first year on SECCIØN. This offer is available for creators who join during our launch campaign. Because we personally review each application, we select the creators who best align with our community's vibe. After your first year, using the AI assistant is just €69/month, or you can choose to manage your channel manually at our free standard platform rate.
+                The Year-Pack AI offer gives our creators complete, free access to our AI Operations Assistant for their entire first year on SECCION. This offer is available for creators who join during our launch campaign. Because we personally review each application, we select the creators who best align with our community's vibe. After your first year, using the AI assistant is just €69/month, or you can choose to manage your channel manually at our free standard platform rate.
               </p>
             </div>
 
@@ -932,7 +932,7 @@ export default function BecomeCreatorPage() {
                 How does the AI Assistant replace a traditional management agency?
               </h4>
               <p className="text-xs text-[#b9cac9] leading-relaxed pl-6">
-                Management agencies charge huge commissions (often 30% to 50%) to handle your direct messages, post teaser content, and review contracts. SECCIØN’s native AI assistant does this work for you. It responds to messages in your unique voice 24/7, schedules teasers on external social platforms, manages your bookkeeping, and scans the web to take down leaked content. You get the power of an agency without the agency fee.
+                Management agencies charge huge commissions (often 30% to 50%) to handle your direct messages, post teaser content, and review contracts. SECCION’s native AI assistant does this work for you. It responds to messages in your unique voice 24/7, schedules teasers on external social platforms, manages your bookkeeping, and scans the web to take down leaked content. You get the power of an agency without the agency fee.
               </p>
             </div>
 
@@ -943,7 +943,7 @@ export default function BecomeCreatorPage() {
                 How does the 80/20 split work? Are there hidden fees?
               </h4>
               <p className="text-xs text-[#b9cac9] leading-relaxed pl-6">
-                You receive 80% of Net Revenue across all subscriptions, tips, streams, and custom orders. Net Revenue is simply Gross Customer Value minus third-party payment processing fees (Segpay / CCBill credit card fees). The remaining 20% of Net Revenue covers SECCIØN platform operations, guaranteeing high creator payout yield while maintaining zero hidden agency markups.
+                You receive 80% of Net Revenue across all subscriptions, tips, streams, and custom orders. Net Revenue is simply Gross Customer Value minus third-party payment processing fees (Segpay / CCBill credit card fees). The remaining 20% of Net Revenue covers SECCION platform operations, guaranteeing high creator payout yield while maintaining zero hidden agency markups.
               </p>
             </div>
 
@@ -954,7 +954,7 @@ export default function BecomeCreatorPage() {
                 What are "Sponsored Creators" and how does matchmaking work?
               </h4>
               <p className="text-xs text-[#b9cac9] leading-relaxed pl-6">
-                Instead of setting up a public page and selling to strangers, SECCIØN focuses on quality connections. Members match with you based on shared interests and vibe compatibility. Once a match is made, they can join your Sponsored Creators circle to unlock your premium space. This matching process builds high-trust relationships, resulting in happy, long-term fans and a steady income.
+                Instead of setting up a public page and selling to strangers, SECCION focuses on quality connections. Members match with you based on shared interests and vibe compatibility. Once a match is made, they can join your Sponsored Creators circle to unlock your premium space. This matching process builds high-trust relationships, resulting in happy, long-term fans and a steady income.
               </p>
             </div>
 
@@ -962,7 +962,7 @@ export default function BecomeCreatorPage() {
             <div className="p-5 bg-white/[0.02] border border-white/5 rounded-2xl text-left space-y-2.5">
               <h4 className="text-sm font-bold text-white flex items-center gap-2">
                 <HelpCircle className="w-4 h-4 text-[#00fbfb] shrink-0" />
-                How does SECCIØN protect my content from leaks?
+                How does SECCION protect my content from leaks?
               </h4>
               <p className="text-xs text-[#b9cac9] leading-relaxed pl-6">
                 We keep your creations safe with double-layer protection. First, our Face Blur Encryption keeps your face private on public feeds, letting you choose exactly who gets to see you as you build trust. Second, your shared photos and videos disappear from our servers immediately after they're opened, and we automatically stop screenshot attempts on both iPhones and Androids. What you share stays between you and your match.
@@ -995,10 +995,10 @@ export default function BecomeCreatorPage() {
             <div className="p-5 bg-white/[0.02] border border-white/5 rounded-2xl text-left space-y-2.5">
               <h4 className="text-sm font-bold text-white flex items-center gap-2">
                 <HelpCircle className="w-4 h-4 text-[#00fbfb] shrink-0" />
-                How does SECCIØN keep the platform safe and compliant?
+                How does SECCION keep the platform safe and compliant?
               </h4>
               <p className="text-xs text-[#b9cac9] leading-relaxed pl-6">
-                SECCIØN is built on safety and legal protection. We adhere to digital content regulations, independent creator safety laws, and content safety standards to protect creators and members alike. We provide a secure, professional, and compliant space where you can build your brand with peace of mind.
+                SECCION is built on safety and legal protection. We adhere to digital content regulations, independent creator safety laws, and content safety standards to protect creators and members alike. We provide a secure, professional, and compliant space where you can build your brand with peace of mind.
               </p>
             </div>
 
@@ -1012,7 +1012,7 @@ export default function BecomeCreatorPage() {
         <div className="flex justify-center">
           <img 
             src="/assets/logo/logo-mark.png" 
-            alt="SECCIØN Icon" 
+            alt="SECCION Icon" 
             className="w-12 h-12 md:w-14 md:h-14 drop-shadow-[0_0_20px_rgba(0,251,251,0.4)] object-contain" 
           />
         </div>
@@ -1029,10 +1029,10 @@ export default function BecomeCreatorPage() {
         <div className="flex flex-col items-center gap-3">
           <img 
             src="/assets/logo/logo-wordmark.png" 
-            alt="SECCIØN Logo" 
+            alt="SECCION Logo" 
             className="h-8 md:h-10 drop-shadow-[0_0_25px_rgba(0,251,251,0.4)] object-contain" 
           />
-          <p className="font-mono text-[11px] font-medium tracking-widest text-[#b9cac9] opacity-40 pt-2">© 2026 SECCIØN. {t("footer.rights").toUpperCase()}</p>
+          <p className="font-mono text-[11px] font-medium tracking-widest text-[#b9cac9] opacity-40 pt-2">© 2026 SECCION. {t("footer.rights").toUpperCase()}</p>
         </div>
       </footer>
 

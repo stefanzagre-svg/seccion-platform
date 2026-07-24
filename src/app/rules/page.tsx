@@ -53,10 +53,10 @@ export default function RulesPage() {
             {t("rules.title", "Community Rules")}
           </h1>
           <p className="text-xs sm:text-sm text-[#b9cac9] max-w-xl">
-            {t("rules.subtitle", "Guidelines ensuring a safe, respectful, and authentic community on SECCIØN.")}
+            {t("rules.subtitle", "Guidelines ensuring a safe, respectful, and authentic community on SECCION.")}
           </p>
           <div className="p-3 bg-[#ffabf3]/5 border border-[#ffabf3]/20 rounded-xl text-left text-[10px] text-[#ffabf3]">
-            💡 **{t("creatorHub.badge", "LEGAL STANDARDS & MONETIZATION")}**: {t("creatorHub.subtitle", "Terms, legal guidelines, and monetization tools for creators on SECCIØN.")} <Link href="/creator-hub" className="underline font-bold">[Creator Hub]</Link>
+            💡 **{t("creatorHub.badge", "LEGAL STANDARDS & MONETIZATION")}**: {t("creatorHub.subtitle", "Terms, legal guidelines, and monetization tools for creators on SECCION.")} <Link href="/creator-hub" className="underline font-bold">[Creator Hub]</Link>
           </div>
         </div>
 
@@ -189,7 +189,7 @@ export default function RulesPage() {
               <div className="p-4 bg-white/[0.02] border-l-2 border-[#00fbfb] rounded-r-xl space-y-1">
                 <span className="text-[9px] font-mono font-bold text-[#00fbfb] uppercase tracking-wider block">🔮 Magic Translation (TL;DR)</span>
                 <p className="text-[10.5px] italic text-[#b9cac9]">
-                  Creators earn **80% of Net Revenue**. Net Revenue is calculated after deducting third-party payment processing fees (Segpay / CCBill credit card fees). This guarantees SECCIØN maintains a solid 15%–18% net operating margin while delivering high yield to creators.
+                  Creators earn **80% of Net Revenue**. Net Revenue is calculated after deducting third-party payment processing fees (Segpay / CCBill credit card fees). This guarantees SECCION maintains a solid 15%–18% net operating margin while delivering high yield to creators.
                 </p>
               </div>
               <div className="space-y-2">
@@ -199,8 +199,8 @@ export default function RulesPage() {
                 </p>
                 <ul className="list-disc pl-4 space-y-1 font-mono text-[11px] text-[#b9cac9]">
                   <li><strong className="text-white">Net Revenue Definition:</strong> Net Revenue is defined as Gross Customer Payments minus mandatory third-party payment processing costs (e.g., Segpay / CCBill transaction fees, credit card interchange, and chargeback reserves).</li>
-                  <li><strong className="text-white">80% Net Payout Split:</strong> Creators receive <strong className="text-[#00fbfb]">80% of Net Revenue</strong> across all subscription tiers, pay-per-view unlocks, live streams, and custom escrow orders. SECCIØN retains the remaining 20% of Net Revenue.</li>
-                  <li><strong className="text-white">Guaranteed Operating Margin:</strong> This Net Revenue formula guarantees SECCIØN consistently maintains a healthy <strong className="text-emerald-400">15% to 18% net platform margin</strong> regardless of international credit card processing fees.</li>
+                  <li><strong className="text-white">80% Net Payout Split:</strong> Creators receive <strong className="text-[#00fbfb]">80% of Net Revenue</strong> across all subscription tiers, pay-per-view unlocks, live streams, and custom escrow orders. SECCION retains the remaining 20% of Net Revenue.</li>
+                  <li><strong className="text-white">Guaranteed Operating Margin:</strong> This Net Revenue formula guarantees SECCION consistently maintains a healthy <strong className="text-emerald-400">15% to 18% net platform margin</strong> regardless of international credit card processing fees.</li>
                 </ul>
               </div>
             </div>
@@ -216,7 +216,7 @@ export default function RulesPage() {
         <div className="flex justify-center">
           <img 
             src="/assets/logo/logo-mark.png" 
-            alt="SECCIØN Icon" 
+            alt="SECCION Icon" 
             className="w-12 h-12 md:w-14 md:h-14 drop-shadow-[0_0_20px_rgba(0,251,251,0.4)] object-contain" 
           />
         </div>
@@ -233,10 +233,10 @@ export default function RulesPage() {
         <div className="flex flex-col items-center gap-3">
           <img 
             src="/assets/logo/logo-wordmark.png" 
-            alt="SECCIØN Logo" 
+            alt="SECCION Logo" 
             className="h-8 md:h-10 drop-shadow-[0_0_25px_rgba(0,251,251,0.4)] object-contain" 
           />
-          <p className="font-mono text-[11px] font-medium tracking-widest text-[#b9cac9] opacity-40 pt-2">© 2026 SECCIØN. {t("footer.rights").toUpperCase()}</p>
+          <p className="font-mono text-[11px] font-medium tracking-widest text-[#b9cac9] opacity-40 pt-2">© 2026 SECCION. {t("footer.rights").toUpperCase()}</p>
         </div>
       </footer>
 

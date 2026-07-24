@@ -124,7 +124,7 @@ export default function AIWingmanBubble() {
       }
 
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to communicate with SECCIØN Agent');
+        throw new Error(data.error || 'Failed to communicate with SECCION Agent');
       }
 
       // Update local state metrics if member
@@ -136,7 +136,7 @@ export default function AIWingmanBubble() {
       const wingmanMsg: Message = {
         id: `wingman-${Date.now()}`,
         sender: 'wingman',
-        text: data.reply || data.response || "I'm here to help you explore SECCIØN!",
+        text: data.reply || data.response || "I'm here to help you explore SECCION!",
         timestamp: new Date()
       };
       setMessages((prev) => [...prev, wingmanMsg]);
@@ -361,8 +361,8 @@ export default function AIWingmanBubble() {
         onClick={() => setIsOpen(!isOpen)}
         whileHover={{ scale: 1.08 }}
         whileTap={{ scale: 0.92 }}
-        aria-label="Ask SECCIØN Agent"
-        title="Ask SECCIØN Agent"
+        aria-label="Ask SECCION Agent"
+        title="Ask SECCION Agent"
         className={`w-13 h-13 sm:w-14 sm:h-14 rounded-full flex items-center justify-center text-black shadow-xl relative border transition-all duration-300 ${
           isOpen
             ? 'bg-white border-white text-black shadow-[0_0_20px_rgba(255,255,255,0.5)]'

@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
         const ai = new GoogleGenAI({ apiKey: geminiKey });
         
         const systemInstruction = `
-You are the SECCIØN Legal Vetting Copilot.
+You are the SECCION Legal Vetting Copilot.
 You analyze incoming brand sponsorship and management contracts for digital creators.
 Your task is to review the contract and flag terms violating:
 1. NY Labor Law Art. 36 (Fashion Workers Act) - requires commission caps (20%), no automatic renewals, and specific written consent for "digital replicas" / likeness cloning.

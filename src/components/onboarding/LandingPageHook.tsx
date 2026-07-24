@@ -145,7 +145,7 @@ export default function LandingPageHook({ onAccept, onBecomeCreator }: { onAccep
                   <span>{t("landing.swipeToSignUp", "SWIPE TO SIGN UP TO")}</span>
                   <img 
                     src="/assets/logo/logo-wordmark.png" 
-                    alt="SECCIØN" 
+                    alt="SECCION" 
                     className="h-5 sm:h-6 md:h-7 object-contain inline-block drop-shadow-[0_0_15px_rgba(0,251,251,0.6)] group-hover:drop-shadow-[0_0_25px_rgba(0,251,251,0.9)] transition-all duration-300"
                   />
                 </div>
@@ -170,7 +170,7 @@ export default function LandingPageHook({ onAccept, onBecomeCreator }: { onAccep
                   <span>{t("landing.swipeToSignUp", "SWIPE TO SIGN UP TO")}</span>
                   <img 
                     src="/assets/logo/logo-wordmark.png" 
-                    alt="SECCIØN" 
+                    alt="SECCION" 
                     className="h-5 sm:h-6 md:h-7 object-contain inline-block drop-shadow-[0_0_15px_rgba(0,251,251,0.6)] group-hover:drop-shadow-[0_0_25px_rgba(0,251,251,0.9)] transition-all duration-300"
                   />
                 </div>
@@ -387,7 +387,7 @@ export default function LandingPageHook({ onAccept, onBecomeCreator }: { onAccep
         <div className="flex justify-center">
           <img 
             src="/assets/logo/logo-mark.png" 
-            alt="SECCIØN Icon" 
+            alt="SECCION Icon" 
             className="w-12 h-12 md:w-14 md:h-14 drop-shadow-[0_0_20px_rgba(0,251,251,0.4)] object-contain" 
           />
         </div>
@@ -404,10 +404,10 @@ export default function LandingPageHook({ onAccept, onBecomeCreator }: { onAccep
         <div className="flex flex-col items-center gap-3">
           <img 
             src="/assets/logo/logo-wordmark.png" 
-            alt="SECCIØN Logo" 
+            alt="SECCION Logo" 
             className="h-8 md:h-10 drop-shadow-[0_0_25px_rgba(0,251,251,0.4)] object-contain" 
           />
-          <p className="font-mono text-[11px] font-medium tracking-widest text-[#b9cac9] opacity-40 pt-2">© 2026 SECCIØN. {t("footer.rights", "ALL RIGHTS RESERVED.")}</p>
+          <p className="font-mono text-[11px] font-medium tracking-widest text-[#b9cac9] opacity-40 pt-2">© 2026 SECCION. {t("footer.rights", "ALL RIGHTS RESERVED.")}</p>
         </div>
       </footer>
     </div>

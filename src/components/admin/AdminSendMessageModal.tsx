@@ -21,7 +21,7 @@ export const AdminSendMessageModal: React.FC<AdminSendMessageModalProps> = ({
   onClose,
   onSuccess,
 }) => {
-  const [subject, setSubject] = useState('Welcome to SECCIØN!');
+  const [subject, setSubject] = useState('Welcome to SECCION!');
   const [messageText, setMessageText] = useState('');
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -31,14 +31,14 @@ export const AdminSendMessageModal: React.FC<AdminSendMessageModalProps> = ({
 
   const handleTemplateSelect = (templateType: string) => {
     if (templateType === 'creator_welcome') {
-      setSubject('Welcome to SECCIØN Creator Network! 🚀');
+      setSubject('Welcome to SECCION Creator Network! 🚀');
       setMessageText(
-        `Hi @${targetUser.username},\n\nWelcome to the SECCIØN Creator Community! I'm Stefan, founder of SECCIØN.\n\nWe're thrilled to have you on board. Make sure to complete your profile in the Studio (/studio) and select your Specialization Badge to start receiving member requests.\n\nIf you have any questions or need custom payout assistance, reply to this message directly!\n\nBest,\nStefan (Founder)`
+        `Hi @${targetUser.username},\n\nWelcome to the SECCION Creator Community! I'm Stefan, founder of SECCION.\n\nWe're thrilled to have you on board. Make sure to complete your profile in the Studio (/studio) and select your Specialization Badge to start receiving member requests.\n\nIf you have any questions or need custom payout assistance, reply to this message directly!\n\nBest,\nStefan (Founder)`
       );
     } else if (templateType === 'member_welcome') {
-      setSubject('Welcome to SECCIØN! 🔮');
+      setSubject('Welcome to SECCION! 🔮');
       setMessageText(
-        `Hi @${targetUser.username},\n\nWelcome to SECCIØN! Your account is active and ready to explore.\n\nTake your Onboarding Quest to define your Archetype, and check out the Vibe Radar (/vibe-radar) to connect with specialized creators and matches.\n\nEnjoy the platform!\n\nBest,\nSECCIØN Team`
+        `Hi @${targetUser.username},\n\nWelcome to SECCION! Your account is active and ready to explore.\n\nTake your Onboarding Quest to define your Archetype, and check out the Vibe Radar (/vibe-radar) to connect with specialized creators and matches.\n\nEnjoy the platform!\n\nBest,\nSECCION Team`
       );
     } else if (templateType === 'kyc_checkin') {
       setSubject('Verification Check-In 🛡️');

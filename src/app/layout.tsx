@@ -18,13 +18,13 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   metadataBase: new URL("https://seccion.ai"),
   title: {
-    default: "SECCIØN | Authentic Connections & Content Creators",
-    template: "%s | SECCIØN",
+    default: "SECCION | Authentic Connections & Content Creators",
+    template: "%s | SECCION",
   },
   description:
     "1st Fusion Platform combining AI-driven dating matchmaking with live streaming content creators.",
   keywords: [
-    "SECCIØN",
+    "SECCION",
     "seccion.ai",
     "social platform",
     "AI matching",
@@ -48,23 +48,23 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "SECCIØN",
+    title: "SECCION",
   },
   formatDetection: {
     telephone: false,
   },
   openGraph: {
-    title: "SECCIØN | Authentic Connections & Content Creators",
+    title: "SECCION | Authentic Connections & Content Creators",
     description:
       "1st Fusion Platform combining AI-driven dating matchmaking with live streaming content creators.",
     url: "https://seccion.ai",
-    siteName: "SECCIØN",
+    siteName: "SECCION",
     images: [
       {
         url: "/assets/logo/logo-wordmark.png",
         width: 766,
         height: 191,
-        alt: "SECCIØN Logo",
+        alt: "SECCION Logo",
       },
     ],
     locale: "es_CO",
@@ -72,7 +72,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "SECCIØN | Authentic Connections & Content Creators",
+    title: "SECCION | Authentic Connections & Content Creators",
     description:
       "1st Fusion Platform combining AI-driven dating matchmaking with live streaming content creators.",
     images: ["/assets/logo/logo-wordmark.png"],
@@ -119,7 +119,7 @@ export default function RootLayout({
           <div className="relative z-10 flex-1 flex flex-col">
             {children}
           </div>
-          {/* SECCIØN Agent for public/unauthenticated pages */}
+          {/* SECCION Agent for public/unauthenticated pages */}
           <SeccionAgentBubble />
           {/* AI Dating Wingman Coach for authenticated member accounts */}
           <AIWingmanBubble />

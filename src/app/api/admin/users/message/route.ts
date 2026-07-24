@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Insert admin message into public.messages
-    const formattedContent = `[OFFICIAL ADMIN MESSAGE]\nSubject: ${subject}\n\n${messageText.trim()}\n\n— SECCIØN Platform Operations`;
+    const formattedContent = `[OFFICIAL ADMIN MESSAGE]\nSubject: ${subject}\n\n${messageText.trim()}\n\n— SECCION Platform Operations`;
 
     const { data: messageRecord, error: msgErr } = await adminClient
       .from('messages')

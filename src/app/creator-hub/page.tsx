@@ -53,7 +53,7 @@ export default function CreatorHubPage() {
             {t("creatorHub.title", "Creator Hub")}
           </h1>
           <p className="text-xs sm:text-sm text-[#b9cac9] max-w-xl">
-            {t("creatorHub.subtitle", "Terms, legal guidelines, and monetization tools for creators on SECCIØN.")}
+            {t("creatorHub.subtitle", "Terms, legal guidelines, and monetization tools for creators on SECCION.")}
           </p>
         </div>
 
@@ -96,16 +96,16 @@ export default function CreatorHubPage() {
               <div className="p-4 bg-white/[0.02] border-l-2 border-[#ffabf3] rounded-r-xl space-y-1">
                 <span className="text-[9px] font-mono font-bold text-[#ffabf3] uppercase tracking-wider block">🔮 Magic Translation (TL;DR)</span>
                 <p className="text-[10.5px] italic text-[#b9cac9]">
-                  Creators receive **80% of Net Revenue** (Gross Revenue minus credit card processing fees). SECCIØN retains 20% of Net Revenue, guaranteeing a 15%–18% net platform operating margin. We handle automatic payout distribution and report earnings under DAC7 and IRS 1099 guidelines.
+                  Creators receive **80% of Net Revenue** (Gross Revenue minus credit card processing fees). SECCION retains 20% of Net Revenue, guaranteeing a 15%–18% net platform operating margin. We handle automatic payout distribution and report earnings under DAC7 and IRS 1099 guidelines.
                 </p>
               </div>
               <div className="space-y-2">
                 <span className="text-[9px] font-mono text-white/30 uppercase font-bold block">⚖️ Legal Terms</span>
                 <p>
-                  Creators on SECCIØN retain **80% of Net Revenue** on subscriptions, tips, and custom escrow orders. Net Revenue is defined as Gross Customer Payments minus third-party payment processing fees (Segpay / CCBill credit card transaction fees & chargeback reserves).
+                  Creators on SECCION retain **80% of Net Revenue** on subscriptions, tips, and custom escrow orders. Net Revenue is defined as Gross Customer Payments minus third-party payment processing fees (Segpay / CCBill credit card transaction fees & chargeback reserves).
                 </p>
                 <ul className="list-disc pl-4 space-y-1">
-                  <li>**Net Revenue Payout Formula**: Creator Payout = 80% × (Gross Revenue - Payment Processing Fees). SECCIØN retains 20% of Net Revenue, maintaining a guaranteed 15%–18% net margin.</li>
+                  <li>**Net Revenue Payout Formula**: Creator Payout = 80% × (Gross Revenue - Payment Processing Fees). SECCION retains 20% of Net Revenue, maintaining a guaranteed 15%–18% net margin.</li>
                   <li>**Tax Identification & Reporting**: Creators are solely responsible for reporting and paying all applicable taxes. In compliance with the **EU DAC7 Directive** and U.S. IRS regulations, the Platform will collect and verify your Tax Identification Number (TIN) and VAT details.</li>
                   <li>**Reporting to Authorities**: The Platform is legally mandated to report creator transactions and payouts annually to the Spanish tax authorities and the IRS (via Form **1099**-NEC).</li>
                   <li>**CNMC Registration & Transparency**: In compliance with Spain's **General Law on Audiovisual and Media Communication (2025 Reform)**, the Platform is registered in the National Registry for Media Service Providers. We disclose our Ultimate Beneficial Ownership (UBO) structures and declare advertising revenue.</li>
@@ -153,12 +153,12 @@ export default function CreatorHubPage() {
               <div className="space-y-2">
                 <span className="text-[9px] font-mono text-white/30 uppercase font-bold block">⚖️ Legal Terms</span>
                 <p>
-                  SECCIØN equips creators with advanced resources to safeguard their digital presence:
+                  SECCION equips creators with advanced resources to safeguard their digital presence:
                 </p>
                 <ul className="list-disc pl-4 space-y-1">
                   <li>**Visible Watermarks**: The Platform overlays your username or stage name onto images and videos.</li>
                   <li>**Invisible Steganographic Watermarks**: Advanced invisible tracking data is secretly embedded into media files, allowing us to identify the specific subscriber account responsible in the event of a leak.</li>
-                  <li>**DMCA Takedowns**: SECCIØN provides automated tools to generate and issue Digital Millennium Copyright Act (DMCA) takedown notices to third-party hosts or search engines hosting stolen media.</li>
+                  <li>**DMCA Takedowns**: SECCION provides automated tools to generate and issue Digital Millennium Copyright Act (DMCA) takedown notices to third-party hosts or search engines hosting stolen media.</li>
                 </ul>
               </div>
             </div>
@@ -171,7 +171,7 @@ export default function CreatorHubPage() {
               </div>
               <div className="space-y-2">
                 <p>
-                  To render exploitative talent agencies obsolete, SECCIØN provides automated tools and privacy filters:
+                  To render exploitative talent agencies obsolete, SECCION provides automated tools and privacy filters:
                 </p>
                 <ul className="list-disc pl-4 space-y-2">
                   <li>**Contract Copilot**: Our built-in legal scanner reviews brand contracts and agency agreements, flagging predatory terms such as likeness lock-in clauses or exclusive IP forfeitures.</li>
@@ -193,7 +193,7 @@ export default function CreatorHubPage() {
         <div className="flex justify-center">
           <img 
             src="/assets/logo/logo-mark.png" 
-            alt="SECCIØN Icon" 
+            alt="SECCION Icon" 
             className="w-12 h-12 md:w-14 md:h-14 drop-shadow-[0_0_20px_rgba(0,251,251,0.4)] object-contain" 
           />
         </div>
@@ -210,10 +210,10 @@ export default function CreatorHubPage() {
         <div className="flex flex-col items-center gap-3">
           <img 
             src="/assets/logo/logo-wordmark.png" 
-            alt="SECCIØN Logo" 
+            alt="SECCION Logo" 
             className="h-8 md:h-10 drop-shadow-[0_0_25px_rgba(0,251,251,0.4)] object-contain" 
           />
-          <p className="font-mono text-[11px] font-medium tracking-widest text-[#b9cac9] opacity-40 pt-2">© 2026 SECCIØN. {t("footer.rights").toUpperCase()}</p>
+          <p className="font-mono text-[11px] font-medium tracking-widest text-[#b9cac9] opacity-40 pt-2">© 2026 SECCION. {t("footer.rights").toUpperCase()}</p>
         </div>
       </footer>
 

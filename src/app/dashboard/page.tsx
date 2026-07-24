@@ -34,7 +34,7 @@ export default function Dashboard() {
         animate={{ opacity: 1, y: 0 }}
         className="text-center mb-4 md:mb-12"
       >
-        <h1 className="text-4xl font-black text-glow tracking-tighter">THE SECCIØN</h1>
+        <h1 className="text-4xl font-black text-glow tracking-tighter">THE SECCION</h1>
         <p className="text-muted-foreground mt-2 font-medium">Swipe to build relationships.</p>
       </motion.div>
 

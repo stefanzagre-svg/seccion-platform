@@ -75,11 +75,11 @@ export default function AdminSidebar({ adminUser }: SidebarProps) {
 
       {/* Header Logo */}
       <div className={cn("p-6 flex items-center gap-3 border-b border-white/5", isCollapsed ? "justify-center" : "")}>
-        <img src="/assets/logo/logo-mark.png" alt="SECCIØN" className="w-8 h-8 drop-shadow-[0_0_12px_rgba(0,251,251,0.4)] object-contain" />
+        <img src="/assets/logo/logo-mark.png" alt="SECCION" className="w-8 h-8 drop-shadow-[0_0_12px_rgba(0,251,251,0.4)] object-contain" />
         {!isCollapsed && (
           <div className="flex flex-col">
             <div className="flex items-center gap-2">
-              <span className="font-['Outfit'] font-black tracking-widest text-xs text-white">SECCIØN</span>
+              <span className="font-['Outfit'] font-black tracking-widest text-xs text-white">SECCION</span>
               <span className="text-[9px] font-['JetBrains_Mono'] uppercase tracking-widest text-primary font-bold">Station Control</span>
             </div>
           </div>

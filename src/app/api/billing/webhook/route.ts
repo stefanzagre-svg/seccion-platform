@@ -57,7 +57,7 @@ export async function POST(req: NextRequest) {
           return new NextResponse('Database update failed', { status: 500 });
         }
 
-        // 2. Log 80/20 Revenue Split (80% net to creator, 20% to SECCIØN)
+        // 2. Log 80/20 Revenue Split (80% net to creator, 20% to SECCION)
         const netCreatorPayout = pricePaid * 0.80;
         const platformTake = pricePaid * 0.20;
 

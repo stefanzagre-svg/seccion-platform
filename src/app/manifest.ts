@@ -2,8 +2,8 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "SECCIØN Platform | Authentic Connections & Content",
-    short_name: "SECCIØN",
+    name: "SECCION Platform | Authentic Connections & Content",
+    short_name: "SECCION",
     description:
       "1st Fusion Platform Dating App & Live Streaming Content Creators",
     start_url: "/",
