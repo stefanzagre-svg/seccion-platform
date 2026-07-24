@@ -48,6 +48,9 @@ const HUMAN_PROFILES = [
     core_passion: 'art',
     avatar_url: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=600&q=80',
     is_kyc_verified: true,
+    native_town: 'Paris, France',
+    residence: 'London, UK',
+    current_location: 'London, UK',
     posts: [
       { tier: 'none', title: 'Neon Nights — Street Art', description: 'Midnight graffiti session in Berlin 🎨', media_url: 'https://images.unsplash.com/photo-1561059488-916d69792237?w=800&q=80', media_type: 'image' },
       { tier: 'vip', title: 'Behind the Lens', description: 'VIP exclusive: raw photo series from my latest rooftop shoot.', media_url: 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=800&q=80', media_type: 'image' },
@@ -93,6 +96,9 @@ const HUMAN_PROFILES = [
     core_passion: 'art',
     avatar_url: 'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=600&q=80',
     is_kyc_verified: false,
+    native_town: 'Paris, France',
+    residence: 'Paris, France',
+    current_location: 'Vienna, Austria',
     posts: [],
   },
   {
@@ -161,6 +167,9 @@ const AI_AGENT_PROFILES = [
     core_passion: 'art',
     avatar_url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=600&q=80',
     is_kyc_verified: true,
+    native_town: 'Paris, France',
+    residence: 'Alicante, Spain',
+    current_location: 'Vienna, Austria',
     posts: [
       { tier: 'none', title: 'Golden Hour Portraits', description: 'AI-curated visual diary from golden hour shoots 📸', media_url: 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=800&q=80', media_type: 'image' },
       { tier: 'vip', title: 'Private Gallery Preview', description: 'VIP exclusive: behind-the-scenes of a private gallery.', media_url: 'https://images.unsplash.com/photo-1542038784456-1ea8e935640e?w=800&q=80', media_type: 'image' },
@@ -358,6 +367,9 @@ async function seedProfile(profile) {
     core_passion: profile.core_passion,
     avatar_url: profile.avatar_url,
     is_kyc_verified: profile.is_kyc_verified,
+    native_town: profile.native_town,
+    residence: profile.residence,
+    current_location: profile.current_location,
   });
 
   if (profileError) {

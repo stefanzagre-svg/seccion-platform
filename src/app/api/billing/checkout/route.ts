@@ -1,10 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import Stripe from 'stripe';
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_mock', {
-  apiVersion: '2023-10-16' as any,
-});
 
 export async function POST(req: NextRequest) {
   try {
@@ -17,138 +12,57 @@ export async function POST(req: NextRequest) {
 
     const supabase = await createClient();
 
-    // Fetch creator Connect ID to handle direct transfer or destination charge
+    // Fetch creator profile for reference
     const { data: creatorProfile } = await supabase
       .from('profiles')
-      .select('*')
+      .select('username, display_name')
       .eq('id', creatorId)
       .single();
 
-    const stripeConnectId = creatorProfile?.privacy_settings?.stripe_connect_id;
     const origin = req.nextUrl.origin;
-    const hasRealKey = process.env.STRIPE_SECRET_KEY && process.env.STRIPE_SECRET_KEY !== 'sk_test_mock';
+    const segpayEticketId = process.env.SEGPAY_ETICKET_ID || 'demo';
+    const isDemoMode = !process.env.SEGPAY_ETICKET_ID || process.env.SEGPAY_ETICKET_ID === 'demo';
 
-    // 1. VIP Subscription: recurring Billing Mode
-    if (tier === 'vip') {
-      let priceId = '';
+    // Price point IDs configured in Segpay Merchant Portal
+    const pricepointId = tier === 'master' 
+      ? (process.env.SEGPAY_PRICEPOINT_MASTER || 'pricepoint_master_002')
+      : (process.env.SEGPAY_PRICEPOINT_VIP || 'pricepoint_vip_001');
 
-      if (hasRealKey) {
-        // Create a dynamic price for recurring monthly subscription
-        const stripePrice = await stripe.prices.create({
-          unit_amount: Math.round(price * 100),
-          currency: 'usd',
-          recurring: { interval: 'month' },
-          product_data: {
-            name: `Session VIP Subscription to @${creatorProfile?.username || 'creator'}`,
-          },
-        });
-        priceId = stripePrice.id;
-      }
-
-      const sessionOptions: Stripe.Checkout.SessionCreateParams = {
-        payment_method_types: ['card'],
-        line_items: [
-          hasRealKey 
-            ? { price: priceId, quantity: 1 }
-            : {
-                price_data: {
-                  currency: 'usd',
-                  product_data: {
-                    name: `Session VIP Subscription to @${creatorProfile?.username || 'creator'} (Mock)`,
-                  },
-                  unit_amount: Math.round(price * 100),
-                  recurring: { interval: 'month' },
-                },
-                quantity: 1,
-              }
-        ],
-        mode: 'subscription',
-        success_url: `${origin}/profile/member?checkout=success&tier=vip`,
-        cancel_url: `${origin}/profile/member?checkout=cancelled`,
-        metadata: {
-          subscriberId,
-          creatorId,
-          tier,
-          price: price.toString(),
-        },
-        subscription_data: {
-          metadata: {
-            subscriberId,
-            creatorId,
-            tier,
-            price: price.toString(),
-          }
-        }
-      };
-
-      if (stripeConnectId) {
-        sessionOptions.subscription_data = {
-          ...sessionOptions.subscription_data,
-          application_fee_percent: 20, // 20% platform fee automatically taken from invoices
-          transfer_data: {
-            destination: stripeConnectId,
-          },
-        };
-      }
-
-      if (hasRealKey) {
-        const session = await stripe.checkout.sessions.create(sessionOptions);
-        return NextResponse.json({ url: session.url });
-      } else {
-        // Mock fallback checkout redirection
-        console.log('Mock VIP Subscription Session created:', sessionOptions);
-        return NextResponse.json({ url: `${origin}/profile/member?checkout=success&tier=vip` });
-      }
-    } 
-    
-    // 2. MASTER Subscription: one-time billing (non-recurring)
-    else {
-      const sessionOptions: Stripe.Checkout.SessionCreateParams = {
-        payment_method_types: ['card'],
-        line_items: [
-          {
-            price_data: {
-              currency: 'usd',
-              product_data: {
-                name: `Session MASTER Pass - Sponsored Creators Roster`,
-                description: `1-Month full access to all matched creator feeds`,
-              },
-              unit_amount: Math.round(price * 100),
-            },
-            quantity: 1,
-          },
-        ],
-        mode: 'payment',
-        success_url: `${origin}/profile/member?checkout=success&tier=master`,
-        cancel_url: `${origin}/profile/member?checkout=cancelled`,
-        metadata: {
-          subscriberId,
-          creatorId,
-          tier,
-          price: price.toString(),
-        },
-      };
-
-      if (stripeConnectId) {
-        sessionOptions.payment_intent_data = {
-          application_fee_amount: Math.round(price * 0.20 * 100), // 20% Platform Fee
-          transfer_data: {
-            destination: stripeConnectId,
-          },
-        };
-      }
-
-      if (hasRealKey) {
-        const session = await stripe.checkout.sessions.create(sessionOptions);
-        return NextResponse.json({ url: session.url });
-      } else {
-        // Mock fallback checkout redirection
-        console.log('Mock Master Pass Session created:', sessionOptions);
-        return NextResponse.json({ url: `${origin}/profile/member?checkout=success&tier=master` });
-      }
+    if (isDemoMode) {
+      // Mock Sandbox Checkout Redirection for Local / Dev testing
+      console.log(`[Segpay Demo Mode] Generating mock Join Link for ${tier.toUpperCase()} subscription:`, {
+        subscriberId,
+        creatorId,
+        tier,
+        price,
+        pricepointId
+      });
+      return NextResponse.json({ 
+        url: `${origin}/profile/member?checkout=success&tier=${tier}&processor=segpay&mock=true` 
+      });
     }
+
+    // Segpay Production Join Link Generator
+    const SEGPAY_BASE_URL = 'https://secure2.segpay.com/billing/poset.cgi';
+    const approvedUrl = `${origin}/profile/member?checkout=success&tier=${tier}&processor=segpay`;
+    const declinedUrl = `${origin}/profile/member?checkout=cancelled&processor=segpay`;
+
+    const params = new URLSearchParams({
+      'x-eticketid': segpayEticketId,
+      'pricepoint_id': pricepointId,
+      'extra_member_id': subscriberId,
+      'extra_creator_id': creatorId,
+      'extra_tier': tier,
+      'extra_price': price.toString(),
+      'approved_url': approvedUrl,
+      'declined_url': declinedUrl,
+    });
+
+    const joinUrl = `${SEGPAY_BASE_URL}?${params.toString()}`;
+    return NextResponse.json({ url: joinUrl });
+
   } catch (err: any) {
-    console.error('Checkout Session creation error:', err);
+    console.error('Segpay Checkout Generation error:', err);
     return NextResponse.json({ error: err.message || 'Internal Server Error' }, { status: 500 });
   }
 }

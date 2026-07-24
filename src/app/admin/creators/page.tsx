@@ -290,13 +290,23 @@ export default function CreatorsManagement() {
           </p>
         </div>
 
-        <button 
-          onClick={fetchCreators}
-          className="self-start p-2 rounded-xl border border-white/10 bg-white/5 text-white/60 hover:text-white hover:border-primary/45 transition-all"
-          title="Refresh Creators Data"
-        >
-          <RefreshCw className="w-4 h-4" />
-        </button>
+        <div className="flex items-center gap-3">
+          <Link
+            href="/admin/creators/applications"
+            className="px-3.5 py-2 rounded-xl border border-[#00fbfb]/30 bg-[#00fbfb]/10 text-[#00fbfb] hover:bg-[#00fbfb]/20 active:scale-95 transition-all text-xs font-mono font-bold uppercase tracking-wider flex items-center gap-2 shadow-[0_0_15px_rgba(0,251,251,0.15)]"
+          >
+            <Sparkles className="w-4 h-4" />
+            <span>Applications Queue</span>
+          </Link>
+          
+          <button 
+            onClick={fetchCreators}
+            className="p-2 rounded-xl border border-white/10 bg-white/5 text-white/60 hover:text-white hover:border-primary/45 transition-all"
+            title="Refresh Creators Data"
+          >
+            <RefreshCw className="w-4 h-4" />
+          </button>
+        </div>
       </div>
 
       {/* Filters Form */}

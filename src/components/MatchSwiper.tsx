@@ -1,18 +1,20 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, useMotionValue, useTransform, AnimatePresence } from 'framer-motion';
 import { 
-  Heart, HeartCrack, Sparkles, MessageCircleHeart, Info, X, 
-  Compass, Activity, Clock, MapPin, ShieldAlert, Lock, Send, Brain 
+  Heart, HeartCrack, Sparkles, MessageCircleHeart, Info, X, Star,
+  Compass, Activity, Clock, MapPin, ShieldAlert, Lock, Send, Brain, Flag, ShieldCheck, ArrowRight
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { fetchSwipeableProfiles, recordInteraction, fetchProfileMedia, type ProfileMedia } from '@/lib/relationship-db';
-import { calculateMatch, type UserProfile, type MatchResult } from '@/lib/match-engine';
+import { calculateMatch, type UserProfile, type MatchResult, calculateMockDistance } from '@/lib/match-engine';
 import { ARCHETYPE_PROFILES, type ArchetypeId } from '@/lib/constants';
 import SuggestionMovesModal from './SuggestionMovesModal';
 import BlurredFaceImage from '@/components/BlurredFaceImage';
+import ReportModal from '@/components/modals/ReportModal';
+
 
 
 const DEFAULT_USER_PROFILE: UserProfile = {
@@ -62,6 +64,9 @@ function mapDbProfileToEngine(dbProf: any): UserProfile {
     moods: dbProf.moods || undefined,
     corePassion: dbProf.core_passion || dbProf.corePassion || undefined,
     origins: dbProf.origins || undefined,
+    nativeTown: dbProf.native_town || dbProf.nativeTown || undefined,
+    residence: dbProf.residence || undefined,
+    currentLocation: dbProf.current_location || dbProf.currentLocation || undefined,
     isKycVerified: dbProf.is_kyc_verified || dbProf.isKycVerified || false,
     lastActiveAt: dbProf.last_active_at || dbProf.lastActiveAt || undefined,
     engagementScore: dbProf.engagement_score || dbProf.engagementScore || undefined,
@@ -94,31 +99,31 @@ const RELATIONSHIP_LEVELS_METADATA = [
 function getMockMediaForCandidate(candidateId: string): ProfileMedia[] {
   const mockMedia: Record<string, ProfileMedia[]> = {
     elena: [
-      { id: 'elena-media-1', user_id: 'elena', media_url: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=800&q=80', media_type: 'image', is_hidden: false, required_level: 'public' },
-      { id: 'elena-media-2', user_id: 'elena', media_url: 'https://images.unsplash.com/photo-1518310383802-640c2de311b2?w=800&q=80', media_type: 'image', is_hidden: false, required_level: 'public' },
-      { id: 'elena-media-3', user_id: 'elena', media_url: 'https://images.unsplash.com/photo-1541534741688-6078c6bfb5c5?w=800&q=80', media_type: 'image', is_hidden: true, required_level: 'friendly' },
-      { id: 'elena-media-4', user_id: 'elena', media_url: 'https://images.unsplash.com/photo-1507398941214-572c25f4b1dc?w=800&q=80', media_type: 'image', is_hidden: true, required_level: 'close' }
+      { id: 'elena-media-1', user_id: 'elena', media_url: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=400&q=80', media_type: 'image', is_hidden: false, required_level: 'public' },
+      { id: 'elena-media-2', user_id: 'elena', media_url: 'https://images.unsplash.com/photo-1518310383802-640c2de311b2?w=400&q=80', media_type: 'image', is_hidden: false, required_level: 'public' },
+      { id: 'elena-media-3', user_id: 'elena', media_url: 'https://images.unsplash.com/photo-1541534741688-6078c6bfb5c5?w=400&q=80', media_type: 'image', is_hidden: true, required_level: 'friendly' },
+      { id: 'elena-media-4', user_id: 'elena', media_url: 'https://images.unsplash.com/photo-1507398941214-572c25f4b1dc?w=400&q=80', media_type: 'image', is_hidden: true, required_level: 'close' }
     ],
     sofia: [
-      { id: 'sofia-media-1', user_id: 'sofia', media_url: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=800&q=80', media_type: 'image', is_hidden: false, required_level: 'public' },
-      { id: 'sofia-media-2', user_id: 'sofia', media_url: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=800&q=80', media_type: 'image', is_hidden: false, required_level: 'public' },
-      { id: 'sofia-media-3', user_id: 'sofia', media_url: 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=800&q=80', media_type: 'image', is_hidden: true, required_level: 'friendly' },
-      { id: 'sofia-media-4', user_id: 'sofia', media_url: 'https://images.unsplash.com/photo-1531297484001-80022131f5a1?w=800&q=80', media_type: 'image', is_hidden: true, required_level: 'close' }
+      { id: 'sofia-media-1', user_id: 'sofia', media_url: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&q=80', media_type: 'image', is_hidden: false, required_level: 'public' },
+      { id: 'sofia-media-2', user_id: 'sofia', media_url: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=400&q=80', media_type: 'image', is_hidden: false, required_level: 'public' },
+      { id: 'sofia-media-3', user_id: 'sofia', media_url: 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=400&q=80', media_type: 'image', is_hidden: true, required_level: 'friendly' },
+      { id: 'sofia-media-4', user_id: 'sofia', media_url: 'https://images.unsplash.com/photo-1531297484001-80022131f5a1?w=400&q=80', media_type: 'image', is_hidden: true, required_level: 'close' }
     ],
     valentina: [
-      { id: 'valentina-media-1', user_id: 'valentina', media_url: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=800&q=80', media_type: 'image', is_hidden: false, required_level: 'public' },
-      { id: 'valentina-media-2', user_id: 'valentina', media_url: 'https://images.unsplash.com/photo-1487180142328-0c4e37023af5?w=800&q=80', media_type: 'image', is_hidden: false, required_level: 'public' },
-      { id: 'valentina-media-3', user_id: 'valentina', media_url: 'https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?w=800&q=80', media_type: 'image', is_hidden: true, required_level: 'friendly' },
-      { id: 'valentina-media-4', user_id: 'valentina', media_url: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=800&q=80', media_type: 'image', is_hidden: true, required_level: 'close' }
+      { id: 'valentina-media-1', user_id: 'valentina', media_url: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=400&q=80', media_type: 'image', is_hidden: false, required_level: 'public' },
+      { id: 'valentina-media-2', user_id: 'valentina', media_url: 'https://images.unsplash.com/photo-1487180142328-0c4e37023af5?w=400&q=80', media_type: 'image', is_hidden: false, required_level: 'public' },
+      { id: 'valentina-media-3', user_id: 'valentina', media_url: 'https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?w=400&q=80', media_type: 'image', is_hidden: true, required_level: 'friendly' },
+      { id: 'valentina-media-4', user_id: 'valentina', media_url: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=400&q=80', media_type: 'image', is_hidden: true, required_level: 'close' }
     ],
     marco: [
-      { id: 'marco-media-1', user_id: 'marco', media_url: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=800&q=80', media_type: 'image', is_hidden: false, required_level: 'public' },
-      { id: 'marco-media-2', user_id: 'marco', media_url: 'https://images.unsplash.com/photo-1480429370139-e0132c086e2a?w=800&q=80', media_type: 'image', is_hidden: false, required_level: 'public' },
-      { id: 'marco-media-3', user_id: 'marco', media_url: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=800&q=80', media_type: 'image', is_hidden: true, required_level: 'friendly' }
+      { id: 'marco-media-1', user_id: 'marco', media_url: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&q=80', media_type: 'image', is_hidden: false, required_level: 'public' },
+      { id: 'marco-media-2', user_id: 'marco', media_url: 'https://images.unsplash.com/photo-1480429370139-e0132c086e2a?w=400&q=80', media_type: 'image', is_hidden: false, required_level: 'public' },
+      { id: 'marco-media-3', user_id: 'marco', media_url: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=400&q=80', media_type: 'image', is_hidden: true, required_level: 'friendly' }
     ]
   };
   return mockMedia[candidateId] || [
-    { id: `${candidateId}-fallback-1`, user_id: candidateId, media_url: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=800&q=80', media_type: 'image', is_hidden: false, required_level: 'public' }
+    { id: `${candidateId}-fallback-1`, user_id: candidateId, media_url: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=400&q=80', media_type: 'image', is_hidden: false, required_level: 'public' }
   ];
 }
 
@@ -178,6 +183,49 @@ const getRequiredLevelName = (candidate: any, promptField: 'bio_prompt_answer' |
   const found = RELATIONSHIP_LEVELS_METADATA.find(l => l.key === requiredLevel || l.name.toLowerCase().replace(' ', '_') === requiredLevel);
   return found ? found.name : 'Higher Level';
 };
+
+const isFieldLocked = (
+  candidate: any,
+  field: string,
+  currentGaugeLevel: number
+): boolean => {
+  if (!candidate.privacy_settings || !candidate.privacy_settings.hidden_values) return false;
+  const fieldSettings = candidate.privacy_settings.hidden_values[field];
+  if (!fieldSettings) return false;
+  
+  const values = Object.values(fieldSettings);
+  if (values.length === 0) return false;
+  
+  const setting: any = values[0];
+  const requiredLevel = setting?.required_level;
+  if (!requiredLevel || requiredLevel === 'public') return false;
+  
+  const levelKeys = ['strangers', 'acquaintance', 'friendly', 'close', 'intimate', 'vip', 'passionate', 'committed', 'soulmate'];
+  const reqIndex = levelKeys.indexOf(requiredLevel);
+  if (reqIndex === -1) return false;
+  
+  const normalizedReqIndex = reqIndex === 5 ? 4 : reqIndex; // map 'vip' to 'intimate' index
+  const normalizedGaugeIndex = currentGaugeLevel - 1;
+  
+  return normalizedGaugeIndex < normalizedReqIndex;
+};
+
+const getFieldRequiredLevel = (candidate: any, field: string): string => {
+  if (!candidate.privacy_settings || !candidate.privacy_settings.hidden_values) return '';
+  const fieldSettings = candidate.privacy_settings.hidden_values[field];
+  if (!fieldSettings) return '';
+  
+  const values = Object.values(fieldSettings);
+  if (values.length === 0) return '';
+  
+  const setting: any = values[0];
+  const requiredLevel = setting?.required_level;
+  if (!requiredLevel) return '';
+  
+  const found = RELATIONSHIP_LEVELS_METADATA.find(l => l.key === requiredLevel || l.name.toLowerCase().replace(' ', '_') === requiredLevel);
+  return found ? found.name : 'Higher Level';
+};
+
 
 
 // Particle class for Match Reveal Canvas
@@ -278,6 +326,14 @@ class RevealParticle {
 
 export default function MatchSwiper() {
   const router = useRouter();
+
+  const stopPropagationRef = useCallback((el: HTMLElement | null) => {
+    if (!el) return;
+    const handler = (e: Event) => e.stopPropagation();
+    el.addEventListener('pointerdown', handler, { passive: true });
+    el.addEventListener('mousedown', handler);
+    el.addEventListener('touchstart', handler, { passive: true });
+  }, []);
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [currentUserProfile, setCurrentUserProfile] = useState<UserProfile>(DEFAULT_USER_PROFILE);
   const [cards, setCards] = useState<any[]>([]);
@@ -300,6 +356,31 @@ export default function MatchSwiper() {
 
   // Match HUD detail view overlay toggle per card
   const [activeBreakdownCardId, setActiveBreakdownCardId] = useState<string | null>(null);
+  
+  const [reportingContent, setReportingContent] = useState<{ id: string, type: 'platform_content' | 'profile' | 'message' } | null>(null);
+
+  // Favorites list state (persist in localStorage)
+  const [favorites, setFavorites] = useState<string[]>([]);
+
+  useEffect(() => {
+    const saved = localStorage.getItem('swiper_favorites');
+    if (saved) {
+      try {
+        setFavorites(JSON.parse(saved));
+      } catch (e) {
+        console.error('Error parsing favorites:', e);
+      }
+    }
+  }, []);
+
+  const handleToggleFavorite = (candidateId: string) => {
+    setFavorites(prev => {
+      const isFav = prev.includes(candidateId);
+      const updated = isFav ? prev.filter(id => id !== candidateId) : [...prev, candidateId];
+      localStorage.setItem('swiper_favorites', JSON.stringify(updated));
+      return updated;
+    });
+  };
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const particlesRef = useRef<RevealParticle[]>([]);
@@ -566,6 +647,12 @@ export default function MatchSwiper() {
 
   return (
     <div className="relative w-full max-w-sm h-[calc(100vh-210px)] md:h-[650px] max-h-[680px] min-h-[400px] md:min-h-[480px] flex flex-col items-center justify-between mx-auto">
+      <ReportModal 
+        isOpen={!!reportingContent} 
+        onClose={() => setReportingContent(null)} 
+        contentId={reportingContent?.id || ''} 
+        contentType={reportingContent?.type || 'profile'} 
+      />
       
       {/* Gauge Header */}
       <div className="w-full flex flex-col items-center mb-2 shrink-0">
@@ -644,12 +731,25 @@ export default function MatchSwiper() {
                     </div>
                   )}
 
+                  {/* Right-float Report badge */}
+                  <button 
+                    ref={stopPropagationRef}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setReportingContent({ id: card.id, type: 'profile' });
+                    }}
+                    className="absolute top-4 right-4 z-20 p-2 rounded-full bg-black/40 backdrop-blur-md border border-white/10 hover:bg-[#dc143c]/20 hover:border-[#dc143c]/50 hover:text-[#dc143c] text-white/50 transition-colors shadow-lg group/report cursor-pointer"
+                    title="Report Profile"
+                  >
+                    <Flag className="w-3.5 h-3.5 group-hover/report:fill-current" />
+                  </button>
+
                   <div className="relative w-full h-full select-none">
                     {activeMedia?.media_type === 'video' ? (
                       <div className="w-full h-full relative flex items-center justify-center">
                         <BlurredFaceImage
                           sharedScore={gaugeLevel === 1 ? 2 : gaugeLevel === 2 ? 10 : gaugeLevel === 3 ? 20 : 35}
-                          isEnabledByOwner={card.face_blur_active !== false}
+                          isEnabledByOwner={card.face_blur_active === true}
                           faceCoordinates={activeMedia?.face_coordinates || card.avatar_face_coordinates}
                           className="w-full h-full"
                         >
@@ -668,7 +768,7 @@ export default function MatchSwiper() {
                         src={displayUrl}
                         alt={card.display_name || card.username}
                         sharedScore={gaugeLevel === 1 ? 2 : gaugeLevel === 2 ? 10 : gaugeLevel === 3 ? 20 : 35}
-                        isEnabledByOwner={card.face_blur_active !== false}
+                        isEnabledByOwner={card.face_blur_active === true}
                         faceCoordinates={activeMedia?.face_coordinates || card.avatar_face_coordinates}
                         className="w-full h-full"
                         imgClassName={`transition-all duration-500 ${isCurrentlyLocked ? 'blur-[30px] scale-110' : ''}`}
@@ -720,121 +820,69 @@ export default function MatchSwiper() {
                   </div>
 
                   {/* Compatibility Float Badge */}
-                  <div className="absolute top-4 right-4 z-20 flex items-center gap-1.5">
-                    <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border bg-black/75 backdrop-blur-md text-[10px] font-black uppercase tracking-widest bg-gradient-to-r ${tierConfig.gradient}`}>
+                  <div className="absolute top-4 left-4 z-20 flex items-center gap-1.5">
+                    <div className={`px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-[0.2em] flex items-center gap-1.5 backdrop-blur-md border border-white/15 bg-gradient-to-r ${tierConfig.gradient} text-white`}>
                       <span>{tierConfig.emoji}</span>
-                      <span>{matchResult.totalScore}% MATCH</span>
+                      <span>{tierConfig.emoji} CHEMISTRY</span>
                     </div>
-                    <button 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setActiveBreakdownCardId(isBreakdownOpen ? null : card.id);
-                      }}
-                      className="p-1.5 bg-black/60 hover:bg-black/90 backdrop-blur-md rounded-full border border-white/10 text-white/70 hover:text-white transition"
-                    >
-                      {isBreakdownOpen ? <X className="w-3.5 h-3.5" /> : <Info className="w-3.5 h-3.5" />}
-                    </button>
                   </div>
                   
                   {/* Card Info Overlay */}
-                  <div className="absolute bottom-0 w-full p-6 bg-gradient-to-t from-black/95 via-black/60 to-transparent">
-                    <h2 className="text-2xl font-bold text-white flex items-center gap-2">
-                      {card.display_name || card.username}
-                      {card.is_kyc_verified && <Sparkles className="w-5 h-5 text-[#ffa500]" />}
-                    </h2>
-                    
-                    {/* Archetype Badge */}
-                    {mappedCandidate.archetype && (
-                      <div className="mt-1 flex">
-                        <span className="text-[9px] font-black uppercase tracking-widest px-2 py-0.5 bg-white/10 text-white/70 border border-white/10 rounded">
-                          Archetype: {mappedCandidate.archetype}
+                  <div className="absolute bottom-0 w-full p-6 bg-gradient-to-t from-black/95 via-black/60 to-transparent flex flex-col gap-2 z-20">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <button 
+                          ref={stopPropagationRef}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            router.push(`/profile/${card.id}`);
+                          }}
+                          className="text-2xl font-bold text-white hover:text-primary transition text-left cursor-pointer flex items-center gap-1.5"
+                        >
+                          {card.display_name || card.username}
+                          {card.age && <span className="text-white/80 font-normal">, {card.age}</span>}
+                          <ArrowRight className="w-4 h-4 text-primary" />
+                        </button>
+                        {card.is_kyc_verified && (
+                          <span title="Verified Face" className="p-0.5 bg-green-500/10 rounded border border-green-500/20 text-green-400">
+                            <ShieldCheck className="w-3.5 h-3.5" />
+                          </span>
+                        )}
+                        <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-wider bg-gradient-to-r ${tierConfig.gradient} border`}>
+                          {matchResult.compatibilityTier.replace('_', ' ')}
                         </span>
                       </div>
-                    )}
-
-                    {/* Prompts Section */}
-                    <div className="mt-3 space-y-2 max-h-[140px] overflow-y-auto pr-1 select-text">
-                      {card.bio_prompt_question && card.bio_prompt_answer && (() => {
-                        const isLocked1 = isPromptAnswerLockedForViewer(card, 'bio_prompt_answer', gaugeLevel);
-                        const reqLevelName1 = getRequiredLevelName(card, 'bio_prompt_answer');
-                        return (
-                          <div className="p-2.5 rounded-xl bg-black/40 border border-white/10 backdrop-blur-sm text-left">
-                            <p className="text-[9px] font-black uppercase tracking-wider text-primary mb-1">
-                              Prompt 1: {card.bio_prompt_question}
-                            </p>
-                            {isLocked1 ? (
-                              <div className="relative overflow-hidden rounded-lg p-2 bg-black/50 border border-white/5 flex items-center justify-center min-h-[40px]">
-                                <div className="absolute inset-0 bg-white/5 backdrop-blur-md z-0" />
-                                <div className="relative z-10 flex flex-col items-center gap-1 text-center">
-                                  <Lock className="w-3 h-3 text-[#dc143c]" />
-                                  <span className="text-[9px] font-black uppercase tracking-widest text-[#dc143c]">
-                                    {reqLevelName1 || 'Higher Level'} required
-                                  </span>
-                                </div>
-                              </div>
-                            ) : (
-                              <p className="text-white/95 text-xs leading-relaxed">
-                                "{card.bio_prompt_answer}"
-                              </p>
-                            )}
-                          </div>
-                        );
-                      })()}
-
-                      {card.bio_prompt_question_2 && card.bio_prompt_answer_2 && (() => {
-                        const isLocked2 = isPromptAnswerLockedForViewer(card, 'bio_prompt_answer_2', gaugeLevel);
-                        const reqLevelName2 = getRequiredLevelName(card, 'bio_prompt_answer_2');
-                        return (
-                          <div className="hidden sm:block p-2.5 rounded-xl bg-black/40 border border-white/10 backdrop-blur-sm text-left">
-                            <p className="text-[9px] font-black uppercase tracking-wider text-primary mb-1">
-                              Prompt 2: {card.bio_prompt_question_2}
-                            </p>
-                            {isLocked2 ? (
-                              <div className="relative overflow-hidden rounded-lg p-2 bg-black/50 border border-white/5 flex items-center justify-center min-h-[40px]">
-                                <div className="absolute inset-0 bg-white/5 backdrop-blur-md z-0" />
-                                <div className="relative z-10 flex flex-col items-center gap-1 text-center">
-                                  <Lock className="w-3 h-3 text-[#dc143c]" />
-                                  <span className="text-[9px] font-black uppercase tracking-widest text-[#dc143c]">
-                                    {reqLevelName2 || 'Higher Level'} required
-                                  </span>
-                                </div>
-                              </div>
-                            ) : (
-                              <p className="text-white/95 text-xs leading-relaxed">
-                                "{card.bio_prompt_answer_2}"
-                              </p>
-                            )}
-                          </div>
-                        );
-                      })()}
-
-                      {!card.bio_prompt_question && !card.bio_prompt_question_2 && (
-                        <p className="text-white/80 text-sm text-left">{card.bio || "No bio yet."}</p>
-                      )}
+                      
+                      <button 
+                        ref={stopPropagationRef}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setActiveBreakdownCardId(isBreakdownOpen ? null : card.id);
+                        }}
+                        className="p-2 bg-primary text-black rounded-full hover:shadow-[0_0_15px_rgba(102,252,241,0.5)] scale-100 hover:scale-105 active:scale-95 transition"
+                        title="View Details"
+                      >
+                        <Info className="w-4 h-4" />
+                      </button>
                     </div>
 
-                    {/* Hidden Info Badge if applicable */}
-                    {card.privacy_settings?.hidden_values && Object.keys(card.privacy_settings.hidden_values).length > 0 && (
-                      <div className="mt-2.5 flex items-center gap-1.5 px-3 py-1 bg-[#dc143c]/15 border border-[#dc143c]/25 rounded-full w-fit">
-                        <Lock className="w-3 h-3 text-[#dc143c]" />
-                        <span className="text-[8px] font-black uppercase tracking-widest text-[#dc143c]">
-                          {Object.values(card.privacy_settings.hidden_values).reduce((acc: number, field: any) => acc + Object.keys(field).length, 0)}+ Hidden Info
+                    <div className="flex flex-wrap items-center gap-3 text-[10px] text-white/60 font-semibold mt-1">
+                      {mappedCandidate.location && (
+                        <span className="flex items-center gap-1">
+                          <MapPin className="w-3.5 h-3.5 text-red-400" />
+                          {mappedCandidate.location}
                         </span>
-                      </div>
-                    )}
-
-                    {card.hobbies && card.hobbies.length > 0 && (
-                      <div className="flex flex-wrap gap-1 mt-3">
-                        {card.hobbies.slice(0, 3).map((hobby: string, i: number) => (
-                          <span key={i} className="text-[10px] bg-white/10 text-white/80 px-2 py-0.5 rounded-full font-medium">
-                            {hobby}
-                          </span>
-                        ))}
-                      </div>
-                    )}
+                      )}
+                      
+                      {mappedCandidate.archetype && (
+                        <span className="px-2 py-0.5 bg-white/5 border border-white/10 rounded uppercase text-[8px] font-black tracking-widest text-white/50">
+                          {mappedCandidate.archetype}
+                        </span>
+                      )}
+                    </div>
                   </div>
 
-                  {/* Slide-Up Match Compatibility HUD Breakdown Overlay */}
+                  {/* Slide-Up Match Compatibility & Profile Details Drawer */}
                   <AnimatePresence>
                     {isBreakdownOpen && (
                       <motion.div
@@ -842,88 +890,44 @@ export default function MatchSwiper() {
                         animate={{ y: 0 }}
                         exit={{ y: '100%' }}
                         transition={{ type: 'spring', damping: 25, stiffness: 220 }}
-                        className="absolute inset-x-0 bottom-0 top-16 bg-black/95 backdrop-blur-2xl border-t border-white/10 p-5 z-30 flex flex-col justify-between text-left"
+                        className="absolute inset-x-0 bottom-0 top-16 bg-black/95 backdrop-blur-2xl border-t border-white/10 p-6 z-30 flex flex-col justify-between text-left"
                       >
-                        {/* Scrollable Upper Section */}
-                        <div className="flex-1 overflow-y-auto pr-1 mb-3">
-                          <div className="flex justify-between items-center border-b border-white/10 pb-3 mb-3">
-                            <div>
-                              <h3 className="text-sm font-black uppercase tracking-widest text-white">
-                                Compatibility HUD
+                        {/* Scrollable Content Section */}
+                        <div className="flex-1 overflow-y-auto pr-1 mb-4 space-y-6 scrollbar-hide">
+                          
+                          {/* Profile details */}
+                          <div className="space-y-4">
+                            <div className="border-b border-white/10 pb-3">
+                              <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                                About {card.display_name || card.username}
                               </h3>
-                              <p className="text-[9px] font-black text-primary uppercase tracking-widest mt-0.5">
-                                Tracker: {matchResult.compatibilityTier.replace('_', ' ')}
-                              </p>
                             </div>
-                            <span className="text-2xl font-black text-primary">
-                              {matchResult.totalScore}%
-                            </span>
-                          </div>
 
-                          {/* Blocker alert if blocked */}
-                          {matchResult.compatibilityTier === 'blocked' && (
-                            <div className="flex items-center gap-2 p-2 bg-red-950/20 border border-red-500/20 rounded-xl mb-3 text-red-400">
-                              <ShieldAlert className="w-4.5 h-4.5 shrink-0" />
-                              <span className="text-[9px] font-black uppercase tracking-wider truncate">
-                                Blocker: {matchResult.hardBlockerHit}
-                              </span>
-                            </div>
-                          )}
-
-                          {/* 6 Signals Breakdown list */}
-                          <div className="grid grid-cols-2 gap-3">
-                            {SIGNALS_METADATA.map(sig => {
-                              const scoreVal = matchResult.breakdown[sig.key] || 0;
-                              return (
-                                <div key={sig.key} className="bg-white/2 border border-white/5 p-2 rounded-xl">
-                                  <div className="flex items-center justify-between text-[8px] font-black uppercase tracking-widest mb-1.5 text-white/60">
-                                    <span className="flex items-center gap-1.5">
-                                      <sig.icon className={`w-3 h-3 ${sig.color}`} />
-                                      {sig.label}
-                                    </span>
-                                    <span className="text-white">{Math.round(scoreVal * 100)}%</span>
-                                  </div>
-                                  <div className="h-1 bg-white/5 rounded-full overflow-hidden">
-                                    <div 
-                                      className="h-full bg-primary" 
-                                      style={{ width: `${scoreVal * 100}%` }}
-                                    />
-                                  </div>
-                                </div>
-                              );
-                            })}
-                          </div>
-
-                          {/* Profile Bio & Insights Section */}
-                          <div className="border-t border-white/10 pt-4 mt-4 space-y-3">
-                            <h4 className="text-[10px] font-black uppercase tracking-widest text-white/50">
-                              Profile Bio & Insights
-                            </h4>
-                            
                             {card.bio && (
-                              <div className="p-2.5 rounded-xl bg-white/2 border border-white/5">
-                                <p className="text-[9px] font-black uppercase tracking-wider text-muted-foreground mb-1">Bio</p>
-                                <p className="text-white text-xs leading-relaxed">{card.bio}</p>
+                              <div className="p-3.5 rounded-2xl bg-white/[0.02] border border-white/5">
+                                <p className="text-[9px] font-black uppercase tracking-widest text-white/40 mb-1.5">Bio</p>
+                                <p className="text-white/90 text-xs leading-relaxed font-medium">{card.bio}</p>
                               </div>
                             )}
 
+                            {/* Prompts */}
                             {card.bio_prompt_question && card.bio_prompt_answer && (() => {
                               const isLocked1 = isPromptAnswerLockedForViewer(card, 'bio_prompt_answer', gaugeLevel);
                               const reqLevelName1 = getRequiredLevelName(card, 'bio_prompt_answer');
                               return (
-                                <div className="p-2.5 rounded-xl bg-white/2 border border-white/5">
-                                  <p className="text-[9px] font-black uppercase tracking-wider text-primary mb-1">
+                                <div className="p-3.5 rounded-2xl bg-white/[0.02] border border-white/5">
+                                  <p className="text-[9px] font-black uppercase tracking-widest text-primary mb-1.5">
                                     Q: {card.bio_prompt_question}
                                   </p>
                                   {isLocked1 ? (
-                                    <div className="flex items-center gap-1.5 mt-1">
-                                      <Lock className="w-3 h-3 text-[#dc143c]" />
-                                      <span className="text-[9px] font-black uppercase tracking-widest text-[#dc143c]">
+                                    <div className="flex items-center gap-1.5 text-red-400 mt-1">
+                                      <Lock className="w-3.5 h-3.5" />
+                                      <span className="text-[9px] font-black uppercase tracking-widest">
                                         Locked ({reqLevelName1 || 'Higher Level'} required)
                                       </span>
                                     </div>
                                   ) : (
-                                    <p className="text-white text-xs leading-relaxed">
+                                    <p className="text-white/90 text-xs leading-relaxed font-medium">
                                       "{card.bio_prompt_answer}"
                                     </p>
                                   )}
@@ -935,19 +939,19 @@ export default function MatchSwiper() {
                               const isLocked2 = isPromptAnswerLockedForViewer(card, 'bio_prompt_answer_2', gaugeLevel);
                               const reqLevelName2 = getRequiredLevelName(card, 'bio_prompt_answer_2');
                               return (
-                                <div className="p-2.5 rounded-xl bg-white/2 border border-white/5">
-                                  <p className="text-[9px] font-black uppercase tracking-wider text-primary mb-1">
+                                <div className="p-3.5 rounded-2xl bg-white/[0.02] border border-white/5">
+                                  <p className="text-[9px] font-black uppercase tracking-widest text-primary mb-1.5">
                                     Q: {card.bio_prompt_question_2}
                                   </p>
                                   {isLocked2 ? (
-                                    <div className="flex items-center gap-1.5 mt-1">
-                                      <Lock className="w-3 h-3 text-[#dc143c]" />
-                                      <span className="text-[9px] font-black uppercase tracking-widest text-[#dc143c]">
+                                    <div className="flex items-center gap-1.5 text-red-400 mt-1">
+                                      <Lock className="w-3.5 h-3.5" />
+                                      <span className="text-[9px] font-black uppercase tracking-widest">
                                         Locked ({reqLevelName2 || 'Higher Level'} required)
                                       </span>
                                     </div>
                                   ) : (
-                                    <p className="text-white text-xs leading-relaxed">
+                                    <p className="text-white/90 text-xs leading-relaxed font-medium">
                                       "{card.bio_prompt_answer_2}"
                                     </p>
                                   )}
@@ -955,31 +959,198 @@ export default function MatchSwiper() {
                               );
                             })()}
 
+                            {/* Traits Grid */}
+                            {(() => {
+                              const traits = [
+                                {
+                                  key: 'relationship_goals',
+                                  label: 'Relationship Goals',
+                                  value: card.relationship_goals?.length > 0 ? card.relationship_goals.join(', ') : card.relationshipGoal,
+                                },
+                                {
+                                  key: 'relationship_types',
+                                  label: 'Relationship Type',
+                                  value: card.relationship_types?.length > 0 ? card.relationship_types.join(', ') : card.relationshipType,
+                                },
+                                {
+                                  key: 'sexual_preferences',
+                                  label: 'Sexual Preference',
+                                  value: card.sexual_preferences?.length > 0 ? card.sexual_preferences.join(', ') : card.sexual_preference,
+                                },
+                                {
+                                  key: 'height',
+                                  label: 'Height',
+                                  value: card.lifestyle_habits?.height || card.height,
+                                },
+                                {
+                                  key: 'career',
+                                  label: 'Profession',
+                                  value: card.lifestyle_habits?.career || card.career,
+                                },
+                                {
+                                  key: 'family_goals',
+                                  label: 'Family Plan',
+                                  value: card.lifestyle_habits?.family_goals || card.familyGoals,
+                                },
+                                {
+                                  key: 'origins',
+                                  label: 'Distance',
+                                  value: calculateMockDistance(currentUserProfile, card),
+                                },
+                                {
+                                  key: 'native_town',
+                                  label: 'Hometown',
+                                  value: card.native_town || card.nativeTown,
+                                },
+                                {
+                                  key: 'residence',
+                                  label: 'Residence',
+                                  value: card.residence,
+                                },
+                                {
+                                  key: 'current_location',
+                                  label: 'Current Location',
+                                  value: card.current_location || card.currentLocation,
+                                },
+                                {
+                                  key: 'favorite_languages',
+                                  label: 'Languages',
+                                  value: (() => {
+                                    const favs = card.favorite_languages || [];
+                                    const adds = card.additional_languages || [];
+                                    const combined = [...favs, ...adds];
+                                    return combined.length > 0 ? combined.join(', ') : null;
+                                  })(),
+                                },
+                              ];
+
+                              const filledTraits = traits.filter(t => !!t.value);
+
+                              if (filledTraits.length === 0) return null;
+
+                              return (
+                                <div className="space-y-2.5">
+                                  <p className="text-[9px] font-black uppercase tracking-widest text-white/40">Profile Traits</p>
+                                  <div className="grid grid-cols-2 gap-2">
+                                    {filledTraits.map(({ key, label, value }) => {
+                                      const locked = isFieldLocked(card, key, gaugeLevel);
+                                      return locked ? (
+                                        <div key={key} className="p-2.5 bg-red-950/5 border border-red-500/10 rounded-xl flex items-center justify-between gap-2.5 text-left">
+                                          <div className="flex flex-col min-w-0">
+                                            <span className="text-[8px] font-black uppercase text-white/30 tracking-widest leading-none">{label}</span>
+                                            <span className="text-[9px] font-black text-red-400 mt-1 flex items-center gap-1">
+                                              <Lock className="w-3 h-3" /> Locked
+                                            </span>
+                                          </div>
+                                          <span className="text-[7px] font-black uppercase tracking-wider text-red-500 bg-red-500/10 px-1 py-0.5 rounded border border-red-500/20 text-right shrink-0">
+                                            {getFieldRequiredLevel(card, key)}
+                                          </span>
+                                        </div>
+                                      ) : (
+                                        <div key={key} className="p-2.5 bg-white/[0.02] border border-white/5 rounded-xl flex flex-col justify-center text-left">
+                                          <span className="text-[8px] font-black uppercase text-white/40 tracking-widest leading-none">{label}</span>
+                                          <span className="text-[9px] font-bold text-white/80 mt-1 uppercase tracking-wide truncate" title={String(value)}>
+                                            {String(value)}
+                                          </span>
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                              );
+                            })()}
+
                             {card.hobbies && card.hobbies.length > 0 && (
-                              <div className="p-2.5 rounded-xl bg-white/2 border border-white/5">
-                                <p className="text-[9px] font-black uppercase tracking-wider text-muted-foreground mb-1.5">Hobbies</p>
-                                <div className="flex flex-wrap gap-1">
+                              <div className="p-3.5 rounded-2xl bg-white/[0.02] border border-white/5">
+                                <p className="text-[9px] font-black uppercase tracking-widest text-white/40 mb-2">Hobbies & Interests</p>
+                                <div className="flex flex-wrap gap-1.5">
                                   {card.hobbies.map((hobby: string, i: number) => (
-                                    <span key={i} className="text-[9px] bg-white/10 text-white/80 px-2 py-0.5 rounded-full font-medium">
+                                    <span key={i} className="text-[9px] bg-white/5 border border-white/10 text-white/80 px-2.5 py-1 rounded-full font-semibold">
                                       {hobby}
                                     </span>
                                   ))}
                                 </div>
                               </div>
                             )}
+
+                            {/* Hidden Info Badge if applicable */}
+                            {card.privacy_settings?.hidden_values && Object.keys(card.privacy_settings.hidden_values).length > 0 && (
+                              <div className="flex items-center gap-2 bg-[#dc143c]/10 border border-[#dc143c]/20 px-3.5 py-2 rounded-xl w-fit">
+                                <Lock className="w-3.5 h-3.5 text-[#dc143c]" />
+                                <span className="text-[9px] font-black uppercase tracking-widest text-[#dc143c]">
+                                  {Object.values(card.privacy_settings.hidden_values).reduce((acc: number, field: any) => acc + Object.keys(field).length, 0)} Info Locked by User
+                                </span>
+                              </div>
+                            )}
                           </div>
+
+                          {/* Compatibility section */}
+                          <div className="space-y-4 pt-4 border-t border-white/5">
+                            <div className="flex justify-between items-center">
+                              <div>
+                                <h3 className="text-md font-bold uppercase tracking-widest text-white">
+                                  Vibe Breakdown
+                                </h3>
+                                <p className="text-[9px] font-black text-primary uppercase tracking-widest mt-0.5">
+                                  Vibe Level: {matchResult.compatibilityTier.replace('_', ' ')}
+                                </p>
+                              </div>
+                              <span className="text-2xl font-black text-primary">
+                                {tierConfig.emoji}
+                              </span>
+                            </div>
+
+                            {/* Blocker alert if blocked */}
+                            {matchResult.compatibilityTier === 'blocked' && (
+                              <div className="flex items-center gap-2 p-2.5 bg-red-950/20 border border-red-500/20 rounded-xl text-red-400">
+                                <ShieldAlert className="w-4.5 h-4.5 shrink-0" />
+                                <span className="text-[9px] font-black uppercase tracking-wider truncate">
+                                  Blocker: {matchResult.hardBlockerHit}
+                                </span>
+                              </div>
+                            )}
+
+                            {/* 6 Signals Breakdown list */}
+                            <div className="grid grid-cols-2 gap-3">
+                              {SIGNALS_METADATA.map(sig => {
+                                const scoreVal = matchResult.breakdown[sig.key] || 0;
+                                return (
+                                  <div key={sig.key} className="bg-white/[0.02] border border-white/5 p-2.5 rounded-2xl">
+                                    <div className="flex items-center justify-between text-[8px] font-black uppercase tracking-widest mb-1.5 text-white/50">
+                                      <span className="flex items-center gap-1.5">
+                                        <sig.icon className={`w-3.5 h-3.5 ${sig.color}`} />
+                                        {sig.label}
+                                      </span>
+                                      <span className="text-white/80">{Math.round(scoreVal * 100)}%</span>
+                                    </div>
+                                    <div className="h-1 bg-white/5 rounded-full overflow-hidden">
+                                      <div 
+                                        className="h-full bg-primary" 
+                                        style={{ width: `${scoreVal * 100}%` }}
+                                      />
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                            
+                            <div className="p-3.5 rounded-2xl bg-white/[0.02] border border-white/5">
+                              <p className="text-[9px] font-black uppercase tracking-widest text-white/40 mb-1.5">Vibe Insight</p>
+                              <p className="text-white/90 text-xs leading-relaxed font-medium">
+                                {matchResult.tierReason}
+                              </p>
+                            </div>
+                          </div>
+
                         </div>
 
-                        {/* Chemistry description/tierReason */}
-                        <div className="border-t border-white/10 pt-3 shrink-0">
-                          <p className="text-[10px] text-white/60 font-medium leading-relaxed">
-                            {matchResult.tierReason}
-                          </p>
+                        {/* Close Action */}
+                        <div className="border-t border-white/5 pt-4 shrink-0">
                           <button 
                             onClick={() => setActiveBreakdownCardId(null)}
-                            className="w-full mt-4 py-2 bg-white/5 border border-white/10 hover:bg-white/10 text-white rounded-xl text-[9px] font-black uppercase tracking-widest transition"
+                            className="w-full py-3 bg-white/5 border border-white/10 hover:bg-white/10 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest transition"
                           >
-                            Close HUD
+                            Close Profile Details
                           </button>
                         </div>
                       </motion.div>
@@ -1037,10 +1208,15 @@ export default function MatchSwiper() {
         <motion.button 
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.9 }}
-          onClick={() => setIsModalOpen(true)}
-          className="w-16 h-16 rounded-full bg-accent/20 border border-accent flex items-center justify-center text-accent shadow-[0_0_15px_rgba(255,0,127,0.5)] transition"
+          onClick={() => cards[0] && handleToggleFavorite(cards[0].id)}
+          disabled={cards.length === 0}
+          className={`w-16 h-16 rounded-full border flex items-center justify-center transition shadow-xl ${
+            cards[0] && favorites.includes(cards[0].id)
+              ? 'bg-yellow-500/25 border-yellow-500 text-yellow-400 shadow-[0_0_15px_rgba(234,179,8,0.4)]'
+              : 'bg-white/5 border-white/10 text-white/60 hover:text-white hover:border-white/30'
+          }`}
         >
-          <Brain className="w-7 h-7" />
+          <Star className={`w-7 h-7 ${cards[0] && favorites.includes(cards[0].id) ? 'fill-yellow-500 text-yellow-500' : ''}`} />
         </motion.button>
 
         <motion.button 
@@ -1135,7 +1311,7 @@ export default function MatchSwiper() {
                 </div>
                 
                 <h1 className="text-5xl font-black text-glow tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-white via-primary to-accent mb-10 uppercase">
-                  IT'S A MATCH!
+                  IT'S A CONNECTION!
                 </h1>
 
                 {/* 3D Flip Profile Cards */}
@@ -1224,7 +1400,7 @@ export default function MatchSwiper() {
                   className="mb-10 px-4 py-3 bg-white/2 border border-white/5 rounded-2xl"
                 >
                   <p className="text-[10px] font-black uppercase tracking-[0.25em] text-primary">
-                    {scoreVal.totalScore}% Compatibility Synergy
+                    Synergy Level: {scoreVal.compatibilityTier.replace('_', ' ')}
                   </p>
                   <p className="text-[9px] text-white/50 uppercase font-black tracking-wider leading-relaxed mt-1.5 max-w-[280px]">
                     {scoreVal.tierReason}

@@ -1,0 +1,294 @@
+1: "use client";
+3: import React, { useState, useEffect } from "react";
+6: import { motion, AnimatePresence } from "framer-motion";
+7: import PublicNavbar from "@/components/PublicNavbar";
+8: import { WaitlistSignup } from "@/components/WaitlistSignup";
+9: import MemberTourModal from "@/components/onboarding/MemberTourModal";
+10: import { SpecializationFilter } from "@/components/SpecializationFilter";
+12:   Sparkles, 
+17:   TrendingUp, 
+32: // Double-Bezel Card wrapper matching SECCI�N design guidelines
+33: function DoubleBezelCard({ children, className = "" }: { children: React.ReactNode; 
+36:       <div className="absolute inset-0 border border-white/5 rounded-[2rem] 
+38:         {children}
+46:   const [isTourOpen, setIsTourOpen] = useState(false);
+48:   // Specialization filter & 18+ SafeSearch state
+49:   const [selectedSpecialization, setSelectedSpecialization] = useState<string>("all");
+50:   const [includeAdultContent, setIncludeAdultContent] = useState<boolean>(false);
+52:   // Reveal progression simulation states
+53:   const [peekCountdown, setPeekCountdown] = useState<number | null>(null);
+54:   const [hasUnblurKey, setHasUnblurKey] = useState<boolean>(false);
+55:   const [isFaceBlurred, setIsFaceBlurred] = useState<boolean>(true);
+58:   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(null);
+74:   const handlePeekRequest = () => {
+86:   const resetRevealDemo = () => {
+104:       tinder: "Boost fees required to be seen",
+106:       hinge: "Paid premium likes required"
+113:       hinge: "Static profile prompt likes"
+125:       tinder: "Unverified profiles remain",
+138:   // Member FAQ Data (10 Questions focusing on Members)
+142:       a: "Yes. All matchmaking, communication channels, compatibility radar checks, 
+145:       q: "How does the Synergy matching engine connect me with matches?",
+146:       a: "Instead of just sorting by proximity or photos, our engine reads your 
+150:       a: "The Chemistry Meter is our progress gauge. It tracks mutual chat momentum 
+153:       q: "How does the Reveal Progression protect privacy while keeping dating 
+154:       a: "Profiles feature two clear, unblurred 'Aesthetic Anchors' (lifestyle shots, 
+158:       a: "Sponsored Creators are creators you choose to support directly. A single 
+162:       a: "Yes. To prevent spam and maintain a verified community, you must sign up for 
+166:       a: "Yes. Members can create one customized Date Plan (a concrete, time-bound 
+169:       q: "How does the Dating Coach AI help me connect?",
+170:       a: "Our built-in AI Wingman acts as a digital relationship coach and platform 
+173:       q: "How does SECCI�N verify profile safety without storing my ID documents?",
+174:       a: "To unlock real-world dating moves (Level 4+), users complete a secure face 
+177:       q: "Can I connect and talk with matches in other countries?",
+178:       a: "Absolutely. Our platform is built for global vibes (matching US, UK, EU, and 
+184:       className="w-full min-h-[100dvh] text-[#e2e2e2] overflow-x-hidden font-sans 
+186:         backgroundImage: "radial-gradient(circle at 15% 50%, rgba(255, 171, 243, 
+190:       <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
+195:               "linear-gradient(rgba(255,255,255,1) 1px, transparent 1px), 
+205:       <header className="relative z-10 pt-24 sm:pt-36 pb-14 sm:pb-20 px-4 sm:px-6 
+206:         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 sm:gap-10 lg:gap-16 
+210:             <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full 
+219:               <span className="block text-[#00fbfb] 
+223:               Traditional dating apps exploit gender imbalances, charging you just to 
+226:             <div className="flex flex-wrap items-center gap-3 pt-2">
+229:                 className="group px-5 py-3 rounded-full bg-[#00fbfb] text-black 
+232:                 <span className="w-6 h-6 rounded-full bg-black/10 flex items-center 
+238:                 onClick={() => setIsTourOpen(true)}
+239:                 className="group px-5 py-3 rounded-full border border-[#ffabf3]/40 
+242:                 <span className="w-6 h-6 rounded-full bg-[#ffabf3]/10 flex 
+243:                   <Sparkles className="w-3.5 h-3.5 text-[#ffabf3] animate-pulse" />
+250:           <div className="col-span-12 lg:col-span-5 flex justify-center min-w-0 
+251:             <div className="relative w-full max-w-full sm:max-w-[400px] 
+252:               <div className="w-full h-full rounded-[calc(2.5rem-0.375rem)] 
+254:                 <div className="absolute inset-0 opacity-[0.03] bg-[linear-gradient(rgb
+256:                 <div className="flex justify-between items-center border-b 
+258:                   <span className="flex items-center gap-1.5 text-[9px] font-mono 
+259:                     <Sparkles className="w-3 h-3 text-[#ffabf3] animate-pulse" /> 
+265:                   <div className="p-3 bg-white/[0.04] border border-white/5 
+266:                     <div className="flex items-center gap-3 min-w-0">
+268:                       <div className="relative w-9 h-9 rounded-full overflow-hidden 
+269:                         <img 
+279:                   <div className="p-3 bg-white/[0.04] border border-white/5 
+280:                     <div className="flex items-center gap-3 min-w-0">
+282:                       <div className="relative w-9 h-9 rounded-full overflow-hidden 
+283:                         <img 
+293:                   <div className="p-3 bg-white/[0.04] border border-white/5 
+294:                     <div className="flex items-center gap-3 min-w-0">
+296:                       <div className="relative w-9 h-9 rounded-full overflow-hidden 
+297:                         <img 
+304:                     <span className="text-[10px] font-mono font-bold text-[#b9cac9] 
+308:                 <p className="text-[9px] text-[#b9cac9]/60 text-center leading-relaxed 
+309:                   Ranked updates daily based on conversation gravity and completed 
+321:           <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 
+323:               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full 
+324:                 <Sparkles className="w-3 h-3 text-[#ffabf3]" />
+325:                 <span>Mentors & Connection Catalysts</span>
+331:                 Level up your date night confidence, outfit style, makeup glow-up, and 
+336:           {/* Interactive Specialization Filter & SafeSearch Toggle */}
+340:             includeAdult={includeAdultContent}
+341:             onToggleAdult={setIncludeAdultContent}
+350:                 <div className="flex items-center justify-between">
+351:                   <span className="px-3 py-1 rounded-full text-[10px] font-mono 
+357:                 <div className="flex items-center gap-3">
+358:                   <div className="w-12 h-12 rounded-full overflow-hidden border-2 
+359:                     <img 
+362:                     <h3 className="text-sm font-bold text-white 
+368:                   "I help members create glowing date-night makeup looks and 
+373:                   <span>#EveningGlam</span>
+379:                   className="w-full py-2 rounded-xl bg-white/5 border border-white/10 
+381:                   Request Style Order ($15)
+389:                 <div className="flex items-center justify-between">
+390:                   <span className="px-3 py-1 rounded-full text-[10px] font-mono 
+396:                 <div className="flex items-center gap-3">
+397:                   <div className="w-12 h-12 rounded-full overflow-hidden border-2 
+398:                     <img 
+407:                   "Send me 2 outfit choices before your date - I'll tell you which fit 
+411:                   <span>#DateStyle</span>
+418:                   className="w-full py-2 rounded-xl bg-white/5 border border-white/10 
+420:                   Request Fit Audit ($15)
+428:                 <div className="flex items-center justify-between">
+429:                   <span className="px-3 py-1 rounded-full text-[10px] font-mono 
+435:                 <div className="flex items-center gap-3">
+436:                   <div className="w-12 h-12 rounded-full overflow-hidden border-2 
+437:                     <img 
+446:                   "Learn 20-minute gourmet recipes that impress dates every single 
+450:                   <span>#RomanticRecipes</span>
+452:                   <span>#ImpressionDinner</span>
+457:                   className="w-full py-2 rounded-xl bg-white/5 border border-white/10 
+467:                 <div className="flex items-center justify-between">
+468:                   <span className="px-3 py-1 rounded-full text-[10px] font-mono 
+474:                 <div className="flex items-center gap-3">
+475:                   <div className="w-12 h-12 rounded-full overflow-hidden border-2 
+476:                     <img 
+480:                     <p className="text-[11px] text-[#b9cac9]">Chemistry & Opener 
+485:                   "We analyze your match's archetype and craft tailored icebreaker 
+490:                   <span>#OpenerAdvice</span>
+496:                   className="w-full py-2 rounded-xl bg-white/5 border border-white/10 
+498:                   Request Opener Audit ($10)
+503:             {/* 5. Fitness Coach */}
+504:             {(selectedSpecialization === 'all' || selectedSpecialization === 
+506:                 <div className="flex items-center justify-between">
+507:                   <span className="px-3 py-1 rounded-full text-[10px] font-mono 
+508:                     <span>???</span> Fitness Coach
+513:                 <div className="flex items-center gap-3">
+514:                   <div className="w-12 h-12 rounded-full overflow-hidden border-2 
+515:                     <img 
+524:                   "Level up your physical presence, posture, and energy levels for 
+528:                   <span>#FitnessMotivation</span>
+535:                   className="w-full py-2 rounded-xl bg-white/5 border border-white/10 
+545:                 <div className="flex items-center justify-between">
+546:                   <span className="px-3 py-1 rounded-full text-[10px] font-mono 
+552:                 <div className="flex items-center gap-3">
+553:                   <div className="w-12 h-12 rounded-full overflow-hidden border-2 
+554:                     <img 
+557:                     <h3 className="text-sm font-bold text-white 
+558:                     <p className="text-[11px] text-[#b9cac9]">Executive Presence & 
+563:                   "I audit your LinkedIn, refine your executive presence, and coach 
+574:                   className="w-full py-2 rounded-xl bg-white/5 border border-white/10 
+576:                   Request LinkedIn Audit ($25)
+581:             {/* 7. Wellness Guide */}
+582:             {(selectedSpecialization === 'all' || selectedSpecialization === 
+584:                 <div className="flex items-center justify-between">
+585:                   <span className="px-3 py-1 rounded-full text-[10px] font-mono 
+586:                     <span>??</span> Wellness Guide
+588:                   <span className="text-[10px] font-mono text-teal-400 bg-teal-500/10 
+591:                 <div className="flex items-center gap-3">
+592:                   <div className="w-12 h-12 rounded-full overflow-hidden border-2 
+593:                     <img 
+602:                   "Breathwork sessions, sleep optimization protocols, and stress 
+606:                   <span>#WellnessGuide</span>
+607:                   <span>#Mindfulness</span>
+613:                   className="w-full py-2 rounded-xl bg-white/5 border border-white/10 
+615:                   Join Breathwork Session ($15)
+623:                 <div className="flex items-center justify-between">
+624:                   <span className="px-3 py-1 rounded-full text-[10px] font-mono 
+630:                 <div className="flex items-center gap-3">
+631:                   <div className="w-12 h-12 rounded-full overflow-hidden border-2 
+632:                     <img 
+641:                   "Build financial independence, master automated investing, and plan 
+652:                   className="w-full py-2 rounded-xl bg-white/5 border border-white/10 
+659:             {/* 6. 18+ Adult Sensual Creator (Gated by SafeSearch Toggle) */}
+660:             {includeAdultContent && (selectedSpecialization === 'all' || 
+661:               <div className="p-5 rounded-2xl bg-gradient-to-tr from-red-950/40 
+662:                 <div className="flex items-center justify-between">
+663:                   <span className="px-3 py-1 rounded-full text-[10px] font-mono 
+664:                     <span>??</span> 18+ Sensual Creator
+669:                 <div className="flex items-center gap-3">
+670:                   <div className="w-12 h-12 rounded-full overflow-hidden border-2 
+671:                     <img 
+675:                     <p className="text-[11px] text-red-200/70">Sensual Art & Private 
+680:                   "Private 18+ VIP content, behind-closed-doors streams, and intimate 
+684:                   <span>#SensualContent</span>
+686:                   <span>#PrivateStream</span>
+691:                   className="w-full py-2 rounded-xl bg-red-600/30 border 
+702:       {/* Swipe Recession / Sociological Section */}
+704:         <div className="max-w-4xl mx-auto space-y-12 text-center">
+707:               Escape the Swiping Trap
+710:               Tired of Endless Digital Noise?
+713:               Dating apps in 2026 have become virtual transaction catalogs. We are 
+723:                   65%+ male ratios create hyper-competitive visibility bottlenecks.
+727:                   Uncapped premium tiers force you to pay just to have your messages 
+741:                   Creator subscriptions fund matching, keeping basic dating features 
+745:                   Structured Date Plans and levels turn digital talk into verified 
+749:                   Synergy matching on mood, personality, and values, not just visual 
+757:       {/* Reveal Progression Interactive Simulator */}
+758:       <section className="relative z-10 py-16 sm:py-24 px-4 sm:px-6 md:px-12 lg:px-20 
+759:         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 sm:gap-12 lg:gap-16 
+767:               The Reveal Progression
+770:               Dating is fundamentally driven by physical attraction. Therefore, we 
+773:               Our **Face Blur Encryption** and **Aesthetic Anchors** are designed as a 
+777:               <div className="flex items-start sm:items-center gap-3">
+778:                 <div className="w-5 h-5 rounded-full bg-[#00fbfb]/10 border 
+781:                 <span className="break-words">Clear portraits are highly recommended 
+783:               <div className="flex items-start sm:items-center gap-3">
+784:                 <div className="w-5 h-5 rounded-full bg-[#00fbfb]/10 border 
+787:                 <span className="break-words">Optional Face Blur Encryption keeps your 
+789:               <div className="flex items-start sm:items-center gap-3">
+790:                 <div className="w-5 h-5 rounded-full bg-[#00fbfb]/10 border 
+793:                 <span className="break-words">Aesthetic Anchors showcase visual style 
+799:           <div className="col-span-12 lg:col-span-6 flex justify-center min-w-0 
+804:                 <div className="relative aspect-square w-full rounded-2xl 
+806:                     
+807:                     alt="Siena" 
+812:                   {/* Badges on Portrait overlay */}
+813:                   <div className="absolute top-3 left-3 sm:top-4 sm:left-4 z-10 px-2.5 
+817:                         <span className="text-[8px] font-mono font-bold text-[#ffabf3] 
+830:                 {/* Aesthetic Anchors (Mandatory 2 unblurred files) */}
+832:                   <div className="relative h-18 sm:h-20 rounded-xl overflow-hidden 
+834:                       
+840:                   <div className="relative h-18 sm:h-20 rounded-xl overflow-hidden 
+842:                       
+852:                   <div className="flex justify-between items-center">
+854:                       <h4 className="text-xs font-bold text-white">Siena Vibe</h4>
+859:                         onClick={resetRevealDemo}
+862:                         Reset Demo
+871:                       onClick={handlePeekRequest}
+872:                       className="px-3 sm:px-4 py-2.5 rounded-xl border 
+874:                       Request Limited Peek
+880:                       className="px-3 sm:px-4 py-2.5 rounded-xl bg-[#00fbfb] 
+895:       <section className="relative z-10 py-16 sm:py-24 px-4 sm:px-6 md:px-12 lg:px-20 
+896:         <div className="max-w-full sm:max-w-4xl mx-auto space-y-8 sm:space-y-12 
+905:               No generic pick-up formulas or robotic lines. Our built-in relationship 
+911:               <div className="w-8 h-8 rounded-lg bg-[#00fbfb]/10 border 
+916:                 The Coach measures emotional balance and connection momentum in your 
+921:               <div className="w-8 h-8 rounded-lg bg-[#ffabf3]/10 border 
+922:                 <Sparkles className="w-4.5 h-4.5 text-[#ffabf3]" />
+926:                 Stuck on how to start? The Wingman suggests customized conversation 
+931:               <div className="w-8 h-8 rounded-lg bg-[#39FF14]/10 border 
+944:       <section className="relative z-10 py-16 sm:py-24 px-4 sm:px-6 md:px-12 lg:px-20 
+945:         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 sm:gap-12 lg:gap-16 
+950:               Connection Quest
+956:               Relationship progress is tracked through 8 Vibe Levels. As your Vibe 
+959:               At **Level 1 and 2**, you unlock basic chat and low-intensity digital 
+963:               <div className="p-3 bg-white/[0.02] border border-white/5 rounded-xl 
+965:                 <span className="text-white font-bold uppercase break-words">Basic 
+967:               <div className="p-3 bg-[#00fbfb]/5 border border-[#00fbfb]/20 rounded-xl 
+969:                 <span className="text-[#00fbfb] font-bold uppercase break-words">60+ 
+971:               <div className="p-3 bg-white/[0.02] border border-white/5 rounded-xl 
+987:               We design our platform for real-world interactions. **Date Plans** are 
+990:               Standard members get **1 customized Date Plan creation per month** for 
+1007:         <div className="max-w-4xl mx-auto space-y-12 text-center">
+1018:           <div className="block md:hidden space-y-4 text-left">
+1024:                 <div className="flex justify-between items-center text-xs">
+1028:                 <div className="flex justify-between items-center text-[11px] 
+1032:                 <div className="flex justify-between items-center text-[11px] 
+1036:                 <div className="flex justify-between items-center text-[11px] 
+1044:           {/* Desktop Comparison Table (>= md) */}
+1045:           <div className="hidden md:block w-full overflow-x-auto rounded-2xl border 
+1049:                   <th className="p-4 font-mono font-bold uppercase 
+1072:       {/* Security & KYC (Identity Attestation) */}
+1074:         <div className="max-w-4xl mx-auto space-y-8 text-center">
+1075:           <div className="w-12 h-12 rounded-full bg-[#39FF14]/10 border 
+1080:               Verified Profiles. No Doc Storage.
+1083:               We eliminate catfishing and fake accounts completely. When connections 
+1086:               To respect your absolute privacy, **SECCI�N does not store any official 
+1096:           <div className="text-center space-y-4">
+1100:             <h2 className="font-display text-3xl md:text-4xl font-black text-white 
+1107:               const isOpen = openFaqIndex === idx;
+1111:                   className="bg-white/[0.02] border border-white/5 rounded-2xl 
+1115:                     onClick={() => setOpenFaqIndex(isOpen ? null : idx)}
+1116:                     className="w-full px-6 py-5 flex justify-between items-center 
+1122:                       className={`w-4 h-4 text-[#00fbfb] shrink-0 
+1126:                   <AnimatePresence initial={false}>
+1127:                     {isOpen && (
+1139:                   </AnimatePresence>
+1149:       <section className="relative z-10 pb-24 pt-4 px-4 sm:px-6 md:px-12 lg:px-20 
+1150:         <DoubleBezelCard className="w-full max-w-[640px] text-center">
+1152:             <h3 className="font-display text-xl sm:text-2xl font-black text-white 
+1154:               Step into a premium, transparent dating landscape funded by the creator 
+1159:                 className="inline-block w-full sm:w-auto px-8 sm:px-10 py-4 
+1173:       <footer className="relative z-10 bg-[#0B0C10] border-t border-white/10 flex 
+1174:         {/* Top: Centered 3D Icon */}
+1175:         <div className="flex justify-center">
+1184:         <div className="flex flex-wrap justify-center gap-4 sm:gap-8">
+1185:           <Link className="text-[#b9cac9] hover:text-[#ffabf3] transition-colors 
+1186:           <Link className="text-[#b9cac9] hover:text-[#ffabf3] transition-colors 
+1187:           <Link className="text-[#b9cac9] hover:text-[#ffabf3] transition-colors 
+1188:           <Link className="text-[#b9cac9] hover:text-[#ffabf3] transition-colors 
+1192:         <div className="flex flex-col items-center gap-3">
+1198:           <p className="font-mono text-[11px] font-medium tracking-widest 
+1204:         isOpen={isTourOpen} 
+1205:         onClose={() => setIsTourOpen(false)} 
+1206:         onStartQuest={() => {
+1207:           setIsTourOpen(false);

@@ -20,27 +20,39 @@ export interface MasterSubscriptionRequest {
 }
 
 export interface PayoutBreakdown {
-  totalRevenue: number;
-  platformCut: number;       // 20%
-  totalCreatorEscrow: number; // 80%
+  grossRevenue: number;
+  processorFee: number;       // e.g. 4.5% Segpay/CCBill credit card fee
+  netRevenue: number;         // grossRevenue - processorFee
+  platformCut: number;        // 20% of netRevenue (Guarantees ~15.2% - 18.5% net platform margin)
+  totalCreatorEscrow: number; // 80% of netRevenue
   creatorDistributions: Array<{
     creatorId: string;
-    guaranteedPayout: number; // 20% of the 80% escrow
-    variablePayout: number;   // up to 60% of the 80% escrow based on engagement
+    guaranteedPayout: number; // 20% of the 80% net escrow
+    variablePayout: number;   // up to 60% of the 80% net escrow based on engagement
     totalPayout: number;
   }>;
 }
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
-export const PLATFORM_CUT_PERCENT = 0.20;
-export const CREATOR_ESCROW_PERCENT = 0.80;
+export const DEFAULT_PROCESSOR_FEE_PERCENT = 0.045; // 4.5% avg Segpay / CCBill processing & reserve
+export const PLATFORM_CUT_PERCENT = 0.20;         // 20% of Net Revenue
+export const CREATOR_ESCROW_PERCENT = 0.80;        // 80% of Net Revenue
 
 // Of the 80% escrow, how is it split?
 export const ESCROW_GUARANTEED_RATIO = 0.25; // 25% of 80% = 20% overall
 export const ESCROW_VARIABLE_RATIO = 0.75;   // 75% of 80% = 60% overall
 
 // ─── Functions ───────────────────────────────────────────────────────────────
+
+/**
+ * Calculates Net Revenue after deducting payment processor fees (Segpay / CCBill).
+ */
+export function calculateNetRevenue(grossAmount: number, processorFeePercent: number = DEFAULT_PROCESSOR_FEE_PERCENT): { grossAmount: number; processorFee: number; netRevenue: number } {
+  const processorFee = Math.round(grossAmount * processorFeePercent * 100) / 100;
+  const netRevenue = Math.max(0, grossAmount - processorFee);
+  return { grossAmount, processorFee, netRevenue };
+}
 
 /**
  * Calculates the total cost to the user for the Master Subscription.
@@ -54,20 +66,23 @@ export function calculateMasterPrice(req: MasterSubscriptionRequest): number {
 
 /**
  * Calculates the escrow payouts for a given billing cycle.
- * The total revenue is split: 20% platform, 80% creators.
- * The creator pool is distributed proportionally based on their base price weight,
- * then split into guaranteed and variable tranches.
+ * Payouts are calculated as 80% of NET Revenue (Gross minus processor fees).
+ * The platform retains 20% of Net Revenue, guaranteeing a 15% - 18% net margin.
  */
-export function calculatePayouts(req: MasterSubscriptionRequest): PayoutBreakdown {
-  const totalRevenue = calculateMasterPrice(req);
-  const platformCut = totalRevenue * PLATFORM_CUT_PERCENT;
-  const totalCreatorEscrow = totalRevenue * CREATOR_ESCROW_PERCENT;
+export function calculatePayouts(req: MasterSubscriptionRequest, processorFeePercent: number = DEFAULT_PROCESSOR_FEE_PERCENT): PayoutBreakdown {
+  const grossRevenue = calculateMasterPrice(req);
+  const { processorFee, netRevenue } = calculateNetRevenue(grossRevenue, processorFeePercent);
+  
+  const platformCut = Math.round(netRevenue * PLATFORM_CUT_PERCENT * 100) / 100;
+  const totalCreatorEscrow = Math.round(netRevenue * CREATOR_ESCROW_PERCENT * 100) / 100;
 
-  // If no creators, all goes to platform (or hold in escrow)
+  // If no creators, all net revenue goes to platform
   if (req.creators.length === 0) {
     return {
-      totalRevenue,
-      platformCut: totalRevenue,
+      grossRevenue,
+      processorFee,
+      netRevenue,
+      platformCut: netRevenue,
       totalCreatorEscrow: 0,
       creatorDistributions: []
     };
@@ -81,25 +96,24 @@ export function calculatePayouts(req: MasterSubscriptionRequest): PayoutBreakdow
     const creatorTotalPool = totalCreatorEscrow * shareWeight;
     
     // Guaranteed portion
-    const guaranteedPayout = creatorTotalPool * ESCROW_GUARANTEED_RATIO;
+    const guaranteedPayout = Math.round(creatorTotalPool * ESCROW_GUARANTEED_RATIO * 100) / 100;
     
     // Variable portion (scales with engagement accelerator)
     const maxVariablePayout = creatorTotalPool * ESCROW_VARIABLE_RATIO;
-    const variablePayout = maxVariablePayout * creator.engagementAccelerator;
-
-    // Any unearned variable payout (if accelerator < 1) could theoretically return to platform or roll over,
-    // but for this model we assume it's kept by the platform or a community pool.
+    const variablePayout = Math.round(maxVariablePayout * creator.engagementAccelerator * 100) / 100;
 
     return {
       creatorId: creator.creatorId,
       guaranteedPayout,
       variablePayout,
-      totalPayout: guaranteedPayout + variablePayout
+      totalPayout: Math.round((guaranteedPayout + variablePayout) * 100) / 100
     };
   });
 
   return {
-    totalRevenue,
+    grossRevenue,
+    processorFee,
+    netRevenue,
     platformCut,
     totalCreatorEscrow,
     creatorDistributions: distributions

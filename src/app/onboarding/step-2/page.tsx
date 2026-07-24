@@ -254,9 +254,9 @@ export default function OnboardingStepTwo() {
                 <Check className="w-12 h-12 text-primary" />
               </motion.div>
               <div>
-                <h2 className="text-4xl font-black tracking-tighter mb-4">PULSE CALIBRATED</h2>
+                <h2 className="text-4xl font-black tracking-tighter mb-4">VIBE LOCKED IN</h2>
                 <p className="text-sm text-white/60 font-medium leading-relaxed max-w-xs mx-auto">
-                  "Your lifestyle matrix has been synchronized with the platform. You are ready to experience the high-fidelity feed."
+                  "Your vibe profile is live. Time to see who's out there."
                 </p>
               </div>
 
@@ -271,7 +271,7 @@ export default function OnboardingStepTwo() {
                   {isLoading ? (
                     <>
                       <Loader2 className="w-4 h-4 animate-spin" />
-                      SAVING MATRIX...
+                      LOCKING IN YOUR VIBES...
                     </>
                   ) : (
                     <>
@@ -284,7 +284,7 @@ export default function OnboardingStepTwo() {
                   disabled={isLoading}
                   className="text-[9px] font-black text-white/30 hover:text-white uppercase tracking-widest flex items-center justify-center gap-2 mx-auto transition-colors disabled:opacity-30"
                 >
-                  <RotateCcw className="w-3 h-3" /> Re-calibrate Habits
+                  <RotateCcw className="w-3 h-3" /> Redo My Vibes
                 </button>
               </div>
             </motion.div>
@@ -296,7 +296,7 @@ export default function OnboardingStepTwo() {
       {/* Security Breadcrumb */}
       <div className="absolute bottom-10 flex items-center gap-4 text-[8px] font-black text-white/20 uppercase tracking-[0.4em]">
         <div className="w-12 h-[1px] bg-white/10" />
-        SECURE MATRIX ACCESS
+        ENCRYPTED ZONE 🔒
         <div className="w-12 h-[1px] bg-white/10" />
       </div>
     </div>

@@ -82,6 +82,44 @@ function BrainPulse() {
   );
 }
 
+function BackgroundParticles() {
+  const particles = Array.from({ length: 12 });
+  return (
+    <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
+      {particles.map((_, i) => {
+        const size = Math.random() * 2.5 + 1;
+        const delay = Math.random() * 5;
+        const duration = Math.random() * 8 + 10;
+        const x = Math.random() * 100;
+        const y = Math.random() * 100;
+        return (
+          <motion.div
+            key={i}
+            className="absolute rounded-full bg-cyan-400/20"
+            style={{
+              width: size,
+              height: size,
+              left: `${x}%`,
+              top: `${y}%`,
+            }}
+            animate={{
+              y: [0, -120 - Math.random() * 100],
+              x: [0, (Math.random() - 0.5) * 40],
+              opacity: [0, 0.6, 0]
+            }}
+            transition={{
+              duration: duration,
+              repeat: Infinity,
+              delay: delay,
+              ease: "easeInOut"
+            }}
+          />
+        );
+      })}
+    </div>
+  );
+}
+
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function AISuggestionPanel({
@@ -199,6 +237,7 @@ export default function AISuggestionPanel({
 
         {/* ── Panel container ── */}
         <div className="relative rounded-3xl border border-cyan-500/15 bg-black/50 backdrop-blur-2xl overflow-hidden">
+          <BackgroundParticles />
 
           {/* Top gradient line */}
           <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-cyan-400/60 to-transparent" />

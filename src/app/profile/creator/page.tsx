@@ -20,6 +20,7 @@ export default function CreatorProfile() {
   const [calendarEvents, setCalendarEvents] = useState<any[]>([]);
   const [isLoadingEvents, setIsLoadingEvents] = useState(false);
   const [creatorId, setCreatorId] = useState('364177d5-8664-460d-8534-111111111111');
+  const [faceBlurActive, setFaceBlurActive] = useState(false);
 
   const [showUploadModal, setShowUploadModal] = useState<{ show: boolean, target: string }>({ show: false, target: '' });
 
@@ -40,7 +41,11 @@ export default function CreatorProfile() {
     reading: BookOpen,
     'social media': Smartphone,
     'pet lover': PawPrint,
-    'morning/night': Sun
+    'morning/night': Sun,
+    'creative flow': Music,
+    'adventure seek': Trophy,
+    'love style': Heart,
+    communication: ChevronRight,
   };
 
   const [familyGoal, setFamilyGoal] = useState(FAMILY_GOALS[2]); // Default: Open to children
@@ -221,7 +226,7 @@ export default function CreatorProfile() {
       <div className="max-w-6xl mx-auto">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8 gap-4 relative z-10">
           <div>
-            <h1 className="text-4xl font-black text-glow tracking-tighter">CREATOR STUDIO</h1>
+            <h1 className="text-4xl font-black text-glow tracking-tighter">MY PROFILE VIBE & PORTFOLIO</h1>
             <p className="text-muted-foreground mt-1 text-xs uppercase tracking-widest font-bold opacity-60">Manage your empire and scale your influence.</p>
           </div>
           <div className="flex gap-3">
@@ -241,7 +246,7 @@ export default function CreatorProfile() {
             <div className="bg-white/[0.02] border border-white/5 p-2 rounded-[2rem] shadow-[0_30px_60px_-15px_rgba(0,0,0,0.8)] backdrop-blur-xl relative overflow-hidden">
               <div className="bg-black/40 border border-white/5 rounded-[calc(2rem-0.5rem)] p-4 space-y-2 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]">
                 {[
-                  { id: 'monetization', label: 'Monetization', icon: DollarSign, activeStyle: 'bg-primary text-black font-black shadow-[0_0_20px_rgba(102,252,241,0.4)] border border-primary/20 scale-105' },
+                  { id: 'monetization', label: 'Earnings', icon: DollarSign, activeStyle: 'bg-primary text-black font-black shadow-[0_0_20px_rgba(102,252,241,0.4)] border border-primary/20 scale-105' },
                   { id: 'content', label: 'Content Tiers', icon: Lock, activeStyle: 'bg-accent text-white font-black shadow-[0_0_20px_rgba(69,162,158,0.4)] border border-accent/20 scale-105' },
                   { id: 'calendar', label: 'Calendar', icon: CalendarIcon, activeStyle: 'bg-[#ffa500]/20 border border-[#ffa500]/30 text-[#ffa500] font-black scale-105' }
                 ].map((tab) => {
@@ -288,6 +293,55 @@ export default function CreatorProfile() {
                 </div>
               </div>
             </div>
+
+            {/* Live Profile Preview Card */}
+            <div className="bg-white/[0.02] border border-white/5 p-2 rounded-[2rem] shadow-[0_30px_60px_-15px_rgba(0,0,0,0.8)] backdrop-blur-xl relative overflow-hidden">
+              <div className="bg-black/40 border border-white/5 rounded-[calc(2rem-0.5rem)] p-4 space-y-4 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]">
+                <div className="border-b border-white/5 pb-2 flex justify-between items-center text-left">
+                  <h3 className="text-[10px] font-black uppercase tracking-widest text-primary">Live Card Preview</h3>
+                  <span className="text-[8px] bg-primary/10 text-primary border border-primary/20 px-2 py-0.5 rounded font-black uppercase tracking-wider">Subscriber view</span>
+                </div>
+
+                <div className="relative aspect-[3/4] rounded-2xl overflow-hidden border border-white/10 group shadow-lg">
+                  {/* Mock Profile Avatar */}
+                  <img 
+                    src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&q=80" 
+                    alt="Elena Preview" 
+                    className={`w-full h-full object-cover transition duration-500 ${faceBlurActive ? 'blur-md grayscale/30' : ''}`}
+                  />
+                  
+                  {/* Blur Overlay if active */}
+                  {faceBlurActive && (
+                    <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center gap-1.5 p-4 text-center z-10">
+                      <Lock className="w-5 h-5 text-red-400 animate-pulse" />
+                      <span className="text-[8px] font-black uppercase tracking-widest text-red-400">Gated (Face Blurred)</span>
+                    </div>
+                  )}
+
+                  {/* Gradient bottom overlay */}
+                  <div className="absolute bottom-0 w-full p-4 bg-gradient-to-t from-black/95 via-black/50 to-transparent flex flex-col gap-1 z-20 text-left">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-1">
+                        <p className="text-sm font-black text-white">Elena, 26</p>
+                        <span className="p-0.5 bg-green-500/10 rounded border border-green-500/20 text-green-400">
+                          <ShieldCheck className="w-3 h-3" />
+                        </span>
+                      </div>
+                      <span className="text-[9px] font-black text-primary">${basePrice.toFixed(2)}/mo</span>
+                    </div>
+
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      <span className="text-[8px] bg-white/5 border border-white/10 px-2 py-0.5 rounded-full font-semibold text-white/70">
+                        {selectedHabits.workout === 'Every Day' || selectedHabits.workout === 'Often' ? '🏋️ Fitness' : '🧘 Healthy'}
+                      </span>
+                      <span className="text-[8px] bg-white/5 border border-white/10 px-2 py-0.5 rounded-full font-semibold text-white/70">
+                        {selectedHabits.traveling === 'Every Week' || selectedHabits.traveling === 'Monthly' ? '✈️ Traveler' : '🚗 Local'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* Main Content Area */}
@@ -301,17 +355,22 @@ export default function CreatorProfile() {
               <div className="bg-black/40 border border-white/5 rounded-[2rem] p-8 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)] h-full min-h-[584px]">
               {activeTab === 'monetization' && (
                 <div className="space-y-8">
-                  <div className="flex justify-between items-start">
+                  <div className="flex justify-between items-start flex-col sm:flex-row gap-4">
                     <div>
-                      <h2 className="text-2xl font-black flex items-center gap-2 mb-2 tracking-tighter"><DollarSign className="text-primary" /> PRICING STRATEGY</h2>
-                      <p className="text-muted-foreground text-[11px] uppercase font-bold tracking-widest opacity-60">Set your base subscription price. Your MASTER tier scales automatically based on your content value.</p>
+                      <h2 className="text-2xl font-black flex items-center gap-2 mb-2 tracking-tighter"><DollarSign className="text-primary" /> PRICING & PRIVACY</h2>
+                      <p className="text-muted-foreground text-[11px] uppercase font-bold tracking-widest opacity-60">Set your base subscription price, dynamic pricing levels, and configure profile visibility encryption.</p>
                     </div>
-                    <SafetyWarning className="max-w-[300px]" />
+                    <SafetyWarning className="max-w-[300px] shrink-0" />
                   </div>
                   
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Pricing Strategy Card */}
                     <div className="bg-white/[0.01] border border-white/5 p-1 rounded-3xl shadow-md">
                       <div className="bg-black/50 border border-white/5 rounded-[calc(1.5rem)] p-6 space-y-6">
+                        <h3 className="text-xs font-black uppercase tracking-[0.2em] text-white/80 flex items-center gap-2 pb-3 border-b border-white/5">
+                          <DollarSign className="w-4 h-4 text-primary" /> Earnings Settings
+                        </h3>
+
                         <div>
                           <label className="block text-[10px] font-black text-white/40 mb-3 uppercase tracking-[0.2em]">VIP Base Price</label>
                           <div className="flex items-center gap-3">
@@ -319,92 +378,139 @@ export default function CreatorProfile() {
                             <input 
                               type="number" 
                               value={basePrice}
-                              onChange={(e) => setBasePrice(parseFloat(e.target.value) || 0)}
-                              className="bg-transparent text-4xl font-black outline-none w-32 border-b border-white/10 focus:border-primary transition duration-300"
+                              onChange={(e) => setBasePrice(Number(e.target.value))}
+                              step="0.01"
+                              className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-lg font-black text-white outline-none focus:border-primary transition"
                             />
                           </div>
                         </div>
 
-                        <div className="p-5 bg-primary/5 rounded-2xl border border-primary/25 relative overflow-hidden group">
-                          <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 blur-[40px] rounded-full -mr-16 -mt-16 group-hover:bg-primary/20 transition-all duration-700" />
-                          <div className="relative z-10 space-y-4">
-                            <div className="flex justify-between items-center mb-1">
-                              <p className="text-[9px] font-black text-primary uppercase tracking-[0.2em]">Master Multiplier Strategy</p>
-                              <span className="px-2.5 py-1 bg-primary/20 text-primary border border-primary/30 rounded-full text-[8px] font-black tracking-widest uppercase animate-pulse">
-                                X{dynamicPricing.multiplier.toFixed(1)} DEMAND PULSE
-                              </span>
+                        <div className="space-y-4 pt-4 border-t border-white/5 text-left">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="text-[10px] font-black uppercase tracking-widest text-white/80">Master Tier (Dynamic)</p>
+                              <p className="text-[8px] text-white/45 uppercase font-black tracking-widest">Base Rate x {dynamicPricing.multiplier}</p>
+                              <p className="text-2xl font-black text-white tracking-tighter mt-1">${dynamicPricing.dynamicPrice.toFixed(2)}<span className="text-[10px] text-white/45 ml-1 font-bold">/MO</span></p>
                             </div>
-                            
-                            {/* Demand Pulse towers with springs and gradients */}
-                            <div className="flex items-end justify-between gap-1.5 h-16 pt-2">
-                              {[0.4, 0.6, 0.5, 0.8, 1.0, 0.9, 0.7].map((h, i) => {
-                                const isPeak = i === 4;
-                                return (
-                                  <motion.div 
-                                    key={i}
-                                    initial={{ height: 0 }}
-                                    animate={{ height: `${h * 100}%` }}
-                                    whileHover={{ scaleY: 1.1, originY: 1 }}
-                                    transition={{ 
-                                      type: "spring", 
-                                      stiffness: 100, 
-                                      damping: 10,
-                                      delay: i * 0.05 
-                                    }}
-                                    className={`w-full rounded-t-lg relative group/tower cursor-pointer transition-all duration-300 ${
-                                      isPeak 
-                                        ? 'bg-gradient-to-t from-primary/50 to-primary shadow-[0_0_20px_rgba(102,252,241,0.6)]' 
-                                        : 'bg-gradient-to-t from-white/5 to-white/20 hover:from-accent/30 hover:to-accent/60'
-                                    }`}
-                                  >
-                                    <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-1.5 py-0.5 bg-black border border-white/10 rounded text-[7px] font-black uppercase text-white tracking-widest opacity-0 group-hover/tower:opacity-100 transition-opacity">
-                                      {Math.round(h * 100)}%
-                                    </span>
-                                  </motion.div>
-                                );
-                              })}
+                            <div className="text-right">
+                              <p className="text-[8px] text-accent font-black uppercase tracking-widest">Current Yield</p>
+                              <p className="text-sm font-black text-accent mt-1">+{Math.round((dynamicPricing.multiplier - 1) * 100)}% PREMIUM</p>
                             </div>
-                            
-                            <div className="flex justify-between items-end border-t border-white/5 pt-4 mt-2">
-                              <div>
-                                <p className="text-[8px] text-white/45 uppercase font-black tracking-widest">Base Rate x {dynamicPricing.multiplier}</p>
-                                <p className="text-2xl font-black text-white tracking-tighter mt-1">${dynamicPricing.dynamicPrice.toFixed(2)}<span className="text-[10px] text-white/45 ml-1 font-bold">/MO</span></p>
-                              </div>
-                              <div className="text-right">
-                                <p className="text-[8px] text-accent font-black uppercase tracking-widest">Current Yield</p>
-                                <p className="text-sm font-black text-accent mt-1">+{Math.round((dynamicPricing.multiplier - 1) * 100)}% PREMIUM</p>
-                              </div>
-                            </div>
-
-                            <p className="text-[8px] text-white/30 uppercase font-bold leading-tight mt-4 border-t border-white/5 pt-3">
-                              *Master pricing scales automatically based on content volume ({dynamicPricing.contentVolume} assets) and matching demand.
-                            </p>
                           </div>
+
+                          <p className="text-[8px] text-white/30 uppercase font-bold leading-tight border-t border-white/5 pt-3">
+                            *Master pricing scales automatically based on content volume ({dynamicPricing.contentVolume} assets) and connection demand.
+                          </p>
                         </div>
                       </div>
                     </div>
 
-                    <div className="space-y-6">
-                      <h3 className="text-lg font-black flex items-center gap-2 uppercase tracking-tighter"><Trophy className="w-5 h-5 text-[#ffff00]" /> LIFESTYLE & HABITS</h3>
-                      
-                      <div className="bg-white/[0.01] border border-white/5 p-1 rounded-3xl shadow-md">
-                        <div className="bg-black/50 border border-white/5 rounded-[calc(1.5rem)] p-5 space-y-5">
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                            {Object.entries(HABIT_CHOICES).map(([habit, options]) => {
-                              const Icon = LIFESTYLE_ICONS[habit] || Trophy;
-                              return (
-                                <div key={habit} className="p-3 bg-white/[0.02] border border-white/5 rounded-2xl hover:border-white/10 transition flex items-center justify-between gap-3">
-                                  <div className="flex items-center gap-2 min-w-0">
-                                    <div className="w-7 h-7 bg-white/5 border border-white/10 rounded-xl flex items-center justify-center shrink-0">
-                                      <Icon className="w-3.5 h-3.5 text-primary" />
-                                    </div>
-                                    <span className="text-[10px] font-black uppercase tracking-widest text-white/60 truncate">{habit}</span>
+                    {/* Face Blur Settings Card */}
+                    <div className="bg-white/[0.01] border border-white/5 p-1 rounded-3xl shadow-md flex flex-col justify-between">
+                      <div className="bg-black/50 border border-white/5 rounded-[calc(1.5rem)] p-6 space-y-6 h-full flex flex-col justify-between">
+                        <div className="space-y-4">
+                          <h3 className="text-xs font-black uppercase tracking-[0.2em] text-white/80 flex items-center gap-2 pb-3 border-b border-white/5">
+                            <Lock className="w-4 h-4 text-primary" /> Face Blur Privacy (Stealth Mode)
+                          </h3>
+                          
+                          <div className="space-y-2 text-left">
+                            <p className="text-[10px] font-black text-white/40 uppercase tracking-widest">Blur Pics for Connections</p>
+                            <p className="text-[9px] text-white/60 leading-normal font-medium">
+                              When enabled, your main profile photos and live previews will remain blurred for connections until your chemistry meter level reaches Level 3 (VIP).
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="pt-4 border-t border-white/5 flex items-center justify-between">
+                          <span className="text-[9px] font-black uppercase tracking-widest text-white/40">Status: {faceBlurActive ? 'Blurred' : 'Unblurred'}</span>
+                          <button
+                            type="button"
+                            onClick={() => setFaceBlurActive(!faceBlurActive)}
+                            className={`px-6 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition duration-300 \${
+                              faceBlurActive 
+                                ? 'bg-primary text-black shadow-[0_0_15px_rgba(102,252,241,0.4)] border border-primary/20 scale-105' 
+                                : 'bg-white/5 text-white/40 border border-white/10 hover:bg-white/10'
+                            }`}
+                          >
+                            {faceBlurActive ? 'Disable Blur' : 'Enable Blur'}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Lifestyle & Habits Section */}
+                  <div className="space-y-6 pt-4">
+                    <h3 className="text-lg font-black flex items-center gap-2 uppercase tracking-tighter"><Trophy className="w-5 h-5 text-[#ffff00]" /> LIFESTYLE & HABITS</h3>
+                    
+                    <div className="bg-white/[0.01] border border-white/5 p-1 rounded-3xl shadow-md">
+                      <div className="bg-black/50 border border-white/5 rounded-[calc(1.5rem)] p-6 space-y-6">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                          {Object.entries(HABIT_CHOICES).map(([habit, options]) => {
+                            const Icon = LIFESTYLE_ICONS[habit] || Trophy;
+                            const currentValue = selectedHabits[habit] || '';
+                            const hasValue = !!currentValue;
+                            const HABIT_LABELS: Record<string, string> = {
+                              workout: 'Workout',
+                              traveling: 'Traveling',
+                              partying: 'Partying',
+                              'healthy eating': 'Healthy Eating',
+                              socializing: 'Socializing',
+                              reading: 'Reading',
+                              sleep: 'Sleep',
+                              smoking: 'Smoking',
+                              drinking: 'Drinking',
+                              'social media': 'Social Media',
+                              pets: 'Pet Lover',
+                              'morning/night': 'Morning / Night',
+                              'creative flow': 'Creative Flow',
+                              'adventure seek': 'Adventure',
+                              'love style': 'Love Style',
+                              communication: 'Communication',
+                            };
+                            const label = HABIT_LABELS[habit] ?? habit;
+                            return (
+                              <div
+                                key={habit}
+                                className={`relative p-4 rounded-2xl border transition-all duration-200 flex flex-col gap-3 ${
+                                  hasValue
+                                    ? 'bg-primary/[0.04] border-primary/20 hover:border-primary/40'
+                                    : 'bg-white/[0.02] border-white/5 hover:border-white/15'
+                                }`}
+                              >
+                                {/* Category header */}
+                                <div className="flex items-center gap-2">
+                                  <div className={`w-7 h-7 rounded-xl flex items-center justify-center shrink-0 border transition-all ${
+                                    hasValue
+                                      ? 'bg-primary/20 border-primary/30'
+                                      : 'bg-white/5 border-white/10'
+                                  }`}>
+                                    <Icon className={`w-3.5 h-3.5 transition-colors ${hasValue ? 'text-primary' : 'text-white/40'}`} />
                                   </div>
+                                  <p className={`text-[10px] font-black uppercase tracking-widest leading-tight transition-colors ${
+                                    hasValue ? 'text-white/80' : 'text-white/40'
+                                  }`}>
+                                    {label}
+                                  </p>
+                                </div>
+
+                                {/* Selected value badge + dropdown */}
+                                <div className="flex flex-col gap-1.5">
+                                  {hasValue && (
+                                    <span className="text-[9px] font-black uppercase tracking-widest text-primary bg-primary/10 border border-primary/20 px-2 py-1 rounded-lg leading-none w-fit">
+                                      {currentValue}
+                                    </span>
+                                  )}
                                   <select
-                                    value={selectedHabits[habit] || ''}
+                                    value={currentValue}
                                     onChange={(e) => setSelectedHabits(prev => ({ ...prev, [habit]: e.target.value }))}
-                                    className="bg-black/50 border border-white/10 rounded-xl px-2 py-1 text-[9px] font-black uppercase outline-none focus:border-primary text-white/80 shrink-0 max-w-[110px] cursor-pointer"
+                                    className={`w-full bg-black/40 border rounded-xl px-2.5 py-2 text-[9px] font-black uppercase outline-none focus:border-primary transition-colors cursor-pointer appearance-none ${
+                                      hasValue
+                                        ? 'border-white/10 text-white/60 focus:text-white'
+                                        : 'border-white/10 text-white/40 focus:text-white'
+                                    }`}
                                   >
+                                    <option value="" disabled>— Select —</option>
                                     {options.map((opt) => (
                                       <option key={opt} value={opt} className="bg-[#11111A] text-white">
                                         {opt}
@@ -412,47 +518,74 @@ export default function CreatorProfile() {
                                     ))}
                                   </select>
                                 </div>
-                              );
-                            })}
-
-                            {/* Family Goals */}
-                            <div className="p-3 bg-white/[0.02] border border-white/5 rounded-2xl hover:border-white/10 transition flex items-center justify-between gap-3 sm:col-span-2">
-                              <div className="flex items-center gap-2 min-w-0">
-                                <div className="w-7 h-7 bg-white/5 border border-white/10 rounded-xl flex items-center justify-center shrink-0">
-                                  <Users className="w-3.5 h-3.5 text-accent" />
-                                </div>
-                                <span className="text-[10px] font-black uppercase tracking-widest text-white/60 truncate">Family Goals</span>
                               </div>
-                              <select
-                                value={familyGoal}
-                                onChange={(e) => setFamilyGoal(e.target.value)}
-                                className="bg-black/50 border border-white/10 rounded-xl px-2 py-1 text-[9px] font-black uppercase outline-none focus:border-accent text-white/80 shrink-0 max-w-[180px] cursor-pointer"
-                              >
-                                {FAMILY_GOALS.map((opt) => (
-                                  <option key={opt} value={opt} className="bg-[#11111A] text-white">
-                                    {opt}
-                                  </option>
-                                ))}
-                              </select>
+                            );
+                          })}
+
+                          {/* Family Goals — full width card */}
+                          {(() => {
+                            const hasValue = !!familyGoal;
+                            return (
+                              <div className={`relative p-4 rounded-2xl border transition-all duration-200 flex flex-col gap-3 col-span-2 sm:col-span-3 md:col-span-4 ${
+                                hasValue
+                                  ? 'bg-accent/[0.04] border-accent/20 hover:border-accent/40'
+                                  : 'bg-white/[0.02] border-white/5 hover:border-white/15'
+                              }`}>
+                                <div className="flex items-center gap-2">
+                                  <div className={`w-7 h-7 rounded-xl flex items-center justify-center shrink-0 border transition-all ${
+                                    hasValue ? 'bg-accent/20 border-accent/30' : 'bg-white/5 border-white/10'
+                                  }`}>
+                                    <Users className={`w-3.5 h-3.5 transition-colors ${hasValue ? 'text-accent' : 'text-white/40'}`} />
+                                  </div>
+                                  <p className={`text-[10px] font-black uppercase tracking-widest leading-tight transition-colors ${
+                                    hasValue ? 'text-white/80' : 'text-white/40'
+                                  }`}>
+                                    Family Goals
+                                  </p>
+                                </div>
+                                <div className="flex flex-col gap-1.5">
+                                  {hasValue && (
+                                    <span className="text-[9px] font-black uppercase tracking-widest text-accent bg-accent/10 border border-accent/20 px-2 py-1 rounded-lg leading-none w-fit">
+                                      {familyGoal}
+                                    </span>
+                                  )}
+                                  <select
+                                    value={familyGoal}
+                                    onChange={(e) => setFamilyGoal(e.target.value)}
+                                    className={`w-full bg-black/40 border rounded-xl px-2.5 py-2 text-[9px] font-black uppercase outline-none focus:border-accent transition-colors cursor-pointer appearance-none ${
+                                      hasValue
+                                        ? 'border-white/10 text-white/60 focus:text-white'
+                                        : 'border-white/10 text-white/40 focus:text-white'
+                                    }`}
+                                  >
+                                    <option value="" disabled>— Select —</option>
+                                    {FAMILY_GOALS.map((opt) => (
+                                      <option key={opt} value={opt} className="bg-[#11111A] text-white">
+                                        {opt}
+                                      </option>
+                                    ))}
+                                  </select>
+                                </div>
+                              </div>
+                            );
+                          })()}
+                        </div>
+
+                        <div className="pt-4 border-t border-white/5">
+                          <button 
+                            onClick={() => alert('Lifestyle habits saved!')}
+                            className="w-full relative p-[1px] rounded-full overflow-hidden bg-gradient-to-r from-primary to-accent group transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] hover:scale-[1.01] active:scale-[0.99]"
+                          >
+                            <div className="w-full bg-black/95 rounded-full px-6 py-2.5 flex items-center justify-between transition-colors group-hover:bg-black/90">
+                              <span className="text-[9px] font-black uppercase tracking-widest text-white/95 group-hover:text-white transition-colors">
+                                Save Lifestyle Data
+                              </span>
+                              <div className="flex items-center gap-1.5 px-3 py-1 bg-primary text-black rounded-full font-black text-[9px] uppercase tracking-wider shadow-sm">
+                                <span>Save</span>
+                                <ChevronRight className="w-3 h-3 stroke-[3px]" />
+                              </div>
                             </div>
-                          </div>
-
-                          <div className="pt-2 border-t border-white/5">
-                            <button 
-                              onClick={() => alert('Lifestyle habits saved!')}
-                              className="w-full relative p-[1px] rounded-full overflow-hidden bg-gradient-to-r from-primary to-accent group transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] hover:scale-[1.01] active:scale-[0.99]"
-                            >
-                              <div className="w-full bg-black/95 rounded-full px-6 py-2.5 flex items-center justify-between transition-colors group-hover:bg-black/90">
-                                <span className="text-[9px] font-black uppercase tracking-widest text-white/95 group-hover:text-white transition-colors">
-                                  Save Lifestyle Data
-                                </span>
-                                <div className="flex items-center gap-1.5 px-3 py-1 bg-primary text-black rounded-full font-black text-[9px] uppercase tracking-wider shadow-sm">
-                                  <span>Save</span>
-                                  <ChevronRight className="w-3 h-3 stroke-[3px]" />
-                                </div>
-                              </div>
-                            </button>
-                          </div>
+                          </button>
                         </div>
                       </div>
                     </div>
@@ -465,13 +598,13 @@ export default function CreatorProfile() {
                         <p className="font-bold text-lg mb-1">Broadcasting Status: Offline</p>
                         <p className="text-sm text-muted-foreground">Go live to interact with your fans in real-time. Public streams build your audience.</p>
                       </div>
-                      <button className="relative p-[1px] rounded-full overflow-hidden bg-gradient-to-r from-primary to-accent group transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] hover:scale-105 active:scale-95 shadow-[0_0_30px_rgba(102,252,241,0.3)]">
+                      <button className="relative p-[1px] rounded-full overflow-hidden bg-gradient-to-r from-primary to-accent group transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] hover:scale-105 active:scale-95 shadow-[0_0_30px_rgba(102,252,241,0.35)]">
                         <div className="bg-black/95 rounded-full px-8 py-3.5 flex items-center gap-4 transition-colors group-hover:bg-black/90">
                           <Video className="w-5 h-5 text-primary animate-pulse" />
                           <span className="text-xs font-black uppercase tracking-widest text-white">
-                            Go Broadcast Live
+                            Launch Live Stream
                           </span>
-                          <div className="flex items-center justify-center w-7 h-7 bg-primary text-black rounded-full">
+                           <div className="flex items-center justify-center w-7 h-7 bg-primary text-black rounded-full">
                             <ChevronRight className="w-4 h-4 stroke-[3px]" />
                           </div>
                         </div>
@@ -479,11 +612,7 @@ export default function CreatorProfile() {
                     </div>
                   </div>
                 </div>
-              )}
-
-
-
-              {activeTab === 'content' && (
+              )}              {activeTab === 'content' && (
                 <div className="space-y-8">
                   <div className="flex items-center justify-between mb-8">
                     <h2 className="text-2xl font-bold flex items-center gap-2"><Lock className="text-accent" /> Content Management</h2>
@@ -552,7 +681,7 @@ export default function CreatorProfile() {
                         <div className="bg-white/5 border border-white/10 p-6 rounded-2xl text-left space-y-4 mb-8">
                           <p className="text-xs text-white/70 leading-relaxed font-medium">
                             <span className="text-white font-bold block mb-2 underline underline-offset-4 decoration-red-500">MANDATORY NOTICE:</span>
-                            Explicit adult content (albums, avatars, profile photos, descriptions, public posts) is <span className="text-red-500 font-black">STRICTLY PROHIBITED</span> in public channels or shared spaces accessible to Matched users who do not hold a valid subscription.
+                             Explicit adult content (albums, avatars, profile photos, descriptions, public posts) is <span className="text-red-500 font-black">STRICTLY PROHIBITED</span> in public channels or shared spaces accessible to connections who do not hold a valid subscription.
                           </p>
                           <p className="text-xs text-white/70 leading-relaxed font-medium border-l-2 border-primary pl-4">
                             Exclusively upload sensitive assets to the <span className="text-primary font-bold">VIP</span> or <span className="text-[#dc143c] font-bold">MASTER</span> tiers. Violations will result in immediate account suspension.

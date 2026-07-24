@@ -1,5 +1,5 @@
 /**
- * Match Engine v2 — Project Fusion / Session
+ * Match Engine v2 — Project Fusion / Seccion
  *
  * Multi-Signal Scoring Pipeline
  * ─────────────────────────────────────────────
@@ -37,6 +37,9 @@ export interface UserProfile {
   age?: number;
   /** City/region origin string */
   origins?: string;
+  nativeTown?: string;
+  residence?: string;
+  currentLocation?: string;
   /** KYC verification status */
   isKycVerified?: boolean;
   /** Active Master Subscriber */
@@ -138,6 +141,9 @@ export const ARCHETYPE_CHEMISTRY: Record<ArchetypeId, Record<ArchetypeId, number
     visionary:  0.60,
     protector:  0.85,
     explorer:   0.50,
+    creator:    0.65,
+    alchemist:  0.82,
+    hedonist:   0.55,
   },
   rebel: {
     caregiver:  0.45,
@@ -146,6 +152,9 @@ export const ARCHETYPE_CHEMISTRY: Record<ArchetypeId, Record<ArchetypeId, number
     visionary:  0.82,
     protector:  0.40,
     explorer:   0.88,
+    creator:    0.85,
+    alchemist:  0.60,
+    hedonist:   0.82,
   },
   dreamer: {
     caregiver:  0.90,
@@ -154,6 +163,9 @@ export const ARCHETYPE_CHEMISTRY: Record<ArchetypeId, Record<ArchetypeId, number
     visionary:  0.75,
     protector:  0.68,
     explorer:   0.85,
+    creator:    0.92,
+    alchemist:  0.88,
+    hedonist:   0.80,
   },
   visionary: {
     caregiver:  0.60,
@@ -162,6 +174,9 @@ export const ARCHETYPE_CHEMISTRY: Record<ArchetypeId, Record<ArchetypeId, number
     visionary:  0.65,
     protector:  0.80,
     explorer:   0.70,
+    creator:    0.88,
+    alchemist:  0.82,
+    hedonist:   0.85,
   },
   protector: {
     caregiver:  0.85,
@@ -170,6 +185,9 @@ export const ARCHETYPE_CHEMISTRY: Record<ArchetypeId, Record<ArchetypeId, number
     visionary:  0.80,
     protector:  0.60,
     explorer:   0.55,
+    creator:    0.55,
+    alchemist:  0.85,
+    hedonist:   0.60,
   },
   explorer: {
     caregiver:  0.50,
@@ -178,6 +196,42 @@ export const ARCHETYPE_CHEMISTRY: Record<ArchetypeId, Record<ArchetypeId, number
     visionary:  0.70,
     protector:  0.55,
     explorer:   0.62,
+    creator:    0.80,
+    alchemist:  0.75,
+    hedonist:   0.85,
+  },
+  creator: {
+    caregiver:  0.65,
+    rebel:      0.85,
+    dreamer:    0.92,
+    visionary:  0.88,
+    protector:  0.55,
+    explorer:   0.80,
+    creator:    0.75,
+    alchemist:  0.78,
+    hedonist:   0.86,
+  },
+  alchemist: {
+    caregiver:  0.82,
+    rebel:      0.60,
+    dreamer:    0.88,
+    visionary:  0.82,
+    protector:  0.85,
+    explorer:   0.75,
+    creator:    0.78,
+    alchemist:  0.70,
+    hedonist:   0.68,
+  },
+  hedonist: {
+    caregiver:  0.55,
+    rebel:      0.82,
+    dreamer:    0.80,
+    visionary:  0.85,
+    protector:  0.60,
+    explorer:   0.85,
+    creator:    0.86,
+    alchemist:  0.68,
+    hedonist:   0.72,
   },
 };
 
@@ -192,11 +246,11 @@ function classifyTier(score: number): CompatibilityTier {
 }
 
 const TIER_REASONS: Record<CompatibilityTier, string> = {
-  soul_aligned: 'Exceptional multi-signal alignment across archetypes, lifestyle, and engagement.',
-  high_spark:   'Strong compatibility with promising overlap — high potential for deep connection.',
-  moderate:     'Shared interests present but key lifestyle or archetype gaps reduce signal strength.',
-  low:          'Minimal overlap detected — significant divergence in core values or lifestyle.',
-  blocked:      'Fundamental incompatibility detected in relationship goals, preferences, or lifestyle.',
+  soul_aligned: 'Off-the-charts alignment — archetypes, lifestyle, engagement all clicking.',
+  high_spark:   'Strong spark with serious overlap — real potential for something deep.',
+  moderate:     'You share interests but some lifestyle or vibe gaps bring the energy down a bit.',
+  low:          'Not much overlap here — pretty different core values and lifestyle vibes.',
+  blocked:      'Hard pass from the vibe engine — major clashes in goals, preferences, or lifestyle.',
 };
 
 // ─── Hard Blockers ───────────────────────────────────────────────────────────
@@ -435,14 +489,36 @@ function scoreTemporalSignal(userA: UserProfile, userB: UserProfile): number {
  * Same location = 100, different + no long-distance support = 30, missing = 60.
  */
 function scoreGeoProximity(userA: UserProfile, userB: UserProfile): number {
-  const locA = (userA.location || userA.origins || '').toLowerCase().trim();
-  const locB = (userB.location || userB.origins || '').toLowerCase().trim();
+  const currentA = (userA.currentLocation || '').toLowerCase().trim();
+  const currentB = (userB.currentLocation || '').toLowerCase().trim();
+  const residenceA = (userA.residence || '').toLowerCase().trim();
+  const residenceB = (userB.residence || '').toLowerCase().trim();
+  const nativeA = (userA.nativeTown || '').toLowerCase().trim();
+  const nativeB = (userB.nativeTown || '').toLowerCase().trim();
 
-  // Both missing — neutral
-  if (!locA || !locB) return 60;
+  // Legacy fallbacks if new fields are empty
+  const legacyA = (userA.location || userA.origins || '').toLowerCase().trim();
+  const legacyB = (userB.location || userB.origins || '').toLowerCase().trim();
 
-  // Same city/region
-  if (locA === locB) return 100;
+  // 1. Current Location Match (Highest priority for physical meetup)
+  if (currentA && currentB && currentA === currentB) {
+    return 100;
+  }
+
+  // 2. Residence Match (Lives in same place)
+  if (residenceA && residenceB && residenceA === residenceB) {
+    return 85;
+  }
+
+  // 3. Shared Native Town (Chemistry/Shared Origins bonus)
+  if (nativeA && nativeB && nativeA === nativeB) {
+    return 70;
+  }
+
+  // 4. Legacy Match (If new fields are missing, fall back to origins/location check)
+  if ((!currentA || !currentB) && (!residenceA || !residenceB) && legacyA && legacyB && legacyA === legacyB) {
+    return 100;
+  }
 
   // Different location — check if either supports long-distance
   const typeA = (userA.relationshipType || '').toLowerCase();
@@ -596,40 +672,40 @@ export function calculateMatch(userA: UserProfile, userB: UserProfile): MatchRes
       description: getChemistryNarrative(userA.archetype, userB.archetype)
     },
     {
-      factor: 'Lifestyle Synchronization',
+      factor: 'Lifestyle Sync',
       score: breakdown.lifestyleSync,
       impact: breakdown.lifestyleSync >= 70 ? 'positive' : breakdown.lifestyleSync < 50 ? 'negative' : 'neutral',
       description: breakdown.lifestyleSync >= 70 
-        ? 'Outstanding sync in daily routines, sleep habits, and social schedules.'
+        ? 'Your daily routines, sleep vibes, and social energy are crazy aligned.'
         : breakdown.lifestyleSync < 50 
-          ? 'Divergence in key daily routines or habits which may require adjustment.'
-          : 'Moderate lifestyle coordination with minor routine gaps.'
+          ? 'Some routine differences — nothing a lil flexibility can\'t handle.'
+          : 'Mostly in sync — a few minor routine gaps, no big deal.'
     },
     {
       factor: 'Vibe & Passion Resonance',
       score: breakdown.moodResonance,
       impact: breakdown.moodResonance >= 70 ? 'positive' : breakdown.moodResonance < 45 ? 'negative' : 'neutral',
       description: userA.corePassion && userB.corePassion && userA.corePassion === userB.corePassion
-        ? `Exceptional alignment centered around your shared core passion for ${userA.corePassion}.`
-        : 'Harmonious emotional moods and complementary connection goals.'
+        ? `You both burn for ${userA.corePassion} — that's rare, main character energy fr.`
+        : 'Your moods click and your connection goals vibe — solid foundation.'
     },
     {
-      factor: 'Geographic Proximity',
+      factor: 'Location Vibe',
       score: breakdown.geoProximity,
       impact: breakdown.geoProximity >= 80 ? 'positive' : breakdown.geoProximity < 40 ? 'negative' : 'neutral',
       description: breakdown.geoProximity >= 80 
-        ? `Both located in ${userA.location || 'the same region'}, facilitating effortless offline meetups.`
-        : 'Geographic distance detected; may require long-distance relationship pacing.'
+        ? `You're both in ${userA.location || 'the same area'} — linking up IRL is a breeze.`
+        : 'You\'re in different spots — long-distance vibes, but totally doable.'
     },
     {
-      factor: 'Personality Resonance',
+      factor: 'Personality Sync',
       score: breakdown.narrativeResonance,
       impact: breakdown.narrativeResonance >= 75 ? 'positive' : breakdown.narrativeResonance < 50 ? 'negative' : 'neutral',
       description: breakdown.narrativeResonance >= 75
-        ? 'Deep emotional compatibility: highly introspective alignment with healthy vulnerability patterns.'
+        ? 'You both go deep emotionally — openness and self-awareness are off the charts here.'
         : breakdown.narrativeResonance < 50
-          ? 'Noticeable friction in connection pacing or emotional availability styles.'
-          : 'Healthy relational alignment with balanced communication styles.'
+          ? 'There\'s some friction in how you connect — different paces, different energy availability.'
+          : 'Your communication styles are balanced — healthy dynamic overall.'
     }
   ];
 
@@ -676,6 +752,65 @@ export function rankCandidates(
 export function calculateMatchProbability(userA: UserProfile, userB: UserProfile): number {
   return calculateMatch(userA, userB).totalScore;
 }
+
+/**
+ * Calculates a mock distance string between two users based on their location details.
+ * Useful for displaying "Distance" instead of plain text "City Location".
+ */
+export function calculateMockDistance(userA: any, userB: any): string {
+  if (!userA || !userB) return 'Nearby';
+
+  // Determine current active location
+  const locA = (userA.currentLocation || userA.current_location || userA.location || userA.origins || '').toLowerCase().trim();
+  const locB = (userB.currentLocation || userB.current_location || userB.location || userB.origins || '').toLowerCase().trim();
+  
+  if (!locA || !locB) return 'Nearby';
+  
+  if (locA === locB) {
+    // Same city - generate a consistent mock distance under 15 km based on target user's username/id
+    const idSeed = userB.id || userB.username || 'default';
+    const hash = idSeed.split('').reduce((acc: number, char: string) => acc + char.charCodeAt(0), 0);
+    const kms = (hash % 12) + 2; // 2 to 13 km
+    return `${kms} km away`;
+  }
+  
+  // Different cities
+  const cityDistances: Record<string, Record<string, number>> = {
+    'paris': { 'london': 344, 'berlin': 878, 'new york': 5840, 'tokyo': 9700 },
+    'london': { 'paris': 344, 'berlin': 930, 'new york': 5570, 'tokyo': 9560 },
+    'new york': { 'london': 5570, 'paris': 5840, 'berlin': 6380, 'tokyo': 10850 },
+    'berlin': { 'paris': 878, 'london': 930, 'new york': 6380, 'tokyo': 8920 },
+    'vienna': { 'paris': 1033, 'london': 1235, 'alicante': 1650, 'berlin': 524 },
+    'alicante': { 'paris': 1190, 'london': 1470, 'vienna': 1650, 'berlin': 1870 }
+  };
+  
+  const cleanA = locA.split(',')[0].trim();
+  const cleanB = locB.split(',')[0].trim();
+  
+  let distStr = '';
+  if (cityDistances[cleanA]?.[cleanB]) {
+    distStr = `${cityDistances[cleanA][cleanB]} km away`;
+  } else if (cityDistances[cleanB]?.[cleanA]) {
+    distStr = `${cityDistances[cleanB][cleanA]} km away`;
+  } else {
+    // Default fallback for different cities
+    const hash = (cleanA.length + cleanB.length) % 15;
+    const kms = (hash + 1) * 75 + 120; // 195 to 1245 km
+    distStr = `${kms} km away`;
+  }
+
+  // Add native town / shared origins note if applicable
+  const nativeA = (userA.nativeTown || userA.native_town || '').toLowerCase().trim();
+  const nativeB = (userB.nativeTown || userB.native_town || '').toLowerCase().trim();
+  if (nativeA && nativeB && nativeA === nativeB) {
+    const hometownName = userB.nativeTown || userB.native_town || 'same hometown';
+    const formattedHometown = hometownName.split(' ').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+    return `${distStr} (Both from ${formattedHometown})`;
+  }
+
+  return distStr;
+}
+
 
 // ─── Tier Metadata (for UI rendering) ────────────────────────────────────────
 
@@ -740,3 +875,61 @@ export function getChemistryNarrative(archA?: ArchetypeId, archB?: ArchetypeId):
   }
   return `${nameA} and ${nameB} are fundamentally different in approach. Connection is possible but demands mutual understanding.`;
 }
+
+export interface TaxFormat {
+  placeholder: string;
+  label: string;
+  regex?: RegExp;
+  hint: string;
+}
+
+/**
+ * Returns tax ID format configuration (labels, placeholders, validation regex) based on user residence.
+ */
+export function getTaxFormatForResidence(residence: string): TaxFormat {
+  const r = (residence || '').toLowerCase().trim();
+  
+  if (r.includes('united states') || r.includes('usa') || r.includes('us ') || r.endsWith(' us') || r === 'us') {
+    return {
+      label: 'SSN / EIN (US Tax ID)',
+      placeholder: 'e.g. 000-00-0000 or 00-0000000',
+      regex: /^\d{3}-\d{2}-\d{4}$|^\d{2}-\d{7}$/,
+      hint: 'Format: 9 digits (SSN: XXX-XX-XXXX or EIN: XX-XXXXXXX)'
+    };
+  }
+  
+  if (r.includes('spain') || r.includes('españa') || r.includes('es')) {
+    return {
+      label: 'NIF / NIE / CIF (Spain Tax ID)',
+      placeholder: 'e.g. 12345678A or Y1234567Z',
+      regex: /^[0-9XYZKMX][0-9]{7}[A-Z]$/i,
+      hint: 'Format: 8 digits + 1 control letter (e.g. 12345678A)'
+    };
+  }
+  
+  if (r.includes('france') || r.includes('fr')) {
+    return {
+      label: 'SIRET / SIREN / Numéro Fiscal (France)',
+      placeholder: 'e.g. 123 456 789 00012 or 123456789',
+      regex: /^[\d\s]{9}$|^[\d\s]{14}$|^\d{13}$/,
+      hint: 'Format: SIREN (9 digits), SIRET (14 digits), or Numéro Fiscal (13 digits)'
+    };
+  }
+  
+  if (r.includes('united kingdom') || r.includes('uk') || r.includes('gb') || r.includes('london')) {
+    return {
+      label: 'UTR or National Insurance Number (UK)',
+      placeholder: 'e.g. 12345 67890 or QQ 12 34 56 A',
+      regex: /^\d{10}$|^[A-CEGHJ-PR-TW-Z][A-CEGHJ-NPR-TW-Z]\s*\d{2}\s*\d{2}\s*\d{2}\s*[A-D]$/i,
+      hint: 'Format: UTR (10 digits) or NINO (2 letters, 6 numbers, 1 letter)'
+    };
+  }
+  
+  // Generic Fallback
+  return {
+    label: 'Taxpayer ID Number (TIN / National ID)',
+    placeholder: 'e.g. Taxpayer ID Number',
+    hint: 'Enter your country\'s taxpayer identification number (TIN)'
+  };
+}
+

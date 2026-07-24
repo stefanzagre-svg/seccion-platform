@@ -11,14 +11,54 @@ import {
   Eye, EyeOff
 } from 'lucide-react';
 import UploadSafetyNotice from '@/components/UploadSafetyNotice';
-import { calculateMatch, type UserProfile, type MatchResult } from '@/lib/match-engine';
+import { calculateMatch, type UserProfile, type MatchResult, getTaxFormatForResidence } from '@/lib/match-engine';
 import { type ArchetypeId, type MoodId, type PassionId } from '@/lib/constants';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import CreatorGoalProgress, { type CreatorGoal } from '@/components/CreatorGoalProgress';
 import CreatorOrdersPanel from '@/components/CreatorOrdersPanel';
+import SafetyPatrolPanel from '@/components/SafetyPatrolPanel';
 import ConfigPanel from '@/components/AIAssistant/ConfigPanel';
 import BlurredFaceImage from '@/components/BlurredFaceImage';
+import { awardXp } from '@/lib/xp-service';
+
+interface TeaserMetadata {
+  teaser_type: 'none' | 'video_clip' | 'main_photo' | 'custom';
+  video_start_time?: number;
+  thumbnail_url?: string;
+  thumbnail_type?: 'photo' | 'video';
+}
+
+function parseDescription(description: string) {
+  let cleanDesc = description || '';
+  let coPerformers: any[] = [];
+  let teaser: TeaserMetadata = { teaser_type: 'none' };
+
+  if (cleanDesc.includes('===CO_PERFORMERS===')) {
+    const parts = cleanDesc.split('\n\n===CO_PERFORMERS===\n');
+    cleanDesc = parts[0];
+    const secondPart = parts[1] || '';
+    if (secondPart.includes('===THUMBNAIL===')) {
+      const subParts = secondPart.split('\n\n===THUMBNAIL===\n');
+      try {
+        coPerformers = JSON.parse(subParts[0]);
+        teaser = JSON.parse(subParts[1]);
+      } catch (e) {}
+    } else {
+      try {
+        coPerformers = JSON.parse(secondPart);
+      } catch (e) {}
+    }
+  } else if (cleanDesc.includes('===THUMBNAIL===')) {
+    const parts = cleanDesc.split('\n\n===THUMBNAIL===\n');
+    cleanDesc = parts[0];
+    try {
+      teaser = JSON.parse(parts[1]);
+    } catch (e) {}
+  }
+
+  return { cleanDesc, coPerformers, teaser };
+}
 
 // Simulated Creator Profile (Elena)
 const CREATOR_PROFILE: UserProfile = {
@@ -294,9 +334,15 @@ export default function CreatorStudio() {
   const [isLoadingPosts, setIsLoadingPosts] = useState(false);
   const [postTitle, setPostTitle] = useState('');
   const [postDesc, setPostDesc] = useState('');
-  const [postTier, setPostTier] = useState<'vip' | 'master'>('vip');
+  const [postTier, setPostTier] = useState<'vip' | 'master' | 'ppv'>('vip');
   const [postMediaUrl, setPostMediaUrl] = useState('');
   const [postTags, setPostTags] = useState('');
+  const [ppvPrice, setPpvPrice] = useState<number>(4.99);
+  const [teaserType, setTeaserType] = useState<'none' | 'video_clip' | 'main_photo' | 'custom'>('none');
+  const [teaserStartTime, setTeaserStartTime] = useState<number>(0);
+  const [customTeaserUrl, setCustomTeaserUrl] = useState('');
+  const [customTeaserType, setCustomTeaserType] = useState<'photo' | 'video'>('photo');
+  const [teaserConsent, setTeaserConsent] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [uploadSuccess, setUploadSuccess] = useState(false);
   const [allPendingPosts, setAllPendingPosts] = useState<any[]>([]);
@@ -379,6 +425,19 @@ export default function CreatorStudio() {
         .update({ moderation_status: action })
         .eq('id', postId);
 
+      if (!error && action === 'approved') {
+        // Award Creator XP (+100 XP) for approved content
+        const { data: postData } = await supabase
+          .from('platform_content')
+          .select('creator_id')
+          .eq('id', postId)
+          .single();
+
+        if (postData?.creator_id) {
+          await awardXp(postData.creator_id, 100);
+        }
+      }
+
       if (error) {
         console.warn('DB update of moderation_status failed, falling back to localStorage simulation:', error);
       }
@@ -415,6 +474,12 @@ export default function CreatorStudio() {
       return;
     }
 
+    // Safety check: if post has a teaser preview, creator MUST confirm compliance!
+    if (teaserType !== 'none' && !teaserConsent) {
+      setUploadError('Compliance Required: Please confirm that the selected teaser preview is safe and contains no adult or explicit content.');
+      return;
+    }
+
     setUploadError(null);
     setIsUploading(true);
     setUploadSuccess(false);
@@ -426,9 +491,20 @@ export default function CreatorStudio() {
         .filter(t => t.length > 0);
 
       // Serialize co-performers inside description if toggle is enabled
-      const finalDesc = hasCoPerformers && addedCoPerformers.length > 0
-        ? `${postDesc.trim()}\n\n===CO_PERFORMERS===\n${JSON.stringify(addedCoPerformers)}`
-        : postDesc.trim();
+      let finalDesc = postDesc.trim();
+      if (hasCoPerformers && addedCoPerformers.length > 0) {
+        finalDesc += `\n\n===CO_PERFORMERS===\n${JSON.stringify(addedCoPerformers)}`;
+      }
+
+      // Serialize teaser preview thumbnail
+      if (teaserType !== 'none') {
+        finalDesc += `\n\n===THUMBNAIL===\n${JSON.stringify({
+          teaser_type: teaserType,
+          video_start_time: teaserType === 'video_clip' ? teaserStartTime : 0,
+          thumbnail_url: teaserType === 'custom' ? customTeaserUrl.trim() : (teaserType === 'main_photo' ? postMediaUrl.trim() : ''),
+          thumbnail_type: teaserType === 'custom' ? customTeaserType : (postMediaUrl.toLowerCase().endsWith('.mp4') ? 'video' : 'photo')
+        })}`;
+      }
 
       const res = await fetch('/api/content/upload', {
         method: 'POST',
@@ -457,6 +533,10 @@ export default function CreatorStudio() {
       setPostTags('');
       setAddedCoPerformers([]);
       setHasCoPerformers(false);
+      setTeaserType('none');
+      setTeaserStartTime(0);
+      setCustomTeaserUrl('');
+      setTeaserConsent(false);
       
       await loadCreatorPosts(profile.id);
       await loadAllPendingPosts();
@@ -601,6 +681,8 @@ export default function CreatorStudio() {
   const [legalBusinessName, setLegalBusinessName] = useState<string>('');
   const [taxIdNumber, setTaxIdNumber] = useState<string>('');
   const [vatGstNumber, setVatGstNumber] = useState<string>('');
+  const [creatorResidence, setCreatorResidence] = useState<string>('');
+  const taxFormat = getTaxFormatForResidence(creatorResidence);
 
   // Google Calendar Sync State
   const [isCalendarConnected, setIsCalendarConnected] = useState<boolean>(false);
@@ -766,6 +848,7 @@ export default function CreatorStudio() {
             setLegalBusinessName(privacy.legal_business_name || '');
             setTaxIdNumber(privacy.tax_id_number || '');
             setVatGstNumber(privacy.vat_gst_number || '');
+            setCreatorResidence(profileData.residence || '');
             
             // Load Calendar Status
             try {
@@ -948,7 +1031,7 @@ export default function CreatorStudio() {
         face_blur_default: faceBlurDefault,
       };
       
-      const { error: updateError } = await supabase
+        const { error: updateError } = await supabase
         .from('profiles')
         .update({
           base_subscription_price: baseSubscriptionPrice,
@@ -960,6 +1043,8 @@ export default function CreatorStudio() {
           digital_replica_consent: digitalReplicaConsent,
           ai_suggestion_status: aiSuggestionStatus,
           face_blur_active: faceBlurActive,
+          specialization: (profile as any).specialization || 'beauty',
+          is_adult_content: (profile as any).is_adult_content || false,
         })
         .eq('id', profile.id);
         
@@ -1219,6 +1304,11 @@ export default function CreatorStudio() {
       });
       if (!res.ok) throw new Error('Failed to update live stream status');
       
+      if (nextStatus && profile?.id) {
+        // Award Creator XP (+100 XP) for starting live session broadcast
+        await awardXp(profile.id, 100);
+      }
+      
       setIsBroadcasting(nextStatus);
       if (channelRef.current) {
         channelRef.current.send({
@@ -1304,13 +1394,13 @@ export default function CreatorStudio() {
         <div className="flex items-center gap-2 bg-white/5 p-1.5 rounded-2xl border border-white/5 w-fit">
           {[
             { id: 'content', icon: LayoutGrid, label: 'Content' },
-            { id: 'live', icon: Video, label: 'Live Sessions' },
+            { id: 'live', icon: Video, label: 'Stream Station' },
             { id: 'orders', icon: ListOrdered, label: 'Custom Requests' },
-            { id: 'consent_inbox', icon: Users, label: 'Consent Inbox' },
+            { id: 'consent_inbox', icon: Users, label: 'Consent Box' },
             { id: 'goals', icon: Crown, label: 'Goals' },
-            { id: 'analytics', icon: BarChart3, label: 'Analytics' },
-            { id: 'settings', icon: Settings, label: 'Settings' },
-            { id: 'safety_ops', icon: Shield, label: 'Safety Ops' },
+            { id: 'analytics', icon: BarChart3, label: 'Vibe Insights' },
+            { id: 'settings', icon: Settings, label: 'Profile Settings' },
+            { id: 'safety_ops', icon: Shield, label: 'Safety Patrol' },
             { id: 'ai_tools', icon: Zap, label: 'AI Tools' },
           ].map((tab) => (
             <button
@@ -1335,7 +1425,7 @@ export default function CreatorStudio() {
                     <h3 className="text-base font-black tracking-wider uppercase flex items-center gap-2 text-white">
                       <Plus className="w-5 h-5 text-primary animate-pulse" /> Upload New Premium Media
                     </h3>
-                    <p className="text-[10px] text-white/40 uppercase font-black tracking-widest mt-1">Submit content to the compliance pipeline</p>
+                    <p className="text-[10px] text-white/40 uppercase font-black tracking-widest mt-1">Submit content for review</p>
                   </div>
 
                   {uploadError && (
@@ -1406,7 +1496,7 @@ export default function CreatorStudio() {
                       <label className="text-[9px] uppercase tracking-widest font-black text-white/40">Description</label>
                       <textarea 
                         rows={2}
-                        placeholder="Describe your asset for Layer 1 tag verification..." 
+                        placeholder="Describe your content for review..." 
                         value={postDesc}
                         onChange={(e) => setPostDesc(e.target.value)}
                         className="w-full px-4 py-3 bg-black/40 border border-white/10 rounded-xl text-xs text-white placeholder-white/20 focus:border-primary focus:outline-none transition resize-none"
@@ -1528,29 +1618,154 @@ export default function CreatorStudio() {
                       )}
                     </div>
 
-                    <div className="flex justify-between items-center pt-2">
+                    {/* PPV Price Input */}
+                    {postTier === 'ppv' && (
+                      <div className="p-4 bg-white/5 border border-white/10 rounded-2xl space-y-2 animate-fade-in">
+                        <label className="text-[9px] font-black text-white/40 uppercase tracking-widest block">PPV Price ($)</label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          min="0.99"
+                          max="99.99"
+                          value={ppvPrice}
+                          onChange={(e) => setPpvPrice(Number(e.target.value))}
+                          className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-primary transition"
+                        />
+                        <p className="text-[8px] text-white/40 font-semibold">Suggested base rate from settings: ${ppvBaseRate.toFixed(2)}</p>
+                      </div>
+                    )}
+
+                    {/* Teaser Preview Settings */}
+                    <div className="p-4 bg-white/5 border border-white/10 rounded-2xl space-y-4">
+                      <div className="space-y-1">
+                        <label className="text-[9px] font-black text-white/40 uppercase tracking-widest block">Teaser Preview Mode</label>
+                        <select
+                          value={teaserType}
+                          onChange={(e) => {
+                            setTeaserType(e.target.value as any);
+                            setTeaserConsent(false);
+                          }}
+                          className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-primary transition"
+                        >
+                          <option value="none">Full Blur (Default - Secure)</option>
+                          {postMediaUrl.toLowerCase().endsWith('.mp4') ? (
+                            <option value="video_clip">Select 5-Second Video Clip</option>
+                          ) : (
+                            <option value="main_photo">Use Main Photo as Teaser Preview</option>
+                          )}
+                          <option value="custom">Upload Custom Teaser (Photo/Video)</option>
+                        </select>
+                      </div>
+
+                      {/* Video Clip Start Time Input */}
+                      {teaserType === 'video_clip' && (
+                        <div className="space-y-1 animate-fade-in">
+                          <label className="text-[9px] font-black text-white/40 uppercase tracking-widest block">Teaser Start Time (seconds)</label>
+                          <input
+                            type="number"
+                            min="0"
+                            value={teaserStartTime}
+                            onChange={(e) => setTeaserStartTime(Number(e.target.value))}
+                            className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-primary transition"
+                          />
+                          <p className="text-[8px] text-white/40 font-semibold">Teaser range will be from {teaserStartTime}s to {teaserStartTime + 5}s.</p>
+                        </div>
+                      )}
+
+                      {/* Custom Teaser Inputs */}
+                      {teaserType === 'custom' && (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-fade-in">
+                          <div className="space-y-1">
+                            <label className="text-[9px] font-black text-white/40 uppercase tracking-widest block">Custom Teaser URL</label>
+                            <input
+                              type="text"
+                              value={customTeaserUrl}
+                              onChange={(e) => setCustomTeaserUrl(e.target.value)}
+                              placeholder="https://..."
+                              className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-primary transition"
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <label className="text-[9px] font-black text-white/40 uppercase tracking-widest block">Teaser Media Type</label>
+                            <select
+                              value={customTeaserType}
+                              onChange={(e) => setCustomTeaserType(e.target.value as any)}
+                              className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-primary transition"
+                            >
+                              <option value="photo">Photo / Image</option>
+                              <option value="video">Short Video / Clip</option>
+                            </select>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Teaser Preview Explicit warning & consent */}
+                      {teaserType !== 'none' && (
+                        <div className="p-3 bg-red-950/15 border border-red-500/25 rounded-xl space-y-3 animate-fade-in">
+                          <div className="flex gap-2">
+                            <ShieldAlert className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
+                            <div>
+                              <h5 className="text-[10px] font-black text-red-400 uppercase tracking-wider">TEASER PREVIEW WARNING</h5>
+                              <p className="text-[9px] text-white/60 leading-relaxed font-semibold">
+                                Preview teasers are visible to unsubscribed, anonymous, and public platform visitors. You are strictly forbidden from choosing or uploading explicit, adult, or sensitive material for teaser previews. Violating this will result in immediate content rejection and account review.
+                              </p>
+                            </div>
+                          </div>
+
+                          <label className="flex items-start gap-2.5 cursor-pointer select-none">
+                            <input 
+                              type="checkbox"
+                              checked={teaserConsent}
+                              onChange={(e) => setTeaserConsent(e.target.checked)}
+                              className="accent-primary mt-0.5 shrink-0"
+                            />
+                            <span className="text-[9.5px] font-bold text-white/90 leading-tight">
+                              I confirm that the selected teaser preview is 100% safe and contains no adult or explicit content.
+                            </span>
+                          </label>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="flex flex-col md:flex-row gap-4 justify-between items-center pt-2">
                       {/* Tier Toggle */}
-                      <div className="flex bg-white/5 p-1 rounded-xl border border-white/15">
+                      <div className="flex bg-white/5 p-1 rounded-xl border border-white/15 shrink-0">
                         <button
                           type="button"
-                          onClick={() => setPostTier('vip')}
+                          onClick={() => {
+                            setPostTier('vip');
+                            setTeaserType('none');
+                          }}
                           className={`px-4 py-2 rounded-lg text-[9px] font-black uppercase tracking-wider transition ${postTier === 'vip' ? 'bg-[#ff007f] text-white' : 'text-white/40 hover:text-white/80'}`}
                         >
                           VIP Access
                         </button>
                         <button
                           type="button"
-                          onClick={() => setPostTier('master')}
+                          onClick={() => {
+                            setPostTier('master');
+                            setTeaserType('none');
+                          }}
                           className={`px-4 py-2 rounded-lg text-[9px] font-black uppercase tracking-wider transition ${postTier === 'master' ? 'bg-[#9d4edd] text-white font-black' : 'text-white/40 hover:text-white/80'}`}
                         >
                           Master Tier
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setPostTier('ppv');
+                            setTeaserType('none');
+                          }}
+                          className={`px-4 py-2 rounded-lg text-[9px] font-black uppercase tracking-wider transition ${postTier === 'ppv' ? 'bg-primary text-black font-black' : 'text-white/40 hover:text-white/80'}`}
+                        >
+                          PPV Gated
                         </button>
                       </div>
 
                       <button
                         type="submit"
-                        disabled={isUploading}
-                        className="px-8 py-3 bg-primary text-black font-black uppercase tracking-wider text-[10px] rounded-xl hover:shadow-[0_0_20px_rgba(102,252,241,0.4)] transition disabled:opacity-50 flex items-center gap-2"
+                        disabled={isUploading || (teaserType !== 'none' && !teaserConsent)}
+                        className="w-full md:w-auto px-8 py-3 bg-primary text-black font-black uppercase tracking-wider text-[10px] rounded-xl hover:shadow-[0_0_20px_rgba(102,252,241,0.4)] transition disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
                       >
                         {isUploading ? <><Loader2 className="w-4 h-4 animate-spin" /> Scanning Media...</> : 'Publish to Gateway'}
                       </button>
@@ -1574,14 +1789,7 @@ export default function CreatorStudio() {
                   ) : uploadedPosts.length > 0 ? (
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                       {uploadedPosts.map((post) => {
-                        const parts = post.description?.split('\n\n===CO_PERFORMERS===\n');
-                        const cleanDesc = parts?.[0] || post.description || '';
-                        let coPerformers: any[] = [];
-                        try {
-                          if (parts?.[1]) {
-                            coPerformers = JSON.parse(parts[1]);
-                          }
-                        } catch (e) {}
+                        const { cleanDesc, coPerformers, teaser } = parseDescription(post.description || '');
 
                         return (
                           <motion.div 
@@ -1589,7 +1797,18 @@ export default function CreatorStudio() {
                             whileHover={{ y: -4 }}
                             className="glass-card aspect-square relative group overflow-hidden border border-white/5 bg-black/40 rounded-3xl"
                           >
-                            <img src={post.media_url} className="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition duration-500" />
+                            {/* Teaser Preview / Main image thumbnail display */}
+                            {teaser.teaser_type === 'custom' && teaser.thumbnail_url ? (
+                              teaser.thumbnail_type === 'video' ? (
+                                <video src={teaser.thumbnail_url} autoPlay loop muted playsInline className="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition duration-500" />
+                              ) : (
+                                <img src={teaser.thumbnail_url} className="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition duration-500" />
+                              )
+                            ) : teaser.teaser_type === 'video_clip' ? (
+                              <video src={`${post.media_url}#t=${teaser.video_start_time || 0},${(teaser.video_start_time || 0) + 5}`} autoPlay loop muted playsInline className="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition duration-500" />
+                            ) : (
+                              <img src={post.media_url} className="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition duration-500" />
+                            )}
                             <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                             
                             {/* Access tier badge */}
@@ -1598,6 +1817,8 @@ export default function CreatorStudio() {
                                 <div className="px-2 py-0.5 bg-[#9d4edd] text-white rounded-md text-[8px] font-black uppercase tracking-widest shadow-[0_0_10px_rgba(157,78,221,0.5)]">Master</div>
                               ) : post.tier === 'vip' ? (
                                 <div className="px-2 py-0.5 bg-[#ff007f] text-white rounded-md text-[8px] font-black uppercase tracking-widest shadow-[0_0_10px_rgba(255,0,127,0.5)]">VIP</div>
+                              ) : post.tier === 'ppv' ? (
+                                <div className="px-2 py-0.5 bg-primary text-black rounded-md text-[8px] font-black uppercase tracking-widest shadow-[0_0_10px_rgba(102,252,241,0.5)]">PPV</div>
                               ) : (
                                 <div className="px-2 py-0.5 bg-gray-600 text-white rounded-md text-[8px] font-black uppercase tracking-widest">Public</div>
                               )}
@@ -1987,7 +2208,7 @@ export default function CreatorStudio() {
                         <div className="glass-card p-6 bg-white/2 border border-white/5 flex flex-col h-[350px]">
                           <div className="flex justify-between items-center border-b border-white/5 pb-3 mb-4">
                             <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-white/80 flex items-center gap-2">
-                              <Users className="w-4.5 h-4.5 text-primary" /> Audience Match HUD
+                              <Users className="w-4.5 h-4.5 text-primary" /> Audience Vibe Dashboard
                             </h3>
                             <span className="text-[8px] font-black text-accent bg-accent/10 px-2 py-0.5 rounded border border-accent/20">
                               RLS Active
@@ -2210,8 +2431,8 @@ export default function CreatorStudio() {
                           <div className="space-y-4">
                             <div>
                               <div className="flex justify-between text-[9px] font-black uppercase tracking-widest mb-2">
-                                <span className="text-white/60">Minimum Compatibility Threshold</span>
-                                <span className="text-primary">{minMatchThreshold}% Match</span>
+                                <span className="text-white/60">Minimum Vibe Level</span>
+                                <span className="text-primary">{minMatchThreshold}% Vibe Match</span>
                               </div>
                               <input 
                                 type="range" 
@@ -2222,13 +2443,13 @@ export default function CreatorStudio() {
                                 className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-primary"
                               />
                               <p className="text-[8px] text-white/40 uppercase font-black tracking-wider leading-relaxed mt-2">
-                                Fans below this match threshold are muted in chat feeds.
+                                Fans below this vibe level are muted in chat feeds.
                               </p>
                             </div>
 
                             <div className="pt-3 border-t border-white/5 space-y-2">
                               <div className="flex justify-between items-center text-[9px] font-black uppercase text-white/60">
-                                <span>Require Verified KYC</span>
+                                <span>Require Face Verification</span>
                                 <input type="checkbox" defaultChecked className="accent-primary" />
                               </div>
                               <div className="flex justify-between items-center text-[9px] font-black uppercase text-white/60">
@@ -2464,10 +2685,10 @@ export default function CreatorStudio() {
                       <div className="flex items-center justify-between border-b border-white/5 pb-4">
                         <div>
                           <h4 className="text-sm font-black uppercase tracking-widest text-white flex items-center gap-2">
-                            <SlidersHorizontal className="w-4 h-4 text-primary" /> Feed Algorithm A/B Split Test
+                            <SlidersHorizontal className="w-4 h-4 text-primary" /> Feed Style Test — Testing Two Vibe Versions
                           </h4>
                           <p className="text-[9px] text-white/40 uppercase font-black tracking-widest mt-1">
-                            Live telemetry tracking impressions, clicks, and conversion rates
+                            Comparing Version A (Synergy-first) vs Version B (Interaction-first) to see what gets you more connections.
                           </p>
                         </div>
                         <div className="px-3 py-1 bg-primary/10 border border-primary/20 text-primary rounded-full text-[9px] font-black uppercase tracking-widest animate-pulse">
@@ -2482,7 +2703,7 @@ export default function CreatorStudio() {
                           <div className="flex justify-between items-center">
                             <span className="text-[10px] font-black uppercase tracking-wider text-pink-400 flex items-center gap-1.5">
                               <span className="w-2 h-2 rounded-full bg-pink-400 animate-pulse" />
-                              Variant A: Compatibility Mode
+                              Version A: Synergy Mode
                             </span>
                             <span className="text-[8px] font-bold text-white/40 uppercase">Harmony First</span>
                           </div>
@@ -2521,7 +2742,7 @@ export default function CreatorStudio() {
                           <div className="flex justify-between items-center">
                             <span className="text-[10px] font-black uppercase tracking-wider text-purple-400 flex items-center gap-1.5">
                               <span className="w-2 h-2 rounded-full bg-purple-400 animate-pulse" />
-                              Variant B: Engagement Mode
+                              Version B: Interaction Mode
                             </span>
                             <span className="text-[8px] font-bold text-white/40 uppercase">Engagement First</span>
                           </div>
@@ -2574,9 +2795,9 @@ export default function CreatorStudio() {
                                 {(analyticsData.abTesting.variantB?.ctr === 0 && analyticsData.abTesting.variantA?.ctr === 0) 
                                   ? 'Experiment Status'
                                   : (analyticsData.abTesting.variantB?.ctr > analyticsData.abTesting.variantA?.ctr)
-                                  ? 'Engagement Winner: Variant B'
+                                  ? 'Interaction Winner: Version B'
                                   : (analyticsData.abTesting.variantA?.ctr > analyticsData.abTesting.variantB?.ctr)
-                                  ? 'Compatibility Winner: Variant A'
+                                  ? 'Synergy Winner: Version A'
                                   : 'Experiment Tied'}
                               </p>
                               <p className="text-xs font-semibold leading-relaxed">
@@ -2705,7 +2926,7 @@ export default function CreatorStudio() {
                       <div className="glass-card p-6 bg-white/2 border border-white/5 rounded-3xl flex flex-col justify-between">
                         <div>
                           <h4 className="text-[10px] font-black uppercase tracking-widest mb-4 flex items-center gap-1.5 text-white/70">
-                            <Lock className="w-3.5 h-3.5 text-success" /> Escrow Payout Matrix
+                            <Lock className="w-3.5 h-3.5 text-success" /> Earnings Breakdown
                           </h4>
                           <p className="text-[9px] text-white/40 uppercase font-black tracking-widest leading-relaxed mb-6">
                             Under the platform model, 80% of sub & crowdfunding revenue goes to creator escrow immediately. 20% is retained as platform commission.
@@ -2871,7 +3092,7 @@ export default function CreatorStudio() {
                   <div className="glass-card p-6 bg-white/2 border border-white/5 rounded-3xl space-y-6">
                     <div className="flex justify-between items-center border-b border-white/5 pb-3">
                       <h3 className="text-xs font-black uppercase tracking-[0.2em] text-white/80 flex items-center gap-2">
-                        <Send className="w-4.5 h-4.5 text-primary" /> Outgoing Tracking & Verification
+                        <Send className="w-4.5 h-4.5 text-primary" /> Outgoing Tracking & Checks
                       </h3>
                       <span className="text-[8px] font-black text-white/40 bg-white/5 px-2 py-0.5 rounded border border-white/10 uppercase">
                         Real-time status
@@ -2981,7 +3202,7 @@ export default function CreatorStudio() {
                 {isLoadingSettings ? (
                   <div className="p-12 flex flex-col items-center justify-center space-y-4 glass-card bg-white/2 border border-white/5 rounded-3xl">
                     <Loader2 className="w-8 h-8 text-primary animate-spin" />
-                    <p className="text-[10px] font-black uppercase tracking-widest text-white/40">Loading Secure Settings Matrix...</p>
+                    <p className="text-[10px] font-black uppercase tracking-widest text-white/40">Loading Settings...</p>
                   </div>
                 ) : !profile ? (
                   <div className="p-12 text-center glass-card bg-red-950/5 border border-red-500/20 rounded-3xl space-y-4">
@@ -2995,7 +3216,7 @@ export default function CreatorStudio() {
                     <div className="space-y-6">
                       <div className="glass-card p-6 bg-white/2 border border-white/5 rounded-3xl space-y-6">
                         <h3 className="text-xs font-black uppercase tracking-[0.2em] text-white/80 flex items-center gap-2 pb-3 border-b border-white/5">
-                          <DollarSign className="w-4 h-4 text-primary" /> Monetization Settings
+                          <DollarSign className="w-4 h-4 text-primary" /> Earnings Settings
                         </h3>
 
                         {/* Subscription price */}
@@ -3099,6 +3320,14 @@ export default function CreatorStudio() {
                         </p>
 
                         <div className="space-y-2">
+                          <label className="text-[9px] uppercase tracking-widest font-black text-white/40">Registered Tax Residence</label>
+                          <div className="w-full px-4 py-3 bg-white/[0.02] border border-white/5 rounded-xl text-xs text-white/60 font-bold select-none cursor-not-allowed flex items-center gap-2">
+                            <Globe className="w-3.5 h-3.5 text-white/40" />
+                            {creatorResidence || 'Not Configured (Contact Support)'}
+                          </div>
+                        </div>
+
+                        <div className="space-y-2">
                           <label className="text-[9px] uppercase tracking-widest font-black text-white/40">Legal Business / Individual Name</label>
                           <input 
                             type="text" 
@@ -3110,14 +3339,28 @@ export default function CreatorStudio() {
                         </div>
 
                         <div className="space-y-2">
-                          <label className="text-[9px] uppercase tracking-widest font-black text-white/40">Taxpayer ID Number (TIN / SSN / EIN)</label>
+                          <label className="text-[9px] uppercase tracking-widest font-black text-white/40">
+                            {taxFormat.label}
+                          </label>
                           <input 
                             type="text" 
-                            placeholder="e.g. XX-XXXXXXX" 
+                            placeholder={taxFormat.placeholder}
                             value={taxIdNumber}
                             onChange={(e) => setTaxIdNumber(e.target.value)}
-                            className="w-full px-4 py-3 bg-black/40 border border-white/10 rounded-xl text-xs text-white placeholder-white/20 focus:border-primary focus:outline-none transition font-mono"
+                            className={`w-full px-4 py-3 bg-black/40 border rounded-xl text-xs text-white placeholder-white/20 focus:border-primary focus:outline-none transition font-mono ${
+                              taxIdNumber && taxFormat.regex && !taxFormat.regex.test(taxIdNumber.trim())
+                                ? "border-red-500/50 focus:border-red-500"
+                                : "border-white/10"
+                            }`}
                           />
+                          <p className="text-[8px] text-white/40 uppercase tracking-widest leading-none mt-1">
+                            {taxFormat.hint}
+                          </p>
+                          {taxIdNumber && taxFormat.regex && !taxFormat.regex.test(taxIdNumber.trim()) && (
+                            <span className="text-[8px] font-bold text-red-400 uppercase tracking-wide block mt-1 leading-normal">
+                              Warning: Tax ID format does not match the expected pattern for your residency.
+                            </span>
+                          )}
                         </div>
 
                         <div className="space-y-2">
@@ -3398,7 +3641,7 @@ export default function CreatorStudio() {
                         >
                           {isSavingSettings ? (
                             <>
-                              <Loader2 className="w-4 h-4 animate-spin" /> Saving Matrix...
+                              <Loader2 className="w-4 h-4 animate-spin" /> Saving Settings...
                             </>
                           ) : saveSuccess ? (
                             <>
@@ -3416,6 +3659,43 @@ export default function CreatorStudio() {
                 )}
               </div>
             )}
+
+            {/* Safety Patrol Panel (Layer 3 Content Moderation Queue) */}
+            {activeTab === 'safety_ops' && (
+              <div className="space-y-6 text-left">
+                <div>
+                  <h2 className="text-2xl font-black tracking-tighter uppercase mb-2 flex items-center gap-2">
+                    <Shield className="text-primary inline-block w-6 h-6 animate-pulse" /> Safety Patrol — Layer 3 DSA Queue
+                  </h2>
+                  <p className="text-[10px] text-white/40 uppercase font-black tracking-widest mt-1">
+                    Content moderation desk — review and approve/reject pending uploads
+                  </p>
+                </div>
+                <SafetyPatrolPanel
+                  allPendingPosts={allPendingPosts}
+                  isModerating={isModerating}
+                  onModerate={handleModeratePost}
+                  onRefresh={loadAllPendingPosts}
+                />
+              </div>
+            )}
+
+            {/* Custom Requests Panel */}
+            {activeTab === 'orders' && (
+              <div className="space-y-6 text-left">
+                <div>
+                  <h2 className="text-2xl font-black tracking-tighter uppercase mb-2 flex items-center gap-2">
+                    <ListOrdered className="text-primary inline-block w-6 h-6" /> Custom Content Requests
+                  </h2>
+                  <p className="text-[10px] text-white/40 uppercase font-black tracking-widest mt-1">
+                    Review, approve/deny, and track payments for bespoke content requests from members
+                  </p>
+                </div>
+                <div className="p-8 glass-card bg-black/40 border border-white/5 rounded-[2rem]">
+                  <CreatorOrdersPanel customRequestPermission={customRequestPermission} />
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Sidebar */}
@@ -3426,9 +3706,9 @@ export default function CreatorStudio() {
               </h3>
               <div className="space-y-6">
                  {[
-                   { label: 'Weekly Reach', val: '12.4k', change: '+12%' },
-                   { label: 'Engagement Rate', val: '18.2%', change: '+5%' },
-                   { label: 'Revenue (7d)', val: '$2,450', change: '+24%' },
+                   { label: 'Weekly Eye-Catchers', val: '12.4k', change: '+12%' },
+                   { label: 'Social Buzz', val: '18.2%', change: '+5%' },
+                   { label: 'Gold Coins Earned', val: '$2,450', change: '+24%' },
                  ].map((stat, i) => (
                    <div key={i} className="flex justify-between items-end border-b border-white/5 pb-4 last:border-0 last:pb-0">
                       <div>
@@ -3457,153 +3737,6 @@ export default function CreatorStudio() {
           </div>
         </div>
       </div>
-
-      {/* Safety Operations Panel (Layer 3 Content Moderation Queue) */}
-      {activeTab === 'safety_ops' && (
-        <div className="space-y-6 mt-8">
-          <div>
-            <h2 className="text-2xl font-black tracking-tighter uppercase mb-2 flex items-center gap-2">
-              <Shield className="text-primary inline-block w-6 h-6 animate-pulse" /> Safety Operations Queue (Layer 3)
-            </h2>
-            <p className="text-[10px] text-white/40 uppercase font-black tracking-widest mt-1">
-              DSA Content Moderation Desk — Review and approve/reject pending uploads
-            </p>
-          </div>
-
-          {allPendingPosts.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {allPendingPosts.map((post) => (
-                <div 
-                  key={post.id} 
-                  className="glass-card p-6 bg-black/45 border border-white/10 rounded-3xl space-y-4 text-left relative overflow-hidden"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full overflow-hidden border border-white/10 bg-white/5">
-                      <img src={post.creator_profile?.avatar_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&q=80'} alt={post.creator_profile?.username} className="w-full h-full object-cover" />
-                    </div>
-                    <div>
-                      <p className="text-xs font-bold text-white">@{post.creator_profile?.username || 'unknown'}</p>
-                      <p className="text-[9px] text-white/40 font-mono">Role: Creator | KYC: Verified</p>
-                    </div>
-                    <span className="ml-auto text-[8px] font-black uppercase tracking-wider bg-purple-500/10 text-purple-400 border border-purple-500/20 px-2 py-0.5 rounded">
-                      {post.tier}
-                    </span>
-                  </div>
-
-                  <div className="aspect-video rounded-2xl overflow-hidden border border-white/5 relative bg-white/5 flex items-center justify-center">
-                    {post.media_type === 'video' ? (
-                      <video src={post.media_url} className="w-full h-full object-cover" controls />
-                    ) : (
-                      <img src={post.media_url} alt={post.title} className="w-full h-full object-cover" />
-                    )}
-                  </div>
-
-                  {(() => {
-                    const parts = post.description?.split('\n\n===CO_PERFORMERS===\n');
-                    const cleanDesc = parts?.[0] || post.description || '';
-                    let coPerformers: any[] = [];
-                    try {
-                      if (parts?.[1]) {
-                        coPerformers = JSON.parse(parts[1]);
-                      }
-                    } catch (e) {}
-                    
-                    const hasPendingConsent = coPerformers.some((p: any) => p.status === 'pending');
-
-                    return (
-                      <div className="space-y-3">
-                        <div className="space-y-1">
-                          <h4 className="font-bold text-sm text-white">{post.title}</h4>
-                          <p className="text-xs text-white/60">{cleanDesc || 'No description'}</p>
-                          <p className="text-[8px] font-mono text-white/30">Uploaded at: {new Date(post.created_at).toLocaleString()}</p>
-                        </div>
-
-                        {coPerformers.length > 0 && (
-                          <div className="p-3 bg-white/5 border border-white/10 rounded-2xl space-y-2">
-                            <span className="text-[8px] font-black uppercase tracking-widest text-white/40 block">Co-Performer Consent Verification Gate:</span>
-                            <div className="flex flex-wrap gap-2">
-                              {coPerformers.map((p: any, idx: number) => (
-                                <div key={idx} className="flex items-center gap-1.5 px-2 py-1 bg-black/40 border border-white/5 rounded-xl text-[9px]">
-                                  {p.avatar && <img src={p.avatar} className="w-4 h-4 rounded-full object-cover" />}
-                                  <span className="font-semibold text-white/80">{p.name}</span>
-                                  <span className={`text-[7px] font-black uppercase px-1 rounded ${
-                                    p.status === 'approved' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-amber-500/20 text-amber-400 animate-pulse'
-                                  }`}>
-                                    {p.status === 'approved' ? 'Verified' : 'Pending'}
-                                  </span>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-
-                        {hasPendingConsent && (
-                          <div className="p-3 bg-red-950/20 border border-red-500/30 rounded-2xl flex items-start gap-2 text-red-400">
-                            <ShieldAlert className="w-4.5 h-4.5 shrink-0 mt-0.5" />
-                            <div>
-                              <p className="text-[9px] font-black uppercase tracking-wider">Consent Gate Hold</p>
-                              <p className="text-[8px] text-red-200 leading-normal">
-                                This content contains co-performers with pending digital consent. Release is gated until all parties approve depiction.
-                              </p>
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Actions */}
-                        <div className="flex gap-3 pt-2">
-                          <button
-                            onClick={() => handleModeratePost(post.id, 'rejected')}
-                            disabled={isModerating === post.id}
-                            className="flex-1 py-3 bg-red-500/20 hover:bg-red-500/30 text-red-400 border border-red-500/30 rounded-xl text-[9px] font-black uppercase tracking-wider transition disabled:opacity-50"
-                          >
-                            Reject & Quarantine
-                          </button>
-                          <button
-                            onClick={() => handleModeratePost(post.id, 'approved')}
-                            disabled={isModerating === post.id || hasPendingConsent}
-                            className="flex-1 py-3 bg-green-500/20 hover:bg-green-500/30 text-green-400 border border-green-500/30 rounded-xl text-[9px] font-black uppercase tracking-wider transition disabled:opacity-50 flex items-center justify-center gap-1.5"
-                            title={hasPendingConsent ? 'Gated: Awaiting performer consent' : undefined}
-                          >
-                            {isModerating === post.id ? 'Processing...' : (
-                              <>
-                                {hasPendingConsent && <Lock className="w-3 h-3" />}
-                                Approve & Release
-                              </>
-                            )}
-                          </button>
-                        </div>
-                      </div>
-                    );
-                  })()}
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="py-20 text-center glass-card bg-white/2 border border-dashed border-white/10 rounded-3xl space-y-3">
-              <ShieldCheck className="w-10 h-10 text-green-400 mx-auto" />
-              <p className="text-[10px] font-black uppercase tracking-widest text-white/30">Moderation Desk Empty</p>
-              <p className="text-xs text-white/40 max-w-xs mx-auto">No pending content requires Layer 3 audit. Publish new media in the Content tab to populate this queue.</p>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Custom Requests Panel */}
-      {activeTab === 'orders' && (
-        <div className="space-y-6 mt-8 text-left">
-          <div>
-            <h2 className="text-2xl font-black tracking-tighter uppercase mb-2 flex items-center gap-2">
-              <ListOrdered className="text-primary inline-block w-6 h-6" /> Custom Content Requests
-            </h2>
-            <p className="text-[10px] text-white/40 uppercase font-black tracking-widest mt-1">
-              Review, approve/deny, and track payments for bespoke content requests from members
-            </p>
-          </div>
-          <div className="p-8 glass-card bg-black/40 border border-white/5 rounded-[2rem]">
-            <CreatorOrdersPanel customRequestPermission={customRequestPermission} />
-          </div>
-        </div>
-      )}
 
       {/* Floating Toast Notification */}
       <AnimatePresence>

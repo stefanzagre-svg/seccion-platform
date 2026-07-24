@@ -22,6 +22,10 @@ export async function POST(request: Request) {
 
     if (error) throw error;
 
+    // Award KYC Completion XP (+500 XP)
+    const { awardXp } = await import('@/lib/xp-service');
+    await awardXp(userId, 500);
+
     return NextResponse.json({ success: true, message: 'KYC Verification Successful' });
 
   } catch (error: any) {

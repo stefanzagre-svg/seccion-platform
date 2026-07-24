@@ -19,7 +19,18 @@ export async function GET(request: Request) {
       .eq('id', creatorId)
       .single();
 
-    if (creatorError) throw creatorError;
+    if (creatorError) {
+      if (creatorError.code === 'PGRST116' || creatorError.code === '22P02') {
+        return NextResponse.json({
+          creatorId,
+          basePrice: 19.99,
+          contentVolume: 0,
+          multiplier: 1.0,
+          dynamicPrice: 19.99
+        });
+      }
+      throw creatorError;
+    }
 
     const basePrice = creator?.base_subscription_price || 19.99;
 

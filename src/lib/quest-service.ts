@@ -1,5 +1,5 @@
 /**
- * Quest Service — Project Fusion / Session
+ * Quest Service — Project Fusion / Seccion
  *
  * Manages the gamified onboarding quest state.
  * Phase 1: localStorage (client-side). Phase 2+: will sync to Supabase backend.

@@ -143,7 +143,7 @@ function MatchProgressBar({ current, required }: { current: number; required: nu
       <div className="flex items-center justify-between">
         <span className="flex items-center gap-1.5 text-[8px] font-black uppercase tracking-widest text-amber-400/80">
           <Users className="w-3 h-3" />
-          Match Progress
+          Connection Progress
         </span>
         <span className="text-[8px] font-mono font-black text-amber-400/80">
           {current} / {required}
@@ -159,7 +159,7 @@ function MatchProgressBar({ current, required }: { current: number; required: nu
       </div>
 
       <p className="text-[7.5px] text-white/30 uppercase tracking-widest">
-        {remaining} more match{remaining !== 1 ? 'es' : ''} needed to unlock auto-chat
+        {remaining} more connection{remaining !== 1 ? 's' : ''} needed to unlock auto-chat
       </p>
     </div>
   );
@@ -232,7 +232,7 @@ export default function ConfigPanel({
         id="toggle-ai-master"
         icon={<Zap className="w-4 h-4" />}
         label="Enable AI Copilot"
-        description="Master switch. Activates automated lead scoring, reply drafts, content strategy, and contract vetting."
+        description="Master switch. Activates smart reply drafts, content strategy, and contract checks."
         checked={aiAgentActive}
         onChange={(v) => handleToggle(setAiAgentActive, 'ai_agent_active', v)}
       />

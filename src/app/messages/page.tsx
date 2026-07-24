@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Send, ArrowLeft, MoreVertical, ShieldAlert, Sparkles, Heart, MessageSquare, Activity, Brain, Lock, LockOpen, Flame, Eye, Trash2, FileText, X, AlertCircle, Loader2, Info, Paperclip, Download, Globe, Mic, Languages, Check, CreditCard, Gift } from 'lucide-react';
+import { Send, ArrowLeft, MoreVertical, ShieldAlert, Sparkles, Heart, MessageSquare, Activity, Brain, Lock, LockOpen, Flame, Eye, Trash2, FileText, X, AlertCircle, Loader2, Info, Paperclip, Download, Globe, Mic, Languages, Check, CreditCard, Gift, Zap } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { 
@@ -238,6 +238,10 @@ export default function ChatMessenger() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisError, setAnalysisError] = useState<string | null>(null);
 
+  // Onboarding Stage & Connection Points tracking
+  const [connectionPoints, setConnectionPoints] = useState<number>(0);
+  const [questStage, setQuestStage] = useState<number>(1);
+
   // Ephemeral & File Selection State
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [filePreview, setFilePreview] = useState<string | null>(null);
@@ -258,6 +262,83 @@ export default function ChatMessenger() {
   const [s2stTimeLeft, setS2stTimeLeft] = useState(300); // 5 min
   const [s2stLog, setS2stLog] = useState<string[]>([]);
 
+  // Boost Pass states
+  const [currentXp, setCurrentXp] = useState(0);
+  const [passesAvailable, setPassesAvailable] = useState(0);
+  const [boostTransactions, setBoostTransactions] = useState<any[]>([]);
+  const [isSendingBoost, setIsSendingBoost] = useState(false);
+  const [isRespondingBoost, setIsRespondingBoost] = useState(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  const loadBoostStatus = async () => {
+    if (!currentUser) return;
+    try {
+      const res = await fetch(`/api/v2/boost-pass/status?userId=${currentUser.id}`);
+      if (res.ok) {
+        const data = await res.json();
+        setCurrentXp(data.xp);
+        setPassesAvailable(data.passesAvailable);
+        setBoostTransactions(data.transactions);
+      }
+    } catch (err) {
+      console.error('Error loading boost status:', err);
+    }
+  };
+
+  const handleSendBoostPass = async () => {
+    if (!currentUser || !selectedMatch) return;
+    if (passesAvailable <= 0) {
+      alert('You have no Boost Passes available. Earn passes by gaining XP!');
+      return;
+    }
+    setIsSendingBoost(true);
+    try {
+      const res = await fetch('/api/v2/boost-pass/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          senderId: currentUser.id,
+          receiverId: selectedMatch.target_profile.id
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to send Boost Pass');
+      
+      setToastMessage('⚡ Boost Pass sent to ' + selectedMatch.target_profile.display_name + '!');
+      setTimeout(() => setToastMessage(null), 3000);
+      loadBoostStatus();
+    } catch (err: any) {
+      alert(err.message || 'Error sending Boost Pass.');
+    } finally {
+      setIsSendingBoost(false);
+    }
+  };
+
+  const handleRespondBoostPass = async (txId: string, action: 'accepted' | 'declined') => {
+    setIsRespondingBoost(true);
+    try {
+      const res = await fetch('/api/v2/boost-pass/respond', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          transactionId: txId,
+          action
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to respond to Boost Pass');
+      
+      setToastMessage(action === 'accepted' ? '⚡ Relationship boosted to Level 3 Friendly!' : 'Declined Boost Pass.');
+      setTimeout(() => setToastMessage(null), 3000);
+      loadBoostStatus();
+      loadRls();
+    } catch (err: any) {
+      alert(err.message || 'Error responding to Boost Pass.');
+    } finally {
+      setIsRespondingBoost(false);
+    }
+  };
+
   // Check auth session
   useEffect(() => {
     const checkSession = async () => {
@@ -275,13 +356,15 @@ export default function ChatMessenger() {
         // Load Profile and Translation columns
         const { data: profile } = await supabase
           .from('profiles')
-          .select('role, is_kyc_verified, favorite_languages, text_translation_enabled, speech_translation_enabled, creator_ultimate_pack, creator_ultimate_pack_expires_at, promo_status, promo_creator_link')
+          .select('role, is_kyc_verified, favorite_languages, text_translation_enabled, speech_translation_enabled, creator_ultimate_pack, creator_ultimate_pack_expires_at, promo_status, promo_creator_link, connection_points, quest_stage')
           .eq('id', session.user.id)
           .single();
         
         if (profile) {
           setIsKycVerified(profile.is_kyc_verified || false);
           setProfileData(profile);
+          setConnectionPoints(profile.connection_points || 0);
+          setQuestStage(profile.quest_stage || 1);
           // Set initial target language default
           if (profile.favorite_languages && profile.favorite_languages.length > 0) {
             const langMap: Record<string, string> = {
@@ -523,6 +606,34 @@ export default function ChatMessenger() {
     const computed = getDualGaugeState(rls.myScore, rls.theirScore);
     setRlsState(computed);
     setRelationshipRecord(rls.myRel || null);
+
+    // Re-load current user's points and quest stage
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('connection_points, quest_stage')
+      .eq('id', currentUser.id)
+      .single();
+
+    if (profile) {
+      setConnectionPoints(profile.connection_points || 0);
+      const newStage = profile.quest_stage || 1;
+      
+      setQuestStage((prev) => {
+        // If transitioning to Stage 3 Quest, inject system message!
+        if (prev < 3 && newStage >= 3) {
+          setMessages((messagesPrev) => [
+            ...messagesPrev,
+            {
+              id: `sys-quest-stage3-${Date.now()}`,
+              senderId: 'them',
+              text: `🎉 Quest Unlocked: You have entered the Inner Circle! Detailed relationship diagnostics are now active.`,
+              timestamp: new Date()
+            }
+          ]);
+        }
+        return newStage;
+      });
+    }
   };
 
   // Trigger Google Gemini Gravity and Traits Diagnostics
@@ -566,6 +677,21 @@ export default function ChatMessenger() {
   // Load message history and setup subscription when selected match changes
   useEffect(() => {
     if (!currentUser || !selectedMatch) return;
+
+    loadBoostStatus();
+
+    // Subscribe to Boost Pass transaction changes
+    const boostChannel = supabase
+      .channel('boost_pass_changes_realtime')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'boost_pass_transactions' },
+        () => {
+          loadBoostStatus();
+          loadRls();
+        }
+      )
+      .subscribe();
 
     const targetId = selectedMatch.target_profile.id;
 
@@ -670,6 +796,7 @@ export default function ChatMessenger() {
 
     return () => {
       supabase.removeChannel(channel);
+      supabase.removeChannel(boostChannel);
     };
   }, [selectedMatch, currentUser]);
 
@@ -873,7 +1000,7 @@ export default function ChatMessenger() {
   }
 
   return (
-    <div className="flex h-screen bg-transparent text-foreground overflow-hidden">
+    <div className="flex h-screen bg-transparent text-foreground overflow-hidden pt-16 pb-[60px] md:pb-0">
       
       {/* ─── Sidebar: Matches List ─────────────────────────────────────────── */}
       <aside className={`w-full md:w-80 border-r border-white/5 bg-[#0a0a0a] flex flex-col shrink-0 h-full ${
@@ -886,7 +1013,7 @@ export default function ChatMessenger() {
           >
             <ArrowLeft className="w-4 h-4" /> Feed
           </button>
-          <span className="text-xs font-black text-primary tracking-widest uppercase">My Matches</span>
+          <span className="text-xs font-black text-primary tracking-widest uppercase">My Connections</span>
         </div>
 
         <div className="flex-1 overflow-y-auto p-4 space-y-2">
@@ -928,7 +1055,7 @@ export default function ChatMessenger() {
           ) : (
             <div className="flex flex-col items-center justify-center text-muted-foreground h-64 text-center px-4">
               <MessageSquare className="w-8 h-8 opacity-30 mb-2" />
-              <p className="text-xs">No active matches yet. Swipe on the feed to find a match!</p>
+              <p className="text-xs">No active connections yet. Swipe on the feed to find your vibe!</p>
             </div>
           )}
         </div>
@@ -951,30 +1078,65 @@ export default function ChatMessenger() {
                       window.history.pushState(null, '', window.location.pathname);
                     }}
                     className="flex md:hidden p-2 bg-white/5 hover:bg-white/10 rounded-xl border border-white/10 text-white transition mr-1"
-                    title="Back to matches list"
+                    title="Back to connections"
                   >
                     <ArrowLeft className="w-4 h-4" />
                   </button>
 
-                  <div className="w-10 h-10 rounded-full overflow-hidden border border-white/10 shadow relative">
-                    <BlurredFaceImage
-                      src={selectedMatch.target_profile.avatar_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&q=80'}
-                      alt="Avatar"
-                      sharedScore={selectedMatch.gauge_score ?? 0}
-                      isEnabledByOwner={selectedMatch.target_profile.face_blur_active || false}
-                      faceCoordinates={selectedMatch.target_profile.avatar_face_coordinates}
-                      className="w-full h-full"
-                    />
-                  </div>
-                  <div>
-                    <h1 className="font-bold text-md text-white">{selectedMatch.target_profile.display_name || selectedMatch.target_profile.username}</h1>
-                    <span className="text-[10px] font-black uppercase tracking-widest text-success flex items-center gap-1">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" /> Active
-                    </span>
+                  <div 
+                    onClick={() => router.push(`/profile/${selectedMatch.target_profile.id}`)}
+                    className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition"
+                    title="View Profile Details"
+                  >
+                    <div className="w-10 h-10 rounded-full overflow-hidden border border-white/10 shadow relative">
+                      <BlurredFaceImage
+                        src={selectedMatch.target_profile.avatar_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&q=80'}
+                        alt="Avatar"
+                        sharedScore={selectedMatch.gauge_score ?? 0}
+                        isEnabledByOwner={selectedMatch.target_profile.face_blur_active || false}
+                        faceCoordinates={selectedMatch.target_profile.avatar_face_coordinates}
+                        className="w-full h-full"
+                      />
+                    </div>
+                    <div>
+                      <h1 className="font-bold text-md text-white">{selectedMatch.target_profile.display_name || selectedMatch.target_profile.username}</h1>
+                      <span className="text-[10px] font-black uppercase tracking-widest text-success flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" /> Active
+                      </span>
+                    </div>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-2">
+                  {/* Boost Pass Button */}
+                  {selectedMatch && rlsState && (
+                    <button 
+                      onClick={handleSendBoostPass}
+                      disabled={rlsState.sharedScore >= 16 || passesAvailable <= 0 || isSendingBoost}
+                      className={`w-10 h-10 flex items-center justify-center rounded-full transition border relative ${
+                        rlsState.sharedScore >= 16
+                          ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400 cursor-not-allowed'
+                          : passesAvailable > 0
+                            ? 'bg-yellow-500/10 hover:bg-yellow-500/20 border-yellow-500/30 text-yellow-400 hover:scale-105 shadow-[0_0_15px_rgba(234,179,8,0.2)] animate-pulse'
+                            : 'bg-white/5 border-white/10 text-white/40 cursor-not-allowed'
+                      }`}
+                      title={
+                        rlsState.sharedScore >= 16
+                          ? 'Relationship already Level 3+'
+                          : passesAvailable > 0
+                            ? `Send Boost Pass (You have ${passesAvailable} available)`
+                            : 'No Boost Passes available (Earn via XP)'
+                      }
+                    >
+                      <Zap className="w-5 h-5 fill-current" />
+                      {passesAvailable > 0 && rlsState.sharedScore < 16 && (
+                        <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-yellow-500 text-[8px] font-black text-black ring-2 ring-black">
+                          {passesAvailable}
+                        </span>
+                      )}
+                    </button>
+                  )}
+
                   {/* Globe Translation Button */}
                   <button 
                     onClick={() => {
@@ -1041,7 +1203,7 @@ export default function ChatMessenger() {
                     />
                   </div>
                   <div className="text-right text-[8px] text-white/40 uppercase tracking-widest">
-                    Shared Harmonics: {rlsState.sharedScore.toFixed(0)}% (My Invest: {rlsState.myScore.toFixed(0)})
+                    Synergy Sync: {rlsState.sharedScore.toFixed(0)}% (My Invest: {rlsState.myScore.toFixed(0)})
                   </div>
                 </div>
               )}
@@ -1049,6 +1211,52 @@ export default function ChatMessenger() {
 
             {/* Chat Messages */}
             <div className="flex-1 overflow-y-auto p-6 space-y-4 pb-28">
+              {/* Local Notification Toast */}
+              {toastMessage && (
+                <div className="fixed bottom-24 left-1/2 transform -translate-x-1/2 z-50 px-6 py-3 bg-[#0F0F1A] border border-primary/20 rounded-full text-[10px] font-black uppercase tracking-widest text-primary shadow-[0_0_20px_rgba(0,251,251,0.15)] flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-primary" /> {toastMessage}
+                </div>
+              )}
+
+              {/* Received Boost Pass Alert */}
+              {(() => {
+                const receivedBoostTx = boostTransactions.find(t => t.receiver_id === currentUser?.id && t.sender_id === selectedMatch?.target_profile?.id);
+                if (!receivedBoostTx) return null;
+                return (
+                  <motion.div 
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="p-5 bg-gradient-to-r from-yellow-500/10 via-amber-500/15 to-yellow-500/10 border border-yellow-500/30 rounded-3xl space-y-4 text-center max-w-md mx-auto shadow-[0_0_25px_rgba(234,179,8,0.05)] relative overflow-hidden"
+                  >
+                    <div className="absolute top-0 left-0 right-0 h-[1.5px] bg-gradient-to-r from-transparent via-yellow-400 to-transparent" />
+                    <div className="flex flex-col items-center gap-2">
+                      <div className="w-10 h-10 rounded-full bg-yellow-500/10 border border-yellow-500/20 flex items-center justify-center text-yellow-400 shadow-[0_0_15px_rgba(234,179,8,0.2)] animate-bounce">
+                        <Zap className="w-5 h-5 fill-yellow-400" />
+                      </div>
+                      <h3 className="text-xs font-black uppercase tracking-wider text-white">Boost Pass Received</h3>
+                      <p className="text-[10px] text-white/70 max-w-xs leading-relaxed uppercase tracking-wider font-black">
+                        <span className="text-yellow-400">@{receivedBoostTx.sender_profile?.display_name || receivedBoostTx.sender_profile?.username}</span> has sent you a Boost Pass! Accept to instantly reach Chemistry Level 3 and reveal each other's stream.
+                      </p>
+                    </div>
+                    <div className="flex gap-3 justify-center">
+                      <button
+                        onClick={() => handleRespondBoostPass(receivedBoostTx.id, 'accepted')}
+                        disabled={isRespondingBoost}
+                        className="px-5 py-2.5 rounded-xl bg-yellow-500 text-black font-black text-[9px] uppercase tracking-widest shadow-md hover:shadow-yellow-500/20 active:scale-95 transition cursor-pointer"
+                      >
+                        {isRespondingBoost ? 'Boosting...' : 'Accept Boost'}
+                      </button>
+                      <button
+                        onClick={() => handleRespondBoostPass(receivedBoostTx.id, 'declined')}
+                        disabled={isRespondingBoost}
+                        className="px-5 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white/50 font-black text-[9px] uppercase tracking-widest hover:bg-white/10 active:scale-95 transition cursor-pointer"
+                      >
+                        Decline
+                      </button>
+                    </div>
+                  </motion.div>
+                );
+              })()}
               {/* S2ST Floating Translator HUD */}
               {isS2stActive && (
                 <div className="sticky top-4 z-30 mx-auto max-w-sm p-4 bg-[#0F0F1A]/95 border border-[#00fbfb]/30 rounded-3xl shadow-[0_20px_40px_rgba(0,251,251,0.15)] backdrop-blur-xl">
@@ -1083,7 +1291,7 @@ export default function ChatMessenger() {
               <div className="w-full flex justify-center my-4">
                 <div className="glass-card px-6 py-2 rounded-full border border-primary/20 flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-primary/80 text-center">
                   <Sparkles className="w-4 h-4 text-primary" />
-                  Match Forged • Core Passions Aligned
+                  Connection Forged • Core Passions Aligned
                 </div>
               </div>
 
@@ -1368,7 +1576,7 @@ export default function ChatMessenger() {
           <div className="flex-1 flex flex-col items-center justify-center text-muted-foreground text-center p-6">
             <MessageSquare className="w-12 h-12 opacity-20 mb-4" />
             <h2 className="text-white font-bold mb-2">No Active Chat</h2>
-            <p className="text-sm text-white/50 max-w-xs">Select a match from the sidebar to start building your relationship gauge.</p>
+            <p className="text-sm text-white/50 max-w-xs">Select a match from the sidebar to start building your synergy meter.</p>
           </div>
         )}
       </main>
@@ -1400,121 +1608,160 @@ export default function ChatMessenger() {
             </div>
 
             <div className="flex-1 overflow-y-auto p-6 space-y-6 relative z-10 text-left">
-              
-              {/* Informative Consent Banner */}
-              <div className="p-4 rounded-2xl border border-[#00f0ff]/20 bg-[#00f0ff]/5 text-[#00f0ff]">
-                <div className="flex gap-2 items-start">
-                  <Info className="w-4 h-4 shrink-0 mt-0.5" />
-                  <div className="space-y-1">
-                    <p className="text-[9px] font-black uppercase tracking-wider">AI Diagnostics Active</p>
-                    <p className="text-[9px] font-semibold leading-relaxed normal-case opacity-85">
-                      Diagnostics processes chat logs via Google Gemini to evaluate alignment, extract traits, and determine Conversation Gravity. Updates are mutually shared.
+              {questStage < 3 ? (
+                /* Locked State Container */
+                <div className="bg-[#0f0f15]/80 border border-white/5 rounded-[2rem] p-6 text-center space-y-6 relative overflow-hidden backdrop-blur-xl mt-4">
+                  {/* Glow behind lock */}
+                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-40 h-40 bg-purple-500/10 blur-[50px] rounded-full pointer-events-none" />
+
+                  <div className="w-14 h-14 mx-auto bg-purple-500/10 border border-purple-500/20 rounded-2xl flex items-center justify-center text-purple-400 relative z-10 animate-pulse">
+                    <Lock className="w-6 h-6" />
+                  </div>
+
+                  <div className="space-y-2 relative z-10">
+                    <h3 className="text-sm font-black uppercase tracking-widest text-white">
+                      Inner Circle Radar Locked
+                    </h3>
+                    <p className="text-[10px] text-white/50 leading-relaxed max-w-[240px] mx-auto normal-case">
+                      Complete the Stage 3 Quest &ldquo;Hidden Goals&rdquo; by earning 500 Chemistry XP to unlock AI relationship reasoning &amp; summaries.
                     </p>
                   </div>
-                </div>
-              </div>
 
-              {/* Gravity Score Indicator */}
-              <div className="bg-white/[0.02] border border-white/5 p-2 rounded-[2rem] shadow-[0_20px_40px_rgba(0,0,0,0.5)] backdrop-blur-xl">
-                <div className="bg-black/40 border border-white/5 rounded-[calc(2rem-0.5rem)] p-5 text-center space-y-3">
-                  <span className="text-[8px] font-black uppercase text-white/40 tracking-widest block">
-                    Conversation Gravity
-                  </span>
-                  
-                  <div className="flex items-center justify-center py-2">
-                    <div className="relative flex items-center justify-center w-24 h-24 rounded-full border border-white/10 bg-black/60 shadow-[inset_0_1px_5px_rgba(255,255,255,0.05)]">
-                      {/* Glow according to score */}
-                      <div className={`absolute inset-0 rounded-full blur-xl opacity-35 ${
-                        (relationshipRecord?.gravity_score ?? 0) >= 60 ? 'bg-primary' :
-                        (relationshipRecord?.gravity_score ?? 0) >= 20 ? 'bg-cyan-400' :
-                        (relationshipRecord?.gravity_score ?? 0) >= -20 ? 'bg-zinc-500' : 'bg-destructive'
-                      }`} />
-                      <div className="relative z-10 flex flex-col items-center">
-                        <span className="text-2xl font-black tracking-tighter text-white">
-                          {relationshipRecord?.gravity_score !== undefined && relationshipRecord.gravity_score !== 0
-                            ? `${relationshipRecord.gravity_score > 0 ? '+' : ''}${relationshipRecord.gravity_score}`
-                            : 'N/A'
-                          }
-                        </span>
-                        <span className="text-[8px] font-black uppercase tracking-widest text-white/40 mt-0.5">
-                          {(relationshipRecord?.gravity_score ?? 0) >= 60 ? 'Burning 🔥' :
-                           (relationshipRecord?.gravity_score ?? 0) >= 20 ? 'Sparking ✨' :
-                           (relationshipRecord?.gravity_score ?? 0) >= -20 ? 'Neutral ⚖️' : 'Fading ❄️'}
-                        </span>
+                  {/* Progress bar towards unlock */}
+                  <div className="space-y-2 relative z-10 pt-2">
+                    <div className="flex justify-between text-[8px] font-black uppercase tracking-widest text-white/30">
+                      <span>Unlock Progress</span>
+                      <span>{connectionPoints} / 500 XP</span>
+                    </div>
+                    <div className="h-1.5 bg-black/40 rounded-full overflow-hidden border border-white/5">
+                      <div 
+                        className="h-full bg-gradient-to-r from-purple-500 to-pink-500 shadow-[0_0_10px_rgba(168,85,247,0.5)] transition-all duration-500"
+                        style={{ width: `${Math.min(100, (connectionPoints / 500) * 100)}%` }}
+                      />
+                    </div>
+                  </div>
+
+                  <p className="text-[8px] font-bold text-primary/70 uppercase tracking-widest pt-2">
+                    💡 Tip: Chat and accept Suggestion Moves to earn XP.
+                  </p>
+                </div>
+              ) : (
+                <>
+                  {/* Informative Consent Banner */}
+                  <div className="p-4 rounded-2xl border border-[#00f0ff]/20 bg-[#00f0ff]/5 text-[#00f0ff]">
+                    <div className="flex gap-2 items-start">
+                      <Info className="w-4 h-4 shrink-0 mt-0.5" />
+                      <div className="space-y-1">
+                        <p className="text-[9px] font-black uppercase tracking-wider">AI Diagnostics Active</p>
+                        <p className="text-[9px] font-semibold leading-relaxed normal-case opacity-85">
+                          Diagnostics processes chat logs via Google Gemini to evaluate alignment, extract traits, and determine Conversation Gravity. Updates are mutually shared.
+                        </p>
                       </div>
                     </div>
                   </div>
 
-                  {relationshipRecord?.gravity_updated_at && (
-                    <span className="text-[8px] text-white/30 uppercase tracking-widest font-black block">
-                      Synced: {new Date(relationshipRecord.gravity_updated_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                    </span>
-                  )}
-                </div>
-              </div>
-
-              {/* Extracted Traits */}
-              <div className="space-y-2">
-                <span className="text-[9px] font-black uppercase text-white/40 tracking-widest block">
-                  Extracted Traits
-                </span>
-                {relationshipRecord?.extracted_traits && relationshipRecord.extracted_traits.length > 0 ? (
-                  <div className="flex flex-wrap gap-2">
-                    {relationshipRecord.extracted_traits.map((trait: string) => (
-                      <span 
-                        key={trait} 
-                        className="px-3 py-1 bg-primary/10 border border-primary/20 text-primary rounded-xl text-[9px] font-black uppercase tracking-widest shadow-[0_0_10px_rgba(102,252,241,0.08)] hover:scale-102 transition"
-                      >
-                        {trait}
+                  {/* Gravity Score Indicator */}
+                  <div className="bg-white/[0.02] border border-white/5 p-2 rounded-[2rem] shadow-[0_20px_40px_rgba(0,0,0,0.5)] backdrop-blur-xl">
+                    <div className="bg-black/40 border border-white/5 rounded-[calc(2rem-0.5rem)] p-5 text-center space-y-3">
+                      <span className="text-[8px] font-black uppercase text-white/40 tracking-widest block">
+                        Conversation Gravity
                       </span>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="py-4 text-center border border-dashed border-white/10 rounded-2xl text-[9px] font-black uppercase tracking-widest text-white/30">
-                    No traits detected yet
-                  </div>
-                )}
-              </div>
+                      
+                      <div className="flex items-center justify-center py-2">
+                        <div className="relative flex items-center justify-center w-24 h-24 rounded-full border border-white/10 bg-black/60 shadow-[inset_0_1px_5px_rgba(255,255,255,0.05)]">
+                          {/* Glow according to score */}
+                          <div className={`absolute inset-0 rounded-full blur-xl opacity-35 ${
+                            (relationshipRecord?.gravity_score ?? 0) >= 60 ? 'bg-primary' :
+                            (relationshipRecord?.gravity_score ?? 0) >= 20 ? 'bg-cyan-400' :
+                            (relationshipRecord?.gravity_score ?? 0) >= -20 ? 'bg-zinc-500' : 'bg-destructive'
+                          }`} />
+                          <div className="relative z-10 flex flex-col items-center">
+                            <span className="text-2xl font-black tracking-tighter text-white">
+                              {relationshipRecord?.gravity_score !== undefined && relationshipRecord.gravity_score !== 0
+                                ? `${relationshipRecord.gravity_score > 0 ? '+' : ''}${relationshipRecord.gravity_score}`
+                                : 'N/A'
+                              }
+                            </span>
+                            <span className="text-[8px] font-black uppercase tracking-widest text-white/40 mt-0.5">
+                              {(relationshipRecord?.gravity_score ?? 0) >= 60 ? 'Burning 🔥' :
+                               (relationshipRecord?.gravity_score ?? 0) >= 20 ? 'Sparking ✨' :
+                               (relationshipRecord?.gravity_score ?? 0) >= -20 ? 'Neutral ⚖️' : 'Fading ❄️'}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
 
-              {/* Connection Summary */}
-              <div className="space-y-2">
-                <span className="text-[9px] font-black uppercase text-white/40 tracking-widest block">
-                  AI Connection Radar
-                </span>
-                <div className="p-4 bg-white/2 border border-white/5 rounded-2xl">
-                  <p className="text-xs font-semibold text-white/70 leading-relaxed">
-                    {relationshipRecord?.gravity_summary 
-                      ? `"${relationshipRecord.gravity_summary}"`
-                      : "Click the Sync button below to analyze your interaction momentum and receive matching diagnostic suggestions."
-                    }
-                  </p>
-                </div>
-              </div>
+                      {relationshipRecord?.gravity_updated_at && (
+                        <span className="text-[8px] text-white/30 uppercase tracking-widest font-black block">
+                          Synced: {new Date(relationshipRecord.gravity_updated_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                      )}
+                    </div>
+                  </div>
 
-              {analysisError && (
-                <div className="flex items-center gap-2 p-3 bg-red-950/20 border border-red-500/20 rounded-xl text-red-400 text-xs font-semibold">
-                  <AlertCircle className="w-4 h-4 shrink-0" />
-                  <span>{analysisError}</span>
-                </div>
+                  {/* Extracted Traits */}
+                  <div className="space-y-2">
+                    <span className="text-[9px] font-black uppercase text-white/40 tracking-widest block">
+                      Extracted Traits
+                    </span>
+                    {relationshipRecord?.extracted_traits && relationshipRecord.extracted_traits.length > 0 ? (
+                      <div className="flex flex-wrap gap-2">
+                        {relationshipRecord.extracted_traits.map((trait: string) => (
+                          <span 
+                            key={trait} 
+                            className="px-3 py-1 bg-primary/10 border border-primary/20 text-primary rounded-xl text-[9px] font-black uppercase tracking-widest shadow-[0_0_10px_rgba(102,252,241,0.08)] hover:scale-102 transition"
+                          >
+                            {trait}
+                          </span>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="py-4 text-center border border-dashed border-white/10 rounded-2xl text-[9px] font-black uppercase tracking-widest text-white/30">
+                        No traits detected yet
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Connection Summary */}
+                  <div className="space-y-2">
+                    <span className="text-[9px] font-black uppercase text-white/40 tracking-widest block">
+                      AI Connection Radar
+                    </span>
+                    <div className="p-4 bg-white/2 border border-white/5 rounded-2xl">
+                      <p className="text-xs font-semibold text-white/70 leading-relaxed">
+                        {relationshipRecord?.gravity_summary 
+                          ? `"${relationshipRecord.gravity_summary}"`
+                          : "Click the Sync button below to sync your vibe energy and get personalized tips."
+                        }
+                      </p>
+                    </div>
+                  </div>
+
+                  {analysisError && (
+                    <div className="flex items-center gap-2 p-3 bg-red-950/20 border border-red-500/20 rounded-xl text-red-400 text-xs font-semibold">
+                      <AlertCircle className="w-4 h-4 shrink-0" />
+                      <span>{analysisError}</span>
+                    </div>
+                  )}
+
+                  {/* Trigger diagnostics CTA */}
+                  <button
+                    onClick={handleAnalyzeGravity}
+                    disabled={isAnalyzing}
+                    className="w-full py-4 bg-primary text-black font-black uppercase tracking-widest text-[10px] rounded-2xl hover:shadow-[0_0_20px_rgba(102,252,241,0.5)] transition disabled:opacity-50 flex items-center justify-center gap-2"
+                  >
+                    {isAnalyzing ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" /> Synchronizing...
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="w-4 h-4" /> Run AI Diagnostics
+                      </>
+                    )}
+                  </button>
+                </>
               )}
-
-              {/* Trigger diagnostics CTA */}
-              <button
-                onClick={handleAnalyzeGravity}
-                disabled={isAnalyzing}
-                className="w-full py-4 bg-primary text-black font-black uppercase tracking-widest text-[10px] rounded-2xl hover:shadow-[0_0_20px_rgba(102,252,241,0.5)] transition disabled:opacity-50 flex items-center justify-center gap-2"
-              >
-                {isAnalyzing ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" /> Synchronizing...
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="w-4 h-4" /> Run AI Diagnostics
-                  </>
-                )}
-              </button>
-
             </div>
           </motion.aside>
         )}

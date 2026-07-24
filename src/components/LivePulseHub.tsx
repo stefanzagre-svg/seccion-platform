@@ -415,8 +415,8 @@ export default function LivePulseHub({ currentUser, candidateProfile, onLock }: 
           </div>
 
           {/* Bottom Stream controls overlay */}
-          <div className="relative z-20 p-6 bg-gradient-to-t from-black/90 to-transparent flex items-center justify-between gap-4">
-            <div className="flex gap-2">
+          <div className="relative z-20 p-6 bg-gradient-to-t from-black/90 to-transparent flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="flex gap-2 w-full sm:w-auto justify-center sm:justify-start">
               <button 
                 onClick={() => triggerPulseBurst('⚡')}
                 className="px-5 py-3 bg-primary hover:bg-primary-dark text-white rounded-2xl text-[9px] font-black uppercase tracking-widest shadow-lg shadow-primary/20 border border-white/10 transition-all flex items-center gap-1.5"

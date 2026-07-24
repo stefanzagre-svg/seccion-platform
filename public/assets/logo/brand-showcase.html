@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SECCION Platform — Brand Identity Showcase</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: #0A0A0C;
+      color: #F3F4F6;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+      padding: 40px 20px;
+      min-height: 100vh;
+    }
+    .container { max-width: 1100px; margin: 0 auto; }
+    header { text-align: center; margin-bottom: 48px; }
+    header h1 { font-size: 2.5rem; font-weight: 800; background: linear-gradient(135deg, #00F0FF, #EC4899); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    header p { color: #9CA3AF; margin-top: 8px; font-size: 1.1rem; }
+    
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 24px; margin-bottom: 48px; }
+    .card {
+      border-radius: 20px;
+      padding: 32px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      transition: transform 0.2s ease, border-color 0.2s ease;
+    }
+    .card:hover { transform: translateY(-4px); border-color: rgba(0, 240, 255, 0.4); }
+    .card.dark { background: #0A0A0C; }
+    .card.surface { background: #12121A; }
+    .card.light { background: #FAFAFA; color: #0A0A0C; border-color: rgba(0, 0, 0, 0.1); }
+    .card img { max-width: 80%; height: auto; object-fit: contain; }
+    .card-label { position: absolute; top: 16px; left: 16px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; tracking: 0.05em; opacity: 0.7; }
+    .card-dark-label { color: #66FCF1; }
+    .card-light-label { color: #4B5563; }
+
+    .palette { display: flex; gap: 16px; margin-bottom: 48px; flex-wrap: wrap; }
+    .swatch { flex: 1; min-width: 140px; background: #12121A; border-radius: 16px; padding: 20px; border: 1px solid rgba(255, 255, 255, 0.08); text-align: center; }
+    .swatch-color { height: 60px; border-radius: 10px; margin-bottom: 12px; }
+    .swatch h4 { font-size: 0.9rem; margin-bottom: 4px; }
+    .swatch span { font-size: 0.8rem; color: #9CA3AF; font-family: monospace; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>SECCION Platform Brand Assets</h1>
+      <p>Clean Transparent Vectors — Electric Glass "S" Mark & Slashed Orbital Wordmark</p>
+    </header>
+
+    <div class="grid">
+      <!-- Canonical Mark (Transparent on Dark) -->
+      <div class="card dark">
+        <span class="card-label card-dark-label">logo-mark.svg (Transparent)</span>
+        <img src="logo-mark.svg" alt="SECCION Logo Mark" style="width: 96px; height: 96px;">
+      </div>
+
+      <!-- Full Logo (Transparent on Surface) -->
+      <div class="card surface">
+        <span class="card-label card-dark-label">logo-full.svg (Transparent)</span>
+        <img src="logo-full.svg" alt="SECCION Full Logo">
+      </div>
+
+      <!-- Wordmark Only -->
+      <div class="card dark">
+        <span class="card-label card-dark-label">logo-wordmark.svg (Transparent)</span>
+        <img src="logo-wordmark.svg" alt="SECCION Wordmark">
+      </div>
+
+      <!-- Monochrome White on Dark -->
+      <div class="card dark">
+        <span class="card-label card-dark-label">logo-white.svg (Monochrome White)</span>
+        <img src="logo-white.svg" alt="SECCION White Logo">
+      </div>
+
+      <!-- Monochrome Black on Light -->
+      <div class="card light">
+        <span class="card-label card-light-label">logo-black.svg (Monochrome Black)</span>
+        <img src="logo-black.svg" alt="SECCION Black Logo">
+      </div>
+
+      <!-- App Icon / Favicon -->
+      <div class="card surface" style="flex-direction: row; gap: 24px;">
+        <div style="text-align: center;">
+          <span class="card-label card-dark-label" style="position: static; display: block; margin-bottom: 8px;">App Icon</span>
+          <img src="logo-icon.svg" alt="App Icon" style="width: 80px; height: 80px;">
+        </div>
+        <div style="text-align: center;">
+          <span class="card-label card-dark-label" style="position: static; display: block; margin-bottom: 8px;">Favicon</span>
+          <img src="favicon.svg" alt="Favicon" style="width: 32px; height: 32px;">
+        </div>
+      </div>
+    </div>
+
+    <h2 style="font-size: 1.4rem; margin-bottom: 16px; color: #66FCF1;">Brand Color Tokens</h2>
+    <div class="palette">
+      <div class="swatch">
+        <div class="swatch-color" style="background: #00F0FF;"></div>
+        <h4>Electric Cyan</h4>
+        <span>#00F0FF</span>
+      </div>
+      <div class="swatch">
+        <div class="swatch-color" style="background: #A855F7;"></div>
+        <h4>Electric Violet</h4>
+        <span>#A855F7</span>
+      </div>
+      <div class="swatch">
+        <div class="swatch-color" style="background: #EC4899;"></div>
+        <h4>Neon Magenta</h4>
+        <span>#EC4899</span>
+      </div>
+      <div class="swatch">
+        <div class="swatch-color" style="background: #0A0A0C;"></div>
+        <h4>Deep Space Base</h4>
+        <span>#0A0A0C</span>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

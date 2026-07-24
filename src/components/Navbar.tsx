@@ -6,7 +6,7 @@ import { useLanguage } from '@/context/LanguageContext';
 import { usePathname, useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/lib/supabase';
-import { Shield, Sparkles, MessageSquare, Trophy, RefreshCw, LogIn, User, Compass, Tv, Search, Bell, Heart } from 'lucide-react';
+import { Shield, Sparkles, MessageSquare, Trophy, RefreshCw, LogIn, LogOut, User, Compass, Tv, Search, Bell, Heart } from 'lucide-react';
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -25,8 +25,21 @@ export default function Navbar() {
   const [searchQuery, setSearchQuery] = useState('');
   const [unreadCount, setUnreadCount] = useState(0);
 
-  // Exclude navbar in onboarding, auth callback, or admin pages
-  const isExcludedPage = pathname?.startsWith('/onboarding') || pathname?.startsWith('/auth') || pathname?.startsWith('/admin');
+  // Exclude navbar in onboarding, auth callback, admin pages, or landing page when user is not logged in
+  const isExcludedPage = 
+    pathname?.startsWith('/onboarding') || 
+    pathname?.startsWith('/auth') || 
+    pathname?.startsWith('/admin') ||
+    pathname?.startsWith('/become-creator') ||
+    pathname?.startsWith('/vibe-radar') ||
+    pathname?.startsWith('/how-we-do') ||
+    pathname?.startsWith('/now-streaming') ||
+    pathname?.startsWith('/privacy') ||
+    pathname?.startsWith('/rules') ||
+    pathname?.startsWith('/creator-hub') ||
+    pathname?.startsWith('/hit-us-up') ||
+    pathname?.startsWith('/login') ||
+    (pathname === '/' && !user && !isLoading);
 
   // Sync search query from URL on load/pathname change
   useEffect(() => {
@@ -163,13 +176,11 @@ export default function Navbar() {
     <>
       <nav className="fixed top-0 left-0 right-0 z-50 backdrop-blur-xl bg-black/40 border-b border-white/10 w-full px-6 md:px-12 py-3.5 flex justify-between items-center transition-all duration-300">
         
-        {/* Brand Logo */}
-        <Link href="/" className="flex items-center gap-2.5 cursor-pointer hover:opacity-90 transition-opacity">
-          <img src="/images/seccion-logo-icon.png" alt="SECCION Icon" className="w-8 h-8 rounded-lg drop-shadow-[0_0_12px_rgba(0,251,251,0.4)] object-contain" />
+        <Link href="/" className="flex items-center cursor-pointer hover:opacity-90 transition-opacity group">
           <img 
-            src="/images/seccion-logo-text.png" 
-            alt="SECCION" 
-            className="h-6 object-contain hidden sm:block" 
+            src="/assets/logo/logo-wordmark.png" 
+            alt="SECCIØN" 
+            className="h-7 sm:h-8 md:h-9 object-contain drop-shadow-[0_0_20px_rgba(0,240,255,0.4)] group-hover:drop-shadow-[0_0_30px_rgba(0,240,255,0.7)] transition-all duration-300" 
           />
         </Link>
 
@@ -306,6 +317,7 @@ export default function Navbar() {
                 <Link 
                   href={profile?.role === 'creator' ? '/studio' : '/profile/member'}
                   className="w-8 h-8 rounded-full border border-white/20 bg-white/5 flex items-center justify-center hover:border-primary transition group overflow-hidden"
+                  title={profile?.role === 'creator' ? 'Creator Studio' : 'Member Dashboard'}
                 >
                   {profile?.avatar_url ? (
                     <img src={profile.avatar_url} alt="Profile" className="w-full h-full object-cover" />
@@ -313,10 +325,22 @@ export default function Navbar() {
                     <User className="w-4 h-4 text-white/60 group-hover:text-primary transition" />
                   )}
                 </Link>
+
+                {/* Log Out Button */}
+                <button
+                  onClick={async () => {
+                    await supabase.auth.signOut();
+                    router.push('/');
+                  }}
+                  className="p-2 rounded-full border border-white/10 bg-white/5 hover:bg-red-500/10 hover:border-red-500/30 text-white/80 hover:text-red-400 transition-all duration-300 flex items-center justify-center shrink-0"
+                  title="Log Out"
+                >
+                  <LogOut className="w-4 h-4" />
+                </button>
               </div>
             ) : (
               <button 
-                onClick={() => router.push('/onboarding')}
+                onClick={() => router.push('/early-access')}
                 className="flex items-center gap-2 px-5 py-2 border border-[#00fbfb]/40 text-[#00fbfb] bg-[#00fbfb]/5 font-['JetBrains_Mono'] text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-[#00fbfb]/10 transition-all active:scale-[0.98]"
               >
                 <LogIn className="w-3.5 h-3.5" />

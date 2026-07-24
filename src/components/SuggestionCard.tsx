@@ -15,6 +15,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown, ChevronUp, Zap, TrendingUp, ArrowRight } from 'lucide-react';
 import type { PredictionPayload } from '@/lib/ai-suggestion-service';
 import { CATEGORY_META } from '@/lib/ai-suggestion-service';
+import { ARCHETYPE_PROFILES, CORE_PASSIONS } from '@/lib/constants';
 
 interface SuggestionCardProps {
   payload: PredictionPayload;
@@ -40,17 +41,12 @@ export default function SuggestionCard({ payload, rank, onAction }: SuggestionCa
       initial={{ opacity: 0, y: 24, scale: 0.97 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{ duration: 0.45, delay: rank * 0.08, ease: [0.22, 1, 0.36, 1] }}
-      whileHover={{ scale: 1.015 }}
-      className="relative rounded-2xl border border-white/8 bg-black/40 backdrop-blur-xl overflow-hidden group transition-shadow duration-500"
-      style={{
-        boxShadow: `0 0 0 0px ${meta.glowColor}`,
+      whileHover={{ 
+        scale: 1.015,
+        borderColor: `${meta.color}40`,
+        boxShadow: `0 0 32px 2px ${meta.glowColor}`
       }}
-      onHoverStart={(e) => {
-        (e.currentTarget as HTMLElement).style.boxShadow = `0 0 32px 2px ${meta.glowColor}`;
-      }}
-      onHoverEnd={(e) => {
-        (e.currentTarget as HTMLElement).style.boxShadow = `0 0 0 0px ${meta.glowColor}`;
-      }}
+      className="relative rounded-2xl border border-white/8 bg-black/40 backdrop-blur-xl overflow-hidden group transition-all duration-300"
     >
       {/* Ambient glow background */}
       <div
@@ -101,9 +97,48 @@ export default function SuggestionCard({ payload, rank, onAction }: SuggestionCa
         {/* Content */}
         <div className="flex-1 min-w-0">
           {/* Username + signals row */}
-          <div className="flex items-center justify-between gap-2 mb-1.5">
-            <p className="font-black text-sm text-white tracking-tight">@{payload.username}</p>
-            <div className="flex items-center gap-2">
+          <div className="flex items-center justify-between gap-2">
+            <div>
+              <p className="font-black text-sm text-white tracking-tight">@{payload.username}</p>
+              
+              {/* Archetype & Passion Badge Row */}
+              {(payload.archetype || payload.core_passion) && (
+                <div className="flex flex-wrap gap-1 mt-1 mb-2">
+                  {payload.archetype && (() => {
+                    const archObj = ARCHETYPE_PROFILES[payload.archetype as keyof typeof ARCHETYPE_PROFILES];
+                    if (archObj) {
+                      return (
+                        <span 
+                          className="px-2 py-0.5 rounded-md text-[8px] font-black uppercase tracking-wider border shrink-0"
+                          style={{
+                            borderColor: `${archObj.color}35`,
+                            backgroundColor: `${archObj.color}15`,
+                            color: archObj.color
+                          }}
+                        >
+                          {archObj.emoji} {archObj.name.split(' ').pop()}
+                        </span>
+                      );
+                    }
+                    return null;
+                  })()}
+                  {payload.core_passion && (() => {
+                    const passionObj = CORE_PASSIONS.find(p => p.id === payload.core_passion);
+                    if (passionObj) {
+                      return (
+                        <span 
+                          className="px-2 py-0.5 rounded-md text-[8px] font-black uppercase tracking-wider border border-white/10 bg-white/5 text-white/70 shrink-0"
+                        >
+                          {passionObj.emoji} {passionObj.label}
+                        </span>
+                      );
+                    }
+                    return null;
+                  })()}
+                </div>
+              )}
+            </div>
+            <div className="flex items-center gap-2 flex-shrink-0 self-start mt-0.5">
               <div className="flex items-center gap-1 text-[9px] text-white/40 font-bold uppercase">
                 <Zap className="w-2.5 h-2.5" style={{ color: meta.color }} />
                 <span style={{ color: meta.color }}>{payload.match_probability}%</span>

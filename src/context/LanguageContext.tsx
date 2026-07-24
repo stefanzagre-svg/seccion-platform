@@ -1,97 +1,145 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import en from '../locales/en.json';
-import es from '../locales/es.json';
-import fr from '../locales/fr.json';
+import React, { createContext, useContext, useState, useEffect } from "react";
+import en from "@/locales/en.json";
+import es from "@/locales/es.json";
+import fr from "@/locales/fr.json";
+import pt from "@/locales/pt.json";
+import uk from "@/locales/uk.json";
+import ro from "@/locales/ro.json";
+import ar from "@/locales/ar.json";
 
-type Locale = 'en' | 'es' | 'fr';
+export type SupportedLocale = "es" | "en" | "fr" | "pt" | "uk" | "ro" | "ar";
 
-const dictionaries: Record<Locale, any> = { en, es, fr };
-
-interface LanguageContextType {
-  locale: Locale;
-  changeLanguage: (lang: Locale) => void;
-  t: (key: string) => string;
+export interface LocaleMeta {
+  code: SupportedLocale;
+  name: string;
+  nativeName: string;
+  flag: string;
+  dir: "ltr" | "rtl";
 }
 
-const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
+export const LOCALES: Record<SupportedLocale, LocaleMeta> = {
+  es: { code: "es", name: "Spanish", nativeName: "Español", flag: "🇪🇸", dir: "ltr" },
+  en: { code: "en", name: "English", nativeName: "English", flag: "🇺🇸", dir: "ltr" },
+  fr: { code: "fr", name: "French", nativeName: "Français", flag: "🇫🇷", dir: "ltr" },
+  pt: { code: "pt", name: "Portuguese", nativeName: "Português", flag: "🇵🇹", dir: "ltr" },
+  uk: { code: "uk", name: "Ukrainian", nativeName: "Українська", flag: "🇺🇦", dir: "ltr" },
+  ro: { code: "ro", name: "Romanian", nativeName: "Română", flag: "🇷🇴", dir: "ltr" },
+  ar: { code: "ar", name: "Moroccan Arabic", nativeName: "الدارجة المغربية", flag: "🇲🇦", dir: "rtl" },
+};
 
-export function LanguageProvider({ children }: { children: React.ReactNode }) {
-  const [locale, setLocale] = useState<Locale>('en');
+const DICTIONARIES: Record<SupportedLocale, any> = {
+  en,
+  es,
+  fr,
+  pt,
+  uk,
+  ro,
+  ar,
+};
 
-  // Load language preference from localStorage on mount
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const savedLocale = localStorage.getItem('seccion_locale') as Locale;
-      if (savedLocale && (savedLocale === 'en' || savedLocale === 'es' || savedLocale === 'fr')) {
-        setLocale(savedLocale);
-      } else {
-        // Fallback to browser language
-        const browserLang = navigator.language.split('-')[0] as Locale;
-        if (browserLang === 'es' || browserLang === 'fr') {
-          setLocale(browserLang);
-        }
-      }
+interface LanguageContextType {
+  locale: SupportedLocale;
+  setLocale: (locale: SupportedLocale) => void;
+  t: (path: string, fallback?: string) => string;
+  isRTL: boolean;
+}
+
+const LanguageContext = createContext<LanguageContextType>({
+  locale: "es",
+  setLocale: () => {},
+  t: (path: string, fallback?: string) => fallback || path,
+  isRTL: false,
+});
+
+function getSavedLocale(): SupportedLocale {
+  if (typeof window === "undefined") return "es";
+  
+  // 1. Read from localStorage
+  try {
+    const saved = localStorage.getItem("seccion_user_locale") as SupportedLocale;
+    if (saved && LOCALES[saved]) return saved;
+  } catch (e) {}
+
+  // 2. Read from document.cookie
+  try {
+    const match = document.cookie.match(/(?:^|; )seccion_user_locale=([^;]*)/);
+    if (match && match[1] && LOCALES[match[1] as SupportedLocale]) {
+      return match[1] as SupportedLocale;
     }
+  } catch (e) {}
+
+  // 3. Fallback to browser language or default to Spanish
+  const navLang = (navigator.language || "").toLowerCase();
+  if (navLang.startsWith("es")) return "es";
+  if (navLang.startsWith("pt")) return "pt";
+  if (navLang.startsWith("uk")) return "uk";
+  if (navLang.startsWith("ro")) return "ro";
+  if (navLang.startsWith("ar")) return "ar";
+  if (navLang.startsWith("fr")) return "fr";
+  return "es";
+}
+
+export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [locale, setLocaleState] = useState<SupportedLocale>("es");
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    const activeLocale = getSavedLocale();
+    setLocaleState(activeLocale);
+    setMounted(true);
+
+    document.documentElement.setAttribute("lang", activeLocale);
+    document.documentElement.setAttribute("dir", LOCALES[activeLocale]?.dir || "ltr");
   }, []);
 
-  const changeLanguage = (lang: Locale) => {
-    setLocale(lang);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('seccion_locale', lang);
-    }
-  };
-
-  // Helper to retrieve nested object values by string key (e.g. 'landing.hero.title')
-  const t = (key: string): string => {
-    const keys = key.split('.');
+  const setLocale = (newLocale: SupportedLocale) => {
+    if (!LOCALES[newLocale]) return;
+    setLocaleState(newLocale);
     
-    // 1. Try to resolve in the active locale dictionary
-    let activeResult: any = dictionaries[locale];
-    for (const k of keys) {
-      if (activeResult && typeof activeResult === 'object') {
-        activeResult = activeResult[k];
-      } else {
-        activeResult = undefined;
-        break;
-      }
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.setItem("seccion_user_locale", newLocale);
+        document.cookie = `seccion_user_locale=${newLocale}; path=/; max-age=31536000; SameSite=Lax`;
+        document.documentElement.setAttribute("lang", newLocale);
+        document.documentElement.setAttribute("dir", LOCALES[newLocale]?.dir || "ltr");
+      } catch (e) {}
     }
-
-    if (typeof activeResult === 'string') {
-      return activeResult;
-    }
-
-    // 2. Fallback to English dictionary
-    let fallbackResult: any = dictionaries['en'];
-    for (const k of keys) {
-      if (fallbackResult && typeof fallbackResult === 'object') {
-        fallbackResult = fallbackResult[k];
-      } else {
-        fallbackResult = undefined;
-        break;
-      }
-    }
-
-    if (typeof fallbackResult === 'string') {
-      return fallbackResult;
-    }
-
-    // Return the raw key if not found in any dictionary
-    return key;
   };
+
+  // Dot notation translation resolver e.g. t("nav.home")
+  const t = (path: string, fallback?: string): string => {
+    const keys = path.split(".");
+    let current: any = DICTIONARIES[locale] || DICTIONARIES["es"];
+    
+    for (const key of keys) {
+      if (current && typeof current === "object" && key in current) {
+        current = current[key];
+      } else {
+        // Fallback to English if key missing in chosen locale
+        let fallbackCurrent: any = DICTIONARIES["en"];
+        for (const fbKey of keys) {
+          if (fallbackCurrent && typeof fallbackCurrent === "object" && fbKey in fallbackCurrent) {
+            fallbackCurrent = fallbackCurrent[fbKey];
+          } else {
+            return fallback || path;
+          }
+        }
+        return typeof fallbackCurrent === "string" ? fallbackCurrent : (fallback || path);
+      }
+    }
+
+    return typeof current === "string" ? current : (fallback || path);
+  };
+
+  const isRTL = LOCALES[locale]?.dir === "rtl";
 
   return (
-    <LanguageContext.Provider value={{ locale, changeLanguage, t }}>
+    <LanguageContext.Provider value={{ locale, setLocale, t, isRTL }}>
       {children}
     </LanguageContext.Provider>
   );
-}
+};
 
-export function useLanguage() {
-  const context = useContext(LanguageContext);
-  if (context === undefined) {
-    throw new Error('useLanguage must be used within a LanguageProvider');
-  }
-  return context;
-}
+export const useTranslation = () => useContext(LanguageContext);

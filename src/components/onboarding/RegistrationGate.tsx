@@ -1,16 +1,23 @@
 "use client";
 
 import React, { useState } from 'react';
+import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/lib/supabase';
-import { Loader2, AlertCircle, Sparkles, Key, Mail, User, Phone, Smartphone } from 'lucide-react';
+import { Loader2, AlertCircle, Sparkles, Key, Mail, User, Phone, Smartphone, ShieldCheck } from 'lucide-react';
+import { useTranslation } from '@/context/LanguageContext';
+import CountryAgeVerification from '@/components/onboarding/CountryAgeVerification';
 
 interface RegistrationGateProps {
   onComplete: () => void;
 }
 
 export default function RegistrationGate({ onComplete }: RegistrationGateProps) {
+  const { t } = useTranslation();
   const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [shakeTerms, setShakeTerms] = useState(false);
+  const [showAgeVerification, setShowAgeVerification] = useState(false);
+  const [ageVerificationData, setAgeVerificationData] = useState<{ birthDate: string; countryCode: string; verificationTier: string } | null>(null);
   const [showEmailForm, setShowEmailForm] = useState(false);
   const [showPhoneForm, setShowPhoneForm] = useState(false);
   const [showOtpScreen, setShowOtpScreen] = useState(false);
@@ -30,7 +37,12 @@ export default function RegistrationGate({ onComplete }: RegistrationGateProps) 
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   const handleProviderSelect = (provider: string) => {
-    if (!acceptedTerms) return;
+    if (!acceptedTerms) {
+      setError("Please accept the terms and verify you are 18+ to proceed.");
+      setShakeTerms(true);
+      return;
+    }
+    setError(null);
     if (provider === 'email') {
       setShowEmailForm(true);
       setShowPhoneForm(false);
@@ -76,6 +88,10 @@ export default function RegistrationGate({ onComplete }: RegistrationGateProps) 
         if (signUpError) throw signUpError;
 
         if (data.user) {
+          const isCreatorMode = typeof window !== "undefined" && !!sessionStorage.getItem("_onboarding_creator_archive_choice");
+          const userRole = isCreatorMode ? 'creator' : 'member';
+          const residenceChoice = isCreatorMode && typeof window !== "undefined" ? sessionStorage.getItem("_onboarding_creator_residence") || '' : '';
+
           // 2. Create Profile row
           const { error: profileError } = await supabase
             .from('profiles')
@@ -83,7 +99,8 @@ export default function RegistrationGate({ onComplete }: RegistrationGateProps) 
               id: data.user.id,
               username: username.trim().toLowerCase(),
               display_name: username.trim(),
-              role: 'member'
+              role: userRole,
+              residence: residenceChoice || undefined
             });
 
           if (profileError) {
@@ -232,6 +249,9 @@ export default function RegistrationGate({ onComplete }: RegistrationGateProps) 
       if (isMockPhoneMode && otpCode.trim() === '123456') {
         const mockUserId = 'demo-phone-' + Math.random().toString(36).substring(2, 12);
         const finalUsername = isSignUp ? username.trim() : `user_${mockUserId.substring(11, 16)}`;
+        const isCreatorMode = typeof window !== "undefined" && !!sessionStorage.getItem("_onboarding_creator_archive_choice");
+        const userRole = isCreatorMode ? 'creator' : 'member';
+        const residenceChoice = isCreatorMode && typeof window !== "undefined" ? sessionStorage.getItem("_onboarding_creator_residence") || '' : '';
         
         const { error: profileError } = await supabase
           .from('profiles')
@@ -239,7 +259,8 @@ export default function RegistrationGate({ onComplete }: RegistrationGateProps) 
             id: mockUserId,
             username: finalUsername.toLowerCase(),
             display_name: finalUsername,
-            role: 'member'
+            role: userRole,
+            residence: residenceChoice || undefined
           });
 
         if (profileError) {
@@ -263,13 +284,18 @@ export default function RegistrationGate({ onComplete }: RegistrationGateProps) 
 
         if (data.user) {
           const finalUsername = isSignUp ? username.trim() : `user_${data.user.id.substring(0, 5)}`;
+          const isCreatorMode = typeof window !== "undefined" && !!sessionStorage.getItem("_onboarding_creator_archive_choice");
+          const userRole = isCreatorMode ? 'creator' : 'member';
+          const residenceChoice = isCreatorMode && typeof window !== "undefined" ? sessionStorage.getItem("_onboarding_creator_residence") || '' : '';
+
           const { error: profileError } = await supabase
             .from('profiles')
             .upsert({
               id: data.user.id,
               username: finalUsername.toLowerCase(),
               display_name: finalUsername,
-              role: 'member'
+              role: userRole,
+              residence: residenceChoice || undefined
             });
 
           if (profileError) {
@@ -412,14 +438,20 @@ export default function RegistrationGate({ onComplete }: RegistrationGateProps) 
         transition={{ duration: 0.6, ease: "easeOut" }}
         className="w-full bg-[#11111A]/90 backdrop-blur-2xl border border-white/10 p-8 rounded-3xl shadow-[0_30px_60px_rgba(0,0,0,0.6)]"
       >
-        <div className="text-center mb-8">
+        <div className="text-center mb-6">
           <div className="w-12 h-12 bg-white/5 border border-white/10 rounded-full flex items-center justify-center mx-auto mb-4 text-primary">
-             <Sparkles className="w-5 h-5" />
+            <Sparkles className="w-5 h-5" />
           </div>
-          <h2 className="text-2xl font-bold text-white mb-2">
-            {showEmailForm ? (isSignUp ? 'Create Account' : 'Sign In') : 'Join Session'}
-          </h2>
-          <p className="text-gray-400 text-sm">Experience curated social matchmaking</p>
+
+          {/* Pre-Launch Lock Notice */}
+          <div className="mb-4 p-4 bg-[#00fbfb]/10 border border-[#00fbfb]/30 rounded-2xl text-center space-y-2">
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#00fbfb]/20 text-[#00fbfb] font-mono text-[9px] font-bold uppercase tracking-wider">
+              <span>PRE-LAUNCH PHASE ACTIVE</span>
+            </div>
+            <p className="text-[11px] text-[#b9cac9] leading-relaxed">
+              Public self-registration & guest demo mode are temporarily locked. Access is reserved for <strong className="text-white">Approved Creators</strong> and <strong className="text-white">Founding Members</strong>.
+            </p>
+          </div>
         </div>
 
         {error && (
@@ -442,73 +474,29 @@ export default function RegistrationGate({ onComplete }: RegistrationGateProps) 
               initial={{ opacity: 0, x: -10 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: 10 }}
-              className="flex flex-col gap-3"
+              className="flex flex-col gap-4 text-center"
             >
-              {/* Google */}
-              <button 
-                onClick={() => handleProviderSelect('google')}
-                disabled={!acceptedTerms || isSubmitting}
-                className="relative flex items-center justify-center w-full bg-white text-black py-3 rounded-xl font-medium transition-transform active:scale-[0.98] disabled:opacity-50 disabled:active:scale-100 disabled:cursor-not-allowed text-xs"
-              >
-                <svg className="w-4 h-4 absolute left-4" viewBox="0 0 24 24">
-                  <path fill="currentColor" d="M21.35,11.1H12.18V13.83H18.69C18.36,17.64 15.19,19.27 12.19,19.27C8.36,19.27 5,16.25 5,12C5,7.9 8.2,4.73(12.2,4.73 15.29,4.73 17.1,6.7 17.1,6.7L19,4.72C19,4.72 16.56,2 12.1,2C6.42,2 2.03,6.8 2.03,12C2.03,17.05 6.16,22 12.25,22C17.6,22 21.5,18.33 21.5,12.91C21.5,11.76 21.35,11.1 21.35,11.1V11.1Z" />
-                </svg>
-                Continue with Google
-              </button>
-
-              {/* X */}
-              <button 
-                onClick={() => handleProviderSelect('x')}
-                disabled={!acceptedTerms || isSubmitting}
-                className="relative flex items-center justify-center w-full bg-black text-white py-3 rounded-xl border border-white/20 font-medium hover:bg-white/5 transition-colors active:scale-[0.98] disabled:opacity-50 disabled:active:scale-100 disabled:cursor-not-allowed text-xs"
-              >
-                <svg className="w-4 h-4 absolute left-4" viewBox="0 0 24 24">
-                   <path fill="currentColor" d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
-                </svg>
-                Continue with X
-              </button>
-
-              {/* Phone */}
-              <button 
-                onClick={() => handleProviderSelect('phone')}
-                disabled={!acceptedTerms || isSubmitting}
-                className="relative flex items-center justify-center w-full bg-white/5 hover:bg-white/10 text-white py-3 rounded-xl border border-white/10 transition-colors active:scale-[0.98] disabled:opacity-50 disabled:active:scale-100 text-xs"
-              >
-                <Phone className="w-4 h-4 absolute left-4 text-white/50" />
-                Continue with Phone
-              </button>
-
-              {/* Email */}
-              <button 
-                onClick={() => handleProviderSelect('email')}
-                disabled={!acceptedTerms || isSubmitting}
-                className="relative flex items-center justify-center w-full bg-white/5 hover:bg-white/10 text-white py-3 rounded-xl border border-white/10 transition-colors active:scale-[0.98] disabled:opacity-50 disabled:active:scale-100 text-xs"
-              >
-                <Mail className="w-4 h-4 absolute left-4 text-white/50" />
-                Continue with Email
-              </button>
-
-              <div className="flex items-center gap-4 my-2">
-                <div className="flex-1 h-px bg-white/10"></div>
-                <span className="text-[10px] text-white/30 uppercase tracking-widest font-black">Or bypass auth</span>
-                <div className="flex-1 h-px bg-white/10"></div>
+              <div className="p-4 bg-white/5 border border-white/10 rounded-2xl text-xs text-[#b9cac9] leading-relaxed space-y-4">
+                <p>
+                  Classic self-registration and guest demo access are temporarily disabled during this pre-launch phase.
+                </p>
+                <p className="font-semibold text-white">
+                  Want to be a founding member?
+                </p>
+                <Link 
+                  href="/early-access"
+                  className="w-full py-3 bg-[#00fbfb] text-black font-mono text-xs font-black uppercase tracking-wider rounded-xl hover:shadow-[0_0_15px_rgba(0,251,251,0.5)] transition flex items-center justify-center gap-2 cursor-pointer font-bold"
+                >
+                  Join Early Access List
+                </Link>
               </div>
 
-              {/* Guest / Demo login */}
-              <button 
-                onClick={handleDemoLogin}
-                disabled={isSubmitting}
-                className="relative flex items-center justify-center w-full bg-gradient-to-r from-primary/20 to-accent/20 hover:from-primary/30 hover:to-accent/30 text-white py-3.5 rounded-xl border border-primary/30 transition-all font-black uppercase tracking-widest text-[10px]"
-              >
-                {isSubmitting ? (
-                  <Loader2 className="w-4 h-4 animate-spin text-primary" />
-                ) : (
-                  <>
-                    <Sparkles className="w-4 h-4 mr-2 text-primary" />
-                    Enter Guest Demo Mode
-                  </>
-                )}
-              </button>
+              <div className="pt-2 text-[11px] text-gray-400">
+                Already have pre-launch access?{" "}
+                <Link href="/login" className="text-[#ffabf3] hover:underline font-bold font-mono uppercase tracking-wide">
+                  Log In
+                </Link>
+              </div>
             </motion.div>
           ) : showEmailForm ? (
             <motion.form 
@@ -725,22 +713,62 @@ export default function RegistrationGate({ onComplete }: RegistrationGateProps) 
           )}
         </AnimatePresence>
 
-        {/* Terms Checkbox */}
-        <div className="flex items-start gap-3 mt-6 pt-4 border-t border-white/5">
-          <button 
-            onClick={() => setAcceptedTerms(!acceptedTerms)}
-            className={`flex-shrink-0 w-5 h-5 rounded border flex items-center justify-center transition-colors mt-0.5 ${acceptedTerms ? 'bg-primary border-primary text-black' : 'bg-transparent border-white/20'}`}
-          >
-            {acceptedTerms && (
-              <svg className="w-3.5 h-3.5 text-black stroke-[3]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-              </svg>
-            )}
-          </button>
-          <p className="text-[10px] text-gray-400 leading-relaxed cursor-pointer" onClick={() => setAcceptedTerms(!acceptedTerms)}>
-            I am 18+ and accept the <span className="text-white font-medium underline decoration-white/30">General Platform Conditions</span> and <span className="text-white font-medium underline decoration-white/30">Privacy Policy</span>.
-          </p>
-        </div>
+        {/* Country-Adaptive Age Verification Drawer / Panel */}
+        {showAgeVerification ? (
+          <div className="mt-6 pt-4 border-t border-white/10">
+            <CountryAgeVerification
+              onVerified={(data) => {
+                setAgeVerificationData(data);
+                setAcceptedTerms(true);
+                setShowAgeVerification(false);
+                setError(null);
+                sessionStorage.setItem('_user_age_verified', JSON.stringify(data));
+              }}
+            />
+          </div>
+        ) : (
+          <div className="flex flex-col gap-2.5 mt-6 pt-4 border-t border-white/5">
+            <div className="flex items-start gap-3">
+              <motion.button 
+                onClick={() => {
+                  setAcceptedTerms(!acceptedTerms);
+                  setError(null);
+                }}
+                animate={shakeTerms ? { x: [0, -6, 6, -6, 6, 0] } : {}}
+                transition={{ duration: 0.4 }}
+                onAnimationComplete={() => setShakeTerms(false)}
+                className={`flex-shrink-0 w-5 h-5 rounded border flex items-center justify-center transition-all duration-300 mt-0.5 ${
+                  acceptedTerms 
+                    ? 'bg-primary border-primary text-black' 
+                    : shakeTerms
+                      ? 'bg-red-500/10 border-red-500 shadow-[0_0_12px_rgba(239,68,68,0.7)]' 
+                      : 'bg-transparent border-white/20 hover:border-white/40'
+                }`}
+              >
+                {acceptedTerms && (
+                  <svg className="w-3.5 h-3.5 text-black stroke-[3]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                  </svg>
+                )}
+              </motion.button>
+              <p className="text-[10px] text-gray-400 leading-relaxed cursor-pointer" onClick={() => {
+                setAcceptedTerms(!acceptedTerms);
+                setError(null);
+              }}>
+                I confirm I am 18+ and accept the <span className="text-white font-medium underline decoration-white/30">General Platform Conditions</span> and <span className="text-white font-medium underline decoration-white/30">Privacy Policy</span>.
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setShowAgeVerification(true)}
+              className="text-[9px] font-mono text-primary/80 hover:text-primary transition flex items-center gap-1.5 justify-end"
+            >
+              <ShieldCheck className="w-3 h-3 text-primary" />
+              <span>Customize Country Age Compliance ({ageVerificationData?.countryCode || 'Auto-Detect'})</span>
+            </button>
+          </div>
+        )}
         
       </motion.div>
     </div>

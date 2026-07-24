@@ -59,6 +59,9 @@ function mapDbProfileToEngine(dbProf: any): UserProfile {
     moods: dbProf.moods || undefined,
     corePassion: dbProf.core_passion || undefined,
     origins: dbProf.origins || undefined,
+    nativeTown: dbProf.native_town || dbProf.nativeTown || undefined,
+    residence: dbProf.residence || undefined,
+    currentLocation: dbProf.current_location || dbProf.currentLocation || undefined,
     isKycVerified: dbProf.is_kyc_verified || false,
     lastActiveAt: dbProf.last_active_at || dbProf.updated_at || undefined,
     engagementScore: dbProf.engagement_score || undefined,
@@ -207,16 +210,26 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
         if (text) {
           const predictions = JSON.parse(text) as PredictionPayload[];
           
+          // Enrich with real database archetype/core passion
+          const enrichedPredictions = predictions.map(p => {
+            const cand = mappedCandidates.find(c => c.id === p.target_id);
+            return {
+              ...p,
+              archetype: cand?.profile.archetype || p.archetype,
+              core_passion: cand?.profile.corePassion || p.core_passion
+            };
+          });
+
           // Cache the new suggestions
           await supabase.from('suggestion_caches').insert({
             user_id: body.user_id,
-            suggestions: predictions,
+            suggestions: enrichedPredictions,
             model_version: 'gemini-2.5-flash',
             is_read: true, // Mark as read since it is returned to active user feed
           });
 
           return NextResponse.json({
-            suggestions: predictions,
+            suggestions: enrichedPredictions,
             generated_at: new Date().toISOString(),
             model_version: 'gemini-2.5-flash',
           } as SuggestionResponse);
@@ -227,20 +240,9 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     }
 
     // Fallback: Local signal-based engine calculation using live database values
-    const localSuggestions = generateLocalSuggestions(currentUser, body.context_data, 5);
+    const localSuggestions = generateLocalSuggestions(currentUser, body.context_data, mappedCandidates, 5);
     
-    // Inject the real names and avatars from mapped candidates
-    const suggestions = localSuggestions.map((s) => {
-      const matchCand = mappedCandidates.find(c => c.id === s.target_id);
-      if (matchCand) {
-        return {
-          ...s,
-          username: matchCand.username,
-          avatar_url: matchCand.avatar_url
-        };
-      }
-      return s;
-    });
+    const suggestions = localSuggestions;
 
     // Cache the fallback suggestions
     await supabase.from('suggestion_caches').insert({

@@ -26,12 +26,14 @@ export default function FoundersWelcome() {
             <span className="text-3xl text-white transform -rotate-12">✦</span>
           </div>
 
-          <h1 className="text-3xl font-bold text-white mb-6">Welcome to Session.</h1>
+          <h1 className="text-3xl font-bold text-white mb-6 flex items-center justify-center gap-2">
+            Welcome to <img src="/assets/logo/logo-wordmark.png" alt="SECCIØN" className="h-7 object-contain inline-block" />.
+          </h1>
           
           <div className="relative">
             <span className="absolute -top-4 -left-2 text-4xl text-purple-400/30 font-serif">&quot;</span>
             <p className="text-lg text-gray-300 leading-relaxed relative z-10 px-4">
-              We built Session because the world doesn&apos;t need another generic feed. We value real connection, authentic creativity, and true intentionality. Dive in, find your spark, and create magic.
+              We built <img src="/assets/logo/logo-wordmark.png" alt="SECCIØN" className="h-5 object-contain inline-block mx-1" /> because the world doesn&apos;t need another generic feed. We value real connection, authentic creativity, and true intentionality. Dive in, find your spark, and create magic.
             </p>
             <span className="absolute -bottom-4 -right-2 text-4xl text-purple-400/30 font-serif">&quot;</span>
           </div>
@@ -41,8 +43,8 @@ export default function FoundersWelcome() {
           </div>
 
           <Link href="/onboarding/step-2">
-            <button className="w-full py-4 rounded-xl font-bold bg-white text-black hover:bg-gray-100 transition-all transform hover:scale-[1.02] shadow-[0_0_20px_rgba(255,255,255,0.3)]">
-              Enter Session
+            <button className="w-full py-4 rounded-xl font-bold bg-white text-black hover:bg-gray-100 transition-all transform hover:scale-[1.02] shadow-[0_0_20px_rgba(255,255,255,0.3)] flex items-center justify-center gap-2">
+              Enter <img src="/assets/logo/logo-wordmark.png" alt="SECCIØN" className="h-5 object-contain inline-block" />
             </button>
           </Link>
         </motion.div>

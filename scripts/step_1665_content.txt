@@ -1,0 +1,58 @@
+Created At: 2026-07-22T21:32:34+02:00
+Completed At: 2026-07-22T21:32:34+02:00
+File Path: `file:///c:/Users/USER/Documents/AI/PROJECT%20CONTENT%20PLATFORM/SESSION/web/src/app/vibe-radar/page.tsx`
+Total Lines: 772
+Total Bytes: 43872
+Showing lines 41 to 90
+The following code has been modified to include a line number before every line, in the format: <line_number>: <original_line>. Please note that any changes targeting the original code should remove the line number, colon, and leading space.
+41: 
+42: export default function VibeRadarPage() {
+43:   const router = useRouter();
+44:   const [isTourOpen, setIsTourOpen] = useState(false);
+45:   
+46:   // Reveal progression simulation states
+47:   const [peekCountdown, setPeekCountdown] = useState<number | null>(null);
+48:   const [hasUnblurKey, setHasUnblurKey] = useState<boolean>(false);
+49:   const [isFaceBlurred, setIsFaceBlurred] = useState<boolean>(true);
+50:   
+51:   // Dynamic FAQ state
+52:   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(null);
+53: 
+54:   // Limited Peek simulation timer
+55:   useEffect(() => {
+56:     let interval: NodeJS.Timeout;
+57:     if (peekCountdown !== null && peekCountdown > 0) {
+58:       interval = setInterval(() => {
+59:         setPeekCountdown(prev => (prev !== null ? prev - 1 : null));
+60:       }, 1000);
+61:     } else if (peekCountdown === 0) {
+62:       setPeekCountdown(null);
+63:       setIsFaceBlurred(true);
+64:     }
+65:     return () => clearInterval(interval);
+66:   }, [peekCountdown]);
+67: 
+68:   const handlePeekRequest = () => {
+69:     setIsFaceBlurred(false);
+70:     setPeekCountdown(10); // 10 second demo countdown
+71:     setHasUnblurKey(false);
+72:   };
+73: 
+74:   const handleApplyKey = () => {
+75:     setIsFaceBlurred(false);
+76:     setHasUnblurKey(true);
+77:     setPeekCountdown(null);
+78:   };
+79: 
+80:   const resetRevealDemo = () => {
+81:     setIsFaceBlurred(true);
+82:     setPeekCountdown(null);
+83:     setHasUnblurKey(false);
+84:   };
+85: 
+86:   // Format timer text
+87:   const formatTime = (seconds: number) => {
+88:     const mins = Math.floor(seconds / 60);
+89:     const secs = seconds % 60;
+90:     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+The above content does NOT show the entire file contents. If you need to view any lines of the file which were not shown to complete your task, call this tool again to view those lines.
