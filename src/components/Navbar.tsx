@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useLanguage } from '@/context/LanguageContext';
 import { usePathname, useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/lib/supabase';
@@ -10,6 +11,12 @@ import { Shield, Sparkles, MessageSquare, Trophy, RefreshCw, LogIn, User, Compas
 export default function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
+  const { locale, changeLanguage } = useLanguage();
+  
+  const cycleLanguage = () => {
+    const nextLang = locale === 'en' ? 'es' : locale === 'es' ? 'fr' : 'en';
+    changeLanguage(nextLang);
+  };
   
   const [user, setUser] = useState<any>(null);
   const [profile, setProfile] = useState<any>(null);
@@ -229,6 +236,14 @@ export default function Navbar() {
 
         {/* CTA / Auth / Profile Section */}
         <div className="flex items-center gap-4">
+          {/* Language Switcher */}
+          <button
+            onClick={cycleLanguage}
+            className="px-2 py-1.5 border border-white/10 hover:border-primary/45 bg-white/5 rounded-xl font-['JetBrains_Mono'] text-[10px] font-bold uppercase tracking-wider text-white/80 hover:text-white transition-all duration-300 w-8 h-8 flex items-center justify-center shrink-0"
+            title={`Switch Language (Current: ${locale.toUpperCase()})`}
+          >
+            {locale}
+          </button>
           <AnimatePresence mode="wait">
             {isLoading ? (
               <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />

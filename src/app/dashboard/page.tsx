@@ -1,9 +1,19 @@
 'use client';
 
+import { useEffect } from 'react';
 import MatchSwiper from '@/components/MatchSwiper';
 import { motion } from 'framer-motion';
 
 export default function Dashboard() {
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const isCreatorSignup = localStorage.getItem('is_creator_signup') === 'true';
+      if (isCreatorSignup) {
+        window.location.href = '/onboarding/kyc';
+      }
+    }
+  }, []);
+
   return (
     <div className="min-h-screen bg-transparent relative flex flex-col items-center pt-16 md:pt-24 px-4 overflow-hidden">
       {/* Background glow */}

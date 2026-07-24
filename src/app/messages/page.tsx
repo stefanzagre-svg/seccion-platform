@@ -261,6 +261,13 @@ export default function ChatMessenger() {
   // Check auth session
   useEffect(() => {
     const checkSession = async () => {
+      if (typeof window !== 'undefined') {
+        const isCreatorSignup = localStorage.getItem('is_creator_signup') === 'true';
+        if (isCreatorSignup) {
+          window.location.href = '/onboarding/kyc';
+          return;
+        }
+      }
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
         setCurrentUser(session.user);

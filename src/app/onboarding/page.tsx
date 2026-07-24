@@ -217,6 +217,14 @@ export default function OnboardingFlow() {
   const progress = 25 + Math.round((completedCount / checklist.length) * 75);
   // Check active session on mount to skip login/sign up if already authenticated
   useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const isCreator = params.get("invite") === "creator" || params.get("role") === "creator";
+      if (isCreator) {
+        localStorage.setItem("is_creator_signup", "true");
+      }
+    }
+
     async function checkSession() {
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {

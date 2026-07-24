@@ -20,6 +20,7 @@ export const metadata: Metadata = {
 
 import Navbar from "@/components/Navbar";
 import AmbientBackground from "@/components/AmbientBackground";
+import { LanguageProvider } from "@/context/LanguageContext";
 
 export default function RootLayout({
   children,
@@ -40,12 +41,14 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-full flex flex-col bg-background text-foreground font-sans relative overflow-x-hidden">
-        {/* Global ambient atmosphere — matches the landing page hook */}
-        <AmbientBackground />
-        <Navbar />
-        <div className="relative z-10 flex-1 flex flex-col">
-          {children}
-        </div>
+        <LanguageProvider>
+          {/* Global ambient atmosphere — matches the landing page hook */}
+          <AmbientBackground />
+          <Navbar />
+          <div className="relative z-10 flex-1 flex flex-col">
+            {children}
+          </div>
+        </LanguageProvider>
       </body>
     </html>
   );

@@ -99,7 +99,12 @@ export default function OnboardingStepTwo() {
       // Clean up localStorage
       localStorage.removeItem('fusion_onboarding_core');
 
-      router.push('/dashboard');
+      const isCreatorSignup = localStorage.getItem('is_creator_signup') === 'true';
+      if (isCreatorSignup) {
+        router.push('/onboarding/kyc');
+      } else {
+        router.push('/dashboard');
+      }
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Failed to save profile. Please try again.';
       setError(message);

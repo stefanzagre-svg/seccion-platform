@@ -1,0 +1,63 @@
+{
+  "nav": {
+    "predictive_matches": "Matches Prédictifs",
+    "now_streaming": "Live Streaming",
+    "become_creator": "Devenir Créateur",
+    "how_we_do": "Comment ça marche",
+    "login": "Connexion",
+    "signup": "S'inscrire"
+  },
+  "landing": {
+    "hero": {
+      "title": "Plateforme Hybride",
+      "subtitle": "Dating App - Live Streaming",
+      "creators": "Créateurs de Contenu",
+      "description_1": "Fais-toi des Amis - Développe des Niveaux de Relation",
+      "description_2": "Suggère des Interactions - Match Prédictif par IA - Live Streaming pour Sponsoriser les Créateurs - Contrôle ta Confidentialité - Amuse-toi"
+    },
+    "chat": {
+      "connection_level": "NIVEAU DE CONNEXION",
+      "strangers": "Inconnus",
+      "soulmates": "Âmes Sœurs",
+      "message_prompt": "Hey, prête pour un Chat ?",
+      "message_reply": "Carrément ! :)",
+      "placeholder": "Écrit...."
+    },
+    "privacy": {
+      "title": "Qui Voit Quoi",
+      "subtitle": "CONTRÔLE TA CONFIDENTIALITÉ"
+    },
+    "discovery": {
+      "title": "Découvrir des Matches Potentiels",
+      "status_active": "ACTIF",
+      "status_offline": "HORS LIGNE",
+      "status_live": "EN DIRECT",
+      "cta": "SWIPE POUR REJOINDRE SECCION"
+    },
+    "live": {
+      "audience": "23K",
+      "followers": "18M Abonnés",
+      "cta": "Rejoins sa Session maintenant !"
+    },
+    "order": {
+      "title": "Votre Commande",
+      "subtitle": "Confirmation de commande",
+      "subtotal": "Sous-total",
+      "premium": "Premium",
+      "shipping": "Livraison",
+      "total": "Total"
+    },
+    "quote": {
+      "text": "\"Apportons du sens, du fun et de vraies interactions entre vous\"",
+      "author": "Déclaration de Mission de la Plateforme SECCION"
+    }
+  },
+  "footer": {
+    "tagline": "Show up - Match - Connect",
+    "privacy_policy": "Charte de Confidentialité",
+    "terms_of_service": "Conditions d'Utilisation",
+    "creator_hub": "Espace Créateurs",
+    "support": "Support",
+    "rights": "© 2026 SECCION. TOUS DROITS RÉSERVÉS."
+  }
+}

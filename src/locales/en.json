@@ -1,0 +1,63 @@
+{
+  "nav": {
+    "predictive_matches": "Predictive Matches",
+    "now_streaming": "Now Streaming",
+    "become_creator": "Become Creator",
+    "how_we_do": "How We Do",
+    "login": "Login",
+    "signup": "Sign Up"
+  },
+  "landing": {
+    "hero": {
+      "title": "Fusion Platform",
+      "subtitle": "Dating App - Live Streaming",
+      "creators": "Content Creators",
+      "description_1": "Make New Friends - Develop Relationship Levels",
+      "description_2": "Suggest Interactions - AI Predictive Match - Stream Live Sponsor Creators - Control Your Privacy - Have Fun"
+    },
+    "chat": {
+      "connection_level": "CONNECTION LEVEL",
+      "strangers": "Strangers",
+      "soulmates": "Soulmates",
+      "message_prompt": "Hey, ready for a Chat session ?",
+      "message_reply": "Absolutely! :)",
+      "placeholder": "Typing...."
+    },
+    "privacy": {
+      "title": "Who See What",
+      "subtitle": "CONTROL YOUR PRIVACY"
+    },
+    "discovery": {
+      "title": "Discover Potential Matches",
+      "status_active": "ACTIVE",
+      "status_offline": "OFFLINE",
+      "status_live": "LIVE",
+      "cta": "SWIPE TO SIGN UP SECCION"
+    },
+    "live": {
+      "audience": "23K",
+      "followers": "18M Followers",
+      "cta": "Join her Session now!"
+    },
+    "order": {
+      "title": "Your Content Order",
+      "subtitle": "Order confirmation",
+      "subtotal": "Subtotal",
+      "premium": "Premium",
+      "shipping": "Shipping",
+      "total": "Total"
+    },
+    "quote": {
+      "text": "\"Let's bring some Sense, Fun and Real interactions between you guys\"",
+      "author": "SECCION Platform Mission Statement"
+    }
+  },
+  "footer": {
+    "tagline": "Show up - Match - Connect",
+    "privacy_policy": "Privacy Policy",
+    "terms_of_service": "Terms of Service",
+    "creator_hub": "Creator Hub",
+    "support": "Support",
+    "rights": "© 2026 SECCION. ALL RIGHTS RESERVED."
+  }
+}

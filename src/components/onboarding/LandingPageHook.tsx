@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useRef } from 'react';
+import { useLanguage } from '@/context/LanguageContext';
 
 // Custom Hook for Mouse Tracking on Glass Cards
 function useMouseTracking() {
@@ -36,6 +37,8 @@ function GlassCard({ children, className = "", style = {} }: { children: React.R
 
 
 export default function LandingPageHook({ onAccept }: { onAccept: () => void }) {
+  const { t, locale, changeLanguage } = useLanguage();
+
   return (
     <div className="w-full min-h-screen text-[#e2e2e2] overflow-x-hidden font-['Hanken_Grotesk'] relative" 
          style={{ 
@@ -111,18 +114,26 @@ export default function LandingPageHook({ onAccept }: { onAccept: () => void }) 
           />
         </div>
         <div className="hidden md:flex items-center gap-8">
-          <a className="text-[#ffabf3] border-b-2 border-[#ffabf3] pb-1 text-[14px] leading-none tracking-[0.05em] font-medium font-['JetBrains_Mono']" href="#">Predictive Matches</a>
-          <a className="text-[#b9cac9] hover:text-[#00fbfb] transition-colors text-[14px] leading-none tracking-[0.05em] font-medium font-['JetBrains_Mono']" href="#">Now Streaming</a>
-          <a className="text-[#b9cac9] hover:text-[#00fbfb] transition-colors text-[14px] leading-none tracking-[0.05em] font-medium font-['JetBrains_Mono']" href="#">Become Creator</a>
-          <a className="text-[#b9cac9] hover:text-[#00fbfb] transition-colors text-[14px] leading-none tracking-[0.05em] font-medium font-['JetBrains_Mono']" href="#">How We Do</a>
+          <a className="text-[#ffabf3] border-b-2 border-[#ffabf3] pb-1 text-[14px] leading-none tracking-[0.05em] font-medium font-['JetBrains_Mono']" href="#">{t('nav.predictive_matches')}</a>
+          <a className="text-[#b9cac9] hover:text-[#00fbfb] transition-colors text-[14px] leading-none tracking-[0.05em] font-medium font-['JetBrains_Mono']" href="#">{t('nav.now_streaming')}</a>
+          <a className="text-[#b9cac9] hover:text-[#00fbfb] transition-colors text-[14px] leading-none tracking-[0.05em] font-medium font-['JetBrains_Mono']" href="#">{t('nav.become_creator')}</a>
+          <a className="text-[#b9cac9] hover:text-[#00fbfb] transition-colors text-[14px] leading-none tracking-[0.05em] font-medium font-['JetBrains_Mono']" href="#">{t('nav.how_we_do')}</a>
         </div>
         <div className="flex items-center gap-4">
-          <button className="text-[#b9cac9] hover:text-[#00fbfb] transition-colors text-[14px] leading-none tracking-[0.05em] font-medium font-['JetBrains_Mono'] hidden sm:block">Login</button>
+          {/* Language Switcher */}
+          <button
+            onClick={() => changeLanguage(locale === 'en' ? 'es' : locale === 'es' ? 'fr' : 'en')}
+            className="px-2.5 py-1.5 border border-[#00fbfb]/30 hover:border-[#00fbfb]/60 bg-white/5 rounded-xl font-['JetBrains_Mono'] text-[11px] font-bold uppercase tracking-wider text-[#b9cac9] hover:text-white transition-all"
+            title={`Switch Language (Current: ${locale.toUpperCase()})`}
+          >
+            {locale}
+          </button>
+          <button className="text-[#b9cac9] hover:text-[#00fbfb] transition-colors text-[14px] leading-none tracking-[0.05em] font-medium font-['JetBrains_Mono'] hidden sm:block">{t('nav.login')}</button>
           <button 
             onClick={onAccept}
             className="px-6 py-2 border-2 border-[#00fbfb] text-[#00fbfb] font-['JetBrains_Mono'] text-[14px] leading-none tracking-[0.05em] font-medium uppercase hover:bg-white/10 transition-all active:scale-95 shadow-[0_0_15px_rgba(0,251,251,0.4),0_0_30px_rgba(0,251,251,0.2)]"
           >
-            Sign Up
+            {t('nav.signup')}
           </button>
         </div>
       </nav>
@@ -137,13 +148,13 @@ export default function LandingPageHook({ onAccept }: { onAccept: () => void }) 
         {/* Hero Text */}
         <div className="mb-12 max-w-2xl">
           <h1 className="font-['Plus_Jakarta_Sans'] text-[64px] font-bold leading-[1.1] tracking-[-0.02em] mb-4 text-shadow-[0_0_10px_rgba(255,255,255,0.5)]">
-            <span className="text-[40px] sm:text-[80px] font-extrabold block mb-2 whitespace-nowrap">Fusion Platform</span>
-            <span className="text-[36px] sm:text-[72px] font-bold text-[#00fbfb] leading-tight block whitespace-nowrap">Dating App - Live Streaming</span>
-            <span className="text-[36px] sm:text-[72px] font-bold text-[#00fbfb] leading-tight block whitespace-nowrap">Content Creators</span>
+            <span className="text-[40px] sm:text-[80px] font-extrabold block mb-2 whitespace-nowrap">{t('landing.hero.title')}</span>
+            <span className="text-[36px] sm:text-[72px] font-bold text-[#00fbfb] leading-tight block whitespace-nowrap">{t('landing.hero.subtitle')}</span>
+            <span className="text-[36px] sm:text-[72px] font-bold text-[#00fbfb] leading-tight block whitespace-nowrap">{t('landing.hero.creators')}</span>
           </h1>
           <p className="font-['Hanken_Grotesk'] text-[18px] leading-[1.6] text-[#b9cac9] max-w-md">
-            Make New Friends - Develop Relationship Levels<br/>
-            Suggest Interactions - AI Predictive Match - Stream Live Sponsor Creators - Control Your Privacy - Have Fun<br/>
+            {t('landing.hero.description_1')}<br/>
+            {t('landing.hero.description_2')}<br/>
           </p>
         </div>
 
@@ -162,27 +173,27 @@ export default function LandingPageHook({ onAccept }: { onAccept: () => void }) 
               </div>
               <div className="mb-4">
                 <div className="flex justify-between items-center mb-2">
-                  <span className="text-[10px] font-['JetBrains_Mono'] font-medium text-[#00fbfb]">CONNECTION LEVEL</span>
+                  <span className="text-[10px] font-['JetBrains_Mono'] font-medium text-[#00fbfb]">{t('landing.chat.connection_level')}</span>
                   <span className="text-[10px] font-['JetBrains_Mono'] font-medium text-[#00fbfb]">85%</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-[9px] font-['Plus_Jakarta_Sans'] text-[#b9cac9] opacity-70 uppercase tracking-widest whitespace-nowrap">Strangers</span>
+                  <span className="text-[9px] font-['Plus_Jakarta_Sans'] text-[#b9cac9] opacity-70 uppercase tracking-widest whitespace-nowrap">{t('landing.chat.strangers')}</span>
                   <div className="h-1.5 flex-1 bg-white/10 rounded-full overflow-hidden">
                     <div className="h-full bg-[#00fbfb] shadow-[0_0_5px_#00fbfb,0_0_15px_rgba(0,251,251,0.4),0_0_30px_rgba(0,251,251,0.2)]" style={{ width: '85%' }}></div>
                   </div>
-                  <span className="text-[9px] font-['Plus_Jakarta_Sans'] text-[#00fbfb] font-bold uppercase tracking-widest whitespace-nowrap">Soulmates</span>
+                  <span className="text-[9px] font-['Plus_Jakarta_Sans'] text-[#00fbfb] font-bold uppercase tracking-widest whitespace-nowrap">{t('landing.chat.soulmates')}</span>
                 </div>
               </div>
               <div className="space-y-4 mb-6">
                 <div className="bg-white/10 p-3 rounded-lg rounded-tl-none max-w-[90%] backdrop-blur-xl">
-                  <p className="text-xs text-white">Hey, ready for a Chat session ?</p>
+                  <p className="text-xs text-white">{t('landing.chat.message_prompt')}</p>
                 </div>
                 <div className="bg-[#ffabf3]/20 border border-[#ffabf3]/40 p-3 rounded-lg rounded-tr-none ml-auto max-w-[90%] backdrop-blur-xl shadow-[0_0_10px_rgba(255,171,243,0.2)]">
-                  <p className="text-xs text-[#ffabf3] font-bold">Absolutely! :)</p>
+                  <p className="text-xs text-[#ffabf3] font-bold">{t('landing.chat.message_reply')}</p>
                 </div>
               </div>
               <div className="relative">
-                <input className="w-full bg-black/60 border border-[#00fbfb]/50 rounded-full px-6 py-3 text-xs focus:ring-1 focus:ring-[#00fbfb] focus:border-[#00fbfb] outline-none transition-all text-white placeholder-gray-400" placeholder="Typing...." type="text"/>
+                <input className="w-full bg-black/60 border border-[#00fbfb]/50 rounded-full px-6 py-3 text-xs focus:ring-1 focus:ring-[#00fbfb] focus:border-[#00fbfb] outline-none transition-all text-white placeholder-gray-400" placeholder={t('landing.chat.placeholder')} type="text"/>
                 <svg className="absolute right-4 top-3 text-[#00fbfb] w-4 h-4 cursor-pointer hover:scale-110 transition-transform" fill="currentColor" viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
               </div>
             </GlassCard>
@@ -190,8 +201,8 @@ export default function LandingPageHook({ onAccept }: { onAccept: () => void }) 
             <GlassCard className="p-6">
               <img alt="Control Privacy" className="w-full h-24 object-cover rounded-lg mb-4" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAISe9sznxcBWs4TYSJzLblVX0zDnoWgpESF3BXITeojmb3hLjKf1t8Z9Cbq1JPE7k3Tv7zQ4l5uFbydEt3jenb1VDKmBooqcdPBYH8WnJEWeylVeQ3SfYtfUsvS-sG4Wf4PAZ3iZXH3gb9AmlBDZ_EYHr3a8rpdtMoiEyOdCK_IfuuU--KvN97BVdGVunbyE3sMmXFgYErjDEBPX11KuOXzner-damSuu9NWkxgebre6BrKHHM6xxTCfLkeZ-Gr4A-ljSf7A5YOGc" />
               <p className="font-['Plus_Jakarta_Sans'] text-lg mb-2 leading-tight">
-                <span className="text-2xl font-bold block text-white">Who See What</span>
-                <span className="text-[24px] font-bold text-[#ffabf3]">CONTROL YOUR PRIVACY</span>
+                <span className="text-2xl font-bold block text-white">{t('landing.privacy.title')}</span>
+                <span className="text-[24px] font-bold text-[#ffabf3]">{t('landing.privacy.subtitle')}</span>
               </p>
             </GlassCard>
           </div>
@@ -200,7 +211,7 @@ export default function LandingPageHook({ onAccept }: { onAccept: () => void }) 
           <div className="col-span-12 lg:col-span-5 space-y-6">
             <GlassCard className="p-6">
               <div className="flex justify-between items-center mb-6">
-                <h2 className="font-['Plus_Jakarta_Sans'] text-[32px] font-medium leading-[1.3] text-white">Discover Potential Matches</h2>
+                <h2 className="font-['Plus_Jakarta_Sans'] text-[32px] font-medium leading-[1.3] text-white">{t('landing.discovery.title')}</h2>
                 <svg className="w-6 h-6 text-[#ffabf3]" fill="currentColor" viewBox="0 0 24 24"><path d="M3 17v2h6v-2H3zM3 5v2h10V5H3zm10 16v-2h8v-2h-8v-2h-2v6h2zM7 9v2H3v2h4v2h2V9H7zm14 4v-2H11v2h10zm-6-4h2V7h4V5h-4V3h-2v6z"/></svg>
               </div>
               <div className="grid grid-cols-2 gap-4">
@@ -211,7 +222,7 @@ export default function LandingPageHook({ onAccept }: { onAccept: () => void }) 
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent rounded-lg"></div>
                   <div className="absolute bottom-2 left-2 flex items-center gap-1">
                     <div className="w-2 h-2 bg-[#00fbfb] rounded-full shadow-[0_0_5px_#00fbfb]"></div>
-                    <span className="text-[10px] font-['JetBrains_Mono'] text-white">ACTIVE</span>
+                    <span className="text-[10px] font-['JetBrains_Mono'] text-white">{t('landing.discovery.status_active')}</span>
                   </div>
                   <svg className="absolute top-2 right-2 w-5 h-5 text-[#ffabf3]" fill="currentColor" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
                 </div>
@@ -222,7 +233,7 @@ export default function LandingPageHook({ onAccept }: { onAccept: () => void }) 
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent rounded-lg"></div>
                   <div className="absolute bottom-2 left-2 flex items-center gap-1">
                     <div className="w-2 h-2 bg-[#ffabf3] rounded-full shadow-[0_0_5px_#ffabf3]"></div>
-                    <span className="text-[10px] font-['JetBrains_Mono'] text-white">OFFLINE</span>
+                    <span className="text-[10px] font-['JetBrains_Mono'] text-white">{t('landing.discovery.status_offline')}</span>
                   </div>
                   <svg className="absolute top-2 right-2 w-5 h-5 text-white/50" fill="currentColor" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
                 </div>
@@ -233,7 +244,7 @@ export default function LandingPageHook({ onAccept }: { onAccept: () => void }) 
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent rounded-lg"></div>
                   <div className="absolute bottom-2 left-2 flex items-center gap-1">
                     <div className="w-2 h-2 bg-[#00fbfb] rounded-full shadow-[0_0_5px_#00fbfb]"></div>
-                    <span className="text-[10px] font-['JetBrains_Mono'] text-white">LIVE</span>
+                    <span className="text-[10px] font-['JetBrains_Mono'] text-white">{t('landing.discovery.status_live')}</span>
                   </div>
                 </div>
 
@@ -247,7 +258,7 @@ export default function LandingPageHook({ onAccept }: { onAccept: () => void }) 
             </GlassCard>
 
             <div onClick={onAccept} className="bg-[rgba(255,255,255,0.05)] backdrop-blur-md border-2 border-[#00fbfb]/20 p-10 rounded-2xl shadow-[0_0_15px_rgba(0,251,251,0.4),0_0_30px_rgba(0,251,251,0.2)] text-center group cursor-pointer hover:scale-105 transition-transform">
-              <h3 className="font-['Plus_Jakarta_Sans'] text-[32px] font-medium leading-[1.3] mb-2 text-shadow-[0_0_10px_rgba(255,255,255,0.5)] text-white">SWIPE TO SIGN UP SECCION</h3>
+              <h3 className="font-['Plus_Jakarta_Sans'] text-[32px] font-medium leading-[1.3] mb-2 text-shadow-[0_0_10px_rgba(255,255,255,0.5)] text-white">{t('landing.discovery.cta')}</h3>
               <div className="flex justify-center items-center gap-4 mt-6">
                 <div className="h-[1px] w-20 bg-gradient-to-r from-transparent to-[#00fbfb]"></div>
                 <div className="w-10 h-10 rounded-full border-2 border-[#00fbfb] flex items-center justify-center animate-bounce">
@@ -272,39 +283,39 @@ export default function LandingPageHook({ onAccept }: { onAccept: () => void }) 
                   </span>
                   <span className="bg-black/40 backdrop-blur px-2 py-0.5 rounded text-[10px] font-bold text-white flex items-center gap-1">
                     <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg> 
-                    23K
+                    {t('landing.live.audience')}
                   </span>
                 </div>
                 <div className="absolute bottom-4 left-4">
-                  <p className="text-sm font-bold text-white text-shadow-[0_0_10px_rgba(255,255,255,0.5)]">18M Followers</p>
+                  <p className="text-sm font-bold text-white text-shadow-[0_0_10px_rgba(255,255,255,0.5)]">{t('landing.live.followers')}</p>
                 </div>
-                <button className="absolute bottom-4 right-4 bg-white/10 backdrop-blur border border-white/30 px-4 py-2 rounded-lg text-xs font-bold text-white hover:bg-white/20 transition-all">Join her Session now!</button>
+                <button className="absolute bottom-4 right-4 bg-white/10 backdrop-blur border border-white/30 px-4 py-2 rounded-lg text-xs font-bold text-white hover:bg-white/20 transition-all">{t('landing.live.cta')}</button>
               </div>
             </GlassCard>
 
             {/* ORDER SUMMARY */}
             <GlassCard className="p-6 border-l-4 border-l-[#ffabf3]">
-              <h3 className="font-['Plus_Jakarta_Sans'] text-[32px] font-medium leading-[1.3] text-lg mb-4 text-white">Your Content Order</h3>
-              <p className="text-xs text-[#b9cac9] mb-6">Order confirmation</p>
+              <h3 className="font-['Plus_Jakarta_Sans'] text-[32px] font-medium leading-[1.3] text-lg mb-4 text-white">{t('landing.order.title')}</h3>
+              <p className="text-xs text-[#b9cac9] mb-6">{t('landing.order.subtitle')}</p>
               <div className="flex gap-2 mb-6">
                 <img alt="Item" className="w-20 h-20 rounded-lg object-cover border border-white/10" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBxiktmbSUFs0QMhiycGW4NLUgePY0l_y5nmquA0RkOebyE_q7avgnWmSvMpUOw4YuSR2aR4rkF1YHwU5Tr-V8JXBks7ngz9lB0qYekJtl4s-jXzZ-FOjG1VSWammO9yMvLTtqCrwHOvOqMnbKZBo3c3EJtr4TejxCHp8x1syS7JbyfzO47srckD_WU6E3xeSmNNvB1WeEeZA56ECI-7Dx2F_Gayd_Z9CZTWT0UGjoMqXhRD_ZQHdOZFz2j1dNk__8GYfBFOBRhDo8"/>
                 <img alt="Item" className="w-20 h-20 rounded-lg object-cover border border-white/10" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAXWQwM-5H8IK-MokgPEJPRd3MaLphhVzcpdgqB80OrIrQrYMzFbI-yR_HTPth_fDIJC0xfPGMEXKIaWQw8HIzgK3Tw2jWBDOBFBLyqWzXbQVczjRH4pIwjgCD1-U7tPkgzvtlcUy3eYn6kokQjC4o68mchpkWHJLKzWb6uFybN28I34SdNs14eSzG0wzaKFvBg9jL8HEoFKxudgjTHFNsC5e8DwW8g9HSxZt1NT5bocUzLkv8vdLbprE727LL5Bxrp1SRb7JFdX_0"/>
                 <img alt="Item" className="w-20 h-20 rounded-lg object-cover border border-white/10" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDLchdLA_vA3dDBmRuxBb86eFjfNn0o1Vb8swuYtFReHmvguzoabRjF8pau1vbF4RMyKfEyQS3OdaSvWLunhTbB_4RuD3oGNA3nuSSog-KxHf2zc0cqZrGwXZHKgSZNhRu4FnKFV-V2Mz7BggGSiqNNtE8McywXmC1DovTFsJJLGu4R9ERQqU55CJ1Vkd3vCSGqxewSSLT043NkLjoyVUt96KOzqKInO21CVdQjEuNx028oSiAVWkMGGshCr2d5gpMOeyQ5nq4CsRQ"/>
               </div>
               <div className="space-y-3 font-['JetBrains_Mono'] text-[14px] font-medium leading-[1.0] tracking-[0.05em] text-xs border-t border-white/10 pt-4 text-white">
-                <div className="flex justify-between"><span className="text-[#b9cac9]">Subtotal</span><span>$18.00</span></div>
-                <div className="flex justify-between"><span className="text-[#b9cac9]">Premium</span><span>$25.00</span></div>
-                <div className="flex justify-between"><span className="text-[#b9cac9]">Shipping</span><span>$3.00</span></div>
+                <div className="flex justify-between"><span className="text-[#b9cac9]">{t('landing.order.subtotal')}</span><span>$18.00</span></div>
+                <div className="flex justify-between"><span className="text-[#b9cac9]">{t('landing.order.premium')}</span><span>$25.00</span></div>
+                <div className="flex justify-between"><span className="text-[#b9cac9]">{t('landing.order.shipping')}</span><span>$3.00</span></div>
                 <div className="flex justify-between font-bold text-[#ffabf3] text-sm pt-2">
-                  <span>Total</span><span className="text-shadow-[0_0_10px_rgba(255,255,255,0.5)]">$72.77</span>
+                  <span>{t('landing.order.total')}</span><span className="text-shadow-[0_0_10px_rgba(255,255,255,0.5)]">$72.77</span>
                 </div>
               </div>
             </GlassCard>
 
             {/* EXTRA QUOTE */}
             <GlassCard className="p-6 border border-[#ffabf3]/20">
-              <p className="font-['Plus_Jakarta_Sans'] text-[32px] font-medium leading-[1.3] text-lg mb-2 text-white">&quot;Let &apos;s bring some Sense , Fun and Real interactions between you guys&quot;</p>
-              <p className="text-xs text-[#b9cac9] opacity-60">SECCION Platform Mission Statment</p>
+              <p className="font-['Plus_Jakarta_Sans'] text-[32px] font-medium leading-[1.3] text-lg mb-2 text-white">{t('landing.quote.text')}</p>
+              <p className="text-xs text-[#b9cac9] opacity-60">{t('landing.quote.author')}</p>
             </GlassCard>
 
           </div>
@@ -322,16 +333,16 @@ export default function LandingPageHook({ onAccept }: { onAccept: () => void }) 
               className="h-9 object-contain" 
             />
           </div>
-          <p className="font-['Hanken_Grotesk'] text-[16px] leading-[1.6] font-normal text-[#b9cac9] max-w-xs mt-2">Show up - Match - Connect </p>
+          <p className="font-['Hanken_Grotesk'] text-[16px] leading-[1.6] font-normal text-[#b9cac9] max-w-xs mt-2">{t('footer.tagline')}</p>
         </div>
         <div className="flex flex-wrap justify-center gap-8">
-          <a className="text-[#b9cac9] hover:text-[#ffabf3] transition-colors font-['JetBrains_Mono'] text-[14px] font-medium tracking-[0.05em]" href="#">Privacy Policy</a>
-          <a className="text-[#b9cac9] hover:text-[#ffabf3] transition-colors font-['JetBrains_Mono'] text-[14px] font-medium tracking-[0.05em]" href="#">Terms of Service</a>
-          <a className="text-[#b9cac9] hover:text-[#ffabf3] transition-colors font-['JetBrains_Mono'] text-[14px] font-medium tracking-[0.05em]" href="#">Creator Hub</a>
-          <a className="text-[#b9cac9] hover:text-[#ffabf3] transition-colors font-['JetBrains_Mono'] text-[14px] font-medium tracking-[0.05em]" href="#">Support</a>
+          <a className="text-[#b9cac9] hover:text-[#ffabf3] transition-colors font-['JetBrains_Mono'] text-[14px] font-medium tracking-[0.05em]" href="#">{t('footer.privacy_policy')}</a>
+          <a className="text-[#b9cac9] hover:text-[#ffabf3] transition-colors font-['JetBrains_Mono'] text-[14px] font-medium tracking-[0.05em]" href="#">{t('footer.terms_of_service')}</a>
+          <a className="text-[#b9cac9] hover:text-[#ffabf3] transition-colors font-['JetBrains_Mono'] text-[14px] font-medium tracking-[0.05em]" href="#">{t('footer.creator_hub')}</a>
+          <a className="text-[#b9cac9] hover:text-[#ffabf3] transition-colors font-['JetBrains_Mono'] text-[14px] font-medium tracking-[0.05em]" href="#">{t('footer.support')}</a>
         </div>
         <div className="text-center md:text-right">
-          <p className="font-['JetBrains_Mono'] text-[14px] font-medium tracking-[0.05em] text-[#b9cac9] opacity-50">© 2026 SECCION. ALL RIGHTS RESERVED.</p>
+          <p className="font-['JetBrains_Mono'] text-[14px] font-medium tracking-[0.05em] text-[#b9cac9] opacity-50">{t('footer.rights')}</p>
           <div className="flex justify-center md:justify-end gap-4 mt-4">
             {/* Social Icons Placeholder */}
             <svg className="w-5 h-5 text-[#b9cac9] hover:text-[#00fbfb] cursor-pointer" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>

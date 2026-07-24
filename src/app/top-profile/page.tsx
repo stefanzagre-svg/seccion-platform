@@ -28,6 +28,13 @@ export default function TopProfilePage() {
 
   useEffect(() => {
     async function fetchTopProfiles() {
+      if (typeof window !== 'undefined') {
+        const isCreatorSignup = localStorage.getItem('is_creator_signup') === 'true';
+        if (isCreatorSignup) {
+          window.location.href = '/onboarding/kyc';
+          return;
+        }
+      }
       setIsLoading(true);
       try {
         // Fetch Members
