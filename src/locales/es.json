@@ -1,15 +1,15 @@
 {
   "nav": {
-    "home": "Home",
-    "howWeDo": "How We Do",
-    "becomeCreator": "Become Creator",
-    "studio": "Studio",
-    "signUp": "Sign Up",
-    "login": "Login",
-    "logout": "Logout",
-    "dashboard": "Dashboard",
+    "home": "Inicio",
+    "howWeDo": "Cómo Funciona",
+    "becomeCreator": "Sé Creador",
+    "studio": "Estudio",
+    "signUp": "Registrarse",
+    "login": "Ingresar",
+    "logout": "Cerrar Sesión",
+    "dashboard": "Panel",
     "radar": "Vibe Radar",
-    "messages": "Messages"
+    "messages": "Mensajes"
   },
   "prelaunch": {
     "breaking": "PRE-LANZAMIENTO EXCLUSIVO",
@@ -19,10 +19,10 @@
     "memberCta": "Primeros Miembros: Recompensas VIP"
   },
   "footer": {
-    "privacy": "Your Privacy",
-    "rules": "The Rules",
-    "creatorHub": "Creator Hub",
-    "contact": "Hit Us Up",
+    "privacy": "Tu Privacidad",
+    "rules": "Las Reglas",
+    "creatorHub": "Hub de Creadores",
+    "contact": "Contáctanos",
     "tagline": "El Futuro de la Conexión y la Creación",
     "rights": "Todos los Derechos Reservados."
   },
