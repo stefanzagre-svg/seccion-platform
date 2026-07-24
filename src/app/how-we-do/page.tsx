@@ -3,6 +3,8 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import PublicNavbar from "@/components/PublicNavbar";
+import { useTranslation } from "@/context/LanguageContext";
 import { motion } from "framer-motion";
 import { 
   Compass, 
@@ -61,6 +63,7 @@ function MonoNumber({ value, suffix = "" }: { value: string | number; suffix?: s
 
 export default function HowWeDoPage() {
   const router = useRouter();
+  const { t } = useTranslation();
 
   // 1. Chemistry Meter State
   const [activeChemLevel, setActiveChemLevel] = useState<number>(3);
@@ -175,31 +178,8 @@ export default function HowWeDoPage() {
         />
       </div>
 
-      {/* Floating Navbar (Matching LandingPageHook exactly) */}
-      <nav className="fixed top-0 left-0 right-0 z-50 backdrop-blur-xl border-b border-white/10 flex justify-between items-center w-full px-6 md:px-[84px] py-4 mx-auto">
-        <Link href="/" className="flex items-center cursor-pointer hover:opacity-90 transition-opacity group">
-          <img 
-            src="/images/seccion-wordmark-cropped.png" 
-            alt="SECCION" 
-            className="h-10 md:h-12 object-contain drop-shadow-[0_0_25px_rgba(0,251,251,0.5)] group-hover:drop-shadow-[0_0_35px_rgba(0,251,251,0.8)] transition-all duration-300 object-contain"
-          />
-        </Link>
-        <div className="hidden md:flex items-center gap-8">
-          <Link className="text-[#b9cac9] hover:text-[#00fbfb] transition-colors text-[14px] leading-none tracking-[0.05em] font-medium font-['JetBrains_Mono']" href="/vibe-radar">Vibe Radar</Link>
-          <Link className="text-[#b9cac9] hover:text-[#00fbfb] transition-colors text-[14px] leading-none tracking-[0.05em] font-medium font-['JetBrains_Mono']" href="/now-streaming">Now Streaming</Link>
-          <Link className="text-[#b9cac9] hover:text-[#00fbfb] transition-colors text-[14px] leading-none tracking-[0.05em] font-medium font-['JetBrains_Mono']" href="/become-creator">Become Creator</Link>
-          <Link className="text-[#ffabf3] border-b-2 border-[#ffabf3] pb-1 text-[14px] leading-none tracking-[0.05em] font-medium font-['JetBrains_Mono']" href="/how-we-do">How We Do</Link>
-        </div>
-        <div className="flex items-center gap-4">
-          <Link className="text-[#b9cac9] hover:text-[#00fbfb] transition-colors text-[14px] leading-none tracking-[0.05em] font-medium font-['JetBrains_Mono'] hidden sm:block" href="/login">Login</Link>
-          <Link 
-            href="/early-access"
-            className="px-6 py-2 border-2 border-[#00fbfb] text-[#00fbfb] font-['JetBrains_Mono'] text-[14px] leading-none tracking-[0.05em] font-medium uppercase hover:bg-white/10 transition-all active:scale-95 shadow-[0_0_15px_rgba(0,251,251,0.4),0_0_30px_rgba(0,251,251,0.2)]"
-          >
-            SIGN UP
-          </Link>
-        </div>
-      </nav>
+      {/* Floating Navbar */}
+      <PublicNavbar activeTab="how-we-do" />
 
       {/* Main Container */}
       <main className="relative z-10 pt-36 px-6 md:px-[84px] max-w-[1280px] mx-auto space-y-24">

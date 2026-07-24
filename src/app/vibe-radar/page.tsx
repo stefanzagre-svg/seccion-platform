@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useTranslation } from "@/context/LanguageContext";
+import PublicNavbar from "@/components/PublicNavbar";
 import { SpecializationFilter } from "@/components/SpecializationFilter";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -353,26 +354,7 @@ export default function VibeRadarPage() {
       </div>
 
       {/* Floating Header */}
-      <nav className="fixed top-0 left-0 right-0 z-50 backdrop-blur-xl bg-[#050505]/40 border-b border-white/10 w-full px-6 md:px-[84px] py-4 mx-auto flex justify-between items-center">
-        <Link href="/" className="flex items-center cursor-pointer hover:opacity-90 transition-opacity group">
-          <img 
-            src="/images/seccion-wordmark-cropped.png" 
-            alt="SECCION Logo" 
-            className="h-10 md:h-12 object-contain drop-shadow-[0_0_25px_rgba(0,251,251,0.5)] group-hover:drop-shadow-[0_0_35px_rgba(0,251,251,0.8)] transition-all duration-300"
-          />
-        </Link>
-        <div className="flex items-center gap-4">
-          <span className="text-[10px] font-mono font-bold text-[#ffabf3] bg-[#ffabf3]/5 border border-[#ffabf3]/25 px-3 py-1 rounded-full uppercase tracking-wider">
-            Vibe Radar
-          </span>
-          <Link 
-            href="/early-access" 
-            className="px-6 py-2 rounded-full border-2 border-[#00fbfb] text-[#00fbfb] font-mono text-[11px] leading-none tracking-widest font-bold uppercase bg-transparent hover:bg-[#00fbfb]/10 transition-all active:scale-[0.98] shadow-[0_0_15px_rgba(0,251,251,0.3)]"
-          >
-            Start Quest
-          </Link>
-        </div>
-      </nav>
+      <PublicNavbar activeTab="vibe-radar" />
 
       {/* Hero Section */}
       <header className="relative z-10 pt-36 pb-20 px-6 md:px-[84px] max-w-[1440px] mx-auto w-full flex-grow flex flex-col justify-center">
