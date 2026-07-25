@@ -131,10 +131,12 @@ export default function SeccionAgentBubble() {
             {/* Header */}
             <header className="p-4 border-b border-white/10 bg-gradient-to-r from-[#00fbfb]/10 via-purple-950/20 to-[#ec4899]/10 flex items-center justify-between shrink-0">
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#00fbfb] to-[#ec4899] p-[1.5px] shadow-[0_0_15px_rgba(0,251,251,0.4)]">
-                  <div className="w-full h-full bg-black rounded-full flex items-center justify-center">
-                    <Bot className="w-5 h-5 text-[#00fbfb]" />
-                  </div>
+                <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#00fbfb] to-[#ec4899] p-[1.5px] shadow-[0_0_15px_rgba(0,251,251,0.4)] overflow-hidden">
+                  <img 
+                    src="https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=150&h=150&q=80" 
+                    alt="Steve" 
+                    className="w-full h-full object-cover rounded-full"
+                  />
                 </div>
                 <div className="text-left">
                   <h3 className="text-xs font-black uppercase tracking-widest text-white flex items-center gap-1.5">
