@@ -1,4 +1,9 @@
 {
+  "metadata": {
+    "defaultTitle": "SECCION | Conexiones Auténticas y Creadores de Contenido",
+    "description": "Primera plataforma híbrida que combina el emparejamiento de citas por IA con creadores de contenido de streaming en vivo.",
+    "keywords": "SECCION, seccion.ai, plataforma social, emparejamiento por IA, conexiones auténticas, app de relaciones, streaming en vivo, plataforma de creadores"
+  },
   "nav": {
     "home": "Inicio",
     "howWeDo": "Cómo Funciona",
@@ -223,5 +228,27 @@
     "success": "¡Mensaje recibido! Te responderemos a la brevedad.",
     "sendAnother": "Enviar otro mensaje",
     "backHome": "Volver al Home"
+  },
+  "seo": {
+    "home": {
+      "title": "SECCION | Conexiones Auténticas y Creadores de Contenido",
+      "desc": "Primera plataforma híbrida que combina el emparejamiento de citas por IA con creadores de contenido de streaming en vivo."
+    },
+    "howWeDo": {
+      "title": "Cómo Funciona | SECCION",
+      "desc": "Explora el ciclo de juego de SECCION: emparejamiento, progresión de química y economía de creadores de streaming en vivo."
+    },
+    "vibeRadar": {
+      "title": "Vibe Radar | SECCION",
+      "desc": "Experimenta nuestro motor de emparejamiento sin monetización oculta, arquetipos de personalidad y coach de citas por IA."
+    },
+    "becomeCreator": {
+      "title": "Sé Creador | SECCION",
+      "desc": "Consigue el 90% de ingresos, transmite en vivo para tus matches y monetiza tu contenido con total libertad."
+    },
+    "nowStreaming": {
+      "title": "Transmitiendo Ahora | SECCION",
+      "desc": "Mira a creadores de contenido activos transmitiendo en vivo, interactúa y desbloquea el acceso VIP."
+    }
   }
 }

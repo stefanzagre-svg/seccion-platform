@@ -1,4 +1,9 @@
 {
+  "metadata": {
+    "defaultTitle": "SECCION | Authentic Connections & Content Creators",
+    "description": "1st Fusion Platform combining AI-driven dating matchmaking with live streaming content creators.",
+    "keywords": "SECCION, seccion.ai, social platform, AI matching, authentic connections, relationship app, live streaming, content creator platform, OnlyFans alternative"
+  },
   "nav": {
     "home": "Home",
     "howWeDo": "How We Do",
@@ -223,5 +228,27 @@
     "success": "Message received! We will reply shortly.",
     "sendAnother": "Send another message",
     "backHome": "Back to Home"
+  },
+  "seo": {
+    "home": {
+      "title": "SECCION | Authentic Connections & Content Creators",
+      "desc": "1st Fusion Platform combining AI-driven dating matchmaking with live streaming content creators."
+    },
+    "howWeDo": {
+      "title": "How We Do | SECCION",
+      "desc": "Explore SECCION's gameplay loop: matching, chemistry progression, and live streaming creator economy."
+    },
+    "vibeRadar": {
+      "title": "Vibe Radar | SECCION",
+      "desc": "Experience our non-monetized matching engine, personality archetypes, and dating wingman coach."
+    },
+    "becomeCreator": {
+      "title": "Become a Creator | SECCION",
+      "desc": "Earn 90% revenue split, live stream to your matches, and monetize your content with total freedom."
+    },
+    "nowStreaming": {
+      "title": "Now Streaming | SECCION",
+      "desc": "Watch active content creators live streaming, interact with broadcasters, and unlock VIP access."
+    }
   }
 }

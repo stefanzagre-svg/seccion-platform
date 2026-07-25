@@ -188,6 +188,8 @@ export default function BecomeCreatorPage() {
         backgroundImage: "radial-gradient(circle at 15% 50%, rgba(255, 171, 243, 0.05), transparent 25%), radial-gradient(circle at 85% 30%, rgba(0, 251, 251, 0.05), transparent 25%)"
       }}
     >
+      <title>{t("seo.becomeCreator.title")}</title>
+      <meta name="description" content={t("seo.becomeCreator.desc")} />
       {/* Background mesh glow */}
       <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
         <div

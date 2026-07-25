@@ -342,6 +342,8 @@ export default function VibeRadarPage() {
         backgroundImage: "radial-gradient(circle at 15% 50%, rgba(255, 171, 243, 0.05), transparent 25%), radial-gradient(circle at 85% 30%, rgba(0, 251, 251, 0.05), transparent 25%)"
       }}
     >
+      <title>{t("seo.vibeRadar.title")}</title>
+      <meta name="description" content={t("seo.vibeRadar.desc")} />
       {/* Background Cyber Grid */}
       <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
         <div

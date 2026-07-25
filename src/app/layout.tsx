@@ -1,6 +1,17 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import React from "react";
+import Navbar from "@/components/Navbar";
+import AmbientBackground from "@/components/AmbientBackground";
+import AIWingmanBubble from "@/components/AIWingmanBubble";
+import SeccionAgentBubble from "@/components/SeccionAgentBubble";
+import ServiceWorkerRegister from "@/components/pwa/ServiceWorkerRegister";
+import InAppBrowserDetector from "@/components/pwa/InAppBrowserDetector";
+import PWAInstallPrompt from "@/components/pwa/PWAInstallPrompt";
+import { cookies } from "next/headers";
+import { LanguageProvider, SupportedLocale } from "@/context/LanguageContext";
+import en from "@/locales/en.json";
+import es from "@/locales/es.json";
 
 const plusJakartaSans = { variable: "font-plus-jakarta-sans-fallback" };
 const hankenGrotesk = { variable: "font-hanken-grotesk-fallback" };
@@ -15,87 +26,74 @@ export const viewport: Viewport = {
   viewportFit: "cover",
 };
 
-export const metadata: Metadata = {
-  metadataBase: new URL("https://seccion.ai"),
-  title: {
-    default: "SECCION | Authentic Connections & Content Creators",
-    template: "%s | SECCION",
-  },
-  description:
-    "1st Fusion Platform combining AI-driven dating matchmaking with live streaming content creators.",
-  keywords: [
-    "SECCION",
-    "seccion.ai",
-    "social platform",
-    "AI matching",
-    "authentic connections",
-    "relationship app",
-    "live streaming",
-    "content creator platform",
-    "OnlyFans alternative",
-  ],
-  alternates: {
-    canonical: "https://seccion.ai",
-  },
-  icons: {
-    icon: [
-      { url: "/icon.svg", type: "image/svg+xml" },
-      { url: "/assets/logo/logo-mark.png", type: "image/png" },
-    ],
-    shortcut: "/icon.svg",
-    apple: "/assets/logo/logo-mark.png",
-  },
-  appleWebApp: {
-    capable: true,
-    statusBarStyle: "black-translucent",
-    title: "SECCION",
-  },
-  formatDetection: {
-    telephone: false,
-  },
-  openGraph: {
-    title: "SECCION | Authentic Connections & Content Creators",
-    description:
-      "1st Fusion Platform combining AI-driven dating matchmaking with live streaming content creators.",
-    url: "https://seccion.ai",
-    siteName: "SECCION",
-    images: [
-      {
-        url: "/assets/logo/logo-wordmark.png",
-        width: 766,
-        height: 191,
-        alt: "SECCION Logo",
-      },
-    ],
-    locale: "es_CO",
-    type: "website",
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "SECCION | Authentic Connections & Content Creators",
-    description:
-      "1st Fusion Platform combining AI-driven dating matchmaking with live streaming content creators.",
-    images: ["/assets/logo/logo-wordmark.png"],
-  },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const cookieStore = await cookies();
+  const savedLocale = (cookieStore.get("seccion_user_locale")?.value || "en") as SupportedLocale;
+  const dict = savedLocale === "es" ? es : en;
 
-import Navbar from "@/components/Navbar";
-import AmbientBackground from "@/components/AmbientBackground";
-import AIWingmanBubble from "@/components/AIWingmanBubble";
-import SeccionAgentBubble from "@/components/SeccionAgentBubble";
-import ServiceWorkerRegister from "@/components/pwa/ServiceWorkerRegister";
-import InAppBrowserDetector from "@/components/pwa/InAppBrowserDetector";
-import PWAInstallPrompt from "@/components/pwa/PWAInstallPrompt";
-import { LanguageProvider } from "@/context/LanguageContext";
+  return {
+    metadataBase: new URL("https://seccion.ai"),
+    title: {
+      default: dict.metadata.defaultTitle,
+      template: "%s | SECCION",
+    },
+    description: dict.metadata.description,
+    keywords: dict.metadata.keywords.split(", ").concat(["SECCION"]),
+    alternates: {
+      canonical: "https://seccion.ai",
+    },
+    icons: {
+      icon: [
+        { url: "/icon.svg", type: "image/svg+xml" },
+        { url: "/assets/logo/logo-mark.png", type: "image/png" },
+      ],
+      shortcut: "/icon.svg",
+      apple: "/assets/logo/logo-mark.png",
+    },
+    appleWebApp: {
+      capable: true,
+      statusBarStyle: "black-translucent",
+      title: "SECCION",
+    },
+    formatDetection: {
+      telephone: false,
+    },
+    openGraph: {
+      title: dict.metadata.defaultTitle,
+      description: dict.metadata.description,
+      url: "https://seccion.ai",
+      siteName: "SECCION",
+      images: [
+        {
+          url: "/assets/logo/logo-wordmark.png",
+          width: 766,
+          height: 191,
+          alt: "SECCION Logo",
+        },
+      ],
+      locale: savedLocale === "es" ? "es_ES" : "en_US",
+      type: "website",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: dict.metadata.defaultTitle,
+      description: dict.metadata.description,
+      images: ["/assets/logo/logo-wordmark.png"],
+    },
+  };
+}
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const cookieStore = await cookies();
+  const savedLocale = (cookieStore.get("seccion_user_locale")?.value || "en") as SupportedLocale;
+
   return (
     <html
-      lang="es"
+      lang={savedLocale}
       className={`${plusJakartaSans.variable} ${hankenGrotesk.variable} ${jetBrainsMono.variable} h-full antialiased dark`}
     >
       <head>
@@ -107,7 +105,7 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-full flex flex-col bg-background text-foreground font-sans relative overflow-x-hidden pt-safe pb-safe">
-        <LanguageProvider>
+        <LanguageProvider initialLocale={savedLocale}>
           {/* PWA Background Services & Smart Prompts */}
           <ServiceWorkerRegister />
           <InAppBrowserDetector />

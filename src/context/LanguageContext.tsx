@@ -3,13 +3,8 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import en from "@/locales/en.json";
 import es from "@/locales/es.json";
-import fr from "@/locales/fr.json";
-import pt from "@/locales/pt.json";
-import uk from "@/locales/uk.json";
-import ro from "@/locales/ro.json";
-import ar from "@/locales/ar.json";
 
-export type SupportedLocale = "es" | "en" | "fr" | "pt" | "uk" | "ro" | "ar";
+export type SupportedLocale = "es" | "en";
 
 export interface LocaleMeta {
   code: SupportedLocale;
@@ -22,21 +17,11 @@ export interface LocaleMeta {
 export const LOCALES: Record<SupportedLocale, LocaleMeta> = {
   es: { code: "es", name: "Spanish", nativeName: "Español", flag: "🇪🇸", dir: "ltr" },
   en: { code: "en", name: "English", nativeName: "English", flag: "🇺🇸", dir: "ltr" },
-  fr: { code: "fr", name: "French", nativeName: "Français", flag: "🇫🇷", dir: "ltr" },
-  pt: { code: "pt", name: "Portuguese", nativeName: "Português", flag: "🇵🇹", dir: "ltr" },
-  uk: { code: "uk", name: "Ukrainian", nativeName: "Українська", flag: "🇺🇦", dir: "ltr" },
-  ro: { code: "ro", name: "Romanian", nativeName: "Română", flag: "🇷🇴", dir: "ltr" },
-  ar: { code: "ar", name: "Moroccan Arabic", nativeName: "الدارجة المغربية", flag: "🇲🇦", dir: "rtl" },
 };
 
 const DICTIONARIES: Record<SupportedLocale, any> = {
   en,
   es,
-  fr,
-  pt,
-  uk,
-  ro,
-  ar,
 };
 
 interface LanguageContextType {
@@ -47,51 +32,34 @@ interface LanguageContextType {
 }
 
 const LanguageContext = createContext<LanguageContextType>({
-  locale: "es",
+  locale: "en",
   setLocale: () => {},
   t: (path: string, fallback?: string) => fallback || path,
   isRTL: false,
 });
 
-function getSavedLocale(): SupportedLocale {
-  if (typeof window === "undefined") return "es";
-  
-  // 1. Read from localStorage
-  try {
-    const saved = localStorage.getItem("seccion_user_locale") as SupportedLocale;
-    if (saved && LOCALES[saved]) return saved;
-  } catch (e) {}
-
-  // 2. Read from document.cookie
-  try {
-    const match = document.cookie.match(/(?:^|; )seccion_user_locale=([^;]*)/);
-    if (match && match[1] && LOCALES[match[1] as SupportedLocale]) {
-      return match[1] as SupportedLocale;
-    }
-  } catch (e) {}
-
-  // 3. Fallback to browser language or default to Spanish
-  const navLang = (navigator.language || "").toLowerCase();
-  if (navLang.startsWith("es")) return "es";
-  if (navLang.startsWith("pt")) return "pt";
-  if (navLang.startsWith("uk")) return "uk";
-  if (navLang.startsWith("ro")) return "ro";
-  if (navLang.startsWith("ar")) return "ar";
-  if (navLang.startsWith("fr")) return "fr";
-  return "es";
-}
-
-export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [locale, setLocaleState] = useState<SupportedLocale>("es");
+export const LanguageProvider: React.FC<{ children: React.ReactNode; initialLocale?: SupportedLocale }> = ({ 
+  children, 
+  initialLocale = "en" 
+}) => {
+  const [locale, setLocaleState] = useState<SupportedLocale>(initialLocale);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    const activeLocale = getSavedLocale();
-    setLocaleState(activeLocale);
     setMounted(true);
-
-    document.documentElement.setAttribute("lang", activeLocale);
-    document.documentElement.setAttribute("dir", LOCALES[activeLocale]?.dir || "ltr");
+    
+    // Check localStorage on mount as client fallback if cookie is not set
+    try {
+      const saved = localStorage.getItem("seccion_user_locale") as SupportedLocale;
+      if (saved && LOCALES[saved] && saved !== locale) {
+        setLocaleState(saved);
+        document.documentElement.setAttribute("lang", saved);
+        document.documentElement.setAttribute("dir", LOCALES[saved]?.dir || "ltr");
+      } else {
+        document.documentElement.setAttribute("lang", locale);
+        document.documentElement.setAttribute("dir", LOCALES[locale]?.dir || "ltr");
+      }
+    } catch (e) {}
   }, []);
 
   const setLocale = (newLocale: SupportedLocale) => {
@@ -111,7 +79,7 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   // Dot notation translation resolver e.g. t("nav.home")
   const t = (path: string, fallback?: string): string => {
     const keys = path.split(".");
-    let current: any = DICTIONARIES[locale] || DICTIONARIES["es"];
+    let current: any = DICTIONARIES[locale] || DICTIONARIES["en"];
     
     for (const key of keys) {
       if (current && typeof current === "object" && key in current) {

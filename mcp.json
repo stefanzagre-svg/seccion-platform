@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "buffer": {
+      "serverUrl": "https://mcp.buffer.com/mcp",
+      "headers": {
+        "Authorization": "Bearer vTn9RkH5N0cFfsB1wvyNHbivboaDuWhXhGSiK_ueVLO"
+      }
+    }
+  }
+}

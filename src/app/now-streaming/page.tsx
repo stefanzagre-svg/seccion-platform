@@ -70,6 +70,8 @@ export default function NowStreamingPage() {
 
   return (
     <div className="w-full min-h-screen text-[#e2e2e2] overflow-x-hidden font-sans bg-transparent relative flex flex-col justify-between">
+      <title>{t("seo.nowStreaming.title")}</title>
+      <meta name="description" content={t("seo.nowStreaming.desc")} />
       
       {/* Background Cyber Grid */}
       <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">

@@ -8,7 +8,10 @@ import { useRouter } from "next/navigation";
 import { Loader2, MessageSquare, Send, X, Bot, Sparkles } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
+import { useTranslation } from "@/context/LanguageContext";
+
 export default function Home() {
+  const { t } = useTranslation();
   const [user, setUser] = useState<any>(null);
   const [onboardingCompleted, setOnboardingCompleted] = useState<boolean>(false);
   const [loading, setLoading] = useState(true);
@@ -79,6 +82,8 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-transparent text-white flex flex-col relative overflow-hidden">
+      <title>{t("seo.home.title")}</title>
+      <meta name="description" content={t("seo.home.desc")} />
       {/* Subtle Cyber Grid Texture over global background */}
       <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
         <div

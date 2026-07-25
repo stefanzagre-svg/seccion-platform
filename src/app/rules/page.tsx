@@ -23,6 +23,7 @@ export default function RulesPage() {
   const { t } = useTranslation();
   return (
     <div className="w-full min-h-screen text-[#e2e2e2] overflow-x-hidden font-sans bg-transparent relative flex flex-col justify-between">
+      <title>{t("footer.rules")} | SECCION</title>
       
       {/* Background Cyber Grid */}
       <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">

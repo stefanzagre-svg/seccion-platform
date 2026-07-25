@@ -1,0 +1,70 @@
+{
+  "project": "SECCION Creator Outreach & CRM Tracker",
+  "version": "1.0.0",
+  "city_milestones": {
+    "medellin": {
+      "target_creators": 30,
+      "approved_creators": 0,
+      "waitlist_creators": 0,
+      "pending_review": 0,
+      "status": "In Progress"
+    },
+    "bogota": {
+      "target_creators": 30,
+      "approved_creators": 0,
+      "waitlist_creators": 0,
+      "pending_review": 0,
+      "status": "Queued"
+    },
+    "barcelona": {
+      "target_creators": 30,
+      "approved_creators": 0,
+      "waitlist_creators": 0,
+      "pending_review": 0,
+      "status": "Queued"
+    }
+  },
+  "pipeline_statuses": [
+    "lead_identified",
+    "dm_sent",
+    "application_submitted",
+    "under_review",
+    "waitlist",
+    "approved_onboarded",
+    "rejected"
+  ],
+  "creators": [
+    {
+      "id": "crm-med-001",
+      "full_name": "Mariana Gómez (Example)",
+      "city": "Medellín",
+      "specialization": "Fashion & Lifestyle",
+      "instagram_handle": "@marianagomez_med",
+      "tiktok_handle": "@marianagomez_vibe",
+      "telegram": "@marianag_med",
+      "email": "mariana.example@gmail.com",
+      "status": "lead_identified",
+      "outreach_stage": "DM Sent",
+      "outreach_date": "2026-07-25",
+      "applied_via_web": false,
+      "year1_founding_rate": true,
+      "reviewer_notes": "Strong Paisa creator, high engagement on Instagram Reels. Sent Paisa DM outreach script #1."
+    },
+    {
+      "id": "crm-bog-001",
+      "full_name": "Valentina Ríos (Example)",
+      "city": "Bogotá",
+      "specialization": "Beauty Architect & GRWM",
+      "instagram_handle": "@valerios_bog",
+      "tiktok_handle": "@valerios_beauty",
+      "telegram": "@valerios_bog",
+      "email": "valentinarios@example.com",
+      "status": "application_submitted",
+      "outreach_stage": "Applied via Web",
+      "outreach_date": "2026-07-25",
+      "applied_via_web": true,
+      "year1_founding_rate": true,
+      "reviewer_notes": "Submitted via seccion.ai/become-creator. Needs social link verification in /admin/creators/applications."
+    }
+  ]
+}
