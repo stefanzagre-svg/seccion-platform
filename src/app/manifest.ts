@@ -14,9 +14,21 @@ export default function manifest(): MetadataRoute.Manifest {
     categories: ["social", "entertainment", "lifestyle"],
     icons: [
       {
+        src: "/icon.png",
+        sizes: "192x192",
+        type: "image/png",
+        purpose: "any",
+      },
+      {
+        src: "/apple-touch-icon.png",
+        sizes: "192x192",
+        type: "image/png",
+        purpose: "maskable",
+      },
+      {
         src: "/assets/logo/logo-mark.png",
-        sizes: "64x64",
-        type: "image/svg+xml",
+        sizes: "512x512",
+        type: "image/png",
         purpose: "any",
       },
       {
