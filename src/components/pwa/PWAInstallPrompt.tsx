@@ -6,6 +6,7 @@ import { Download, Share, PlusSquare, X, Sparkles, CheckCircle2 } from "lucide-r
 export default function PWAInstallPrompt() {
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [isIOS, setIsIOS] = useState(false);
+  const [isFirefox, setIsFirefox] = useState(false);
   const [isStandalone, setIsStandalone] = useState(false);
   const [showPrompt, setShowPrompt] = useState(false);
   const [installed, setInstalled] = useState(false);
@@ -32,7 +33,9 @@ export default function PWAInstallPrompt() {
 
     const ua = navigator.userAgent;
     const isIOSDevice = /iPhone|iPad|iPod/i.test(ua) && !(window as any).MSStream;
+    const isFirefoxDevice = /Firefox|FxiOS/i.test(ua);
     setIsIOS(isIOSDevice);
+    setIsFirefox(isFirefoxDevice);
 
     // Android / Chrome beforeinstallprompt event handler
     const handleBeforeInstallPrompt = (e: Event) => {
@@ -43,14 +46,10 @@ export default function PWAInstallPrompt() {
 
     window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
 
-    // Show iOS prompt if iOS Safari and non-standalone
-    if (isIOSDevice) {
-      const isSafari = /Safari/i.test(ua) && !/CriOS|FxiOS|OPiOS/i.test(ua);
-      if (isSafari) {
-        // Slight delay for smooth UI entrance
-        const timer = setTimeout(() => setShowPrompt(true), 2500);
-        return () => clearTimeout(timer);
-      }
+    // Show prompt on iOS (any browser) or Firefox (Android/mobile)
+    if (isIOSDevice || (isFirefoxDevice && /Android/i.test(ua))) {
+      const timer = setTimeout(() => setShowPrompt(true), 2500);
+      return () => clearTimeout(timer);
     }
 
     // App installed event handler
@@ -117,7 +116,7 @@ export default function PWAInstallPrompt() {
               <Sparkles className="w-4 h-4 text-pink-400 fill-pink-400/20" />
             </div>
             <p className="text-xs text-gray-300">
-              {isIOS ? "Add to Home Screen for native experience" : "Fast, full-screen, offline-ready native app"}
+              {isIOS ? "Add to Home Screen for native experience" : isFirefox ? "Install via Firefox menu for native app" : "Fast, full-screen, offline-ready native app"}
             </p>
           </div>
         </div>
@@ -133,13 +132,28 @@ export default function PWAInstallPrompt() {
               <div className="p-1.5 bg-purple-500/20 rounded-lg shrink-0">
                 <Share className="w-4 h-4 text-purple-300" />
               </div>
-              <span>1. Tap the <strong className="text-white">Share</strong> button at the bottom of Safari</span>
+              <span>1. Tap the <strong className="text-white">Share</strong> button in your iOS browser</span>
             </div>
             <div className="flex items-center gap-2.5 text-purple-200">
               <div className="p-1.5 bg-pink-500/20 rounded-lg shrink-0">
                 <PlusSquare className="w-4 h-4 text-pink-300" />
               </div>
               <span>2. Select <strong className="text-white">Add to Home Screen</strong></span>
+            </div>
+          </div>
+        ) : isFirefox ? (
+          <div className="bg-white/5 border border-white/10 rounded-2xl p-3.5 mt-2 space-y-2 text-xs text-gray-300">
+            <div className="flex items-center gap-2.5 text-purple-200">
+              <div className="p-1.5 bg-purple-500/20 rounded-lg shrink-0">
+                <Share className="w-4 h-4 text-purple-300" />
+              </div>
+              <span>1. Tap the <strong className="text-white">Menu (⋮)</strong> button in Firefox</span>
+            </div>
+            <div className="flex items-center gap-2.5 text-purple-200">
+              <div className="p-1.5 bg-pink-500/20 rounded-lg shrink-0">
+                <PlusSquare className="w-4 h-4 text-pink-300" />
+              </div>
+              <span>2. Select <strong className="text-white">Install</strong> or <strong className="text-white">Add to Home screen</strong></span>
             </div>
           </div>
         ) : (
