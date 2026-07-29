@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
+import { useTranslation } from "@/context/LanguageContext";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   X, 
@@ -77,6 +78,7 @@ interface StudioTourModalProps {
 }
 
 export default function StudioTourModal({ isOpen, onClose, onClaimOffer }: StudioTourModalProps) {
+  const { locale } = useTranslation();
   const [activeStep, setActiveStep] = useState(0);
   
   // Interactive Simulator States
@@ -107,39 +109,39 @@ export default function StudioTourModal({ isOpen, onClose, onClaimOffer }: Studi
   // Step Data
   const steps = [
     {
-      title: "SECCION Studio Cockpit",
-      description: "Experience your unified dashboard. View active earnings, subscriber rosters, and toggle your AI autopilot chatter on or off instantly.",
-      tip: "Your studio dashboard gives you a high-density control center without visual clutter."
+      title: locale === "es" ? "Cabina de Estudio SECCION" : "SECCION Studio Cockpit",
+      description: locale === "es" ? "Explora tu panel unificado. Revisa ingresos activos, listas de suscriptores y activa o desactiva tu piloto automático de chat al instante." : "Experience your unified dashboard. View active earnings, subscriber rosters, and toggle your AI autopilot chatter on or off instantly.",
+      tip: locale === "es" ? "Tu panel de estudio te ofrece un centro de control de alta densidad sin desorden visual." : "Your studio dashboard gives you a high-density control center without visual clutter."
     },
     {
-      title: "Customize & Protect Your Identity",
-      description: "Maintain absolute control over your privacy. Block views in specific cities/countries (Geofencing) and configure how your face is blurred on public discovery feeds.",
-      tip: "Geofencing helps keep your content invisible in your hometown or specific markets."
+      title: locale === "es" ? "Personaliza & Protege tu Identidad" : "Customize & Protect Your Identity",
+      description: locale === "es" ? "Mantén un control absoluto sobre tu privacidad. Bloquea vistas en ciudades/países específicos (Geocerca) y configura el difuminado de tu rostro en los feeds públicos." : "Maintain absolute control over your privacy. Block views in specific cities/countries (Geofencing) and configure how your face is blurred on public discovery feeds.",
+      tip: locale === "es" ? "La geocerca te ayuda a mantener tu contenido invisible en tu ciudad local o en mercados específicos." : "Geofencing helps keep your content invisible in your hometown or specific markets."
     },
     {
-      title: "Synergy Matching System",
-      description: "Ditch the public transactional inbox. Members match with you based on shared interests and vibe compatibility before they can subscribe.",
-      tip: "High compatibility scores lead to better relationships and lower subscriber churn."
+      title: locale === "es" ? "Sistema de Sinergia y Matching" : "Synergy Matching System",
+      description: locale === "es" ? "Olvídate de la bandeja pública transaccional. Los miembros hacen match contigo según intereses comunes y compatibilidad de vibe antes de poder suscribirse." : "Ditch the public transactional inbox. Members match with you based on shared interests and vibe compatibility before they can subscribe.",
+      tip: locale === "es" ? "Las altas puntuaciones de compatibilidad generan mejores relaciones y reducen la cancelación de suscripciones." : "High compatibility scores lead to better relationships and lower subscriber churn."
     },
     {
-      title: "Seamless Matching Requests",
-      description: "Review incoming matching invitations. Once you accept a sponsored connection, your Face Blur dissolves automatically for that specific user.",
-      tip: "Accepting a match grants selected entry to your exclusive profile layers."
+      title: locale === "es" ? "Solicitudes de Match Fluidas" : "Seamless Matching Requests",
+      description: locale === "es" ? "Revisa las invitaciones de match entrantes. Una vez que aceptas una conexión patrocinada, el Difuminado Facial se desactiva automáticamente para ese usuario." : "Review incoming matching invitations. Once you accept a sponsored connection, your Face Blur dissolves automatically for that specific user.",
+      tip: locale === "es" ? "Aceptar un match concede acceso seleccionado a las capas exclusivas de tu perfil." : "Accepting a match grants selected entry to your exclusive profile layers."
     },
     {
-      title: "Interactive Communication Hub",
-      description: "Engage your audience with chat, vocals, and HD live streams. Use the AI Suggestion deck to quickly reply to messages in your unique voice tone.",
-      tip: "Double tap suggestions to customize or press Send to execute the chat loop."
+      title: locale === "es" ? "Centro de Comunicación Interactivo" : "Interactive Communication Hub",
+      description: locale === "es" ? "Interactúa con tu audiencia mediante chat, notas de voz y streams en HD. Utiliza el panel de sugerencias de IA para responder rápidamente con tu tono y voz únicos." : "Engage your audience with chat, vocals, and HD live streams. Use the AI Suggestion deck to quickly reply to messages in your unique voice tone.",
+      tip: locale === "es" ? "Toca dos veces las sugerencias para personalizarlas o presiona Enviar para completar el ciclo de chat." : "Double tap suggestions to customize or press Send to execute the chat loop."
     },
     {
-      title: "Legal Contract & DRM Shields",
-      description: "Protect your intellectual property. Run contracts through the Legal Shield to scan for sunset clauses, and check the DRM console to track down leaks.",
-      tip: "We scan the web continuously to file automated takedowns for you."
+      title: locale === "es" ? "Contratos Legales & Protección DRM" : "Legal Contract & DRM Shields",
+      description: locale === "es" ? "Protege tu propiedad intelectual. Analiza contratos con el Escudo Legal para detectar cláusulas abusivas y revisa la consola DRM para rastrear filtraciones." : "Protect your intellectual property. Run contracts through the Legal Shield to scan for sunset clauses, and check the DRM console to track down leaks.",
+      tip: locale === "es" ? "Rastreamos la web continuamente para presentar retiros automáticos de contenido por ti." : "We scan the web continuously to file automated takedowns for you."
     },
     {
-      title: "Claim Campaign Offer",
-      description: "Ready to launch your channel? The first 500 creators claim the AI Assistant free for Year 1 (saving €4,000/month in agency commission fees).",
-      tip: "Click below to complete your studio sign up and claim your slot."
+      title: locale === "es" ? "Reclama la Oferta de Campaña" : "Claim Campaign Offer",
+      description: locale === "es" ? "¿Listo/a para lanzar tu canal? Los primeros 500 creadores obtienen el Asistente IA gratis durante el Año 1 (ahorrando 4.000 €/mes en comisiones de agencia)." : "Ready to launch your channel? The first 500 creators claim the AI Assistant free for Year 1 (saving €4,000/month in agency commission fees).",
+      tip: locale === "es" ? "Haz clic abajo para completar tu registro en el estudio y asegurar tu plaza." : "Click below to complete your studio sign up and claim your slot."
     }
   ];
 
@@ -213,10 +215,10 @@ export default function StudioTourModal({ isOpen, onClose, onClaimOffer }: Studi
             {/* Header logo / step tag */}
             <div className="flex items-center justify-between">
               <span className="text-[10px] font-mono font-bold text-[#00fbfb] bg-[#00fbfb]/5 border border-[#00fbfb]/20 px-3 py-1 rounded-full uppercase tracking-wider">
-                Studio Tour Mode
+                {locale === "es" ? "Tour del Estudio" : "Studio Tour Mode"}
               </span>
               <span className="text-xs font-mono text-white/40">
-                Step {activeStep + 1} of {steps.length}
+                {locale === "es" ? "Paso" : "Step"} {activeStep + 1} {locale === "es" ? "de" : "of"} {steps.length}
               </span>
             </div>
 
@@ -282,7 +284,7 @@ export default function StudioTourModal({ isOpen, onClose, onClaimOffer }: Studi
                 onClick={onClaimOffer}
                 className="px-6 py-3.5 rounded-full bg-[#00fbfb] text-black font-mono text-[10px] font-black uppercase tracking-wider hover:shadow-[0_0_20px_rgba(0,251,251,0.4)] transition flex items-center gap-1.5 cursor-pointer"
               >
-                <span>Claim Offer</span>
+                <span>{locale === "es" ? "Reclamar Oferta" : "Claim Offer"}</span>
                 <Check className="w-3.5 h-3.5" />
               </button>
             ) : (

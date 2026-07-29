@@ -15,7 +15,8 @@ import {
   ArrowLeft,
   ChevronLeft,
   ChevronRight,
-  Shield
+  Shield,
+  UserPlus
 } from 'lucide-react';
 import { cn } from '@/lib/utils'; // wait, is cn helper available? Let's check or write our own simple one
 
@@ -35,6 +36,7 @@ export default function AdminSidebar({ adminUser }: SidebarProps) {
     { name: 'Users', href: '/admin/users', icon: Users },
     { name: 'Creators', href: '/admin/creators', icon: Tv },
     { name: 'Applications', href: '/admin/creators/applications', icon: Shield },
+    { name: 'CRM Tracker', href: '/admin/creators/crm-outreach', icon: UserPlus },
     { name: 'Moderation', href: '/admin/moderation', icon: ShieldAlert },
     { name: 'Finance', href: '/admin/finance', icon: DollarSign },
     { name: 'Features', href: '/admin/features', icon: Activity },
@@ -75,7 +77,7 @@ export default function AdminSidebar({ adminUser }: SidebarProps) {
 
       {/* Header Logo */}
       <div className={cn("p-6 flex items-center gap-3 border-b border-white/5", isCollapsed ? "justify-center" : "")}>
-        <img src="/assets/logo/logo-mark.png" alt="SECCION" className="w-8 h-8 drop-shadow-[0_0_12px_rgba(0,251,251,0.4)] object-contain" />
+        <img src="/assets/logo/seccion-icon-light.png" alt="SECCION" className="w-8 h-8 drop-shadow-[0_0_12px_rgba(0,251,251,0.4)] object-contain" />
         {!isCollapsed && (
           <div className="flex flex-col">
             <div className="flex items-center gap-2">

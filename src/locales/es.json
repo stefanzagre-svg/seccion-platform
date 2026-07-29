@@ -250,5 +250,37 @@
       "title": "Transmitiendo Ahora | SECCION",
       "desc": "Mira a creadores de contenido activos transmitiendo en vivo, interactúa y desbloquea el acceso VIP."
     }
+  },
+  "replicant": {
+    "badge": "Generado por el Replicant de {creatorName}",
+    "badgeSelf": "Enviado por tu Replicant",
+    "autoChat": "Replicant Auto-Chat",
+    "autoChatDesc": "Tu Replicant redacta respuestas que reflejan tu voz y tono auténticos. Cada mensaje se prepara para tu aprobación antes de enviarse.",
+    "consent": "Autorización de Replicant",
+    "consentDesc": "Bajo la Ley Laboral de NY Art. 36, autorizas la creación de tu Replicant — un gemelo digital impulsado por IA que usa tu imagen, voz y estilo de comportamiento para interactuar con miembros en tu nombre.",
+    "tooltip": "Este mensaje fue generado por el Replicant autorizado de {creatorName} — un gemelo digital entrenado para reflejar su voz y estilo auténticos.",
+    "streamDisclosure": "El avatar en vivo de {creatorName} es impulsado por su Replicant autorizado"
+  },
+  "provenance": {
+    "title": "Declaración de Procedencia del Contenido",
+    "subtitle": "Selecciona cómo fue creado este contenido. Tu audiencia verá esta etiqueta. Sé transparente — genera confianza.",
+    "genuine": "100% Genuino",
+    "genuineShort": "Creado 100% por humano",
+    "genuineDesc": "Este contenido fue creado enteramente por el creador sin herramientas de generación IA. Las fotos fueron tomadas con cámara, los videos grabados en vivo y el texto escrito personalmente.",
+    "genuineExamples": "Selfies, videos filmados, subtítulos escritos a mano, grabaciones en vivo",
+    "aiAssisted": "Asistido por IA",
+    "aiAssistedShort": "Creado por humano, mejorado por IA",
+    "aiAssistedDesc": "El contenido base fue creado por el creador, pero se usaron herramientas de IA para mejorarlo. Incluye filtros con IA, eliminación de fondo, subtitulado automático, corrección de color o gramática.",
+    "aiAssistedExamples": "Fotos con filtros IA, videos con subtítulos IA, texto corregido por IA, iluminación mejorada",
+    "aiGenerated": "100% Replicant",
+    "aiGeneratedShort": "Generado completamente por el Replicant del creador",
+    "aiGeneratedDesc": "Este contenido fue generado completamente por IA en nombre del creador. El creador autorizó a su Replicant para producirlo usando su voz, estilo e imagen entrenados.",
+    "aiGeneratedExamples": "Imágenes generadas por IA, mensajes escritos por Replicant, grabaciones de voz IA, avatares sintéticos",
+    "aiEnhanced": "Mejorado por IA",
+    "aiEnhancedShort": "Contenido original modificado por IA",
+    "aiEnhancedDesc": "El creador comenzó con contenido original real pero usó IA para modificarlo significativamente más allá de filtros simples. Incluye retoque facial IA, modificación corporal, reemplazo de fondo IA o edición de video con IA.",
+    "aiEnhancedExamples": "Fotos retocadas por IA, cambios de fondo IA, efectos de video IA, modificaciones tipo deepfake en contenido propio",
+    "autoDetectionNotice": "SECCION analiza automáticamente el contenido subido para verificar la procedencia. Si nuestro análisis difiere de tu declaración, te pediremos que la reconsideres.",
+    "requiresConsent": "Requiere Autorización de Replicant activa en Studio → Configuración"
   }
 }

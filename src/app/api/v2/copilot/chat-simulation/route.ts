@@ -203,6 +203,7 @@ Draft a single-sentence or double-sentence casual reply. Keep it very conversati
       draftText: replyText,
       resolvedLevel: currentLevel.key,
       isAiGenerated: true,
+      replicantCreatorName: creatorName,
       matchCount: totalMatchCount,
       ...(sandboxMode && { _sandboxMode: true, devGaugeScore: sharedScore }),
     });

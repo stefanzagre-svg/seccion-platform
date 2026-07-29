@@ -117,7 +117,7 @@ export default function LoginPage() {
           <div className="space-y-6 text-left">
             <div className="text-center space-y-2">
               <img 
-                src="/assets/logo/logo-wordmark.png" 
+                src="/assets/logo/seccion-wordmark-light.png" 
                 alt="SECCION" 
                 className="h-8 mx-auto object-contain drop-shadow-[0_0_20px_rgba(0,251,251,0.4)]"
               />

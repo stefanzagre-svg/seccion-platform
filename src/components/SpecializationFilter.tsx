@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { CREATOR_SPECIALIZATIONS, CreatorSpecialization } from '@/lib/constants';
 import { AgeConsentModal } from './AgeConsentModal';
 import { ShieldCheck, ShieldAlert, Sparkles, Filter } from 'lucide-react';
+import { useTranslation } from '@/context/LanguageContext';
 
 const SHORT_TITLES: Record<string, string> = {
   beauty: "Beauty & Makeup",
@@ -15,6 +16,19 @@ const SHORT_TITLES: Record<string, string> = {
   career: "Career & Ambition",
   wellness: "Wellness Guide",
   financial: "Wealth Architect",
+  adult: "18+ Sensual"
+};
+
+const SHORT_TITLES_ES: Record<string, string> = {
+  beauty: "Belleza y Maquillaje",
+  style: "Moda y Estilo",
+  culinary: "Cocina y Cena",
+  dating: "Dating Coach",
+  fitness: "Fitness Coach",
+  creative: "Arte y Show",
+  career: "Carrera y Ambición",
+  wellness: "Guía de Bienestar",
+  financial: "Arquitecto de Riqueza",
   adult: "18+ Sensual"
 };
 
@@ -32,6 +46,7 @@ export const SpecializationFilter: React.FC<SpecializationFilterProps> = ({
   onToggleAdult,
 }) => {
   const [showAgeModal, setShowAgeModal] = useState(false);
+  const { locale } = useTranslation();
 
   const handleAdultToggleClick = () => {
     if (includeAdult) {
@@ -48,6 +63,8 @@ export const SpecializationFilter: React.FC<SpecializationFilterProps> = ({
     onToggleAdult(true);
   };
 
+  const titles = locale === 'es' ? SHORT_TITLES_ES : SHORT_TITLES;
+
   return (
     <div className="w-full space-y-3">
       {/* Explicit & Sensual Content Discovery (SafeSearch 18+) Banner */}
@@ -61,14 +78,18 @@ export const SpecializationFilter: React.FC<SpecializationFilterProps> = ({
           <div className="space-y-1 text-left">
             <div className="flex flex-wrap items-center gap-2">
               <h4 className="text-xs font-mono font-bold text-white uppercase tracking-wider">
-                Explicit & 18+ Content Discovery (SafeSearch Tool)
+                {locale === 'es' ? 'Descubrimiento de Contenido 18+ y Explícito (SafeSearch)' : 'Explicit & 18+ Content Discovery (SafeSearch Tool)'}
               </h4>
               <span className="text-[9px] font-mono text-red-400 bg-red-500/10 border border-red-500/30 px-2 py-0.5 rounded-full font-bold uppercase">
-                {includeAdult ? "18+ Unlocked" : "SFW Filter Active"}
+                {includeAdult ? (locale === 'es' ? '18+ Desbloqueado' : '18+ Unlocked') : (locale === 'es' ? 'Filtro SFW Activo' : 'SFW Filter Active')}
               </span>
             </div>
             <p className="text-xs text-[#b9cac9] leading-relaxed max-w-2xl font-medium">
-              SECCION keeps public discovery feeds 100% SFW by default with SafeSearch <strong>ON</strong>. To find 18+ Sensual Creators, unlock private PPV content, and access behind-closed-doors live streams nationwide, use the SafeSearch toggle below to verify age and enable explicit content.
+              {locale === 'es' ? (
+                <>SECCION mantiene los feeds públicos 100% SFW por defecto con SafeSearch <strong>ACTIVO</strong>. Para encontrar Creadores Sensuales 18+, desbloquear contenido privado PPV y acceder a streams en vivo sin censura, usa el botón SafeSearch abajo para verificar tu edad y activar el contenido explícito.</>
+              ) : (
+                <>SECCION keeps public discovery feeds 100% SFW by default with SafeSearch <strong>ON</strong>. To find 18+ Sensual Creators, unlock private PPV content, and access behind-closed-doors live streams nationwide, use the SafeSearch toggle below to verify age and enable explicit content.</>
+              )}
             </p>
           </div>
         </div>
@@ -81,7 +102,9 @@ export const SpecializationFilter: React.FC<SpecializationFilterProps> = ({
               : 'bg-[#00fbfb]/15 border-[#00fbfb] text-[#00fbfb] hover:bg-[#00fbfb]/25 shadow-[0_0_20px_rgba(0,251,251,0.3)]'
           }`}
         >
-          {includeAdult ? '🔞 18+ Unlocked (SafeSearch OFF)' : '🔓 Unlock 18+ SafeSearch'}
+          {includeAdult
+            ? (locale === 'es' ? '🔞 18+ Desbloqueado (SafeSearch OFF)' : '🔞 18+ Unlocked (SafeSearch OFF)')
+            : (locale === 'es' ? '🔓 Desbloquear SafeSearch 18+' : '🔓 Unlock 18+ SafeSearch')}
         </button>
       </div>
 
@@ -89,7 +112,7 @@ export const SpecializationFilter: React.FC<SpecializationFilterProps> = ({
       <div className="flex items-center justify-between gap-2 px-1 pt-2">
         <div className="flex items-center gap-2 text-xs font-mono font-bold text-white/80">
           <Filter className="w-3.5 h-3.5 text-[#ffabf3]" />
-          <span>Filter Creators by Category</span>
+          <span>{locale === 'es' ? 'Filtrar Creadores por Categoría' : 'Filter Creators by Category'}</span>
         </div>
 
         {/* 18+ SafeSearch Toggle Pill */}
@@ -104,12 +127,12 @@ export const SpecializationFilter: React.FC<SpecializationFilterProps> = ({
           {includeAdult ? (
             <>
               <ShieldAlert className="w-3.5 h-3.5 text-red-400" />
-              <span>SafeSearch: <strong className="text-red-300">OFF (18+ Unlocked)</strong></span>
+              <span>SafeSearch: <strong className="text-red-300">{locale === 'es' ? 'OFF (18+ Desbloqueado)' : 'OFF (18+ Unlocked)'}</strong></span>
             </>
           ) : (
             <>
               <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-              <span>SafeSearch: <strong className="text-emerald-300">ON (100% SFW)</strong></span>
+              <span>SafeSearch: <strong className="text-emerald-300">{locale === 'es' ? 'ACTIVO (100% SFW)' : 'ON (100% SFW)'}</strong></span>
             </>
           )}
         </button>
@@ -127,7 +150,7 @@ export const SpecializationFilter: React.FC<SpecializationFilterProps> = ({
           }`}
         >
           <Sparkles className="w-3.5 h-3.5 text-[#ffabf3]" />
-          <span>All Creators</span>
+          <span>{locale === 'es' ? 'Todos los Creadores' : 'All Creators'}</span>
         </button>
 
         {/* Mainstream & Adult Specialization Chips */}
@@ -148,7 +171,7 @@ export const SpecializationFilter: React.FC<SpecializationFilterProps> = ({
               }`}
             >
               <span>{spec.icon}</span>
-              <span>{SHORT_TITLES[spec.id] || spec.title}</span>
+              <span>{titles[spec.id] || spec.title}</span>
             </button>
           );
         })}
@@ -163,3 +186,4 @@ export const SpecializationFilter: React.FC<SpecializationFilterProps> = ({
     </div>
   );
 };
+

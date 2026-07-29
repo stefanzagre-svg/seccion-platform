@@ -27,13 +27,13 @@ export default function FoundersWelcome() {
           </div>
 
           <h1 className="text-3xl font-bold text-white mb-6 flex items-center justify-center gap-2">
-            Welcome to <img src="/assets/logo/logo-wordmark.png" alt="SECCION" className="h-7 object-contain inline-block" />.
+            Welcome to <img src="/assets/logo/seccion-wordmark-light.png" alt="SECCION" className="h-7 object-contain inline-block" />.
           </h1>
           
           <div className="relative">
             <span className="absolute -top-4 -left-2 text-4xl text-purple-400/30 font-serif">&quot;</span>
             <p className="text-lg text-gray-300 leading-relaxed relative z-10 px-4">
-              We built <img src="/assets/logo/logo-wordmark.png" alt="SECCION" className="h-5 object-contain inline-block mx-1" /> because the world doesn&apos;t need another generic feed. We value real connection, authentic creativity, and true intentionality. Dive in, find your spark, and create magic.
+              We built <img src="/assets/logo/seccion-wordmark-light.png" alt="SECCION" className="h-5 object-contain inline-block mx-1" /> because the world doesn&apos;t need another generic feed. We value real connection, authentic creativity, and true intentionality. Dive in, find your spark, and create magic.
             </p>
             <span className="absolute -bottom-4 -right-2 text-4xl text-purple-400/30 font-serif">&quot;</span>
           </div>
@@ -44,7 +44,7 @@ export default function FoundersWelcome() {
 
           <Link href="/onboarding/step-2">
             <button className="w-full py-4 rounded-xl font-bold bg-white text-black hover:bg-gray-100 transition-all transform hover:scale-[1.02] shadow-[0_0_20px_rgba(255,255,255,0.3)] flex items-center justify-center gap-2">
-              Enter <img src="/assets/logo/logo-wordmark.png" alt="SECCION" className="h-5 object-contain inline-block" />
+              Enter <img src="/assets/logo/seccion-wordmark-light.png" alt="SECCION" className="h-5 object-contain inline-block" />
             </button>
           </Link>
         </motion.div>

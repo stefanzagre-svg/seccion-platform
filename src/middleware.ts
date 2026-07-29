@@ -87,8 +87,9 @@ export const config = {
      * - _next/static (static files)
      * - _next/image (image optimization)
      * - favicon.ico
-     * - public assets
+     * - public assets (svg, png, jpg, etc.)
+     * - sitemap.xml, robots.txt, llms.txt, manifest (must return correct Content-Type, not HTML)
      */
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    '/((?!_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt|llms.txt|manifest.webmanifest|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 };

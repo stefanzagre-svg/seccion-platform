@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react';
 import { Coins, CreditCard, Languages, ArrowUpRight, DollarSign, Activity, Loader2, RefreshCw } from 'lucide-react';
 import KPICard from '@/components/admin/KPICard';
-import AdminChart from '@/components/admin/AdminChart';
+import dynamic from 'next/dynamic';
+const AdminChart = dynamic(() => import('@/components/admin/AdminChart'), { ssr: false });
 import DataTable, { Column } from '@/components/admin/DataTable';
 import { cn } from '@/lib/utils';
 

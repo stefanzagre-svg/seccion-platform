@@ -1,0 +1,42 @@
+# SECCION — seccion.ai
+# Crawl rules for web search engines and AI agents
+
+User-agent: *
+Allow: /
+Allow: /how-we-do
+Allow: /become-creator
+Allow: /creator-hub
+Allow: /vibe-radar
+Allow: /now-streaming
+Allow: /privacy
+Allow: /rules
+Allow: /hit-us-up
+Allow: /login
+Disallow: /admin/
+Disallow: /api/
+Disallow: /studio/
+Disallow: /messages/
+Disallow: /dashboard/
+Disallow: /profile/member
+Disallow: /onboarding/
+
+# AI search engines — allow public content
+User-agent: GPTBot
+User-agent: ClaudeBot
+User-agent: PerplexityBot
+User-agent: Google-Extended
+Allow: /
+Allow: /how-we-do
+Allow: /become-creator
+Allow: /creator-hub
+Allow: /vibe-radar
+Allow: /now-streaming
+Allow: /rules
+Allow: /privacy
+Allow: /llms.txt
+Disallow: /admin/
+Disallow: /api/
+Disallow: /studio/
+Disallow: /messages/
+
+Sitemap: https://seccion.ai/sitemap.xml

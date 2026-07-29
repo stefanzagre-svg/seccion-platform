@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { ShieldAlert, CheckCircle2, Lock, Eye, AlertTriangle } from 'lucide-react';
+import { useTranslation } from '@/context/LanguageContext';
 
 interface AgeConsentModalProps {
   isOpen: boolean;
@@ -14,6 +15,7 @@ export const AgeConsentModal: React.FC<AgeConsentModalProps> = ({
   onConfirm,
   onCancel,
 }) => {
+  const { locale } = useTranslation();
   if (!isOpen) return null;
 
   return (
@@ -27,9 +29,11 @@ export const AgeConsentModal: React.FC<AgeConsentModalProps> = ({
           </div>
           <div>
             <h3 className="text-base font-bold text-white font-mono tracking-tight flex items-center gap-2">
-              🔞 18+ Age & Content Consent
+              {locale === 'es' ? '🔞 Consentimiento de Edad y Contenido 18+' : '🔞 18+ Age & Content Consent'}
             </h3>
-            <p className="text-xs text-white/50">SECCION Safety & Compliance Guard</p>
+            <p className="text-xs text-white/50">
+              {locale === 'es' ? 'Protección y Cumplimiento SECCION' : 'SECCION Safety & Compliance Guard'}
+            </p>
           </div>
         </div>
 
@@ -38,7 +42,11 @@ export const AgeConsentModal: React.FC<AgeConsentModalProps> = ({
           <div className="flex items-start gap-2">
             <AlertTriangle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
             <p>
-              You are enabling <strong className="text-red-300">18+ Mature & Explicit Specializations</strong>. This mode displays un-blurred adult creator profiles, sensual tags, and explicit feed content.
+              {locale === 'es' ? (
+                <>Estás activando <strong className="text-red-300">Especializaciones 18+ y Explícitas</strong>. Este modo muestra perfiles de creadores adultos sin censura, etiquetas sensuales y contenido explícito en el feed.</>
+              ) : (
+                <>You are enabling <strong className="text-red-300">18+ Mature & Explicit Specializations</strong>. This mode displays un-blurred adult creator profiles, sensual tags, and explicit feed content.</>
+              )}
             </p>
           </div>
         </div>
@@ -47,11 +55,19 @@ export const AgeConsentModal: React.FC<AgeConsentModalProps> = ({
         <div className="space-y-2 text-xs text-white/80">
           <div className="flex items-center gap-2">
             <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-            <span>I confirm I am at least 18 years of age (or legal age in my jurisdiction).</span>
+            <span>
+              {locale === 'es'
+                ? 'Confirmo que tengo al menos 18 años (o la mayoría de edad legal en mi jurisdicción).'
+                : 'I confirm I am at least 18 years of age (or legal age in my jurisdiction).'}
+            </span>
           </div>
           <div className="flex items-center gap-2">
             <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-            <span>I consent to viewing adult explicit creator specializations and tags.</span>
+            <span>
+              {locale === 'es'
+                ? 'Consiento ver especializaciones y etiquetas explícitas de creadores adultos.'
+                : 'I consent to viewing adult explicit creator specializations and tags.'}
+            </span>
           </div>
         </div>
 
@@ -61,17 +77,18 @@ export const AgeConsentModal: React.FC<AgeConsentModalProps> = ({
             onClick={onCancel}
             className="flex-1 px-4 py-2.5 rounded-xl border border-white/10 text-xs text-white/70 font-mono hover:bg-white/5 transition-all"
           >
-            Keep SafeSearch ON
+            {locale === 'es' ? 'Mantener SafeSearch ACTIVO' : 'Keep SafeSearch ON'}
           </button>
           <button
             onClick={onConfirm}
             className="flex-1 px-4 py-2.5 rounded-xl bg-gradient-to-r from-red-600 to-pink-600 text-xs text-white font-bold font-mono shadow-lg shadow-red-500/30 hover:brightness-110 active:scale-95 transition-all flex items-center justify-center gap-2"
           >
             <Eye className="w-4 h-4" />
-            Unlock 18+ Content
+            {locale === 'es' ? 'Desbloquear Contenido 18+' : 'Unlock 18+ Content'}
           </button>
         </div>
       </div>
     </div>
   );
 };
+

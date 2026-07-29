@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react';
 import { Languages, Activity, MessagesSquare, Clock, Users, ArrowUpRight, DollarSign, RefreshCw } from 'lucide-react';
 import KPICard from '@/components/admin/KPICard';
-import AdminChart from '@/components/admin/AdminChart';
+import dynamic from 'next/dynamic';
+const AdminChart = dynamic(() => import('@/components/admin/AdminChart'), { ssr: false });
 import { cn } from '@/lib/utils';
 
 interface FeatureAnalytics {

@@ -8,6 +8,7 @@ import SeccionAgentBubble from "@/components/SeccionAgentBubble";
 import ServiceWorkerRegister from "@/components/pwa/ServiceWorkerRegister";
 import InAppBrowserDetector from "@/components/pwa/InAppBrowserDetector";
 import PWAInstallPrompt from "@/components/pwa/PWAInstallPrompt";
+import JsonLdSchema from "@/components/JsonLdSchema";
 import { cookies } from "next/headers";
 import { LanguageProvider, SupportedLocale } from "@/context/LanguageContext";
 import en from "@/locales/en.json";
@@ -31,6 +32,43 @@ export async function generateMetadata(): Promise<Metadata> {
   const savedLocale = (cookieStore.get("seccion_user_locale")?.value || "en") as SupportedLocale;
   const dict = savedLocale === "es" ? es : en;
 
+  const organizationSchema = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "name": "SECCION",
+    "alternateName": ["Seccion", "seccion.ai"],
+    "url": "https://seccion.ai",
+    "logo": "https://seccion.ai/assets/logo/seccion-wordmark-light.png",
+    "description": "SECCION is the first fusion platform combining AI-driven dating matchmaking with live streaming content creators. Creators keep 90% of revenue with built-in DRM protection and AI operations assistant.",
+    "foundingDate": "2025",
+    "areaServed": ["CO", "ES", "US"],
+    "knowsLanguage": ["es", "en", "fr"],
+    "sameAs": [
+      "https://www.instagram.com/seccionplatform",
+      "https://www.tiktok.com/@seccionplatform",
+      "https://x.com/seccionplatfrom"
+    ],
+    "contactPoint": {
+      "@type": "ContactPoint",
+      "contactType": "customer support",
+      "url": "https://seccion.ai/hit-us-up",
+      "availableLanguage": ["English", "Spanish"]
+    }
+  };
+
+  const websiteSchema = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "SECCION",
+    "url": "https://seccion.ai",
+    "description": "The first fusion platform combining AI matchmaking with live content creators.",
+    "potentialAction": {
+      "@type": "SearchAction",
+      "target": "https://seccion.ai/vibe-radar?q={search_term_string}",
+      "query-input": "required name=search_term_string"
+    }
+  };
+
   return {
     metadataBase: new URL("https://seccion.ai"),
     title: {
@@ -43,12 +81,9 @@ export async function generateMetadata(): Promise<Metadata> {
       canonical: "https://seccion.ai",
     },
     icons: {
-      icon: [
-        { url: "/icon.svg", type: "image/svg+xml" },
-        { url: "/assets/logo/logo-mark.png", type: "image/png" },
-      ],
-      shortcut: "/icon.svg",
-      apple: "/assets/logo/logo-mark.png",
+      icon: "/icon.jpg",
+      shortcut: "/icon.jpg",
+      apple: "/assets/logo/app-icon.jpg",
     },
     appleWebApp: {
       capable: true,
@@ -65,7 +100,7 @@ export async function generateMetadata(): Promise<Metadata> {
       siteName: "SECCION",
       images: [
         {
-          url: "/assets/logo/logo-wordmark.png",
+          url: "/assets/logo/seccion-wordmark-light.png",
           width: 766,
           height: 191,
           alt: "SECCION Logo",
@@ -78,7 +113,12 @@ export async function generateMetadata(): Promise<Metadata> {
       card: "summary_large_image",
       title: dict.metadata.defaultTitle,
       description: dict.metadata.description,
-      images: ["/assets/logo/logo-wordmark.png"],
+      images: ["/assets/logo/seccion-wordmark-light.png"],
+    },
+    // JSON-LD structured data injected via metadata 'other' — works in RSC streaming
+    other: {
+      "script:ld+json:organization": JSON.stringify(organizationSchema),
+      "script:ld+json:website": JSON.stringify(websiteSchema),
     },
   };
 }
@@ -121,6 +161,8 @@ export default async function RootLayout({
           <SeccionAgentBubble />
           {/* AI Dating Wingman Coach for authenticated member accounts */}
           <AIWingmanBubble />
+          {/* JSON-LD Structured Data — rendered in body for RSC/Cloudflare Workers compatibility */}
+          <JsonLdSchema />
         </LanguageProvider>
       </body>
     </html>

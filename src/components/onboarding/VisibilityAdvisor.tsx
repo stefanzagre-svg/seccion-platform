@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { useTranslation } from "@/context/LanguageContext";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   Sparkles, 
@@ -26,6 +27,7 @@ interface VisibilityAdvisorProps {
 }
 
 export default function VisibilityAdvisor({ initialConfig = "balanced", onChange }: VisibilityAdvisorProps) {
+  const { locale } = useTranslation();
   const [selectedConfig, setSelectedConfig] = useState<VisibilityConfig>(initialConfig);
 
   interface ConfigItem {
@@ -44,48 +46,48 @@ export default function VisibilityAdvisor({ initialConfig = "balanced", onChange
   const configs: Record<VisibilityConfig, ConfigItem> = {
     strict: {
       id: "strict" as VisibilityConfig,
-      name: "Private & Anonymous",
-      tagline: "Option 1 (Request to Peek Only)",
+      name: locale === "es" ? "Privado & Anónimo" : "Private & Anonymous",
+      tagline: locale === "es" ? "Opción 1 (Solo Solicitud de Vistazo)" : "Option 1 (Request to Peek Only)",
       score: 15,
       color: "#ef4444", // Red
       glowClass: "shadow-[0_0_20px_rgba(239,68,68,0.15)] border-red-500/20",
-      description: "100% of your photos and videos are blurred. Members must request permission (Option 1) to peek at your content for 5 minutes.",
+      description: locale === "es" ? "El 100% de tus fotos y videos están difuminados. Los miembros deben solicitar permiso (Opción 1) para dar un vistazo a tu contenido durante 5 minutos." : "100% of your photos and videos are blurred. Members must request permission (Option 1) to peek at your content for 5 minutes.",
       stats: [
-        { label: "Matches Yield", val: "-85% lower", trend: "down" },
-        { label: "Identity Privacy", val: "100% Sealed", trend: "up" },
-        { label: "Match Quality", val: "Niche Vibe", trend: "neutral" }
+        { label: locale === "es" ? "Rendimiento de Matches" : "Matches Yield", val: locale === "es" ? "-85% menor" : "-85% lower", trend: "down" },
+        { label: locale === "es" ? "Privacidad de Identidad" : "Identity Privacy", val: locale === "es" ? "100% Sellado" : "100% Sealed", trend: "up" },
+        { label: locale === "es" ? "Calidad de Match" : "Match Quality", val: locale === "es" ? "Vibe de Nicho" : "Niche Vibe", trend: "neutral" }
       ],
-      warning: "⚠️ Physical attraction is a major spark on dating platforms. 100% blurred feeds feel like 'hidden files' and discourage likes. Best suited if you are bringing an established audience from external social platforms.",
+      warning: locale === "es" ? "⚠️ La atracción física es un impulso clave en las plataformas de conexión. Los feeds 100% difuminados se sienten como 'archivos ocultos' y reducen los likes. Recomendado solo si traes una audiencia ya consolidada desde redes sociales externas." : "⚠️ Physical attraction is a major spark on dating platforms. 100% blurred feeds feel like 'hidden files' and discourage likes. Best suited if you are bringing an established audience from external social platforms.",
     },
     balanced: {
       id: "balanced" as VisibilityConfig,
-      name: "Aesthetic Balance",
-      tagline: "Option 2 (Mandatory Anchors) + Option 1 (Peek)",
+      name: locale === "es" ? "Equilibrio Estético" : "Aesthetic Balance",
+      tagline: locale === "es" ? "Opción 2 (Anclas Obligatorias) + Opción 1 (Vistazo)" : "Option 2 (Mandatory Anchors) + Option 1 (Peek)",
       score: 55,
       color: "#00fbfb", // Cyan
       glowClass: "shadow-[0_0_20px_rgba(0,251,251,0.25)] border-[#00fbfb]/30",
-      description: "Mandatory public unblurred media (Main Profile 1 & 2) show your style, body silhouette, or environment (Option 2). Your face remains blurred by default and requires a peek request (Option 1).",
+      description: locale === "es" ? "Las fotos públicas sin difuminar (Perfil Principal 1 y 2) muestran tu estilo, silueta o entorno (Opción 2). Tu rostro permanece difuminado por defecto y requiere una solicitud de vistazo (Opción 1)." : "Mandatory public unblurred media (Main Profile 1 & 2) show your style, body silhouette, or environment (Option 2). Your face remains blurred by default and requires a peek request (Option 1).",
       stats: [
-        { label: "Matches Boost", val: "+150% higher", trend: "up" },
-        { label: "Privacy Rating", val: "Face Blurred", trend: "up" },
-        { label: "Attraction Spark", val: "Style Anchor", trend: "up" }
+        { label: locale === "es" ? "Impulso de Matches" : "Matches Boost", val: locale === "es" ? "+150% mayor" : "+150% higher", trend: "up" },
+        { label: locale === "es" ? "Nivel de Privacidad" : "Privacy Rating", val: locale === "es" ? "Rostro Difuminado" : "Face Blurred", trend: "up" },
+        { label: locale === "es" ? "Factor de Atracción" : "Attraction Spark", val: locale === "es" ? "Ancla de Estilo" : "Style Anchor", trend: "up" }
       ],
-      tip: "✨ Balanced Option: Preserves facial privacy on public discovery layers while providing environment and style anchors to capture interest.",
+      tip: locale === "es" ? "✨ Opción Equilibrada: Protege la privacidad facial en las capas de descubrimiento públicas mientras ofrece anclas de entorno y estilo para captar el interés." : "✨ Balanced Option: Preserves facial privacy on public discovery layers while providing environment and style anchors to capture interest.",
     },
     magnet: {
       id: "magnet" as VisibilityConfig,
-      name: "Maximum Attraction",
-      tagline: "Highly Recommended (Face Unblurred)",
+      name: locale === "es" ? "Atracción Máxima" : "Maximum Attraction",
+      tagline: locale === "es" ? "Altamente Recomendado (Rostro Sin Difuminar)" : "Highly Recommended (Face Unblurred)",
       score: 98,
       color: "#39FF14", // Lime Green
       glowClass: "shadow-[0_0_20px_rgba(57,255,20,0.25)] border-[#39FF14]/30",
-      description: "Your face and profile anchors are fully unblurred by default. Showcase your natural aesthetic and build immediate connection with potential matches.",
+      description: locale === "es" ? "Tu rostro y tus anclas de perfil se muestran sin difuminar por defecto. Exhibe tu estética natural y genera una conexión inmediata con tus matches potenciales." : "Your face and profile anchors are fully unblurred by default. Showcase your natural aesthetic and build immediate connection with potential matches.",
       stats: [
-        { label: "Matches Yield", val: "+450% Maxed", trend: "up" },
-        { label: "Trust Conversion", val: "Instant Match", trend: "up" },
-        { label: "Attraction Rating", val: "Maximum", trend: "up" }
+        { label: locale === "es" ? "Rendimiento de Matches" : "Matches Yield", val: locale === "es" ? "+450% Máximo" : "+450% Maxed", trend: "up" },
+        { label: locale === "es" ? "Conversión de Confianza" : "Trust Conversion", val: locale === "es" ? "Match Instantáneo" : "Instant Match", trend: "up" },
+        { label: locale === "es" ? "Nivel de Atracción" : "Attraction Rating", val: locale === "es" ? "Máximo" : "Maximum", trend: "up" }
       ],
-      tip: "🔥 Highly Recommended: Showing your face by default maximizes physical attraction and builds immediate trust. Vetted profiles with unblurred faces convert likes to active matches 4.5x faster than blurred profiles.",
+      tip: locale === "es" ? "🔥 Altamente Recomendado: Mostrar tu rostro por defecto maximiza la atracción física y construye confianza inmediata. Los perfiles verificados sin difuminar convierten likes en matches activos 4.5 veces más rápido que los perfiles difuminados." : "🔥 Highly Recommended: Showing your face by default maximizes physical attraction and builds immediate trust. Vetted profiles with unblurred faces convert likes to active matches 4.5x faster than blurred profiles.",
     }
   };
 
@@ -131,7 +133,7 @@ export default function VisibilityAdvisor({ initialConfig = "balanced", onChange
               
               {/* Tiny Score Indicator */}
               <div className="mt-3 flex items-center gap-1.5">
-                <span className="text-[10px] font-mono text-white/40">Attractiveness Score:</span>
+                <span className="text-[10px] font-mono text-white/40">{locale === "es" ? "Puntuación de Atractivo:" : "Attractiveness Score:"}</span>
                 <span className="text-xs font-mono font-bold" style={{ color: cfg.color }}>
                   {cfg.score}%
                 </span>
@@ -149,15 +151,15 @@ export default function VisibilityAdvisor({ initialConfig = "balanced", onChange
           {/* Header with Attractiveness Gauge */}
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-white/5 pb-4">
             <div>
-              <span className="text-[9px] font-mono uppercase text-white/40 block">Profile Visibility Consequence</span>
+              <span className="text-[9px] font-mono uppercase text-white/40 block">{locale === "es" ? "Impacto de Visibilidad del Perfil" : "Profile Visibility Consequence"}</span>
               <h3 className="text-base font-bold text-white uppercase tracking-wide mt-0.5">
-                {current.name} Flow Setup
+                {current.name} {locale === "es" ? "(Configuración)" : "Flow Setup"}
               </h3>
             </div>
             
             {/* Dynamic Attractiveness Meter */}
             <div className="flex items-center gap-3 bg-black/40 px-4 py-2 rounded-xl border border-white/5 shrink-0">
-              <span className="text-[10px] font-mono text-white/30 uppercase">Attraction Index</span>
+              <span className="text-[10px] font-mono text-white/30 uppercase">{locale === "es" ? "Índice de Atracción" : "Attraction Index"}</span>
               <div className="flex items-center gap-2">
                 <div className="w-16 h-2.5 bg-white/10 rounded-full overflow-hidden relative">
                   <motion.div 

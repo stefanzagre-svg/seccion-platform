@@ -245,9 +245,9 @@ export default function ConfigPanel({
           <ToggleRow
             id="toggle-auto-chat"
             icon={<MessageSquare className="w-3.5 h-3.5" />}
-            label="Auto-Chat Simulation"
+            label="Replicant Auto-Chat"
             badge="Draft Mode"
-            description="AI drafts replies that match your tone. Each message is staged for your approval before sending."
+            description="Your Replicant drafts replies that mirror your authentic voice and tone. Each message is staged for your approval before sending."
             warning={autoChatEligible ? 'Hard guardrail: disabled for Level 4 Close Friend connections.' : undefined}
             locked={!autoChatEligible}
             lockedReason={
@@ -296,11 +296,12 @@ export default function ConfigPanel({
           <ShieldCheck className="w-5 h-5 text-primary shrink-0 mt-0.5" />
           <div className="space-y-1">
             <span className="text-[10px] font-black uppercase tracking-widest text-white">
-              Digital Replica Authorization
+              Replicant Authorization
             </span>
             <p className="text-[8px] text-white/40 uppercase tracking-widest leading-relaxed">
-              Under NY Labor Law Art. 36 (Fashion Workers Act), you must provide separate written
-              consent to allow AI usage of your digital likeness, avatar, or voice clone.
+              Under NY Labor Law Art. 36 (Fashion Workers Act), you authorize the creation of your
+              Replicant — an AI-powered digital twin that uses your likeness, voice, and behavioral
+              style to interact with members on your behalf.
             </p>
           </div>
         </div>

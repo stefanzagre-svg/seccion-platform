@@ -18,6 +18,8 @@ import ReportModal from '@/components/modals/ReportModal';
 import { RELATIONSHIP_LEVELS, syncSuggestionMoves } from '@/lib/relationship-engine';
 import CreateDatePlanModal from '@/components/CreateDatePlanModal';
 import ManageApplicantsModal from '@/components/ManageApplicantsModal';
+import ProvenanceBadge from '@/components/ProvenanceBadge';
+import { type ProvenanceLevel } from '@/lib/content-provenance';
 import { awardXp } from '@/lib/xp-service';
 
 // Default User Profile for Fallbacks
@@ -106,6 +108,7 @@ function parseDescription(description: string) {
 export default function PlatformFeed() {
   const router = useRouter();
   const [currentUser, setCurrentUser] = useState<any>(null);
+  const [optimisticLikes, setOptimisticLikes] = useState<Record<string, boolean>>({});
   const [currentUserProfile, setCurrentUserProfile] = useState<UserProfile>(DEFAULT_USER_PROFILE);
   const [activeFilter, setActiveFilter] = useState<'all' | 'live' | 'subscribed' | 'matched' | 'date_plans'>('all');
   const [showAdvancedSearch, setShowAdvancedSearch] = useState(false);
@@ -832,9 +835,21 @@ export default function PlatformFeed() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen bg-black text-white">
-        <Sparkles className="w-8 h-8 animate-spin text-primary mr-2" />
-        <span className="font-semibold">Syncing intelligence feed...</span>
+      <div className="min-h-screen bg-transparent p-4 md:p-6 space-y-6 pt-24 max-w-2xl mx-auto">
+        {[1, 2, 3].map(i => (
+          <div key={i} className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 overflow-hidden relative">
+            <div className="absolute inset-0 bg-white/5 animate-pulse" />
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-full bg-white/10" />
+              <div className="space-y-2">
+                <div className="w-24 h-3 rounded-full bg-white/10" />
+                <div className="w-16 h-2 rounded-full bg-white/5" />
+              </div>
+            </div>
+            <div className="w-full h-64 rounded-xl bg-white/5 mb-4" />
+            <div className="w-3/4 h-3 rounded-full bg-white/10" />
+          </div>
+        ))}
       </div>
     );
   }
@@ -1820,6 +1835,11 @@ export default function PlatformFeed() {
                           <p className="text-[10px] text-muted-foreground opacity-60 flex items-center gap-1">
                             <Clock className="w-2.5 h-2.5" /> {post.timestamp}
                           </p>
+                          <ProvenanceBadge
+                            level={((post as any).provenance_level as ProvenanceLevel) || 'genuine'}
+                            creatorName={post.creator}
+                            size="sm"
+                          />
                         </div>
                       </div>
                       
@@ -2010,8 +2030,24 @@ export default function PlatformFeed() {
                       <p className="text-white/80 text-sm mb-4 leading-relaxed font-medium">"{post.content}"</p>
                       <div className="flex items-center justify-between text-muted-foreground border-t border-white/5 pt-4">
                         <div className="flex gap-6">
-                          <button className="flex items-center gap-2 hover:text-primary transition group/btn">
-                            <Heart className="w-5 h-5 group-hover/btn:scale-110 transition" /> <span className="text-[10px] font-black">124</span>
+                          <button 
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              setOptimisticLikes(prev => ({ ...prev, [post.id]: !prev[post.id] }));
+                            }}
+                            className={cn(
+                              "flex items-center gap-2 transition group/btn",
+                              optimisticLikes[post.id] ? "text-primary" : "hover:text-primary"
+                            )}
+                          >
+                            <Heart className={cn(
+                              "w-5 h-5 transition",
+                              optimisticLikes[post.id] ? "fill-current group-hover/btn:scale-110" : "group-hover/btn:scale-110"
+                            )} /> 
+                            <span className="text-[10px] font-black">
+                              {124 + (optimisticLikes[post.id] ? 1 : 0)}
+                            </span>
                           </button>
                         </div>
                         {post.isMatched ? (

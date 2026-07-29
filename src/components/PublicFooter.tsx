@@ -12,7 +12,7 @@ export default function PublicFooter() {
       {/* Top: Centered 3D Icon */}
       <div className="flex justify-center">
         <img 
-          src="/assets/logo/logo-mark.png" 
+          src="/assets/logo/seccion-icon-light.png" 
           alt="SECCION Icon" 
           className="w-12 h-12 md:w-14 md:h-14 drop-shadow-[0_0_20px_rgba(0,251,251,0.4)] object-contain" 
         />
@@ -37,7 +37,7 @@ export default function PublicFooter() {
       {/* Bottom: Clean Wordmark Only */}
       <div className="flex flex-col items-center gap-3">
         <img 
-          src="/assets/logo/logo-wordmark.png" 
+          src="/assets/logo/seccion-wordmark-light.png" 
           alt="SECCION Logo" 
           className="h-8 md:h-10 drop-shadow-[0_0_25px_rgba(0,251,251,0.4)] object-contain" 
         />

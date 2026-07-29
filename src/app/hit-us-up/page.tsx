@@ -20,7 +20,7 @@ function DoubleBezelCard({ children, className = "" }: { children: React.ReactNo
 }
 
 export default function HitUsUpPage() {
-  const { t } = useTranslation();
+  const { locale } = useTranslation();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [subject, setSubject] = useState("");
@@ -67,16 +67,16 @@ export default function HitUsUpPage() {
         {/* Back Link */}
         <Link href="/" className="inline-flex items-center gap-2 text-xs font-mono font-bold text-white/40 hover:text-[#00fbfb] transition mb-8 group">
           <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-          <span>{t("contact.backHome", "Back to Home")}</span>
+          <span>{locale === "es" ? "Volver al Inicio" : "Back to Home"}</span>
         </Link>
 
         {/* Title */}
         <div className="text-left space-y-3 mb-12">
           <h1 className="font-display text-4xl md:text-5xl font-black text-white tracking-tight uppercase leading-none">
-            {t("contact.title", "Hit Us Up")}
+            {locale === "es" ? "Contáctanos" : "Hit Us Up"}
           </h1>
           <p className="text-xs sm:text-sm text-[#b9cac9]">
-            {t("contact.subtitle", "Have questions, ideas, or feedback? Reach out and our team will get back to you fast.")}
+            {locale === "es" ? "¿Tienes dudas, ideas o comentarios? Escríbenos y nuestro equipo te responderá de una." : "Have questions, ideas, or feedback? Reach out and our team will get back to you fast."}
           </p>
         </div>
 
@@ -89,13 +89,13 @@ export default function HitUsUpPage() {
                   <CheckCircle2 className="w-6 h-6 text-emerald-400" />
                 </div>
                 <div className="space-y-2">
-                  <h4 className="font-bold uppercase tracking-wider text-sm">{t("contact.success", "Message received! We will reply shortly.")}</h4>
+                  <h4 className="font-bold uppercase tracking-wider text-sm">{locale === "es" ? "¡Mensaje recibido! Te responderemos muy pronto." : "Message received! We will reply shortly."}</h4>
                 </div>
                 <button
                   onClick={() => setSuccess(false)}
                   className="text-[9px] font-mono text-[#00fbfb] hover:underline uppercase tracking-wide cursor-pointer"
                 >
-                  {t("contact.sendAnother", "Send another message")}
+                  {locale === "es" ? "Enviar otro mensaje" : "Send another message"}
                 </button>
               </div>
             ) : (
@@ -103,14 +103,14 @@ export default function HitUsUpPage() {
                 
                 {/* Name */}
                 <div className="space-y-1.5">
-                  <label className="block text-[8px] font-mono text-white/40 uppercase font-bold tracking-wider">{t("contact.nameLabel", "Your Name")}</label>
+                  <label className="block text-[8px] font-mono text-white/40 uppercase font-bold tracking-wider">{locale === "es" ? "Tu Nombre" : "Your Name"}</label>
                   <div className="relative">
                     <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
                     <input 
                       type="text" 
                       value={name}
                       onChange={(e) => setName(e.target.value)}
-                      placeholder={t("contact.namePlaceholder", "e.g. Valentina Gomez")}
+                      placeholder={locale === "es" ? "ej. Valentina Gómez" : "e.g. Valentina Gomez"}
                       required
                       className="w-full bg-black/40 border border-white/10 focus:border-[#00fbfb]/50 rounded-xl py-2.5 pl-10 pr-4 text-xs outline-none transition"
                     />
@@ -119,14 +119,14 @@ export default function HitUsUpPage() {
 
                 {/* Email */}
                 <div className="space-y-1.5">
-                  <label className="block text-[8px] font-mono text-white/40 uppercase font-bold tracking-wider">{t("contact.emailLabel", "Your Email")}</label>
+                  <label className="block text-[8px] font-mono text-white/40 uppercase font-bold tracking-wider">{locale === "es" ? "Tu Correo" : "Your Email"}</label>
                   <div className="relative">
                     <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
                     <input 
                       type="email" 
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      placeholder={t("contact.emailPlaceholder", "you@email.com")}
+                      placeholder={locale === "es" ? "tu@correo.com" : "you@email.com"}
                       required
                       className="w-full bg-black/40 border border-white/10 focus:border-[#00fbfb]/50 rounded-xl py-2.5 pl-10 pr-4 text-xs outline-none transition"
                     />
@@ -135,23 +135,23 @@ export default function HitUsUpPage() {
 
                 {/* Subject */}
                 <div className="space-y-1.5">
-                  <label className="block text-[8px] font-mono text-white/40 uppercase font-bold tracking-wider">{t("contact.subjectLabel", "Subject")}</label>
+                  <label className="block text-[8px] font-mono text-white/40 uppercase font-bold tracking-wider">{locale === "es" ? "Asunto" : "Subject"}</label>
                   <input 
                     type="text" 
                     value={subject}
                     onChange={(e) => setSubject(e.target.value)}
-                    placeholder={t("contact.subjectPlaceholder", "Feedback / General query")}
+                    placeholder={locale === "es" ? "Comentarios / Consulta general" : "Feedback / General query"}
                     className="w-full bg-black/40 border border-white/10 focus:border-[#00fbfb]/50 rounded-xl py-2.5 px-4 text-xs outline-none transition"
                   />
                 </div>
 
                 {/* Message */}
                 <div className="space-y-1.5">
-                  <label className="block text-[8px] font-mono text-white/40 uppercase font-bold tracking-wider">{t("contact.messageLabel", "Message")}</label>
+                  <label className="block text-[8px] font-mono text-white/40 uppercase font-bold tracking-wider">{locale === "es" ? "Mensaje" : "Message"}</label>
                   <textarea 
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
-                    placeholder={t("contact.messagePlaceholder", "How can we help you?")}
+                    placeholder={locale === "es" ? "¿En qué podemos ayudarte?" : "How can we help you?"}
                     required
                     rows={4}
                     className="w-full bg-black/40 border border-white/10 focus:border-[#00fbfb]/50 rounded-xl py-2.5 px-4 text-xs outline-none transition resize-none"
@@ -165,7 +165,7 @@ export default function HitUsUpPage() {
                   className="w-full py-3 bg-[#00fbfb] text-black font-mono text-xs font-black uppercase tracking-wider rounded-xl hover:shadow-[0_0_15px_rgba(0,251,251,0.5)] transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-40"
                 >
                   <Send className="w-4 h-4" />
-                  <span>{loading ? t("contact.sending", "Sending...") : t("contact.submit", "Send Message")}</span>
+                  <span>{loading ? (locale === "es" ? "Enviando..." : "Sending...") : (locale === "es" ? "Enviar Mensaje" : "Send Message")}</span>
                 </button>
 
               </form>

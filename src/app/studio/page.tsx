@@ -20,6 +20,8 @@ import CreatorOrdersPanel from '@/components/CreatorOrdersPanel';
 import SafetyPatrolPanel from '@/components/SafetyPatrolPanel';
 import ConfigPanel from '@/components/AIAssistant/ConfigPanel';
 import BlurredFaceImage from '@/components/BlurredFaceImage';
+import ProvenanceSelector from '@/components/ProvenanceSelector';
+import { type ProvenanceLevel } from '@/lib/content-provenance';
 import { awardXp } from '@/lib/xp-service';
 
 interface TeaserMetadata {
@@ -343,6 +345,7 @@ export default function CreatorStudio() {
   const [customTeaserUrl, setCustomTeaserUrl] = useState('');
   const [customTeaserType, setCustomTeaserType] = useState<'photo' | 'video'>('photo');
   const [teaserConsent, setTeaserConsent] = useState(false);
+  const [postProvenance, setPostProvenance] = useState<ProvenanceLevel>('genuine');
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [uploadSuccess, setUploadSuccess] = useState(false);
   const [allPendingPosts, setAllPendingPosts] = useState<any[]>([]);
@@ -516,7 +519,8 @@ export default function CreatorStudio() {
           mediaUrl: postMediaUrl.trim(),
           mediaType: postMediaUrl.toLowerCase().endsWith('.mp4') ? 'video' : 'image',
           tier: postTier,
-          tags: parsedTags
+          tags: parsedTags,
+          provenanceLevel: postProvenance
         })
       });
 
@@ -537,6 +541,7 @@ export default function CreatorStudio() {
       setTeaserStartTime(0);
       setCustomTeaserUrl('');
       setTeaserConsent(false);
+      setPostProvenance('genuine');
       
       await loadCreatorPosts(profile.id);
       await loadAllPendingPosts();
@@ -1760,6 +1765,15 @@ export default function CreatorStudio() {
                         >
                           PPV Gated
                         </button>
+                      </div>
+
+                      {/* Content Provenance Declaration */}
+                      <div className="mt-6 p-5 bg-black/30 border border-white/5 rounded-2xl">
+                        <ProvenanceSelector
+                          value={postProvenance}
+                          onChange={setPostProvenance}
+                          hasReplicantConsent={!!digitalReplicaConsent}
+                        />
                       </div>
 
                       <button
