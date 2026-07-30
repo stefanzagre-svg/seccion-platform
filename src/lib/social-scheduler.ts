@@ -1,235 +1,111 @@
 /**
- * Social Media Scheduler Helper — SECCION Platform
- * Integrates with Buffer GraphQL API (api.buffer.com/graphql)
- * Get your token at: https://publish.buffer.com/settings/api
- *
- * Capabilities:
- *  - pushBufferDraft()    — Schedule/queue a post to Buffer
- *  - getBufferPostStatus() — Check published/pending/draft posts
- *  - pushSocialDraft()    — Universal dispatcher (Buffer → mock fallback)
+ * Social Media Scheduler Helper — SECCIØN Platform
+ * Integrates with Supabase Storage (for media hosting) and Make.com Webhook
  */
-
-const BUFFER_GRAPHQL_URL = 'https://api.buffer.com/graphql';
+import { createClient } from '@supabase/supabase-js';
+import fs from 'fs';
+import path from 'path';
 
 export interface SocialDraftPayload {
   text: string;
-  mediaUrls?: string[];
-  scheduledAt?: string; // ISO date string (UTC) if scheduling for future
+  mediaUrls?: string[]; // Array of absolute local file paths to upload
   platforms?: ('instagram' | 'tiktok' | 'twitter' | 'facebook')[];
 }
 
 export interface SocialDraftResponse {
   success: boolean;
-  provider: 'buffer' | 'mock';
-  draftId?: string;
+  provider: 'make.com';
   message: string;
-  approvalUrl?: string;
 }
 
-export interface BufferPost {
-  id: string;
-  status: 'sent' | 'draft' | 'scheduled' | 'error';
-  text: string;
-  createdAt: string;
-  channel: {
-    name: string;
-    service: string;
-  };
-}
+const MAKE_WEBHOOK_URL = 'https://hook.eu1.make.com/zc2jronounqeqzvnq1iorj8tu8h70mnf';
 
-export interface BufferPostsStatusResponse {
-  success: boolean;
-  sent: BufferPost[];
-  scheduled: BufferPost[];
-  drafts: BufferPost[];
-  error?: string;
-}
+// Initialize Supabase Admin Client
+const supabaseAdmin = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
 
-/**
- * Execute a GraphQL query against the Buffer API
- */
-async function bufferGQL(query: string, variables?: Record<string, unknown>): Promise<unknown> {
-  const token = process.env.BUFFER_ACCESS_TOKEN;
-  if (!token) throw new Error('BUFFER_ACCESS_TOKEN is not configured in environment variables.');
-
-  const res = await fetch(BUFFER_GRAPHQL_URL, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ query, variables }),
-  });
-
-  if (!res.ok) throw new Error(`Buffer API HTTP error: ${res.status} ${res.statusText}`);
-
-  const json = (await res.json()) as { data?: unknown; errors?: { message: string }[] };
-  if (json.errors?.length) {
-    throw new Error(`Buffer GraphQL error: ${json.errors.map((e) => e.message).join(', ')}`);
+export async function uploadMediaToSupabase(localFilePath: string): Promise<string> {
+  if (!fs.existsSync(localFilePath)) {
+    throw new Error(`File not found: ${localFilePath}`);
   }
 
-  return json.data;
-}
+  const fileName = `${Date.now()}_${path.basename(localFilePath)}`;
+  const fileBuffer = fs.readFileSync(localFilePath);
+  
+  // Determine mime type
+  const ext = path.extname(localFilePath).toLowerCase();
+  let contentType = 'image/jpeg';
+  if (ext === '.png') contentType = 'image/png';
+  if (ext === '.mp4') contentType = 'video/mp4';
 
-/**
- * Retrieves the Buffer Organization ID for the authenticated account.
- * Cached at module level to avoid repeated API calls.
- */
-let _cachedOrgId: string | null = null;
-async function getOrgId(): Promise<string> {
-  if (_cachedOrgId) return _cachedOrgId;
+  console.log(`Uploading ${fileName} to Supabase...`);
+  
+  const { data, error } = await supabaseAdmin
+    .storage
+    .from('social-assets')
+    .upload(fileName, fileBuffer, {
+      contentType,
+      upsert: true
+    });
 
-  const data = (await bufferGQL(`
-    { account { organizations { id name } } }
-  `)) as { account: { organizations: { id: string; name: string }[] } };
-
-  const org = data.account.organizations[0];
-  if (!org) throw new Error('No Buffer organization found for this account.');
-
-  _cachedOrgId = org.id;
-  return _cachedOrgId;
-}
-
-/**
- * Fetches posts from Buffer filtered by status.
- * Status options: sent | draft | scheduled | error
- */
-export async function getBufferPostStatus(
-  statusFilter: ('sent' | 'draft' | 'scheduled' | 'error')[] = ['sent', 'scheduled', 'draft']
-): Promise<BufferPostsStatusResponse> {
-  try {
-    const orgId = await getOrgId();
-
-    const data = (await bufferGQL(`
-      query GetPosts($orgId: OrganizationId!, $statuses: [PostStatus!]) {
-        posts(input: { organizationId: $orgId, filter: { status: $statuses } }) {
-          edges {
-            node {
-              id
-              status
-              text
-              createdAt
-              channel {
-                name
-                service
-              }
-            }
-          }
-        }
-      }
-    `, {
-      orgId,
-      statuses: statusFilter,
-    })) as { posts: { edges: { node: BufferPost }[] } };
-
-    const allPosts = data.posts.edges.map((e) => e.node);
-
-    return {
-      success: true,
-      sent: allPosts.filter((p) => p.status === 'sent'),
-      scheduled: allPosts.filter((p) => p.status === 'scheduled'),
-      drafts: allPosts.filter((p) => p.status === 'draft'),
-    };
-  } catch (error: unknown) {
-    const msg = error instanceof Error ? error.message : 'Unknown error';
-    return { success: false, sent: [], scheduled: [], drafts: [], error: msg };
-  }
-}
-
-/**
- * Creates a post in Buffer (scheduled or draft).
- * To keep it as a draft (requires manual approval), pass scheduledAt as undefined.
- */
-export async function pushBufferDraft(payload: SocialDraftPayload): Promise<SocialDraftResponse> {
-  const token = process.env.BUFFER_ACCESS_TOKEN;
-
-  if (!token) {
-    return {
-      success: false,
-      provider: 'buffer',
-      message: 'BUFFER_ACCESS_TOKEN is not configured in .env.local.',
-    };
+  if (error) {
+    throw new Error(`Failed to upload to Supabase: ${error.message}`);
   }
 
-  try {
-    const orgId = await getOrgId();
+  // Get the public URL
+  const { data: publicUrlData } = supabaseAdmin
+    .storage
+    .from('social-assets')
+    .getPublicUrl(fileName);
 
-    // Get connected channel IDs
-    const channelsData = (await bufferGQL(`
-      query GetChannels($orgId: OrganizationId!) {
-        channels(input: { organizationId: $orgId }) {
-          id
-          name
-          service
-        }
-      }
-    `, { orgId })) as { channels: { id: string; name: string; service: string }[] };
-
-    // Filter channels by requested platforms (or use all if not specified)
-    const targetPlatforms = payload.platforms || ['instagram', 'tiktok', 'twitter'];
-    const targetChannels = channelsData.channels.filter((ch) =>
-      targetPlatforms.includes(ch.service as 'instagram' | 'tiktok' | 'twitter' | 'facebook')
-    );
-
-    if (targetChannels.length === 0) {
-      return {
-        success: false,
-        provider: 'buffer',
-        message: 'No matching Buffer channels found for the requested platforms.',
-      };
-    }
-
-    // Create a post for each target channel
-    const createdIds: string[] = [];
-    for (const channel of targetChannels) {
-      const result = (await bufferGQL(`
-        mutation CreatePost($channelId: ChannelId!, $text: String!, $dueAt: DateTime) {
-          createPost(input: {
-            channelId: $channelId
-            content: { text: $text }
-            dueAt: $dueAt
-          }) {
-            post { id status }
-          }
-        }
-      `, {
-        channelId: channel.id,
-        text: payload.text,
-        dueAt: payload.scheduledAt ?? null,
-      })) as { createPost: { post: { id: string } } };
-
-      createdIds.push(result.createPost.post.id);
-    }
-
-    return {
-      success: true,
-      provider: 'buffer',
-      draftId: createdIds.join(','),
-      message: `✅ Successfully queued post to ${targetChannels.map((c) => c.service).join(', ')} via Buffer!`,
-      approvalUrl: 'https://publish.buffer.com',
-    };
-  } catch (error: unknown) {
-    const msg = error instanceof Error ? error.message : 'Unknown error';
-    return { success: false, provider: 'buffer', message: msg };
-  }
+  return publicUrlData.publicUrl;
 }
 
-/**
- * Universal Social Scheduler Dispatcher
- * Tries Buffer first, falls back to mock mode for local development.
- */
 export async function pushSocialDraft(payload: SocialDraftPayload): Promise<SocialDraftResponse> {
-  if (process.env.BUFFER_ACCESS_TOKEN) {
-    return await pushBufferDraft(payload);
-  }
+  try {
+    const publicMediaUrls: string[] = [];
 
-  // Fallback: simulated mock (for local dev without credentials)
-  return {
-    success: true,
-    provider: 'mock',
-    draftId: `draft-mock-${Date.now()}`,
-    message:
-      '🧪 Simulated draft saved locally! Add BUFFER_ACCESS_TOKEN to .env.local to send to live Buffer queue.',
-    approvalUrl: 'https://seccion.ai/admin',
-  };
+    // 1. Upload local media files to Supabase to get public URLs for Make.com
+    if (payload.mediaUrls && payload.mediaUrls.length > 0) {
+      for (const localPath of payload.mediaUrls) {
+        const publicUrl = await uploadMediaToSupabase(localPath);
+        publicMediaUrls.push(publicUrl);
+        console.log(`Uploaded! Public URL: ${publicUrl}`);
+      }
+    }
+
+    // 2. Prepare payload for Make.com
+    const makePayload = {
+      text: payload.text,
+      platforms: payload.platforms || ['instagram', 'tiktok', 'twitter'],
+      mediaUrls: publicMediaUrls
+    };
+
+    console.log('Sending payload to Make.com...', JSON.stringify(makePayload, null, 2));
+
+    // 3. POST to Make.com Webhook
+    const res = await fetch(MAKE_WEBHOOK_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(makePayload),
+    });
+
+    if (!res.ok) {
+      throw new Error(`Make.com webhook failed: ${res.statusText}`);
+    }
+
+    // Trigger the scenario immediately since Make webhooks respond instantly
+    return {
+      success: true,
+      provider: 'make.com',
+      message: `✅ Successfully pushed payload to Make.com webhook! Platforms: ${makePayload.platforms.join(', ')}`,
+    };
+  } catch (error: unknown) {
+    const msg = error instanceof Error ? error.message : 'Unknown error';
+    return { success: false, provider: 'make.com', message: msg };
+  }
 }

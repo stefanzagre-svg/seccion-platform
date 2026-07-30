@@ -111,7 +111,7 @@ export default function LandingPageHook({ onAccept, onBecomeCreator }: { onAccep
          }}>
       
       {/* Foreground Laser Lines (z-[35]: Above typography and cards, below TopNavBar) */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none z-[35]">
+      <div className="hidden md:block absolute inset-0 overflow-hidden pointer-events-none z-[35]">
         <LaserLinesSVG />
       </div>
       
