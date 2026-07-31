@@ -43,7 +43,7 @@ function GlassCard({ children, className = "", style = {} }: { children: React.R
 
 const LaserLinesSVG = () => (
   <svg
-    className="absolute w-full h-full opacity-90"
+    className="absolute w-full h-full opacity-90 hidden md:block"
     viewBox="0 0 1440 1024"
     preserveAspectRatio="none"
     xmlns="http://www.w3.org/2000/svg"

@@ -16,6 +16,8 @@ import { type ArchetypeId, type MoodId, type PassionId } from '@/lib/constants';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import CreatorGoalProgress, { type CreatorGoal } from '@/components/CreatorGoalProgress';
+import SuggestionMovesModal from '@/components/SuggestionMovesModal';
+import { useLanguage } from '@/context/LanguageContext';
 import CreatorOrdersPanel from '@/components/CreatorOrdersPanel';
 import SafetyPatrolPanel from '@/components/SafetyPatrolPanel';
 import ConfigPanel from '@/components/AIAssistant/ConfigPanel';
@@ -280,6 +282,7 @@ class CreatorParticle {
 }
 
 export default function CreatorStudio() {
+  const { translate } = useLanguage();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<'content' | 'live' | 'analytics' | 'settings' | 'goals' | 'safety_ops' | 'orders' | 'consent_inbox'>('content');
   const [customRequestPermission, setCustomRequestPermission] = useState<'anyone' | 'restricted'>('anyone');
@@ -1790,7 +1793,7 @@ export default function CreatorStudio() {
                 {/* Uploaded Posts List */}
                 <div className="space-y-6">
                   <div className="flex items-center justify-between">
-                    <h2 className="text-xl font-black tracking-tight text-white">UPLOADED CONTENT</h2>
+                    <h2 className="text-xl font-black tracking-tight text-white">{translate('creatorStudio.recentUploads', 'UPLOADED CONTENT')}</h2>
                     <div className="flex items-center gap-2 text-[9px] text-white/40 font-black uppercase tracking-widest bg-white/5 px-3 py-1.5 rounded-lg">
                       Total Assets: {uploadedPosts.length}
                     </div>

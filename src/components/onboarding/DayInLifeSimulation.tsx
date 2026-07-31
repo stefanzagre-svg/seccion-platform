@@ -3,12 +3,14 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles, MessageSquare, Check, X, Shield, Lock, Bell } from "lucide-react";
+import { useTranslation } from "@/context/LanguageContext";
 
 interface DayInLifeSimulationProps {
   onComplete: () => void;
 }
 
 export default function DayInLifeSimulation({ onComplete }: DayInLifeSimulationProps) {
+  const { t: translate } = useTranslation();
   const [currentFrame, setCurrentFrame] = useState(1);
   const [typedMessage, setTypedMessage] = useState("");
   const [partnerMessage, setPartnerMessage] = useState("");
@@ -78,10 +80,10 @@ export default function DayInLifeSimulation({ onComplete }: DayInLifeSimulationP
     <div className="space-y-6 w-full max-w-lg mx-auto p-1">
       <div className="text-center">
         <span className="text-[10px] uppercase tracking-widest font-black text-primary bg-primary/10 px-2 py-0.5 rounded-full border border-primary/20">
-          Part 2: SECCION Day-In-The-Life
+          {translate("demos.main.day_in_life_badge", "Part 2: SECCION Day-In-The-Life")}
         </span>
         <h4 className="text-2xl font-black tracking-tight mt-2 uppercase Outfit">
-          Experience a Day on SECCION
+          {translate("demos.main.day_in_life_title", "Experience a Day on SECCION")}
         </h4>
       </div>
 

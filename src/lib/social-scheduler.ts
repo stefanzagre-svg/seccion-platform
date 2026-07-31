@@ -20,11 +20,16 @@ export interface SocialDraftResponse {
 
 const MAKE_WEBHOOK_URL = 'https://hook.eu1.make.com/zc2jronounqeqzvnq1iorj8tu8h70mnf';
 
-// Initialize Supabase Admin Client
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+// Lazy initialization to ensure env vars are loaded first
+function getSupabaseAdmin() {
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    throw new Error('Supabase environment variables are missing.');
+  }
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_ROLE_KEY
+  );
+}
 
 export async function uploadMediaToSupabase(localFilePath: string): Promise<string> {
   if (!fs.existsSync(localFilePath)) {
@@ -42,7 +47,7 @@ export async function uploadMediaToSupabase(localFilePath: string): Promise<stri
 
   console.log(`Uploading ${fileName} to Supabase...`);
   
-  const { data, error } = await supabaseAdmin
+  const { data, error } = await getSupabaseAdmin()
     .storage
     .from('social-assets')
     .upload(fileName, fileBuffer, {
@@ -55,7 +60,7 @@ export async function uploadMediaToSupabase(localFilePath: string): Promise<stri
   }
 
   // Get the public URL
-  const { data: publicUrlData } = supabaseAdmin
+  const { data: publicUrlData } = getSupabaseAdmin()
     .storage
     .from('social-assets')
     .getPublicUrl(fileName);

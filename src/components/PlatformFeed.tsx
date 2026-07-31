@@ -18,6 +18,7 @@ import ReportModal from '@/components/modals/ReportModal';
 import { RELATIONSHIP_LEVELS, syncSuggestionMoves } from '@/lib/relationship-engine';
 import CreateDatePlanModal from '@/components/CreateDatePlanModal';
 import ManageApplicantsModal from '@/components/ManageApplicantsModal';
+import { useLanguage } from '@/context/LanguageContext';
 import ProvenanceBadge from '@/components/ProvenanceBadge';
 import { type ProvenanceLevel } from '@/lib/content-provenance';
 import { awardXp } from '@/lib/xp-service';
@@ -106,6 +107,7 @@ function parseDescription(description: string) {
 }
 
 export default function PlatformFeed() {
+  const { translate } = useLanguage();
   const router = useRouter();
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [optimisticLikes, setOptimisticLikes] = useState<Record<string, boolean>>({});
@@ -930,10 +932,10 @@ export default function PlatformFeed() {
                       ? 'bg-primary text-black border-primary shadow-[0_0_15px_rgba(102,252,241,0.45)] font-black' 
                       : 'bg-white/5 text-white/70 border-white/10 hover:bg-white/10'
                   }`}
-                  title="Toggle Advanced Search Filters"
+                  title={translate('platformFeed.advancedFiltersTitle', "Toggle Advanced Search Filters")}
                 >
                   <SlidersHorizontal className="w-3.5 h-3.5" />
-                  <span>Advanced Filters</span>
+                  <span>{translate('platformFeed.advancedFiltersBtn', 'Advanced Filters')}</span>
                 </button>
               </div>
 

@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles, PieChart, Activity, Target } from "lucide-react";
+import { useTranslation } from "@/context/LanguageContext";
 
 interface SynergyEngineDemoProps {
   userArchetype: string; // From Scene 2 selection
@@ -43,6 +44,7 @@ const ARCHETYPE_COMPATIBILITY: Record<string, { partnerType: string; partnerEmoj
 };
 
 export default function SynergyEngineDemo({ userArchetype, onComplete }: SynergyEngineDemoProps) {
+  const { t: translate } = useTranslation();
   const [activePanel, setActivePanel] = useState<1 | 2 | 3>(1);
   const [matchScore, setMatchScore] = useState(0);
   const [showOrbitReveal, setShowOrbitReveal] = useState(false);
@@ -85,10 +87,10 @@ export default function SynergyEngineDemo({ userArchetype, onComplete }: Synergy
     <div className="space-y-6 w-full max-w-lg mx-auto p-1">
       <div className="text-center">
         <span className="text-[10px] uppercase tracking-widest font-black text-primary bg-primary/10 px-2 py-0.5 rounded-full border border-primary/20">
-          Synergy Engine Analysis
+          {translate("demos.main.synergy_badge", "Synergy Engine Analysis")}
         </span>
         <h4 className="text-2xl font-black tracking-tight mt-2 uppercase Outfit">
-          Predictive Matchmaking
+          {translate("demos.main.synergy_title", "Predictive Matchmaking")}
         </h4>
       </div>
 

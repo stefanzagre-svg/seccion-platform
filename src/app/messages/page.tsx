@@ -20,6 +20,8 @@ import {
   DualGaugeState,
   TENSION_DISPLAY
 } from '@/lib/relationship-engine';
+import VideoCall from '@/components/VideoCall';
+import { useLanguage } from '@/context/LanguageContext';
 import SuggestionMovesModal from '@/components/SuggestionMovesModal';
 import BlurredFaceImage from '@/components/BlurredFaceImage';
 
@@ -214,6 +216,7 @@ function EphemeralMediaBubble({ message, isMe, onViewed, onScreenshotDetected }:
 }
 
 export default function ChatMessenger() {
+  const { translate } = useLanguage();
   const router = useRouter();
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -1542,7 +1545,7 @@ export default function ChatMessenger() {
                       type="text" 
                       value={newMessage}
                       onChange={(e) => setNewMessage(e.target.value)}
-                      placeholder={selectedFile ? "Add a caption..." : "Send a message..."}
+                      placeholder={selectedFile ? "Add a caption..." : translate('secureMessaging.typeMessage', 'Send a message...')}
                       className="w-full bg-white/5 border border-white/10 rounded-3xl py-4 pl-4 pr-12 text-sm text-white placeholder:text-white/30 outline-none focus:border-primary transition"
                     />
                   </div>
@@ -1579,8 +1582,8 @@ export default function ChatMessenger() {
         ) : (
           <div className="flex-1 flex flex-col items-center justify-center text-muted-foreground text-center p-6">
             <MessageSquare className="w-12 h-12 opacity-20 mb-4" />
-            <h2 className="text-white font-bold mb-2">No Active Chat</h2>
-            <p className="text-sm text-white/50 max-w-xs">Select a match from the sidebar to start building your synergy meter.</p>
+            <h2 className="text-white font-bold mb-2">{translate('secureMessaging.noMessages', 'No Active Chat')}</h2>
+            <p className="text-white/40 text-sm">Select a connection to start decrypting vibes.</p>
           </div>
         )}
       </main>

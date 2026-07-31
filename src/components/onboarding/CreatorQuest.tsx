@@ -7,78 +7,7 @@ import RevenueEngineDemo from "./RevenueEngineDemo";
 import StreamStationDemo from "./StreamStationDemo";
 import MonetizationSuiteDemo from "./MonetizationSuiteDemo";
 
-// Localization Matrix
-const LOCALIZED_TEXTS = {
-  en: {
-    lobby_title: "Welcome to SECCION Studio Tour",
-    lobby_sub: "A monetization-focused welcome experience built for professional creators.",
-    lobby_p1: "Before you sign up or configure anything, we want to prove how SECCION maximizes your revenue. No management agencies taking 40%. No commission traps.",
-    lobby_p2: "Let's explore your vibe, test our streaming cockpit, and review your 7 built-in revenue streams. Right now. No account needed.",
-    lobby_cta: "Enter The Studio Tour",
-    vibe_title: "Choose Your Mode",
-    vibe_sub: "Verify if you are here as a creator or member.",
-    hub_cta_creator: "Launch Creator Tour",
-    hub_cta_member: "Switch to Member Quest",
-    profile_title: "Profile & Portfolio Setup",
-    profile_sub: "Configure custom monetization tiers and privacy locks.",
-    profile_blur_label: "Face Blur Privacy Gate Enabled",
-    profile_cta: "Save and Go Live",
-    secret_title: "Studio Tour Complete",
-    secret_p1: "Everything you've seen is mapped dynamically to protect and monetize your audience. SECCION does the heavy lifting for you.",
-    secret_p2: "This is the level of automation and protection creators get every day. We don't guess your value; we unlock it.",
-    secret_cta: "Claim Your SECCION Studio",
-    secret_cta_home: "Go Back to Home Page",
-    subtitles_active: "Subtitles Active"
-  },
-  es: {
-    lobby_title: "Bienvenido al SECCION Studio Tour",
-    lobby_sub: "Una experiencia de bienvenida enfocada en monetización para creadores profesionales.",
-    lobby_p1: "Antes de registrarte o configurar algo, queremos demostrar cómo SECCION maximiza tus ingresos. Sin agencias que se queden con el 40%. Sin trampas de comisión.",
-    lobby_p2: "Explora tu estilo, prueba la cabina de streaming y revisa tus 7 flujos de ingresos integrados. Ahora mismo. Sin cuenta.",
-    lobby_cta: "Iniciar Studio Tour",
-    vibe_title: "Elige tu Modo",
-    vibe_sub: "Confirma si estás aquí como creador o miembro.",
-    hub_cta_creator: "Iniciar Tour de Creador",
-    hub_cta_member: "Cambiar a Búsqueda de Miembro",
-    profile_title: "Configuración de Perfil y Portafolio",
-    profile_sub: "Configura niveles de monetización personalizados y bloqueos de privacidad.",
-    profile_blur_label: "Filtro de Privacidad Face Blur Activo",
-    profile_cta: "Guardar e Ir en Vivo",
-    secret_title: "Studio Tour Completado",
-    secret_p1: "Todo lo que has visto se mapea dinámicamente para proteger y monetizar tu audiencia. SECCION hace el trabajo pesado por ti.",
-    secret_p2: "Este es el nivel de automatización y protección que los creadores obtienen todos los días. No adivinamos tu valor; lo desbloqueamos.",
-    secret_cta: "Reclamar tu Estudio de SECCION",
-    secret_cta_home: "Volver a la Página de Inicio",
-    subtitles_active: "Subtítulos Activos"
-  },
-  fr: {
-    lobby_title: "Bienvenue au SECCION Studio Tour",
-    lobby_sub: "Une expérience d'intégration axée sur la monétisation pour les créateurs professionnels.",
-    lobby_p1: "Avant de vous inscrire, nous voulons prouver comment SECCION maximise vos revenus. Pas d'agences de gestion prélevant 40%. Pas de pièges de commission.",
-    lobby_p2: "Explorons votre style, testons notre cockpit de streaming et passons en revue vos 7 sources de revenus. Dès maintenant. Sans compte.",
-    lobby_cta: "Lancer le Studio Tour",
-    vibe_title: "Choisissez Votre Mode",
-    vibe_sub: "Confirmez si vous êtes ici en tant que créateur ou membre.",
-    hub_cta_creator: "Lancer le Tour Créateur",
-    hub_cta_member: "Passer à la Quête Membre",
-    profile_title: "Profil & Configuration du Portfolio",
-    profile_sub: "Configurez des niveaux de monétisation personnalisés et des verrous de confidentialité.",
-    profile_blur_label: "Protection Face Blur Activée",
-    profile_cta: "Enregistrer et Lancer le Live",
-    secret_title: "Studio Tour Terminé",
-    secret_p1: "Tout ce que vous avez vu est configuré pour protéger et monétiser votre audience. SECCION fait le travail difficile pour vous.",
-    secret_p2: "C'est le niveau d'automatisation et de protection que les créateurs obtiennent chaque jour. Nous ne devinons pas votre valeur ; nous la libérons.",
-    secret_cta: "Réclamer Votre Studio SECCION",
-    secret_cta_home: "Retourner à la Page d'Accueil",
-    subtitles_active: "Sous-titres Actifs"
-  }
-};
-
-const CREATOR_ARCHETYPES = [
-  { id: "STREAMER", emoji: "🎙️", name: "Live Broadcaster", desc: "Monetizes high-interaction streams and community goals." },
-  { id: "PORTFOLIO", emoji: "📸", name: "Exclusive Artist", desc: "Builds premium tiers, custom requests, and ephemeral catalogs." },
-  { id: "HYBRID", emoji: "⚡", name: "Hybrid Creator", desc: "Mixes free DMs, AI auto-upsells, and private consultations." }
-];
+import { useTranslation } from "@/context/LanguageContext";
 
 interface CreatorQuestProps {
   onSignUp: (data: { archetype: string; role: string }) => void;
@@ -87,7 +16,35 @@ interface CreatorQuestProps {
 }
 
 export default function CreatorQuest({ onSignUp, onSwitchToMember, onClose }: CreatorQuestProps) {
-  const [lang, setLang] = useState<"en" | "es" | "fr">("en");
+  const { t: translate, language: lang, setLanguage: setLang } = useTranslation();
+  
+  const t = {
+    lobby_title: translate("creatorQuest.main.lobby_title", "Welcome to SECCION Studio Tour"),
+    lobby_sub: translate("creatorQuest.main.lobby_sub", "A monetization-focused welcome experience built for professional creators."),
+    lobby_p1: translate("creatorQuest.main.lobby_p1", "Before you sign up or configure anything, we want to prove how SECCION maximizes your revenue. No management agencies taking 40%. No commission traps."),
+    lobby_p2: translate("creatorQuest.main.lobby_p2", "Let's explore your vibe, test our streaming cockpit, and review your 7 built-in revenue streams. Right now. No account needed."),
+    lobby_cta: translate("creatorQuest.main.lobby_cta", "Enter The Studio Tour"),
+    vibe_title: translate("creatorQuest.main.vibe_title", "Choose Your Mode"),
+    vibe_sub: translate("creatorQuest.main.vibe_sub", "Verify if you are here as a creator or member."),
+    hub_cta_creator: translate("creatorQuest.main.hub_cta_creator", "Launch Creator Tour"),
+    hub_cta_member: translate("creatorQuest.main.hub_cta_member", "Switch to Member Quest"),
+    profile_title: translate("creatorQuest.main.profile_title", "Profile & Portfolio Setup"),
+    profile_sub: translate("creatorQuest.main.profile_sub", "Configure custom monetization tiers and privacy locks."),
+    profile_blur_label: translate("creatorQuest.main.profile_blur_label", "Face Blur Privacy Gate Enabled"),
+    profile_cta: translate("creatorQuest.main.profile_cta", "Save and Go Live"),
+    secret_title: translate("creatorQuest.main.secret_title", "Studio Tour Complete"),
+    secret_p1: translate("creatorQuest.main.secret_p1", "Everything you've seen is mapped dynamically to protect and monetize your audience. SECCION does the heavy lifting for you."),
+    secret_p2: translate("creatorQuest.main.secret_p2", "This is the level of automation and protection creators get every day. We don't guess your value; we unlock it."),
+    secret_cta: translate("creatorQuest.main.secret_cta", "Claim Your SECCION Studio"),
+    secret_cta_home: translate("creatorQuest.main.secret_cta_home", "Go Back to Home Page"),
+    subtitles_active: translate("creatorQuest.main.subtitles_active", "Subtitles Active")
+  };
+
+  const CREATOR_ARCHETYPES = [
+    { id: "STREAMER", emoji: "🎙️", name: translate("creatorQuest.main.archetype_streamer", "Live Broadcaster"), desc: translate("creatorQuest.main.archetype_streamer_desc", "Monetizes high-interaction streams and community goals.") },
+    { id: "PORTFOLIO", emoji: "📸", name: translate("creatorQuest.main.archetype_portfolio", "Exclusive Artist"), desc: translate("creatorQuest.main.archetype_portfolio_desc", "Builds premium tiers, custom requests, and ephemeral catalogs.") },
+    { id: "HYBRID", emoji: "⚡", name: translate("creatorQuest.main.archetype_hybrid", "Hybrid Creator"), desc: translate("creatorQuest.main.archetype_hybrid_desc", "Mixes free DMs, AI auto-upsells, and private consultations.") }
+  ];
   const [step, setStep] = useState<
     "lobby" | "mode-select" | "revenue-engine" | "profile-setup" | "stream-station" | "monetization-suite" | "secret"
   >("lobby");
@@ -163,7 +120,6 @@ export default function CreatorQuest({ onSignUp, onSwitchToMember, onClose }: Cr
     synthRef.current.speak(utterance);
   };
 
-  const t = LOCALIZED_TEXTS[lang];
 
   const speakStepText = () => {
     if (step === "lobby") {
@@ -171,13 +127,13 @@ export default function CreatorQuest({ onSignUp, onSwitchToMember, onClose }: Cr
     } else if (step === "mode-select") {
       speak(`${t.vibe_title}. ${t.vibe_sub}`);
     } else if (step === "revenue-engine") {
-      speak("Look at our Revenue Payout Math. Most platforms or agencies take up to 40% or more. SECCION keeps it flat: you retain 80% of all earnings.");
+      speak(translate("creatorQuest.main.speech_revenue", "Look at our Revenue Payout Math. Most platforms or agencies take up to 40% or more. SECCION keeps it flat: you retain 80% of all earnings."));
     } else if (step === "profile-setup") {
       speak(`${t.profile_title}. ${t.profile_sub}`);
     } else if (step === "stream-station") {
-      speak("Observe the Stream Station cockpit. Monitor simulated viewers and check out our Face Blur privacy and ephemeral media gates.");
+      speak(translate("creatorQuest.main.speech_stream", "Observe the Stream Station cockpit. Monitor simulated viewers and check out our Face Blur privacy and ephemeral media gates."));
     } else if (step === "monetization-suite") {
-      speak("Review the 7 built-in streams. Additionally, see how our built-in AI Replacement Agent automates fan interactions 24/7.");
+      speak(translate("creatorQuest.main.speech_monetization", "Review the 7 built-in streams. Additionally, see how our built-in AI Replacement Agent automates fan interactions 24/7."));
     } else if (step === "secret") {
       speak(`${t.secret_title}. ${t.secret_p1} ${t.secret_p2}`);
     }

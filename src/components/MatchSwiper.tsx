@@ -14,6 +14,7 @@ import { ARCHETYPE_PROFILES, type ArchetypeId } from '@/lib/constants';
 import SuggestionMovesModal from './SuggestionMovesModal';
 import BlurredFaceImage from '@/components/BlurredFaceImage';
 import ReportModal from '@/components/modals/ReportModal';
+import { useLanguage } from '@/context/LanguageContext';
 
 
 
@@ -325,6 +326,7 @@ class RevealParticle {
 }
 
 export default function MatchSwiper() {
+  const { translate } = useLanguage();
   const router = useRouter();
 
   const stopPropagationRef = useCallback((el: HTMLElement | null) => {
@@ -670,7 +672,21 @@ export default function MatchSwiper() {
       {/* Cards Area */}
       <div className="relative w-full flex-1 min-h-0 flex justify-center items-center my-2">
         <AnimatePresence>
-          {cards.length > 0 ? (
+          {loading ? (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute w-full h-full rounded-3xl overflow-hidden border border-white/10 bg-[#111] animate-pulse flex flex-col"
+            >
+              <div className="w-full h-[60%] bg-white/5" />
+              <div className="flex-1 p-6 space-y-4">
+                <div className="w-1/2 h-8 bg-white/10 rounded-full" />
+                <div className="w-3/4 h-4 bg-white/5 rounded-full" />
+                <div className="w-2/3 h-4 bg-white/5 rounded-full" />
+              </div>
+            </motion.div>
+          ) : cards.length > 0 ? (
             cards.map((card, index) => {
               const isTop = index === 0;
               const mappedCandidate = mapDbProfileToEngine(card);
@@ -1162,8 +1178,8 @@ export default function MatchSwiper() {
           ) : (
             <div className="flex flex-col items-center justify-center text-muted-foreground h-full text-center p-6">
               <Sparkles className="w-12 h-12 mb-4 opacity-50 text-primary" />
-              <p className="font-bold text-white mb-2">No more profiles nearby</p>
-              <p className="text-xs text-white/60">Come back later or adjust your preference.</p>
+              <p className="font-bold text-white mb-2">{translate('matchSwiper.noMoreProfilesTitle', 'No more profiles nearby')}</p>
+              <p className="text-xs text-white/60">{translate('matchSwiper.noMoreProfilesDesc', 'Come back later or adjust your preference.')}</p>
             </div>
           )}
         </AnimatePresence>
@@ -1307,11 +1323,11 @@ export default function MatchSwiper() {
               >
                 <div className="flex gap-2 items-center text-glow-accent mb-4 text-xs font-black uppercase tracking-widest text-[#ff007f] animate-pulse">
                   <Sparkles className="w-4.5 h-4.5" />
-                  Connection Decrypted
+                  {translate('matchSwiper.connectionDecrypted', 'Connection Decrypted')}
                 </div>
                 
                 <h1 className="text-5xl font-black text-glow tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-white via-primary to-accent mb-10 uppercase">
-                  IT'S A CONNECTION!
+                  {translate('matchSwiper.connectionTitle', "IT'S A CONNECTION!")}
                 </h1>
 
                 {/* 3D Flip Profile Cards */}
@@ -1416,13 +1432,13 @@ export default function MatchSwiper() {
                     }}
                     className="laser-btn w-full py-4 rounded-3xl bg-primary text-primary-foreground font-black text-xs tracking-[0.2em] uppercase shadow-[0_15px_30px_rgba(255,0,127,0.3)] hover:brightness-115 active:scale-95 transition relative overflow-hidden"
                   >
-                    Send a Message
+                    {translate('matchSwiper.sendMsgBtn', 'Send a Message')}
                   </button>
                   <button
                     onClick={() => setMatchData(null)}
                     className="w-full py-4 rounded-3xl bg-white/5 border border-white/10 text-white/50 font-black text-[10px] tracking-widest uppercase hover:bg-white/10 active:scale-95 transition"
                   >
-                    Keep Exploring
+                    {translate('matchSwiper.keepExploringBtn', 'Keep Exploring')}
                   </button>
                 </div>
 

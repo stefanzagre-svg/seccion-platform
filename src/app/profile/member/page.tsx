@@ -114,6 +114,7 @@ import ContributeModal from "@/components/ContributeModal";
 import MultiSelectModal from "@/components/MultiSelectModal";
 import BlurredFaceImage from "@/components/BlurredFaceImage";
 import ReportModal from "@/components/modals/ReportModal";
+import { useLanguage } from "@/context/LanguageContext";
 
 const LIFESTYLE_ICONS: Record<string, any> = {
   drinking: Wine,
@@ -371,6 +372,7 @@ const INSIGHT_PROMPTS = {
 };
 
 export default function MemberProfile() {
+  const { translate } = useLanguage();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<
     "status" | "calendar" | "livestream" | "track" | "master" | "insights" | "media" | "preferences"
@@ -1818,7 +1820,7 @@ export default function MemberProfile() {
               >
                 <div className="absolute inset-0 bg-primary/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                   <p className="text-[8px] font-black uppercase tracking-[0.2em]">
-                    Update Avatar
+                    {translate('memberProfile.updateAvatar', 'Update Avatar')}
                   </p>
                 </div>
                 <img
@@ -1842,7 +1844,7 @@ export default function MemberProfile() {
               <div className="mt-6 w-full space-y-4">
                 <div className="space-y-2">
                   <div className="flex items-center justify-between text-[9px] font-black uppercase tracking-widest text-white/40 px-2">
-                    <span>Profile Completion</span>
+                    <span>{translate('memberProfile.profileCompletion', 'Profile Completion')}</span>
                     <span className="text-primary">{profileCompletion}%</span>
                   </div>
                   <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden border border-white/5">

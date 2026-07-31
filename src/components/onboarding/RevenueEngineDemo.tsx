@@ -3,20 +3,22 @@
 import React from "react";
 import { motion } from "framer-motion";
 import { Sparkles, DollarSign, TrendingUp, AlertTriangle } from "lucide-react";
+import { useTranslation } from "@/context/LanguageContext";
 
 interface RevenueEngineDemoProps {
   onComplete: () => void;
 }
 
 export default function RevenueEngineDemo({ onComplete }: RevenueEngineDemoProps) {
+  const { t: translate } = useTranslation();
   return (
     <div className="space-y-6 w-full max-w-lg mx-auto p-1">
       <div className="text-center">
         <span className="text-[10px] uppercase tracking-widest font-black text-primary bg-primary/10 px-2 py-0.5 rounded-full border border-primary/20">
-          Payout Math Comparison
+          {translate("demos.main.revenue_badge", "Payout Math Comparison")}
         </span>
         <h4 className="text-2xl font-black tracking-tight mt-2 uppercase Outfit">
-          Revenue Share Model
+          {translate("demos.main.revenue_title", "Revenue Share Model")}
         </h4>
       </div>
 

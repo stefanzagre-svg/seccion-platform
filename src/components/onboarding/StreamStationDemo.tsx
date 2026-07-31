@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles, Play, Shield, ShieldAlert, Eye, MessageSquare, Flame } from "lucide-react";
+import { useTranslation } from "@/context/LanguageContext";
 
 interface StreamStationDemoProps {
   onComplete: () => void;
@@ -15,6 +16,7 @@ const STREAM_VIEWERS = [
 ];
 
 export default function StreamStationDemo({ onComplete }: StreamStationDemoProps) {
+  const { t: translate } = useTranslation();
   const [chemLevel, setChemLevel] = useState<1 | 2 | 3 | 4>(1);
   const [showTipAlert, setShowTipAlert] = useState(false);
   const [showEphemeralMedia, setShowEphemeralMedia] = useState(false);
@@ -62,10 +64,10 @@ export default function StreamStationDemo({ onComplete }: StreamStationDemoProps
     <div className="space-y-6 w-full max-w-lg mx-auto p-1">
       <div className="text-center">
         <span className="text-[10px] uppercase tracking-widest font-black text-primary bg-primary/10 px-2 py-0.5 rounded-full border border-primary/20">
-          Studio Streaming Cockpit
+          {translate("demos.main.stream_badge", "Studio Streaming Cockpit")}
         </span>
         <h4 className="text-2xl font-black tracking-tight mt-2 uppercase Outfit">
-          Stream Station & Privacy
+          {translate("demos.main.stream_title", "Stream Station & Privacy")}
         </h4>
       </div>
 

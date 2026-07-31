@@ -7,119 +7,7 @@ import ChemistryMeterDemo from "./ChemistryMeterDemo";
 import SynergyEngineDemo from "./SynergyEngineDemo";
 import DayInLifeSimulation from "./DayInLifeSimulation";
 
-// Localization Matrix
-const LOCALIZED_TEXTS = {
-  en: {
-    lobby_title: "Welcome to SECCION",
-    lobby_sub: "A gamified welcome experience built on real psychology.",
-    lobby_p1: "Before we ask you for a username or password, we want to prove why SECCION is different. No endless swiping. No fake connections.",
-    lobby_p2: "Let's explore your vibe, build connection chemistry, and unlock moves. Right now. No account needed.",
-    lobby_cta: "Enter The Quest",
-    vibe_title: "What's Your Vibe?",
-    vibe_sub: "Choose your core archetype to shape your matching potential.",
-    chemistry_title: "The Chemistry Meter",
-    chemistry_sub: "Two-player co-op connection dynamics.",
-    synergy_title: "Predictive Matching",
-    synergy_sub: "Merging your Synergy Auras in real-time.",
-    hub_title: "Part 1 Complete!",
-    hub_p1: "You've selected your archetype and explored the Chemistry Meter. You can join SECCION now to activate your profile, or continue to Part 2 for a full platform simulation.",
-    hub_cta_signup: "Join SECCION Now",
-    hub_cta_continue: "Go Deeper (Part 2)",
-    quiz_title: "Insight Generator",
-    quiz_sub: "Reveal your digital habits to tune your Synergy Aura.",
-    secret_title: "The Pivot",
-    secret_p1: "Everything you've seen? That wasn't pre-saved. SECCION mapped it dynamically from your interactions.",
-    secret_p2: "This is the level of depth members get every day. We don't guess compatibility; we build it.",
-    secret_cta: "Claim Your SECCION Profile",
-    secret_cta_home: "Go Back to Home Page",
-    subtitles_active: "Subtitles Active"
-  },
-  es: {
-    lobby_title: "Bienvenido a SECCION",
-    lobby_sub: "Una experiencia de bienvenida gamificada basada en psicología real.",
-    lobby_p1: "Antes de pedirte un usuario o contraseña, queremos demostrar por qué SECCION es diferente. Sin deslizamientos infinitos. Sin conexiones falsas.",
-    lobby_p2: "Exploremos tu estilo, construyamos química de conexión y desbloqueemos movimientos. Ahora mismo. Sin cuenta.",
-    lobby_cta: "Comenzar Búsqueda",
-    vibe_title: "¿Cuál es tu Estilo?",
-    vibe_sub: "Elige tu arquetipo para definir tu potencial de emparejamiento.",
-    chemistry_title: "El Medidor de Química",
-    chemistry_sub: "Dinámicas de conexión co-op para dos jugadores.",
-    synergy_title: "Emparejamiento Predictivo",
-    synergy_sub: "Fusión de tus Auras de Sinergia en tiempo real.",
-    hub_title: "¡Parte 1 Completada!",
-    hub_p1: "Has seleccionado tu arquetipo y explorado el Medidor de Química. Puedes unirte a SECCION ahora para activar tu perfil, o continuar a la Parte 2 para una simulación completa.",
-    hub_cta_signup: "Unirse a SECCION Ahora",
-    hub_cta_continue: "Ir más profundo (Parte 2)",
-    quiz_title: "Generador de Insights",
-    quiz_sub: "Revela tus hábitos digitales para sintonizar tu Aura.",
-    secret_title: "El Pivote",
-    secret_p1: "¿Todo lo que has visto? No estaba preguardado. SECCION lo mapeó dinámicamente a partir de tus interacciones.",
-    secret_p2: "Este es el nivel de profundidad que los miembros obtienen todos los días. No adivinamos la compatibilidad; la construimos.",
-    secret_cta: "Reclamar tu Perfil de SECCION",
-    secret_cta_home: "Volver a la Página de Inicio",
-    subtitles_active: "Subtítulos Activos"
-  },
-  fr: {
-    lobby_title: "Bienvenue sur SECCION",
-    lobby_sub: "Une expérience d'intégration ludique basée sur la psychologie réelle.",
-    lobby_p1: "Avant de vous demander un identifiant ou un mot de passe, nous voulons prouver pourquoi SECCION est différent. Pas de balayage infini. Pas de fausses connexions.",
-    lobby_p2: "Explorons votre style, construisons une alchimie de connexion et débloquons des actions. Dès maintenant. Sans compte.",
-    lobby_cta: "Lancer la Quête",
-    vibe_title: "Quel est Votre Style?",
-    vibe_sub: "Choisissez votre archétype pour façonner votre potentiel de match.",
-    chemistry_title: "L'Alchimètre",
-    chemistry_sub: "Dynamique de connexion co-op à deux joueurs.",
-    synergy_title: "Matchmaking Prédictif",
-    synergy_sub: "Fusion de vos Auras de Synergie en temps réel.",
-    hub_title: "Partie 1 Terminée !",
-    hub_p1: "Vous avez sélectionné votre archétype et exploré l'Alchimètre. Vous pouvez rejoindre SECCION maintenant pour activer votre profil, ou continuer à la Partie 2 pour une simulation complète.",
-    hub_cta_signup: "Rejoindre SECCION Maintenant",
-    hub_cta_continue: "Aller plus loin (Partie 2)",
-    quiz_title: "Générateur d'Insights",
-    quiz_sub: "Révélez vos habitudes pour accorder votre Aura.",
-    secret_title: "Le Pivot",
-    secret_p1: "Tout ce que vous avez vu ? Rien n'était pré-enregistré. SECCION l'a cartographié dynamiquement à partir de vos interactions.",
-    secret_p2: "C'est le niveau de profondeur que les membres obtiennent chaque jour. Nous ne devinons pas la compatibilité ; nous la construisons.",
-    secret_cta: "Réclamer Votre Profil SECCION",
-    secret_cta_home: "Retourner à la Page d'Accueil",
-    subtitles_active: "Sous-titres Actifs"
-  }
-};
-
-const ARCHETYPES = [
-  { id: "CREATIVER", emoji: "🎨", name: "Creative Dreamer", desc: "Expressive, thoughtful, designs playlist-worthy connections." },
-  { id: "CAREGIVER", emoji: "🔗", name: "Social Connector", desc: "Autonomic helper, remembers names, builds supportive bridges." },
-  { id: "REBEL", emoji: "🎢", name: "Adrenaline Seeker", desc: "Spontaneous, lives at full speed, plans adventures on the fly." },
-  { id: "LOGICIAN", emoji: "🔧", name: "Analytical Builder", desc: "Methodical thinker, values scheduling, builds solid structures." },
-  { id: "POET", emoji: "💍", name: "Romantic Idealist", desc: "Deep dreamer, writes by hand, values absolute relationships." }
-];
-
-const QUIZ_QUESTIONS = [
-  {
-    q: "On weekends, what fuels your battery the most?",
-    opts: [
-      { text: "Designing or creating something quiet 🎨", trait: "creative" },
-      { text: "Hosting a dinner or gathering friends 🔗", trait: "social" },
-      { text: "Booking a last-minute flight or road trip 🎢", trait: "spontaneous" }
-    ]
-  },
-  {
-    q: "How do you handle disagreement in relationships?",
-    opts: [
-      { text: "Discuss it immediately with direct honesty 💬", trait: "direct" },
-      { text: "Take space to process before communicating 📐", trait: "introspective" },
-      { text: "Defuse tension with playfulness and humor 🎭", trait: "witty" }
-    ]
-  },
-  {
-    q: "What is your main investment driver in connection?",
-    opts: [
-      { text: "Shared travel, events, and unique experiences 🌟", driver: "Experience" },
-      { text: "Deep emotional validation and daily vulnerability 💖", driver: "Emotional Connection" },
-      { text: "Intellectual debate and collaborative projects 📐", driver: "Intellectual Stimulation" }
-    ]
-  }
-];
+import { useTranslation } from "@/context/LanguageContext";
 
 interface SessionQuestProps {
   onSignUp: (tutorialData: { archetype: string; preferences: any }) => void;
@@ -127,7 +15,68 @@ interface SessionQuestProps {
 }
 
 export default function SessionQuest({ onSignUp, onClose }: SessionQuestProps) {
-  const [lang, setLang] = useState<"en" | "es" | "fr">("en");
+  const { t: translate, language: lang, setLanguage: setLang } = useTranslation();
+  
+  const t = {
+    lobby_title: translate("sessionQuest.main.lobby_title", "Welcome to SECCION"),
+    lobby_sub: translate("sessionQuest.main.lobby_sub", "A gamified welcome experience built on real psychology."),
+    lobby_p1: translate("sessionQuest.main.lobby_p1", "Before we ask you for a username or password, we want to prove why SECCION is different. No endless swiping. No fake connections."),
+    lobby_p2: translate("sessionQuest.main.lobby_p2", "Let's explore your vibe, build connection chemistry, and unlock moves. Right now. No account needed."),
+    lobby_cta: translate("sessionQuest.main.lobby_cta", "Enter The Quest"),
+    vibe_title: translate("sessionQuest.main.vibe_title", "What's Your Vibe?"),
+    vibe_sub: translate("sessionQuest.main.vibe_sub", "Choose your core archetype to shape your matching potential."),
+    chemistry_title: translate("sessionQuest.main.chemistry_title", "The Chemistry Meter"),
+    chemistry_sub: translate("sessionQuest.main.chemistry_sub", "Two-player co-op connection dynamics."),
+    synergy_title: translate("sessionQuest.main.synergy_title", "Predictive Matching"),
+    synergy_sub: translate("sessionQuest.main.synergy_sub", "Merging your Synergy Auras in real-time."),
+    hub_title: translate("sessionQuest.main.hub_title", "Part 1 Complete!"),
+    hub_p1: translate("sessionQuest.main.hub_p1", "You've selected your archetype and explored the Chemistry Meter. You can join SECCION now to activate your profile, or continue to Part 2 for a full platform simulation."),
+    hub_cta_signup: translate("sessionQuest.main.hub_cta_signup", "Join SECCION Now"),
+    hub_cta_continue: translate("sessionQuest.main.hub_cta_continue", "Go Deeper (Part 2)"),
+    quiz_title: translate("sessionQuest.main.quiz_title", "Insight Generator"),
+    quiz_sub: translate("sessionQuest.main.quiz_sub", "Reveal your digital habits to tune your Synergy Aura."),
+    secret_title: translate("sessionQuest.main.secret_title", "The Pivot"),
+    secret_p1: translate("sessionQuest.main.secret_p1", "Everything you've seen? That wasn't pre-saved. SECCION mapped it dynamically from your interactions."),
+    secret_p2: translate("sessionQuest.main.secret_p2", "This is the level of depth members get every day. We don't guess compatibility; we build it."),
+    secret_cta: translate("sessionQuest.main.secret_cta", "Claim Your SECCION Profile"),
+    secret_cta_home: translate("sessionQuest.main.secret_cta_home", "Go Back to Home Page"),
+    subtitles_active: translate("sessionQuest.main.subtitles_active", "Subtitles Active")
+  };
+
+  const ARCHETYPES = [
+    { id: "CREATIVER", emoji: "🎨", name: translate("sessionQuest.main.archetype_creative", "Creative Dreamer"), desc: translate("sessionQuest.main.archetype_creative_desc", "Expressive, thoughtful, designs playlist-worthy connections.") },
+    { id: "CAREGIVER", emoji: "🔗", name: translate("sessionQuest.main.archetype_social", "Social Connector"), desc: translate("sessionQuest.main.archetype_social_desc", "Autonomic helper, remembers names, builds supportive bridges.") },
+    { id: "REBEL", emoji: "🎢", name: translate("sessionQuest.main.archetype_adrenaline", "Adrenaline Seeker"), desc: translate("sessionQuest.main.archetype_adrenaline_desc", "Spontaneous, lives at full speed, plans adventures on the fly.") },
+    { id: "LOGICIAN", emoji: "🔧", name: translate("sessionQuest.main.archetype_analytical", "Analytical Builder"), desc: translate("sessionQuest.main.archetype_analytical_desc", "Methodical thinker, values scheduling, builds solid structures.") },
+    { id: "POET", emoji: "💍", name: translate("sessionQuest.main.archetype_romantic", "Romantic Idealist"), desc: translate("sessionQuest.main.archetype_romantic_desc", "Deep dreamer, writes by hand, values absolute relationships.") }
+  ];
+
+  const QUIZ_QUESTIONS = [
+    {
+      q: translate("sessionQuest.main.quiz_q1", "On weekends, what fuels your battery the most?"),
+      opts: [
+        { text: translate("sessionQuest.main.quiz_q1_opt1", "Designing or creating something quiet 🎨"), trait: "creative" },
+        { text: translate("sessionQuest.main.quiz_q1_opt2", "Hosting a dinner or gathering friends 🔗"), trait: "social" },
+        { text: translate("sessionQuest.main.quiz_q1_opt3", "Booking a last-minute flight or road trip 🎢"), trait: "spontaneous" }
+      ]
+    },
+    {
+      q: translate("sessionQuest.main.quiz_q2", "How do you handle disagreement in relationships?"),
+      opts: [
+        { text: translate("sessionQuest.main.quiz_q2_opt1", "Discuss it immediately with direct honesty 💬"), trait: "direct" },
+        { text: translate("sessionQuest.main.quiz_q2_opt2", "Take space to process before communicating 📐"), trait: "introspective" },
+        { text: translate("sessionQuest.main.quiz_q2_opt3", "Defuse tension with playfulness and humor 🎭"), trait: "witty" }
+      ]
+    },
+    {
+      q: translate("sessionQuest.main.quiz_q3", "What is your main investment driver in connection?"),
+      opts: [
+        { text: translate("sessionQuest.main.quiz_q3_opt1", "Shared travel, events, and unique experiences 🌟"), driver: "Experience" },
+        { text: translate("sessionQuest.main.quiz_q3_opt2", "Deep emotional validation and daily vulnerability 💖"), driver: "Emotional Connection" },
+        { text: translate("sessionQuest.main.quiz_q3_opt3", "Intellectual debate and collaborative projects 📐"), driver: "Intellectual Stimulation" }
+      ]
+    }
+  ];
   const [step, setStep] = useState<
     | "lobby"
     | "archetype-select"
@@ -148,7 +97,7 @@ export default function SessionQuest({ onSignUp, onClose }: SessionQuestProps) {
   const synthRef = useRef<SpeechSynthesis | null>(null);
   const currentUtteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
 
-  const t = LOCALIZED_TEXTS[lang];
+
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -216,19 +165,19 @@ export default function SessionQuest({ onSignUp, onClose }: SessionQuestProps) {
         speak(`${t.vibe_title}. ${t.vibe_sub}`);
         break;
       case "chemistry-meter":
-        speak("Observe the Chemistry Gauge. In SECCION, compatibility is calculated symmetrically using a harmonic mean. Both sides must invest to level up.");
+        speak(translate("sessionQuest.main.speech_chemistry", "Observe the Chemistry Gauge. In SECCION, compatibility is calculated symmetrically using a harmonic mean. Both sides must invest to level up."));
         break;
       case "synergy-engine":
-        speak("Here is our Synergy Engine metrics engine. We analyze personality compatibility, recent momentum, and schedule opportunities.");
+        speak(translate("sessionQuest.main.speech_synergy", "Here is our Synergy Engine metrics engine. We analyze personality compatibility, recent momentum, and schedule opportunities."));
         break;
       case "branching-hub":
         speak(t.hub_p1);
         break;
       case "day-in-life":
-        speak("Let's simulate a typical day on SECCION. Observe how notifications, matchmaking sweeps, and conversational metrics flow.");
+        speak(translate("sessionQuest.main.speech_dayInLife", "Let's simulate a typical day on SECCION. Observe how notifications, matchmaking sweeps, and conversational metrics flow."));
         break;
       case "quiz":
-        speak("Answer these simple questions. We'll build a live archetype vector without making you fill an actual profile form.");
+        speak(translate("sessionQuest.main.speech_quiz", "Answer these simple questions. We'll build a live archetype vector without making you fill an actual profile form."));
         break;
       case "secret":
         speak(`${t.secret_p1} ${t.secret_p2}`);

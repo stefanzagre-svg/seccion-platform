@@ -10,6 +10,7 @@ import CompletionChecklist, {
   ChecklistItem,
 } from "@/components/onboarding/CompletionChecklist";
 import FoundersWelcome from "@/components/onboarding/FoundersWelcome";
+import { useTranslation } from "@/context/LanguageContext";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/lib/supabase";
 import {
@@ -106,6 +107,7 @@ const INSIGHT_PROMPTS = {
 
 
 export default function OnboardingFlow() {
+  const { t } = useTranslation();
   const [step, setStep] = useState<OnboardingStep>("registration");
   const [tutorialArchetype, setTutorialArchetype] = useState<string | null>(null);
   const [tutorialRole, setTutorialRole] = useState<"member" | "creator" | null>(null);
@@ -681,10 +683,10 @@ export default function OnboardingFlow() {
               <div className="hidden md:block md:col-span-5 space-y-6">
                 <div className="text-left">
                   <h2 className="text-3xl font-black tracking-tighter uppercase text-glow">
-                    Build Your Identity
+                    {t("onboarding.main.buildIdentity", "Build Your Identity")}
                   </h2>
                   <p className="text-white/40 text-xs font-bold uppercase tracking-wider mt-1">
-                    Set up your vibe profile.
+                    {t("onboarding.main.setupProfile", "Set up your vibe profile.")}
                   </p>
                 </div>
 
@@ -705,18 +707,18 @@ export default function OnboardingFlow() {
                 {/* Mobile Tab Navigation */}
                 <div className="block md:hidden mb-6 bg-black/30 border border-white/5 rounded-2xl p-4 animate-fade-in">
                   <div className="flex items-center justify-between mb-3.5">
-                    <span className="text-[10px] font-black uppercase tracking-wider text-white/50">Profile Setup</span>
+                    <span className="text-[10px] font-black uppercase tracking-wider text-white/50">{t("onboarding.main.profileSetup", "Profile Setup")}</span>
                     <span className="text-[10px] font-black uppercase tracking-widest text-primary bg-primary/10 px-2 py-0.5 rounded-full border border-primary/20">
-                      {progress}% Done
+                      {t("onboarding.main.done", "{progress}% Done").replace("{progress}", progress.toString())}
                     </span>
                   </div>
                   <div className="grid grid-cols-3 gap-2">
                     {checklist.map((item) => {
                       const isActive = activeItem === item.id;
                       const isDone = item.completed;
-                      let label = "1. Photo";
-                      if (item.id === "bio") label = "2. Bio";
-                      if (item.id === "preferences") label = "3. Match";
+                      let label = t("onboarding.main.tabPhoto", "1. Photo");
+                      if (item.id === "bio") label = t("onboarding.main.tabBio", "2. Bio");
+                      if (item.id === "preferences") label = t("onboarding.main.tabMatch", "3. Match");
                       
                       return (
                         <button
@@ -763,7 +765,7 @@ export default function OnboardingFlow() {
                           <div className="flex items-center gap-3">
                             <Camera className="w-6 h-6 text-primary" />
                             <h3 className="text-lg font-black uppercase tracking-wider">
-                              Select Profile Photo
+                              {t("onboarding.main.selectPhoto", "Select Profile Photo")}
                             </h3>
                           </div>
 
@@ -779,7 +781,7 @@ export default function OnboardingFlow() {
                           {/* Primary Action: Device / Computer File Upload */}
                           <div className="space-y-3">
                             <label className="text-[9px] uppercase tracking-widest font-black text-white/50 block text-left">
-                              Option 1: Upload from Computer or Phone Folder
+                              {t("onboarding.main.uploadOption1", "Option 1: Upload from Computer or Phone Folder")}
                             </label>
                             <button
                               type="button"
@@ -790,12 +792,12 @@ export default function OnboardingFlow() {
                               {isUploadingPhoto ? (
                                 <>
                                   <Loader2 className="w-5 h-5 animate-spin text-[#00fbfb]" />
-                                  <span>Uploading Image File...</span>
+                                  <span>{t("onboarding.main.uploadingFile", "Uploading Image File...")}</span>
                                 </>
                               ) : (
                                 <>
                                   <Upload className="w-5 h-5 text-[#00fbfb] group-hover:scale-110 transition-transform" />
-                                  <span>Choose File from Computer / Folder</span>
+                                  <span>{t("onboarding.main.chooseFile", "Choose File from Computer / Folder")}</span>
                                 </>
                               )}
                             </button>
@@ -822,7 +824,7 @@ export default function OnboardingFlow() {
                           {/* Divider */}
                           <div className="flex items-center gap-3 my-2">
                             <div className="h-[1px] flex-1 bg-white/10" />
-                            <span className="text-[9px] font-mono uppercase tracking-widest text-white/30">OR CHOOSE PRESET / URL</span>
+                            <span className="text-[9px] font-mono uppercase tracking-widest text-white/30">{t("onboarding.main.option2", "OR CHOOSE PRESET / URL")}</span>
                             <div className="h-[1px] flex-1 bg-white/10" />
                           </div>
 
@@ -879,13 +881,11 @@ export default function OnboardingFlow() {
                             <div className="flex items-center gap-3">
                               <ShieldCheck className="w-5 h-5 text-primary" />
                               <span className="text-xs font-bold text-white uppercase tracking-wider">
-                                Anti-Catfishing Liveness Check
+                                {t("onboarding.main.livenessCheck", "Anti-Catfishing Liveness Check")}
                               </span>
                             </div>
                             <p className="text-[10px] text-white/50 leading-relaxed font-medium">
-                              To keep Seccion safe, you must complete a quick
-                              biometric liveness check to match your face with
-                              the selected photo.
+                              {t("onboarding.main.livenessDesc", "To keep Seccion safe, you must complete a quick biometric liveness check to match your face with the selected photo.")}
                             </p>
 
                             {livenessStep === 0 && (
@@ -895,8 +895,7 @@ export default function OnboardingFlow() {
                                 disabled={!avatarUrl}
                                 className="w-full py-3 bg-primary/10 hover:bg-primary/20 border border-primary/30 text-primary font-black uppercase tracking-wider rounded-xl transition text-[10px] flex items-center justify-center gap-2 disabled:opacity-50"
                               >
-                                <Video className="w-4 h-4" /> Start Liveness
-                                Selfie Check
+                                <Video className="w-4 h-4" /> {t("onboarding.main.startCheck", "Start Liveness Selfie Check")}
                               </button>
                             )}
 
@@ -964,13 +963,12 @@ export default function OnboardingFlow() {
                           <div className="flex items-center gap-3">
                             <FileText className="w-6 h-6 text-primary" />
                             <h3 className="text-lg font-black uppercase tracking-wider">
-                              Relational Prompt Check ({promptStep} of 2)
+                              {t("onboarding.main.bioPrompts", "Relational Prompt Check")} ({t("onboarding.main.promptStep", "Prompt {step} of 2").replace("{step}", promptStep.toString())})
                             </h3>
                           </div>
 
                           <p className="text-xs text-white/50 leading-relaxed font-medium">
-                            Choose a prompt category and question. Write a simple answer (min 10 chars). 
-                            Gemini will analyze your response to unlock your **Relational Aura** — how you connect, open up, and protect your energy.
+                            {t("onboarding.main.bioDesc", "Help our AI Synergy Engine understand your vibe. Answer 2 prompts below.")}
                           </p>
 
                           {completedPrompt1 && (
@@ -984,7 +982,7 @@ export default function OnboardingFlow() {
                           {/* Category Selector Tabs */}
                           <div className="space-y-1.5">
                             <label className="text-[9px] uppercase tracking-widest font-black text-white/40">
-                              1. Pick Your Vibe Zone
+                              {t("onboarding.main.selectCategory", "1. Pick Your Vibe Zone")}
                             </label>
                             <div className="flex flex-wrap gap-1">
                               {Object.entries(INSIGHT_PROMPTS).map(([key, data]) => {
@@ -1013,7 +1011,7 @@ export default function OnboardingFlow() {
                           {/* Question Selector List */}
                           <div className="space-y-1.5">
                             <label className="text-[9px] uppercase tracking-widest font-black text-white/40">
-                              2. Choose Prompt Question
+                              {t("onboarding.main.selectPrompt", "2. Choose Prompt Question")}
                             </label>
                             <div className="flex flex-col gap-1.5 max-h-[140px] overflow-y-auto pr-1 custom-scrollbar">
                               {INSIGHT_PROMPTS[promptCategory].prompts.map((q) => {
@@ -1045,7 +1043,7 @@ export default function OnboardingFlow() {
                               </div>
                               
                               <label className="text-[9px] uppercase tracking-widest font-black text-white/40 block">
-                                3. Write Your Narrative Response
+                                {t("onboarding.main.writeResponse", "3. Write Your Narrative Response")}
                               </label>
                               <textarea
                                 rows={4}
