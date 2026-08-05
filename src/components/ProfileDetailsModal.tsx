@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { X, MessageSquare, ShieldCheck, Heart, Trophy, MapPin, Zap, Ban, Flag, Phone, Loader2, Video, Image as ImageIcon, Briefcase, GraduationCap, Moon, BookOpen, Sparkles, Globe, Lock, Users } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import BlurredFaceImage from '@/components/BlurredFaceImage';
+import { useTranslation } from "@/context/LanguageContext";
 import { scoreToLevel, RELATIONSHIP_LEVELS } from '@/lib/relationship-engine';
 import { calculateMatchProbability } from '@/lib/match-engine';
 import { getRelationshipState } from '@/lib/relationship-db';
@@ -17,6 +18,7 @@ interface ProfileDetailsModalProps {
 }
 
 export default function ProfileDetailsModal({ profileId, onClose, currentUserId }: ProfileDetailsModalProps) {
+  const { t: translate } = useTranslation();
   const [profile, setProfile] = useState<any | null>(null);
   const [relationship, setRelationship] = useState<any | null>(null);
   const [currentUserProfile, setCurrentUserProfile] = useState<any | null>(null);

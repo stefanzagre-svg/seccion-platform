@@ -4,6 +4,7 @@ import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, ShieldCheck, Sparkles, Heart, Globe, Eye, Lock, Users, Briefcase, GraduationCap, Moon, BookOpen, Video, Image as ImageIcon } from "lucide-react";
 import { ARCHETYPES } from "@/components/ArchetypeSelector";
+import { useTranslation } from "@/context/LanguageContext";
 
 interface ProfilePreviewModalProps {
   isOpen: boolean;
@@ -41,6 +42,7 @@ export default function ProfilePreviewModal({
   onClose,
   profile,
 }: ProfilePreviewModalProps) {
+  const { t: translate } = useTranslation();
   if (!isOpen) return null;
 
   const archetypeObj = ARCHETYPES.find((a) => a.id === profile.archetype);

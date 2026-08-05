@@ -35,15 +35,6 @@ export default function EditProfileTab({
   handleUpdateProfileField,
 }: EditProfileTabProps) {
   const { t: translate } = useTranslation();
-  const { t: translate } = useTranslation();
-  mappedCurrentUser,
-  currentUserProfile,
-  handleOpenMultiSelect,
-  renderPrivacyToggle,
-  handleCycleFamilyGoals,
-  handleUpdateHabit,
-  handleUpdateProfileField,
-}: EditProfileTabProps) {
   const HABIT_CATEGORIES = Object.keys(HABIT_CHOICES);
   const currentLifestyle = currentUserProfile?.lifestyle_habits || {};
 

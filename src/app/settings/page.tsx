@@ -70,7 +70,7 @@ export default function SettingsPage() {
         <div className="flex items-center justify-between border-b border-white/5 pb-4">
           <div>
             <h2 className="text-2xl font-bold uppercase tracking-tighter flex items-center gap-2 text-white">
-              <Settings className="text-primary w-6 h-6" /> {translate("settings.title", "Account & {translate("settings.app_prefs", "App Preferences")}")}
+              <Settings className="text-primary w-6 h-6" /> {translate("settings.title", "Account & App Preferences")}
             </h2>
             <p className="text-[10px] text-white/40 uppercase font-bold tracking-widest mt-1">
               {translate("settings.subtitle", "Configure your account settings, privacy gates, and app preferences.")}
@@ -115,7 +115,7 @@ export default function SettingsPage() {
                     : "bg-white/5 text-white/40 border border-white/10 hover:bg-white/10"
                 }`}
               >
-                {currentUserProfile?.face_blur_active ? "{translate("settings.blur_enabled", "Blur: Enabled")}" : "{translate("settings.blur_disabled", "Blur: Disabled")}"}
+                {currentUserProfile?.face_blur_active ? translate("settings.blur_enabled", "Blur: Enabled") : translate("settings.blur_disabled", "Blur: Disabled")}
               </button>
             </div>
           </div>
