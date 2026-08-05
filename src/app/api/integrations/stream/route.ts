@@ -3,15 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin-client';
 
 export async function POST(request: Request) {
-  let supabase = await createClient();
-  const devUserId = request.headers.get('x-dev-user-id');
-  if (process.env.NODE_ENV === 'development' && devUserId) {
-    try {
-      supabase = createAdminClient();
-    } catch (e) {
-      console.warn('Could not create admin client for testing:', e);
-    }
-  }
+  const supabase = await createClient();
 
   try {
     const { userId, action, creatorId } = await request.json();
@@ -21,16 +13,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'creatorId or userId is required' }, { status: 400 });
     }
 
-    // Auth Check
-    let user;
-    const devUserId = request.headers.get('x-dev-user-id');
-    if (process.env.NODE_ENV === 'development' && devUserId) {
-      user = { id: devUserId };
-    } else {
-      const { data: { user: authUser }, error: authError } = await supabase.auth.getUser();
-      if (!authError && authUser) {
-        user = authUser;
-      }
+    // Auth Check via Supabase auth server
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     if (!user) {
@@ -101,28 +87,11 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'creatorId is required' }, { status: 400 });
   }
 
-  let supabase = await createClient();
-  const devUserId = request.headers.get('x-dev-user-id');
-  if (process.env.NODE_ENV === 'development' && devUserId) {
-    try {
-      supabase = createAdminClient();
-    } catch (e) {
-      console.warn('Could not create admin client for testing:', e);
-    }
-  }
+  const supabase = await createClient();
 
   try {
-    // 1. Fetch current user session
-    let user;
-    const devUserId = request.headers.get('x-dev-user-id');
-    if (process.env.NODE_ENV === 'development' && devUserId) {
-      user = { id: devUserId };
-    } else {
-      const { data: { user: authUser }, error: authError } = await supabase.auth.getUser();
-      if (!authError && authUser) {
-        user = authUser;
-      }
-    }
+    // 1. Fetch current user session via Supabase auth server
+    const { data: { user } } = await supabase.auth.getUser();
     const isAuthorized = !!user;
 
     // 2. Fetch live stream details

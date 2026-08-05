@@ -25,11 +25,11 @@ export default function SafetyWarning({ className = '' }: SafetyWarningProps) {
       </div>
 
       {isOpen && (
-        <div className="absolute top-full left-0 mt-2 w-72 p-4 bg-black/95 backdrop-blur-2xl border border-red-500/30 rounded-2xl shadow-[0_20px_40px_rgba(0,0,0,0.8)] z-50 text-left">
+        <div className="absolute bottom-full left-0 mb-3 w-80 max-w-[90vw] p-4 bg-black/95 backdrop-blur-2xl border border-red-500/40 rounded-2xl shadow-[0_-10px_30px_rgba(220,20,60,0.3)] z-[120] text-left">
           <h3 className="text-[11px] font-black text-red-500 uppercase tracking-[0.2em] mb-1.5 flex items-center gap-1.5">
             <ShieldAlert className="w-4 h-4" /> Safety Alert: Content Restriction
           </h3>
-          <p className="text-[9px] text-white/70 uppercase font-bold leading-relaxed tracking-wider">
+          <p className="text-[9px] text-white/80 uppercase font-bold leading-relaxed tracking-wider">
             Explicit adult content is strictly restricted in public spaces (Avatar, Profile Photos, Bio, Public Posts). 
             Such content must be exclusively uploaded to <span className="text-primary font-black">VIP</span> or <span className="text-[#dc143c] font-black">Master</span> vaults. 
             Violations result in automatic blurring or account suspension.

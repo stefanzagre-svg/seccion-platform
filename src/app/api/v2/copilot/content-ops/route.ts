@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
 import { GoogleGenAI } from '@google/genai';
+import { createAdminClient } from '@/lib/supabase/admin-client';
+import { createClient as createServerClient } from '@/lib/supabase/server';
 
 /**
  * Sandbox / Development convenience:
@@ -24,12 +25,10 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const supabaseUrl        = process.env.NEXT_PUBLIC_SUPABASE_URL       || '';
-    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY      || '';
-    const supabaseAnonKey    = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY  || '';
-    const sandboxMode        = IS_DEV && !supabaseServiceKey;
+    const hasServiceKey = !!process.env.SUPABASE_SERVICE_ROLE_KEY;
+    const sandboxMode = IS_DEV && !hasServiceKey;
 
-    const supabase = createClient(supabaseUrl, supabaseServiceKey || supabaseAnonKey);
+    const supabase: any = hasServiceKey ? createAdminClient() : await createServerClient();
 
     // ── 1. Fetch Creator Profile ─────────────────────────────────────────────
     const { data: creatorProfile, error: profileError } = await supabase
@@ -121,7 +120,7 @@ Generate a short, punchy marketing caption and a 3-step video recording prompt f
         is_ai_generated: true,
         resolved_level_key: 'n/a',
       })
-      .then(({ error }) => {
+      .then(({ error }: { error: any }) => {
         if (error) console.warn('[Content Ops] Interaction log insert failed (non-fatal):', error.message);
       });
 

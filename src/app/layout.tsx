@@ -9,6 +9,8 @@ import ServiceWorkerRegister from "@/components/pwa/ServiceWorkerRegister";
 import InAppBrowserDetector from "@/components/pwa/InAppBrowserDetector";
 import PWAInstallPrompt from "@/components/pwa/PWAInstallPrompt";
 import JsonLdSchema from "@/components/JsonLdSchema";
+import CookieConsentBanner from "@/components/CookieConsentBanner";
+import EmailVerificationGuard from "@/components/auth/EmailVerificationGuard";
 import { cookies } from "next/headers";
 import { LanguageProvider, SupportedLocale } from "@/context/LanguageContext";
 import en from "@/locales/en.json";
@@ -38,7 +40,7 @@ export async function generateMetadata(): Promise<Metadata> {
     "name": "SECCION",
     "alternateName": ["Seccion", "seccion.ai"],
     "url": "https://seccion.ai",
-    "logo": "https://seccion.ai/assets/logo/seccion-wordmark-light.png",
+    "logo": "https://seccion.ai/assets/logo/logo-wordmark.png",
     "description": "SECCION is the first fusion platform combining AI-driven dating matchmaking with live streaming content creators. Creators keep 90% of revenue with built-in DRM protection and AI operations assistant.",
     "foundingDate": "2025",
     "areaServed": ["CO", "ES", "US"],
@@ -81,9 +83,13 @@ export async function generateMetadata(): Promise<Metadata> {
       canonical: "https://seccion.ai",
     },
     icons: {
-      icon: "/icon.jpg",
-      shortcut: "/icon.jpg",
-      apple: "/assets/logo/app-icon.jpg",
+      icon: [
+        { url: '/favicon.ico', sizes: 'any' },
+        { url: '/favicon.png', type: 'image/png' },
+        { url: '/icon.png', type: 'image/png' },
+      ],
+      shortcut: '/favicon.ico',
+      apple: '/apple-touch-icon.png',
     },
     appleWebApp: {
       capable: true,
@@ -100,7 +106,7 @@ export async function generateMetadata(): Promise<Metadata> {
       siteName: "SECCION",
       images: [
         {
-          url: "/assets/logo/seccion-wordmark-light.png",
+          url: "/assets/logo/logo-wordmark.png",
           width: 766,
           height: 191,
           alt: "SECCION Logo",
@@ -113,7 +119,7 @@ export async function generateMetadata(): Promise<Metadata> {
       card: "summary_large_image",
       title: dict.metadata.defaultTitle,
       description: dict.metadata.description,
-      images: ["/assets/logo/seccion-wordmark-light.png"],
+      images: ["/assets/logo/logo-wordmark.png"],
     },
     // JSON-LD structured data injected via metadata 'other' — works in RSC streaming
     other: {
@@ -155,7 +161,9 @@ export default async function RootLayout({
           <AmbientBackground />
           <Navbar />
           <div className="relative z-10 flex-1 flex flex-col">
-            {children}
+            <EmailVerificationGuard>
+              {children}
+            </EmailVerificationGuard>
           </div>
           {/* SECCION Agent for public/unauthenticated pages */}
           <SeccionAgentBubble />
@@ -163,6 +171,7 @@ export default async function RootLayout({
           <AIWingmanBubble />
           {/* JSON-LD Structured Data — rendered in body for RSC/Cloudflare Workers compatibility */}
           <JsonLdSchema />
+          <CookieConsentBanner />
         </LanguageProvider>
       </body>
     </html>

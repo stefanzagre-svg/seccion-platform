@@ -5,17 +5,10 @@ export async function POST(req: NextRequest) {
   try {
     const supabase = await createClient();
 
-    // 1. Get user session
-    let user;
-    const devUserId = req.headers.get('x-dev-user-id');
-    if (process.env.NODE_ENV === 'development' && devUserId) {
-      user = { id: devUserId };
-    } else {
-      const { data: { user: authUser }, error: authError } = await supabase.auth.getUser();
-      if (authError || !authUser) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-      }
-      user = authUser;
+    // 1. Get user session strictly via Supabase auth server
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const { externalCreatorLink } = await req.json();

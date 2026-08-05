@@ -8,13 +8,16 @@ import {
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
-import { fetchSwipeableProfiles, recordInteraction, fetchProfileMedia, type ProfileMedia } from '@/lib/relationship-db';
+import { fetchSwipeableProfiles, recordInteraction, fetchProfileMedia, checkPublicPhotoRequirement, type ProfileMedia } from '@/lib/relationship-db';
 import { calculateMatch, type UserProfile, type MatchResult, calculateMockDistance } from '@/lib/match-engine';
 import { ARCHETYPE_PROFILES, type ArchetypeId } from '@/lib/constants';
+import dynamic from 'next/dynamic';
 import SuggestionMovesModal from './SuggestionMovesModal';
 import BlurredFaceImage from '@/components/BlurredFaceImage';
 import ReportModal from '@/components/modals/ReportModal';
-import { useLanguage } from '@/context/LanguageContext';
+import { useTranslation } from '@/context/LanguageContext';
+
+const MatchParticleCanvas = dynamic(() => import('@/components/MatchParticleCanvas'), { ssr: false });
 
 
 
@@ -229,104 +232,16 @@ const getFieldRequiredLevel = (candidate: any, field: string): string => {
 
 
 
-// Particle class for Match Reveal Canvas
-class RevealParticle {
-  x: number;
-  y: number;
-  vx: number;
-  vy: number;
-  alpha: number;
-  size: number;
-  color: string;
-  angle: number;
-  radius: number;
-  speed: number;
-  type: 'spark' | 'star';
-  life: number;
-  maxLife: number;
 
-  constructor(cx: number, cy: number, type: 'spark' | 'star') {
-    this.type = type;
-    this.life = 0;
-    this.maxLife = Math.random() * 80 + 40;
-    
-    if (type === 'spark') {
-      // Explode outwards from center
-      this.x = cx;
-      this.y = cy;
-      const angle = Math.random() * Math.PI * 2;
-      const velocity = Math.random() * 8 + 4;
-      this.vx = Math.cos(angle) * velocity;
-      this.vy = Math.sin(angle) * velocity;
-      this.size = Math.random() * 3 + 2;
-      this.alpha = 1;
-      const colors = ['#ff007f', '#8a2be2', '#00f0ff', '#ffabf3'];
-      this.color = colors[Math.floor(Math.random() * colors.length)];
-      this.radius = 0;
-      this.angle = 0;
-      this.speed = 0;
-    } else {
-      // Swirling background stars
-      this.angle = Math.random() * Math.PI * 2;
-      this.radius = Math.random() * 300 + 50;
-      this.speed = (Math.random() * 0.005 + 0.002) * (Math.random() > 0.5 ? 1 : -1);
-      this.x = cx + Math.cos(this.angle) * this.radius;
-      this.y = cy + Math.sin(this.angle) * this.radius;
-      this.vx = 0;
-      this.vy = 0;
-      this.size = Math.random() * 2 + 1;
-      this.alpha = Math.random() * 0.6 + 0.2;
-      this.color = '#ffffff';
-    }
-  }
 
-  update(cx: number, cy: number, cursor: { x: number; y: number } | null) {
-    if (this.type === 'spark') {
-      this.x += this.vx;
-      this.y += this.vy;
-      this.vx *= 0.96; // drag
-      this.vy *= 0.96;
-      this.vy += 0.08; // gravity
-      this.alpha = Math.max(1 - (this.life / this.maxLife), 0);
-      this.life++;
-    } else {
-      // Swing in orbit
-      this.angle += this.speed;
-      
-      // Pull slightly toward cursor if active
-      if (cursor) {
-        const dx = cursor.x - this.x;
-        const dy = cursor.y - this.y;
-        const dist = Math.sqrt(dx * dx + dy * dy);
-        if (dist < 180) {
-          this.x += (dx / dist) * 0.8;
-          this.y += (dy / dist) * 0.8;
-        }
-      }
+import { FilterState } from '@/components/matchmaking/FilterSidebar';
 
-      // Keep orbiting relative to center
-      const targetX = cx + Math.cos(this.angle) * this.radius;
-      const targetY = cy + Math.sin(this.angle) * this.radius;
-      this.x += (targetX - this.x) * 0.05;
-      this.y += (targetY - this.y) * 0.05;
-    }
-  }
-
-  draw(ctx: CanvasRenderingContext2D) {
-    ctx.save();
-    ctx.globalAlpha = this.alpha;
-    ctx.fillStyle = this.color;
-    ctx.shadowBlur = this.type === 'spark' ? 10 : 2;
-    ctx.shadowColor = this.color;
-    ctx.beginPath();
-    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.restore();
-  }
+interface MatchSwiperProps {
+  filters?: FilterState;
 }
 
-export default function MatchSwiper() {
-  const { translate } = useLanguage();
+export default function MatchSwiper({ filters }: MatchSwiperProps) {
+  const { t } = useTranslation();
   const router = useRouter();
 
   const stopPropagationRef = useCallback((el: HTMLElement | null) => {
@@ -340,6 +255,7 @@ export default function MatchSwiper() {
   const [currentUserProfile, setCurrentUserProfile] = useState<UserProfile>(DEFAULT_USER_PROFILE);
   const [cards, setCards] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [hasMetPhotoReq, setHasMetPhotoReq] = useState<boolean | null>(null);
   const [gaugeLevel, setGaugeLevel] = useState(1); // 1 = Gray, 8 = Crimson
   const [showInteraction, setShowInteraction] = useState<'heart' | 'broken_heart' | null>(null);
   
@@ -384,11 +300,6 @@ export default function MatchSwiper() {
     });
   };
 
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const particlesRef = useRef<RevealParticle[]>([]);
-  const cursorRef = useRef<{ x: number; y: number } | null>(null);
-  const animationFrameId = useRef<number | null>(null);
-
   // Drag variables for the top card
   const x = useMotionValue(0);
   const rotate = useTransform(x, [-200, 200], [-10, 10]);
@@ -423,6 +334,10 @@ export default function MatchSwiper() {
         if (subs) {
           setActiveSubscriptions(subs);
         }
+
+        // Check public photo requirement
+        const metReq = await checkPublicPhotoRequirement(session.user.id);
+        setHasMetPhotoReq(metReq);
       } else {
         setLoading(false);
       }
@@ -437,12 +352,41 @@ export default function MatchSwiper() {
     const loadProfiles = async () => {
       setLoading(true);
       const profiles = await fetchSwipeableProfiles(currentUser.id);
-      setCards(profiles);
+      
+      let filtered = profiles;
+
+      if (filters) {
+        if (filters.location && filters.location !== 'Global') {
+          filtered = filtered.filter(p => 
+            p.current_location === filters.location || 
+            p.native_town === filters.location || 
+            p.residence === filters.location
+          );
+        }
+        
+        if (filters.specialty && filters.specialty !== 'All') {
+           filtered = filtered.filter(p => p.hobbies?.includes(filters.specialty));
+        }
+
+        if (filters.relationshipType && filters.relationshipType !== 'Any') {
+           filtered = filtered.filter(p => p.relationship_goals?.includes(filters.relationshipType));
+        }
+
+        if (filters.minVibeScore > 0) {
+           filtered = filtered.filter(p => {
+             const engineProfile = mapDbProfileToEngine(p);
+             const matchRes = calculateMatch(currentUserProfile, engineProfile);
+             return matchRes.totalScore >= filters.minVibeScore;
+           });
+        }
+      }
+
+      setCards(filtered);
       setLoading(false);
     };
 
     loadProfiles();
-  }, [currentUser]);
+  }, [currentUser, filters]);
 
   // Load media album for all swiper cards
   useEffect(() => {
@@ -473,87 +417,7 @@ export default function MatchSwiper() {
     loadMediaForCards();
   }, [cards]);
 
-  // Canvas particle loops for match overlay
-  useEffect(() => {
-    if (!matchData) {
-      if (animationFrameId.current) cancelAnimationFrame(animationFrameId.current);
-      particlesRef.current = [];
-      return;
-    }
 
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    const resize = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-    };
-    resize();
-    window.addEventListener('resize', resize);
-
-    const cx = canvas.width / 2;
-    const cy = canvas.height / 2;
-
-    // Seed background stars
-    for (let i = 0; i < 70; i++) {
-      particlesRef.current.push(new RevealParticle(cx, cy, 'star'));
-    }
-    // Seed explosion sparks
-    for (let i = 0; i < 90; i++) {
-      particlesRef.current.push(new RevealParticle(cx, cy, 'spark'));
-    }
-
-    const renderLoop = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      const particles = particlesRef.current;
-      const cursor = cursorRef.current;
-
-      // Draw constellation grid lines first
-      const stars = particles.filter(p => p.type === 'star');
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
-      ctx.lineWidth = 0.5;
-      for (let i = 0; i < stars.length; i++) {
-        for (let j = i + 1; j < stars.length; j++) {
-          const dx = stars[i].x - stars[j].x;
-          const dy = stars[i].y - stars[j].y;
-          const dist = Math.sqrt(dx * dx + dy * dy);
-          if (dist < 85) {
-            ctx.beginPath();
-            ctx.moveTo(stars[i].x, stars[i].y);
-            ctx.lineTo(stars[j].x, stars[j].y);
-            ctx.stroke();
-          }
-        }
-      }
-
-      // Update and draw all particles
-      for (let i = particles.length - 1; i >= 0; i--) {
-        const p = particles[i];
-        p.update(cx, cy, cursor);
-        p.draw(ctx);
-        
-        // Remove dead sparks
-        if (p.type === 'spark' && p.life >= p.maxLife) {
-          particles.splice(i, 1);
-        }
-      }
-
-      // Slowly spawn occasional sparkling trails
-      if (Math.random() < 0.15) {
-        particles.push(new RevealParticle(cx, cy, 'spark'));
-      }
-
-      animationFrameId.current = requestAnimationFrame(renderLoop);
-    };
-    renderLoop();
-
-    return () => {
-      window.removeEventListener('resize', resize);
-      if (animationFrameId.current) cancelAnimationFrame(animationFrameId.current);
-    };
-  }, [matchData]);
 
   const handleDragEnd = (event: any, info: any) => {
     if (info.offset.x > 100) {
@@ -565,6 +429,15 @@ export default function MatchSwiper() {
 
   const handleSwipe = async (direction: 'left' | 'right') => {
     if (cards.length === 0 || !currentUser) return;
+
+    // Mobile haptic vibration feedback
+    if (typeof window !== 'undefined' && 'vibrate' in navigator) {
+      try {
+        navigator.vibrate(direction === 'right' ? [20, 50, 20] : 15);
+      } catch (e) {
+        // Ignore haptics on unsupported devices
+      }
+    }
 
     const topCard = cards[0];
     const interactionType = direction === 'right' ? 'heart' : 'broken_heart';
@@ -643,9 +516,24 @@ export default function MatchSwiper() {
     }
   };
 
-  const handleMouseMove = (e: React.MouseEvent) => {
-    cursorRef.current = { x: e.clientX, y: e.clientY };
-  };
+  if (hasMetPhotoReq === false) {
+    return (
+      <div className="relative w-full max-w-sm h-[calc(100vh-210px)] md:h-[650px] max-h-[680px] min-h-[400px] md:min-h-[480px] flex flex-col items-center justify-center mx-auto bg-black/40 border border-white/10 rounded-3xl backdrop-blur-md p-6 text-center">
+        <Lock className="w-12 h-12 text-[#dc143c] mb-4" />
+        <h2 className="text-xl font-black text-white uppercase tracking-wider mb-2">Swipe Deck Locked</h2>
+        <p className="text-sm text-white/60 mb-6">You need at least 2 public photos in your album to unlock matchmaking. This ensures our community remains active and genuine.</p>
+        <button
+          onClick={() => {
+            const role = (currentUserProfile as any)?.role === 'creator' ? 'creator' : 'member';
+            router.push(`/profile/${role}?tab=album`);
+          }}
+          className="px-6 py-3 bg-[#dc143c] text-white font-bold uppercase tracking-wider text-xs rounded-full shadow-[0_0_15px_rgba(220,20,60,0.4)] hover:bg-[#ff1a4a] transition-colors cursor-pointer"
+        >
+          Upload Photos
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="relative w-full max-w-sm h-[calc(100vh-210px)] md:h-[650px] max-h-[680px] min-h-[400px] md:min-h-[480px] flex flex-col items-center justify-between mx-auto">
@@ -769,8 +657,8 @@ export default function MatchSwiper() {
                           faceCoordinates={activeMedia?.face_coordinates || card.avatar_face_coordinates}
                           className="w-full h-full"
                         >
-                          <video 
-                            src={activeMedia.media_url} 
+                            <video 
+                              src={activeMedia.video_start_time != null && activeMedia.video_end_time != null ? `${activeMedia.media_url}#t=${activeMedia.video_start_time},${activeMedia.video_end_time}` : activeMedia.media_url} 
                             className={`w-full h-full object-cover pointer-events-none transition-all duration-500 ${isCurrentlyLocked ? 'blur-[30px] scale-110' : ''}`} 
                             autoPlay 
                             loop 
@@ -1178,8 +1066,8 @@ export default function MatchSwiper() {
           ) : (
             <div className="flex flex-col items-center justify-center text-muted-foreground h-full text-center p-6">
               <Sparkles className="w-12 h-12 mb-4 opacity-50 text-primary" />
-              <p className="font-bold text-white mb-2">{translate('matchSwiper.noMoreProfilesTitle', 'No more profiles nearby')}</p>
-              <p className="text-xs text-white/60">{translate('matchSwiper.noMoreProfilesDesc', 'Come back later or adjust your preference.')}</p>
+              <p className="font-bold text-white mb-2">{t('matchSwiper.noMoreProfilesTitle', 'No more profiles nearby')}</p>
+              <p className="text-xs text-white/60">{t('matchSwiper.noMoreProfilesDesc', 'Come back later or adjust your preference.')}</p>
             </div>
           )}
         </AnimatePresence>
@@ -1270,7 +1158,6 @@ export default function MatchSwiper() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              onMouseMove={handleMouseMove}
               className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/95 p-6 backdrop-blur-md overflow-hidden"
             >
               {/* Laser button border trace style definition */}
@@ -1294,7 +1181,7 @@ export default function MatchSwiper() {
               `}} />
 
               {/* constellation backdrop canvas */}
-              <canvas ref={canvasRef} className="absolute inset-0 z-0 pointer-events-none" />
+              <MatchParticleCanvas isActive={!!matchData} />
 
               {/* Concentric Expanding Shockwave Rings */}
               <div className="absolute inset-0 z-0 flex items-center justify-center pointer-events-none">
@@ -1323,11 +1210,11 @@ export default function MatchSwiper() {
               >
                 <div className="flex gap-2 items-center text-glow-accent mb-4 text-xs font-black uppercase tracking-widest text-[#ff007f] animate-pulse">
                   <Sparkles className="w-4.5 h-4.5" />
-                  {translate('matchSwiper.connectionDecrypted', 'Connection Decrypted')}
+                  {t('matchSwiper.connectionDecrypted', 'Connection Decrypted')}
                 </div>
                 
                 <h1 className="text-5xl font-black text-glow tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-white via-primary to-accent mb-10 uppercase">
-                  {translate('matchSwiper.connectionTitle', "IT'S A CONNECTION!")}
+                  {t('matchSwiper.connectionTitle', "IT'S A CONNECTION!")}
                 </h1>
 
                 {/* 3D Flip Profile Cards */}
@@ -1432,13 +1319,13 @@ export default function MatchSwiper() {
                     }}
                     className="laser-btn w-full py-4 rounded-3xl bg-primary text-primary-foreground font-black text-xs tracking-[0.2em] uppercase shadow-[0_15px_30px_rgba(255,0,127,0.3)] hover:brightness-115 active:scale-95 transition relative overflow-hidden"
                   >
-                    {translate('matchSwiper.sendMsgBtn', 'Send a Message')}
+                    {t('matchSwiper.sendMsgBtn', 'Send a Message')}
                   </button>
                   <button
                     onClick={() => setMatchData(null)}
                     className="w-full py-4 rounded-3xl bg-white/5 border border-white/10 text-white/50 font-black text-[10px] tracking-widest uppercase hover:bg-white/10 active:scale-95 transition"
                   >
-                    {translate('matchSwiper.keepExploringBtn', 'Keep Exploring')}
+                    {t('matchSwiper.keepExploringBtn', 'Keep Exploring')}
                   </button>
                 </div>
 

@@ -1,4 +1,4 @@
-import { createClient as createSupabaseClient } from '@supabase/supabase-js';
+import { createAdminClient } from './supabase/admin-client';
 import { supabase } from './supabase';
 import { applyInteractionEvent, scoreToLevel, POINT_VALUES } from './relationship-engine';
 
@@ -31,12 +31,9 @@ export interface DatePlanInsertPayload {
 
 /**
  * Instantiates a privileged Supabase client that uses the SERVICE_ROLE_KEY to bypass RLS.
- * Falls back to the public anon key if the service role key is not configured in local environment.
  */
 export function getPrivilegedClient() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
-  return createSupabaseClient(url, serviceKey || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '');
+  return createAdminClient();
 }
 
 /**

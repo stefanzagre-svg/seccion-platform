@@ -15,6 +15,7 @@ interface SuggestionMovesModalProps {
   userRole?: 'member' | 'creator';
   onSelectMove: (moveId: string, label: string) => Promise<void>;
   onKycSuccess?: () => void;
+  activePurposes?: string[];
 }
 
 export default function SuggestionMovesModal({ 
@@ -25,7 +26,8 @@ export default function SuggestionMovesModal({
   userId,
   userRole = 'member',
   onSelectMove,
-  onKycSuccess
+  onKycSuccess,
+  activePurposes = []
 }: SuggestionMovesModalProps) {
   const [sessionKycVerified, setSessionKycVerified] = useState(false);
   const [skippedKyc, setSkippedKyc] = useState(false);
@@ -45,7 +47,15 @@ export default function SuggestionMovesModal({
 
   // Resolve the level object (get all moves regardless of KYC state for locked preview display)
   const levelObj = RELATIONSHIP_LEVELS[Math.min(8, Math.max(1, gaugeLevel)) - 1];
-  const availableMoves = levelObj ? getAvailableMoves(levelObj, true) : [];
+  let availableMoves = levelObj ? getAvailableMoves(levelObj, true) : [];
+
+  if (activePurposes.length > 0) {
+    availableMoves = availableMoves.filter(m => {
+      const pCats = m.purposeCategory || ['all'];
+      if (pCats.includes('all')) return true;
+      return pCats.some(cat => activePurposes.includes(cat));
+    });
+  }
 
   const DIGITAL_MOVE_IDS = [
     'follow', 'poke', 'punch', 'reaction', 'compliment',
@@ -136,14 +146,22 @@ export default function SuggestionMovesModal({
 
     setIsSigningAgreement(true);
     setSignLog('Initializing secure SnapSign tunnel...');
-    await new Promise(r => setTimeout(r, 800));
+    await new Promise(r => setTimeout(r, 600));
     setSignLog('Cryptographically binding signature (SHA-256)...');
-    await new Promise(r => setTimeout(r, 800));
+
+    // M5 FIX: Generate real SHA-256 Web Crypto hash bound to user signature & timestamp
+    const payload = `${signatureName.trim()}:${snapSignStep.moveId}:${Date.now()}:${crypto.randomUUID()}`;
+    const encoder = new TextEncoder();
+    const hashBuffer = await crypto.subtle.digest('SHA-256', encoder.encode(payload));
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    const consentHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('').substring(0, 16).toUpperCase();
+
+    await new Promise(r => setTimeout(r, 600));
     setSignLog('Storing sealed consent ledger in compliance node...');
-    await new Promise(r => setTimeout(r, 800));
-    
+    await new Promise(r => setTimeout(r, 600));
+
     setSignSuccess(true);
-    setSignLog('✓ Agreement signed! Consent Hash: ' + Math.random().toString(16).substring(2, 10).toUpperCase());
+    setSignLog(`✓ Agreement signed! Consent Hash: ${consentHash}`);
     await new Promise(r => setTimeout(r, 1000));
     setIsSigningAgreement(false);
 

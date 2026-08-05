@@ -4,8 +4,10 @@ import React, { useState, useEffect, useRef } from "react";
 import LandingPageHook from "@/components/onboarding/LandingPageHook";
 import RegistrationGate from "@/components/onboarding/RegistrationGate";
 import IntentSelector from "@/components/onboarding/IntentSelector";
+import AgeGateSplash from "@/components/onboarding/AgeGateSplash";
 import ArchetypeSelector from "@/components/ArchetypeSelector";
 import ProfileProgressRing from "@/components/onboarding/ProfileProgressRing";
+import PurposeSelector from "@/components/onboarding/PurposeSelector";
 import CompletionChecklist, {
   ChecklistItem,
 } from "@/components/onboarding/CompletionChecklist";
@@ -13,12 +15,16 @@ import FoundersWelcome from "@/components/onboarding/FoundersWelcome";
 import { useTranslation } from "@/context/LanguageContext";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/lib/supabase";
+import { getResilientSession, getResilientProfile, safeSupabaseQuery } from "@/lib/supabase-safe";
 import {
   SEXUAL_ORIENTATIONS,
   RELATIONSHIP_GOALS,
   RELATIONSHIP_TYPES,
   LANGUAGES,
+  PURPOSE_PROMPTS,
+  type MemberPurposeId
 } from "@/lib/constants";
+import ProfilePreviewModal from "@/components/ProfilePreviewModal";
 import {
   Camera,
   FileText,
@@ -31,12 +37,17 @@ import {
   ShieldCheck,
   Lock,
   Upload,
+  Info,
+  ArrowRight,
+  Eye,
+  X,
   Image as ImageIcon,
 } from "lucide-react";
 
 type OnboardingStep =
   | "value-proposition"
   | "registration"
+  | "purpose"
   | "intent"
   | "profile-checklist"
   | "welcome";
@@ -63,48 +74,7 @@ const MOCK_AVATARS = [
     url: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&q=80",
   },
 ];
-const INSIGHT_PROMPTS = {
-  chemistry: {
-    categoryName: "Chemistry & Connection",
-    prompts: [
-      "What is your dream first date?",
-      "What is your biggest green flag in a partner?",
-      "How do you show someone you care?"
-    ]
-  },
-  conflict: {
-    categoryName: "Vibes & Communication",
-    prompts: [
-      "When stressed, do you prefer space or talking it out?",
-      "What is a funny or annoying pet peeve of yours?",
-      "Do you resolve arguments immediately or cool down first?"
-    ]
-  },
-  investment: {
-    categoryName: "Lifestyle & Space",
-    prompts: [
-      "Cozy homebody or active explorer on weekends?",
-      "What is a thoughtful gesture you always appreciate?",
-      "How would you spend a perfect free day?"
-    ]
-  },
-  archetype: {
-    categoryName: "Passions & Vibe",
-    prompts: [
-      "What hobby could you talk about for hours?",
-      "What song or movie always boosts your mood?",
-      "What is a simple daily pleasure you love?"
-    ]
-  },
-  ethics: {
-    categoryName: "Growth & Values",
-    prompts: [
-      "What is a goal you're excited about right now?",
-      "What is an important relationship boundary for you?"
-    ]
-  }
-};
-
+// Removed INSIGHT_PROMPTS in favor of PURPOSE_PROMPTS from constants.ts
 
 export default function OnboardingFlow() {
   const { t } = useTranslation();
@@ -114,6 +84,8 @@ export default function OnboardingFlow() {
   const [intents, setIntents] = useState<string[]>([]);
   const [userId, setUserId] = useState<string | null>(null);
   const [displayAge, setDisplayAge] = useState<number | null>(null);
+  const [activePurposes, setActivePurposes] = useState<MemberPurposeId[]>([]);
+  const [isCreatorMode, setIsCreatorMode] = useState<boolean>(false);
 
   const handleRegistrationComplete = async () => {
     const isCreator = tutorialRole === "creator" || (typeof window !== "undefined" && !!sessionStorage.getItem("_onboarding_creator_archive_choice"));
@@ -165,11 +137,7 @@ export default function OnboardingFlow() {
         console.error("Failed to save tutorial archetype on signup:", err);
       }
     }
-    if (isCreator) {
-      setStep("welcome");
-    } else {
-      setStep("intent");
-    }
+    setStep("purpose");
   };
 
   // Active item in detail checklist panel
@@ -182,7 +150,7 @@ export default function OnboardingFlow() {
   const [displayName, setDisplayName] = useState("");
   const [username, setUsername] = useState("");
   const [bio, setBio] = useState("");
-  const [promptCategory, setPromptCategory] = useState<keyof typeof INSIGHT_PROMPTS>("chemistry");
+  const [promptCategory, setPromptCategory] = useState<string>("");
   const [promptQuestion, setPromptQuestion] = useState("");
   const [promptAnswer, setPromptAnswer] = useState("");
   const [promptStep, setPromptStep] = useState<1 | 2>(1);
@@ -195,6 +163,10 @@ export default function OnboardingFlow() {
   // Form submission status
   const [isSaving, setIsSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+
+  // Album photos state & Profile Preview modal
+  const [albumPhotos, setAlbumPhotos] = useState<string[]>([]);
+  const [showPreviewModal, setShowPreviewModal] = useState(false);
 
   // File Upload states & handler
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -214,6 +186,10 @@ export default function OnboardingFlow() {
 
     // 1. Convert to Data URL immediately for instant UI preview
     const reader = new FileReader();
+    reader.onerror = () => {
+      setFormError("Failed to read image file from device.");
+      setIsUploadingPhoto(false);
+    };
     reader.onload = async (event) => {
       const dataUrl = event.target?.result as string;
       if (dataUrl) {
@@ -228,14 +204,22 @@ export default function OnboardingFlow() {
         const fileName = `${userId || 'guest'}_${Date.now()}.${fileExt}`;
         const filePath = `avatars/${fileName}`;
 
-        const { data, error } = await supabase.storage
+        const uploadPromise = supabase.storage
           .from('avatars')
           .upload(filePath, file, {
             cacheControl: '3600',
             upsert: true
           });
+          
+        const timeoutPromise = new Promise<{data: any, error: any}>((_, reject) => 
+          setTimeout(() => reject(new Error("Upload timeout exceeded")), 12000)
+        );
 
-        if (!error && data) {
+        const { data, error } = await Promise.race([uploadPromise, timeoutPromise]);
+        
+        if (error) throw error;
+
+        if (data) {
           const { data: { publicUrl } } = supabase.storage
             .from('avatars')
             .getPublicUrl(filePath);
@@ -324,7 +308,7 @@ export default function OnboardingFlow() {
 
   // Checklist State
   const [checklist, setChecklist] = useState<ChecklistItem[]>([
-    { id: "photo", label: "Upload your best photo", completed: false },
+    { id: "photo", label: "Upload profile photo (Min. 2 for Matchmaking)", completed: false },
     { id: "bio", label: "Answer 2 Relational Prompts", completed: false },
     {
       id: "preferences",
@@ -347,16 +331,20 @@ export default function OnboardingFlow() {
     }
 
     async function checkSession() {
-      const { data: { session } } = await supabase.auth.getSession();
+      const params = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : new URLSearchParams();
+      const isFresh = params.get("fresh") === "true" || params.get("reset") === "true";
+
+      const session = await getResilientSession(4000);
       if (session?.user) {
         setUserId(session.user.id);
         
-        // Fetch existing profile to see if they completed step 1 details
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("*")
-          .eq("id", session.user.id)
-          .single();
+        if (isFresh) {
+          setStep("purpose");
+          return;
+        }
+
+        // Fetch existing profile with resilient fallback guard
+        const profile: any = await getResilientProfile(session.user.id, 4000);
           
         if (profile) {
           const hasPhoto = !!profile.avatar_url;
@@ -366,25 +354,45 @@ export default function OnboardingFlow() {
           if (hasPhoto && hasBio && hasPreferences) {
             setStep("welcome");
           } else {
-            // Check if they already set their age
+            const hasPurposes = Array.isArray(profile.member_purposes) && profile.member_purposes.length > 0;
             const hasAge = !!profile.privacy_settings?.display_age;
-            if (hasAge) {
-              setStep("profile-checklist");
-            } else {
+
+            if (!hasPurposes) {
+              setStep("purpose");
+            } else if (!hasAge) {
               setStep("intent");
+            } else {
+              setStep("profile-checklist");
             }
           }
         } else {
-          // Profile doesn't exist yet - provision one
-          await supabase
-            .from('profiles')
-            .upsert({
-              id: session.user.id,
-              username: (session.user.user_metadata?.username || session.user.email?.split('@')[0] || 'user_' + Math.floor(Math.random() * 10000)).toLowerCase(),
-              display_name: session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || 'User',
-              role: 'member'
-            });
-          setStep("intent");
+          if (params.get("bypass") === "true") {
+            setStep("purpose");
+            return;
+          }
+
+          // Provision missing profile with safety wrapper
+          await safeSupabaseQuery(
+            supabase
+              .from('profiles')
+              .upsert({
+                id: session.user.id,
+                username: (session.user.user_metadata?.username || session.user.email?.split('@')[0] || 'user_' + Math.floor(Math.random() * 10000)).toLowerCase(),
+                display_name: session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || 'User',
+                role: 'member'
+              }),
+            null,
+            4000
+          );
+          setStep("purpose");
+        }
+      } else {
+        const error = params.get("error");
+        if (error === "auth_callback_failed") {
+          setFormError("Your magic link was opened in a different browser window or has expired. Please log in with your password or request a new 6-digit passcode.");
+          setStep("registration");
+        } else if (params.get("bypass") === "true" || isFresh) {
+          setStep("purpose");
         }
       }
     }
@@ -525,7 +533,8 @@ export default function OnboardingFlow() {
             promptCategory,
             promptQuestion,
             promptAnswer: promptAnswer.trim(),
-            promptIndex: promptStep
+            promptIndex: promptStep,
+            activePurposes
           })
         });
 
@@ -561,10 +570,16 @@ export default function OnboardingFlow() {
 
       // Upsert/Update the profile row if payload is defined
       if (updatePayload) {
-        const { error } = await supabase
+        const updatePromise = supabase
           .from("profiles")
           .update(updatePayload)
           .eq("id", userId);
+          
+        const timeoutPromise = new Promise<{data: any, error: any}>((_, reject) => 
+          setTimeout(() => reject(new Error("Database update timeout exceeded")), 8000)
+        );
+        
+        const { error } = await Promise.race([updatePromise, timeoutPromise]);
 
         if (error) throw error;
       }
@@ -597,6 +612,7 @@ export default function OnboardingFlow() {
 
   return (
     <div className="min-h-screen bg-transparent text-white flex flex-col relative overflow-hidden">
+      <AgeGateSplash />
       {/* Subtle Cyber Grid Texture over global background */}
       <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
         <div
@@ -636,6 +652,33 @@ export default function OnboardingFlow() {
             />
           )}
 
+          {step === "purpose" && (
+            <motion.div
+              key="purpose"
+              className="w-full"
+              initial={{ opacity: 0, x: 50 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -50 }}
+            >
+              <PurposeSelector
+                onContinue={(purposes, isCreator) => {
+                  setActivePurposes(purposes);
+                  setIsCreatorMode(isCreator);
+                  
+                  // Initial prompt category based on first active purpose
+                  const availablePrompts = Object.entries(PURPOSE_PROMPTS)
+                    .filter(([p]) => purposes.includes(p as MemberPurposeId))
+                    .reduce((acc, [_, cats]) => ({ ...acc, ...cats }), {} as Record<string, any>);
+                  
+                  const firstCat = Object.keys(availablePrompts)[0] || "";
+                  setPromptCategory(firstCat);
+                  
+                  setStep("intent");
+                }}
+              />
+            </motion.div>
+          )}
+
           {step === "intent" && (
             <motion.div
               key="intent"
@@ -645,14 +688,29 @@ export default function OnboardingFlow() {
               exit={{ opacity: 0, x: -50 }}
             >
               <IntentSelector
+                activePurposes={activePurposes}
                 onContinue={async (selected, chosenAge, corePassion) => {
                   setIntents(selected);
                   setDisplayAge(chosenAge);
-                  if (userId) {
+                  let currentUserId = userId;
+                  if (!currentUserId) {
+                    const { data: { session } } = await supabase.auth.getSession();
+                    currentUserId = session?.user?.id || null;
+                  }
+                  if (!currentUserId && typeof window !== "undefined") {
+                    const stored = localStorage.getItem("fusion_onboarding_core");
+                    if (stored) {
+                      try {
+                        currentUserId = JSON.parse(stored).userId;
+                      } catch (e) {}
+                    }
+                  }
+                  if (currentUserId) {
+                    setUserId(currentUserId);
                     const { data } = await supabase
                       .from("profiles")
                       .select("privacy_settings")
-                      .eq("id", userId)
+                      .eq("id", currentUserId)
                       .single();
                     const settings = data?.privacy_settings || {};
                     await supabase
@@ -664,7 +722,7 @@ export default function OnboardingFlow() {
                           display_age: chosenAge,
                         },
                       })
-                      .eq("id", userId);
+                      .eq("id", currentUserId);
                   }
                   setStep("profile-checklist");
                 }}
@@ -682,12 +740,24 @@ export default function OnboardingFlow() {
               {/* Left Column: Progress & Checklist */}
               <div className="hidden md:block md:col-span-5 space-y-6">
                 <div className="text-left">
-                  <h2 className="text-3xl font-black tracking-tighter uppercase text-glow">
-                    {t("onboarding.main.buildIdentity", "Build Your Identity")}
-                  </h2>
-                  <p className="text-white/40 text-xs font-bold uppercase tracking-wider mt-1">
-                    {t("onboarding.main.setupProfile", "Set up your vibe profile.")}
-                  </p>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h2 className="text-3xl font-black tracking-tighter uppercase text-glow">
+                        {t("onboarding.main.buildIdentity", "Build Your Identity")}
+                      </h2>
+                      <p className="text-white/40 text-xs font-bold uppercase tracking-wider mt-1">
+                        {t("onboarding.main.setupProfile", "Set up your vibe profile.")}
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => setShowPreviewModal(true)}
+                      className="px-3.5 py-2 bg-[#00fbfb]/10 border border-[#00fbfb]/30 rounded-xl text-[#00fbfb] text-[10px] font-black uppercase tracking-wider hover:bg-[#00fbfb]/20 transition flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <Eye className="w-3.5 h-3.5" /> Preview Profile
+                    </button>
+                  </div>
                 </div>
 
                 <div className="glass-card p-6 rounded-3xl border border-white/5 bg-black/30 flex flex-col items-center">
@@ -769,7 +839,33 @@ export default function OnboardingFlow() {
                             </h3>
                           </div>
 
-                          {/* Hidden File Input */}
+                          {/* Requirement Callout */}
+                          <div className="p-3.5 rounded-2xl bg-[#00fbfb]/10 border border-[#00fbfb]/30 text-white text-xs flex items-start gap-3 text-left">
+                            <Info className="w-4 h-4 shrink-0 mt-0.5 text-[#00fbfb]" />
+                            <div className="space-y-0.5">
+                              <span className="font-extrabold text-[#00fbfb] uppercase text-[10px] tracking-wider block">
+                                Community Requirement: 2 Photos Minimum
+                              </span>
+                              <span className="text-white/80 text-[11px] leading-relaxed block">
+                                A minimum of <strong>2 public photos</strong> (1 primary avatar + 1 album photo) is required to unlock the Matchmaking deck. Set your primary photo below and add your 2nd photo anytime in your profile album.
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Main Avatar Explainer */}
+                          <div className="p-4 rounded-2xl bg-gradient-to-r from-primary/10 to-accent/5 border border-primary/30 text-white space-y-1.5 text-left">
+                            <div className="flex items-center gap-2">
+                              <Camera className="w-4 h-4 text-[#00fbfb]" />
+                              <span className="font-extrabold text-[#00fbfb] uppercase text-[11px] tracking-wider">
+                                1. Main Profile Avatar (Visible to Everyone)
+                              </span>
+                            </div>
+                            <p className="text-white/80 text-xs leading-relaxed">
+                              Your Main Avatar is your primary vibe card displayed across the community feed & match deck. <strong>Everyone on SECCION can see this photo as your front cover.</strong>
+                            </p>
+                          </div>
+
+                          {/* Hidden File Input for Avatar */}
                           <input
                             type="file"
                             ref={fileInputRef}
@@ -778,11 +874,8 @@ export default function OnboardingFlow() {
                             className="hidden"
                           />
 
-                          {/* Primary Action: Device / Computer File Upload */}
+                          {/* Avatar Upload Action */}
                           <div className="space-y-3">
-                            <label className="text-[9px] uppercase tracking-widest font-black text-white/50 block text-left">
-                              {t("onboarding.main.uploadOption1", "Option 1: Upload from Computer or Phone Folder")}
-                            </label>
                             <button
                               type="button"
                               onClick={() => fileInputRef.current?.click()}
@@ -797,13 +890,13 @@ export default function OnboardingFlow() {
                               ) : (
                                 <>
                                   <Upload className="w-5 h-5 text-[#00fbfb] group-hover:scale-110 transition-transform" />
-                                  <span>{t("onboarding.main.chooseFile", "Choose File from Computer / Folder")}</span>
+                                  <span>Upload Main Avatar Photo</span>
                                 </>
                               )}
                             </button>
                           </div>
 
-                          {/* Selected Photo Live Preview */}
+                          {/* Avatar Live Preview */}
                           {avatarUrl && (
                             <div className="p-3 bg-white/5 border border-[#00fbfb]/30 rounded-2xl flex items-center gap-4">
                               <div className="w-14 h-14 rounded-xl overflow-hidden border border-[#00fbfb]/60 relative shrink-0">
@@ -811,7 +904,7 @@ export default function OnboardingFlow() {
                               </div>
                               <div className="flex-1 text-left">
                                 <span className="text-xs font-black text-[#00fbfb] uppercase tracking-wider block">
-                                  Photo Ready
+                                  Main Avatar Ready
                                 </span>
                                 <span className="text-[10px] text-white/50 block truncate max-w-[220px]">
                                   {avatarUrl.startsWith("data:") ? "Image loaded from computer" : avatarUrl}
@@ -821,59 +914,102 @@ export default function OnboardingFlow() {
                             </div>
                           )}
 
-                          {/* Divider */}
-                          <div className="flex items-center gap-3 my-2">
-                            <div className="h-[1px] flex-1 bg-white/10" />
-                            <span className="text-[9px] font-mono uppercase tracking-widest text-white/30">{t("onboarding.main.option2", "OR CHOOSE PRESET / URL")}</span>
-                            <div className="h-[1px] flex-1 bg-white/10" />
-                          </div>
-
-                          <div className="grid grid-cols-4 gap-3">
-                            {MOCK_AVATARS.map((av) => (
-                              <button
-                                key={av.id}
-                                onClick={() => {
-                                  setAvatarUrl(av.url);
-                                  setLivenessVerified(false);
-                                  setLivenessStep(0);
-                                }}
-                                className={`relative aspect-square rounded-2xl overflow-hidden border-2 transition-all ${
-                                  avatarUrl === av.url
-                                    ? "border-primary scale-105 shadow-[0_0_15px_rgba(102,252,241,0.5)]"
-                                    : "border-white/10 hover:border-white/30"
-                                }`}
-                              >
-                                <img
-                                  src={av.url}
-                                  alt={av.name}
-                                  className="w-full h-full object-cover"
-                                />
-                                {avatarUrl === av.url && (
-                                  <div className="absolute inset-0 bg-primary/20 flex items-center justify-center">
-                                    <div className="bg-primary p-1 rounded-full text-black">
-                                      <Check className="w-3.5 h-3.5 stroke-[3]" />
+                          {/* Preset Avatar Selection */}
+                          <div className="space-y-2 text-left">
+                            <span className="text-[9px] font-mono uppercase tracking-widest text-white/40 block">Or Select Preset Avatar</span>
+                            <div className="grid grid-cols-4 gap-3">
+                              {MOCK_AVATARS.map((av) => (
+                                <button
+                                  key={av.id}
+                                  type="button"
+                                  onClick={() => {
+                                    setAvatarUrl(av.url);
+                                    setLivenessVerified(false);
+                                    setLivenessStep(0);
+                                  }}
+                                  className={`relative aspect-square rounded-2xl overflow-hidden border-2 transition-all ${
+                                    avatarUrl === av.url
+                                      ? "border-primary scale-105 shadow-[0_0_15px_rgba(102,252,241,0.5)]"
+                                      : "border-white/10 hover:border-white/30"
+                                  }`}
+                                >
+                                  <img src={av.url} alt={av.name} className="w-full h-full object-cover" />
+                                  {avatarUrl === av.url && (
+                                    <div className="absolute inset-0 bg-primary/20 flex items-center justify-center">
+                                      <div className="bg-primary p-1 rounded-full text-black">
+                                        <Check className="w-3.5 h-3.5 stroke-[3]" />
+                                      </div>
                                     </div>
-                                  </div>
-                                )}
-                              </button>
-                            ))}
+                                  )}
+                                </button>
+                              ))}
+                            </div>
                           </div>
 
-                          <div className="space-y-2">
-                            <label className="text-[9px] uppercase tracking-widest font-black text-white/40">
-                              Custom Photo URL
-                            </label>
-                            <input
-                              type="text"
-                              placeholder="https://images.unsplash.com/..."
-                              value={avatarUrl}
-                              onChange={(e) => {
-                                setAvatarUrl(e.target.value);
-                                setLivenessVerified(false);
-                                setLivenessStep(0);
-                              }}
-                              className="w-full px-4 py-3 bg-black/40 border border-white/10 rounded-xl text-xs text-white placeholder-white/20 focus:border-primary focus:outline-none transition"
-                            />
+                          {/* Section B: Public Photo Album */}
+                          <div className="pt-4 border-t border-white/10 space-y-4 text-left">
+                            <div className="p-4 rounded-2xl bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-500/30 text-white space-y-1.5">
+                              <div className="flex items-center gap-2">
+                                <ImageIcon className="w-4 h-4 text-purple-400" />
+                                <span className="font-extrabold text-purple-300 uppercase text-[11px] tracking-wider">
+                                  2. Public Photo Album (Visible to All Members)
+                                </span>
+                              </div>
+                              <p className="text-white/80 text-xs leading-relaxed">
+                                Your Public Album showcases your authentic lifestyle, passions, and world. <strong>Photos added here are visible to all SECCION members and unlock your full Matchmaking Feed (min. 2 total photos required: 1 main avatar + 1 album photo).</strong>
+                              </p>
+                            </div>
+
+                            {/* Album Photo Uploader */}
+                            <div className="space-y-3">
+                              <input
+                                type="file"
+                                id="album-file-input"
+                                accept="image/*"
+                                multiple
+                                onChange={(e) => {
+                                  const files = Array.from(e.target.files || []);
+                                  files.forEach((file) => {
+                                    const reader = new FileReader();
+                                    reader.onload = (event) => {
+                                      const res = event.target?.result as string;
+                                      if (res) {
+                                        setAlbumPhotos((prev) => [...prev, res]);
+                                      }
+                                    };
+                                    reader.readAsDataURL(file);
+                                  });
+                                }}
+                                className="hidden"
+                              />
+
+                              <button
+                                type="button"
+                                onClick={() => document.getElementById("album-file-input")?.click()}
+                                className="w-full py-3.5 px-5 bg-white/5 hover:bg-white/10 border border-purple-500/40 rounded-2xl text-xs font-bold text-purple-300 uppercase tracking-wider flex items-center justify-center gap-2 transition cursor-pointer"
+                              >
+                                <Upload className="w-4 h-4 text-purple-400" />
+                                Add Photos to Public Album
+                              </button>
+
+                              {/* Album Grid Previews */}
+                              {albumPhotos.length > 0 && (
+                                <div className="grid grid-cols-3 gap-2 pt-2">
+                                  {albumPhotos.map((photo, i) => (
+                                    <div key={i} className="relative aspect-square rounded-2xl overflow-hidden border border-white/20 group">
+                                      <img src={photo} alt={`Album Photo ${i+1}`} className="w-full h-full object-cover" />
+                                      <button
+                                        type="button"
+                                        onClick={() => setAlbumPhotos((prev) => prev.filter((_, idx) => idx !== i))}
+                                        className="absolute top-1.5 right-1.5 p-1 rounded-full bg-black/70 text-white/80 hover:text-white transition"
+                                      >
+                                        <X className="w-3.5 h-3.5" />
+                                      </button>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
                           </div>
 
                           {/* Biometric Liveness Panel */}
@@ -985,52 +1121,64 @@ export default function OnboardingFlow() {
                               {t("onboarding.main.selectCategory", "1. Pick Your Vibe Zone")}
                             </label>
                             <div className="flex flex-wrap gap-1">
-                              {Object.entries(INSIGHT_PROMPTS).map(([key, data]) => {
-                                const isActive = promptCategory === key;
-                                return (
-                                  <button
-                                    key={key}
-                                    type="button"
-                                    onClick={() => {
-                                      setPromptCategory(key as any);
-                                      setPromptQuestion("");
-                                    }}
-                                    className={`px-2.5 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest border transition ${
-                                      isActive
-                                        ? "bg-primary border-primary text-black"
-                                        : "bg-white/5 border-white/5 text-white/60 hover:bg-white/10"
-                                    }`}
-                                  >
-                                    {data.categoryName.split(" ")[0]}
-                                  </button>
-                                );
-                              })}
+                              {(() => {
+                                const availablePrompts = Object.entries(PURPOSE_PROMPTS)
+                                  .filter(([p]) => activePurposes.length === 0 || activePurposes.includes(p as MemberPurposeId))
+                                  .reduce((acc, [_, cats]) => ({ ...acc, ...cats }), {} as Record<string, any>);
+                                
+                                return Object.entries(availablePrompts).map(([key, data]) => {
+                                  const isActive = promptCategory === key;
+                                  return (
+                                    <button
+                                      key={key}
+                                      type="button"
+                                      onClick={() => {
+                                        setPromptCategory(key);
+                                        setPromptQuestion("");
+                                      }}
+                                      className={`px-2.5 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest border transition ${
+                                        isActive
+                                          ? "bg-primary border-primary text-black"
+                                          : "bg-white/5 border-white/5 text-white/60 hover:bg-white/10"
+                                      }`}
+                                    >
+                                      {data.categoryName.split(" ")[0]}
+                                    </button>
+                                  );
+                                });
+                              })()}
                             </div>
                           </div>
 
-                          {/* Question Selector List */}
                           <div className="space-y-1.5">
                             <label className="text-[9px] uppercase tracking-widest font-black text-white/40">
                               {t("onboarding.main.selectPrompt", "2. Choose Prompt Question")}
                             </label>
                             <div className="flex flex-col gap-1.5 max-h-[140px] overflow-y-auto pr-1 custom-scrollbar">
-                              {INSIGHT_PROMPTS[promptCategory].prompts.map((q) => {
-                                const isSelected = promptQuestion === q;
-                                return (
-                                  <button
-                                    key={q}
-                                    type="button"
-                                    onClick={() => setPromptQuestion(q)}
-                                    className={`p-2.5 rounded-xl border text-left text-[10px] leading-relaxed transition ${
-                                      isSelected
-                                        ? "bg-white/10 border-primary text-white font-bold"
-                                        : "bg-white/2 border-white/5 text-white/50 hover:bg-white/5 hover:border-white/10"
-                                    }`}
-                                  >
-                                    {q}
-                                  </button>
-                                );
-                              })}
+                              {(() => {
+                                const availablePrompts = Object.entries(PURPOSE_PROMPTS)
+                                  .filter(([p]) => activePurposes.length === 0 || activePurposes.includes(p as MemberPurposeId))
+                                  .reduce((acc, [_, cats]) => ({ ...acc, ...cats }), {} as Record<string, any>);
+                                
+                                const prompts = availablePrompts[promptCategory]?.prompts || [];
+                                return prompts.map((q: string) => {
+                                  const isSelected = promptQuestion === q;
+                                  return (
+                                    <button
+                                      key={q}
+                                      type="button"
+                                      onClick={() => setPromptQuestion(q)}
+                                      className={`p-2.5 rounded-xl border text-left text-[10px] leading-relaxed transition ${
+                                        isSelected
+                                          ? "bg-white/10 border-primary text-white font-bold"
+                                          : "bg-white/2 border-white/5 text-white/50 hover:bg-white/5 hover:border-white/10"
+                                      }`}
+                                    >
+                                      {q}
+                                    </button>
+                                  );
+                                });
+                              })()}
                             </div>
                           </div>
 
@@ -1093,19 +1241,31 @@ export default function OnboardingFlow() {
                         className="flex-1 flex flex-col justify-between h-full"
                       >
                         <ArchetypeSelector
+                          activePurposes={activePurposes}
                           onSelect={async (archetype, data) => {
                             if (!userId) return;
                             setIsSaving(true);
                             try {
-                              const updatePayload = {
+                              const isDating = activePurposes.includes("dating") || (activePurposes as string[]).includes("intimate") || activePurposes.includes("explicit");
+                              
+                              const updatePayload: any = {
                                 archetype: archetype,
                                 hobbies: data.hobbies,
                                 lifestyle_habits: data.lifestyle_habits,
-                                relationship_goals: data.relationship_goals,
                                 connection_points: 100,
-                                sexual_preference: "Everyone",
                                 favorite_languages: ["English"]
                               };
+
+                              if (isDating) {
+                                updatePayload.relationship_goals = data.relationship_goals;
+                                updatePayload.sexual_preference = "Everyone";
+                              } else {
+                                updatePayload.relationship_goals = null;
+                                updatePayload.sexual_preference = null;
+                                updatePayload.sexual_preferences = null;
+                                updatePayload.family_goals = null;
+                              }
+                              
                               const { error } = await supabase
                                 .from("profiles")
                                 .update(updatePayload)
@@ -1137,6 +1297,20 @@ export default function OnboardingFlow() {
           {step === "welcome" && <FoundersWelcome key="welcome" />}
         </AnimatePresence>
       </div>
+
+      {/* Profile Preview Modal */}
+      <ProfilePreviewModal
+        isOpen={showPreviewModal}
+        onClose={() => setShowPreviewModal(false)}
+        profile={{
+          avatar_url: avatarUrl,
+          bio_prompt_answer: completedPrompt1?.answer || promptAnswer,
+          bio_prompt_answer_2: completedPrompt1 ? promptAnswer : "",
+          bio_prompt_question: completedPrompt1?.question || promptQuestion,
+          bio_prompt_question_2: completedPrompt1 ? promptQuestion : "",
+          album_photos: albumPhotos,
+        }}
+      />
     </div>
   );
 }

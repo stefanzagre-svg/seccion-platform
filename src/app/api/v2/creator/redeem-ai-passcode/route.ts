@@ -1,10 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { createAdminClient } from "@/lib/supabase/admin-client";
 
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+const supabaseAdmin = createAdminClient();
 
 // Pre-approved 1-Year Free AI Assistant Passcodes
 const VALID_PASSCODES = [

@@ -25,7 +25,36 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    console.log(`[Segpay Cancel] Cancelling subscription ${targetSegpaySubId || 'creator_' + creatorId}`);
+    const maskedSubId = targetSegpaySubId ? `${targetSegpaySubId.slice(0, 4)}...${targetSegpaySubId.slice(-4)}` : 'unspecified';
+    console.log(`[Segpay Cancel] Processing cancellation request for target: ${maskedSubId}`);
+
+    // Call Segpay API to officially stop billing
+    const segpayMerchantId = process.env.SEGPAY_MERCHANT_ID;
+    
+    if (targetSegpaySubId && targetSegpaySubId !== 'demo' && targetSegpaySubId !== 'bypass' && segpayMerchantId && segpayMerchantId !== 'placeholder_merchant_id') {
+      console.log(`[Segpay Cancel] Calling Segpay API to cancel subscription target: ${maskedSubId}`);
+      try {
+        const segpayUrl = new URL('https://secure2.segpay.com/billing/poset.cgi');
+        segpayUrl.searchParams.append('action', 'cancel');
+        segpayUrl.searchParams.append('merchantid', segpayMerchantId);
+        segpayUrl.searchParams.append('purchaseid', targetSegpaySubId);
+
+        const segpayResponse = await fetch(segpayUrl.toString(), {
+          method: 'GET',
+          headers: {
+            'User-Agent': 'SECCION-Billing-Agent'
+          }
+        });
+
+        if (!segpayResponse.ok) {
+          console.error('[Segpay Cancel] Failed to cancel with Segpay API. Status:', segpayResponse.status);
+        } else {
+          console.log('[Segpay Cancel] Segpay API confirmed cancellation.');
+        }
+      } catch (segpayError) {
+        console.error('[Segpay Cancel] Error communicating with Segpay:', segpayError);
+      }
+    }
 
     // Update database status
     let updateQuery = supabase.from('subscriptions').update({

@@ -15,7 +15,7 @@ interface SessionQuestProps {
 }
 
 export default function SessionQuest({ onSignUp, onClose }: SessionQuestProps) {
-  const { t: translate, language: lang, setLanguage: setLang } = useTranslation();
+  const { t: translate, locale: lang, setLocale: setLang } = useTranslation();
   
   const t = {
     lobby_title: translate("sessionQuest.main.lobby_title", "Welcome to SECCION"),

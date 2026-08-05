@@ -11,18 +11,26 @@ import { UserProfile } from '@/lib/match-engine';
 import { GoogleGenAI } from '@google/genai';
 import { SYSTEM_INSTRUCTION, buildPredictionPrompt } from '@/lib/prompts/suggestion-prompt';
 
-// Rate Limit Store
-const requestLog = new Map<string, number[]>();
-const RATE_LIMIT = { window: 60_000, max: 20 }; // 20 req/min
-
-function isRateLimited(userId: string): boolean {
-  const now = Date.now();
-  const times = (requestLog.get(userId) ?? []).filter(
-    (t) => now - t < RATE_LIMIT.window
-  );
-  times.push(now);
-  requestLog.set(userId, times);
-  return times.length > RATE_LIMIT.max;
+// C4 FIX: Rate limiting is now handled by Supabase RPC (check_rate_limit)
+// The old in-memory Map was reset on every Cloudflare cold start → zero protection in production.
+// The RPC performs an atomic INSERT ... ON CONFLICT DO UPDATE in one DB round-trip.
+async function checkRateLimit(supabase: any, userId: string): Promise<boolean> {
+  try {
+    const { data, error } = await supabase.rpc('check_rate_limit', {
+      p_user_id:  userId,
+      p_endpoint: 'suggestions/predict',
+      p_max_hits: 20,
+      p_window_s: 60,
+    });
+    if (error) {
+      console.error('[RateLimit] RPC error, allowing request:', error.message);
+      return false; // fail-open: never block on infra errors
+    }
+    return !(data?.allowed ?? true);
+  } catch (err) {
+    console.error('[RateLimit] Unexpected error, allowing request:', err);
+    return false;
+  }
 }
 
 // Prompt Injection Guard
@@ -89,12 +97,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: 'Invalid user_id' }, { status: 400 });
   }
 
-  if (isRateLimited(body.user_id)) {
-    return NextResponse.json(
-      { error: 'Rate limit exceeded. Please wait before retrying.' },
-      { status: 429 }
-    );
-  }
+
 
   try {
     const supabase = await createClient();
@@ -108,6 +111,14 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
     if (userError && userError.code !== 'PGRST116') {
       throw userError;
+    }
+
+    // C4 FIX: Persistent rate limit check via Supabase RPC
+    if (await checkRateLimit(supabase, body.user_id)) {
+      return NextResponse.json(
+        { error: 'Rate limit exceeded. Please wait before retrying.' },
+        { status: 429 }
+      );
     }
 
     const currentUser = mapDbProfileToEngine(dbUser);
@@ -183,8 +194,8 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
         username: cand.username,
         avatar_url: cand.avatar_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&q=80',
         profile: mapDbProfileToEngine(cand),
-        momentum: rel?.gauge_score ? Math.min(100, rel.gauge_score * 10) : Math.floor(Math.random() * 30) + 40,
-        their_gauge: rel?.gauge_score || Math.floor(Math.random() * 20) + 10,
+        momentum: rel?.gauge_score ? Math.min(100, rel.gauge_score * 10) : (rel?.gravity_score ?? 0),
+        their_gauge: rel?.gauge_score || 0,
         shared_interests: (cand.hobbies || []).filter((h: string) => currentUser.hobbies.includes(h)),
         complementary_desires: [cand.relationship_goals?.[0]].filter(Boolean)
       };

@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ShieldCheck, Lock, Wallet, Loader2, CheckCircle2, Plane, Palette, Music, Dumbbell, Briefcase, GraduationCap, Brain, Lightbulb, Rocket } from 'lucide-react';
 import { useTranslation } from '@/context/LanguageContext';
+import { type MemberPurposeId } from '@/lib/constants';
 
 const INTENTS = [
   // Learning, Mentorship & Growth Vibes (Knowledge & Growth)
@@ -37,14 +38,13 @@ const CORE_PASSIONS = [
   { id: 'travel', label: 'Travel & Languages', icon: <Plane className="w-8 h-8 text-[#3b82f6]" />, desc: 'Cultural exchange & global trips', color: 'border-[#3b82f6]/30 shadow-[#3b82f6]/20 bg-[#3b82f6]/10' },
 ];
 
-export default function IntentSelector({ onContinue }: { onContinue: (intents: string[], displayAge: number, corePassion: string) => void }) {
+export default function IntentSelector({ activePurposes, onContinue }: { activePurposes: MemberPurposeId[], onContinue: (intents: string[], displayAge: number, corePassion: string) => void }) {
   const { t } = useTranslation();
   const [step, setStep] = useState(1);
   const [name, setName] = useState('');
   const [displayAge, setDisplayAge] = useState<number>(25);
   const [zkpStatus, setZkpStatus] = useState<'idle' | 'verifying' | 'success'>('idle');
   const [zkpLog, setZkpLog] = useState<string>('');
-  const [connectionHorizon, setConnectionHorizon] = useState<'growth' | 'intimate' | 'dual'>('dual');
   const [selectedIntents, setSelectedIntents] = useState<string[]>([]);
   const [selectedPassion, setSelectedPassion] = useState<string>('');
 
@@ -216,70 +216,16 @@ export default function IntentSelector({ onContinue }: { onContinue: (intents: s
               <h2 className="text-2xl font-bold text-white mb-1">What&apos;s your purpose & vibe?</h2>
               <p className="text-xs text-gray-400 mb-5">Select your primary connection mode and interests.</p>
 
-              {/* Master Connection Horizon Mode Switcher */}
-              <div className="w-full bg-black/40 border border-white/10 rounded-2xl p-3 mb-6 space-y-2 text-left">
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#00fbfb] flex items-center gap-1.5">
-                    <span>⚡ Connection Horizon Mode</span>
-                  </span>
-                  <div className="group relative cursor-pointer">
-                    <span className="text-[10px] text-white/50 hover:text-white font-mono bg-white/5 px-2 py-0.5 rounded border border-white/10">
-                      ℹ️ Explainer
-                    </span>
-                    <div className="absolute right-0 bottom-full mb-2 w-64 p-3 bg-[#0F0F1A] border border-[#00fbfb]/30 rounded-xl shadow-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50 text-[10px] text-[#b9cac9] leading-relaxed font-sans">
-                      <strong className="text-[#00fbfb] block mb-1">How Horizon Filter Works:</strong>
-                      Career/Lifestyle mode pairs you with verified masterclasses, coaches & peer co-creators. Social/Intimate mode pairs you with dating & nightlife vibes. You can switch modes anytime in your profile settings!
-                    </div>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-3 gap-1.5">
-                  <button
-                    type="button"
-                    onClick={() => setConnectionHorizon('growth')}
-                    className={`py-2 px-1.5 rounded-xl border text-[9px] font-bold uppercase tracking-wider transition-all flex flex-col items-center gap-1 ${
-                      connectionHorizon === 'growth'
-                        ? 'bg-[#00fbfb]/15 border-[#00fbfb] text-[#00fbfb] shadow-[0_0_12px_rgba(0,251,251,0.2)]'
-                        : 'bg-white/5 border-white/10 text-white/50 hover:text-white'
-                    }`}
-                  >
-                    <span className="text-base">🎓</span>
-                    <span>Career / Growth</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setConnectionHorizon('intimate')}
-                    className={`py-2 px-1.5 rounded-xl border text-[9px] font-bold uppercase tracking-wider transition-all flex flex-col items-center gap-1 ${
-                      connectionHorizon === 'intimate'
-                        ? 'bg-[#ffabf3]/15 border-[#ffabf3] text-[#ffabf3] shadow-[0_0_12px_rgba(255,171,243,0.2)]'
-                        : 'bg-white/5 border-white/10 text-white/50 hover:text-white'
-                    }`}
-                  >
-                    <span className="text-base">💜</span>
-                    <span>Social / Intimate</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setConnectionHorizon('dual')}
-                    className={`py-2 px-1.5 rounded-xl border text-[9px] font-bold uppercase tracking-wider transition-all flex flex-col items-center gap-1 ${
-                      connectionHorizon === 'dual'
-                        ? 'bg-gradient-to-r from-[#00fbfb]/20 to-[#ffabf3]/20 border-white text-white shadow-md'
-                        : 'bg-white/5 border-white/10 text-white/50 hover:text-white'
-                    }`}
-                  >
-                    <span className="text-base">✨</span>
-                    <span>Dual (Both)</span>
-                  </button>
-                </div>
-              </div>
+              {/* Master Connection Horizon Mode Switcher (Removed in favor of Purpose) */}
               
               <div className="grid grid-cols-2 gap-3 w-full mb-6 max-h-[260px] overflow-y-auto pr-1 custom-scrollbar">
                 {INTENTS.filter(i => {
-                  if (connectionHorizon === 'growth') return i.type === 'growth';
-                  if (connectionHorizon === 'intimate') return i.type === 'online' || i.type === 'irl';
-                  return true;
+                  const hasLifestyle = activePurposes.includes('lifestyle') || activePurposes.includes('creator');
+                  const hasDating = activePurposes.includes('dating') || activePurposes.includes('explicit');
+                  
+                  if (hasLifestyle && !hasDating) return i.type === 'growth';
+                  if (hasDating && !hasLifestyle) return i.type === 'online' || i.type === 'irl';
+                  return true; // Dual
                 }).map((intent) => {
                   const isSelected = selectedIntents.includes(intent.id);
                   return (
@@ -376,10 +322,10 @@ export default function IntentSelector({ onContinue }: { onContinue: (intents: s
               <button 
                 onClick={handleNext}
                 disabled={selectedPassion.length === 0}
-                className="w-full py-4 rounded-2xl bg-gradient-to-r from-primary to-emerald-400 text-black font-bold uppercase tracking-wider disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_0_20px_rgba(102,252,241,0.4)] transition-transform active:scale-95 flex items-center justify-center gap-2"
+                className="w-full py-4 rounded-2xl bg-gradient-to-r from-primary to-emerald-400 text-black font-black uppercase tracking-wider disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_0_20px_rgba(102,252,241,0.4)] transition-transform active:scale-95 flex items-center justify-center gap-2 text-xs"
               >
                 <span>Enter the</span>
-                <img src="/assets/logo/seccion-wordmark-light.png" alt="SECCION" className="h-5 object-contain inline-block brightness-0" />
+                <img src="/assets/logo/seccion-wordmark-dark.png" alt="SECCION" className="h-4 object-contain inline-block" />
               </button>
             </motion.div>
           )}

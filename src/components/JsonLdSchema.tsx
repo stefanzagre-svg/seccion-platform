@@ -11,7 +11,7 @@ export default function JsonLdSchema() {
     "name": "SECCION",
     "alternateName": ["Seccion", "seccion.ai"],
     "url": "https://seccion.ai",
-    "logo": "https://seccion.ai/assets/logo/seccion-wordmark-light.png",
+    "logo": "https://seccion.ai/assets/logo/logo-wordmark.png",
     "description": "SECCION is the first fusion platform combining AI-driven dating matchmaking with live streaming content creators. Creators keep 90% of revenue with built-in DRM protection and AI operations assistant.",
     "foundingDate": "2025",
     "areaServed": ["CO", "ES", "US"],

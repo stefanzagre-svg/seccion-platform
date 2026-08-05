@@ -1,8 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+import { createAdminClient } from '@/lib/supabase/admin-client';
 
 async function handleCheckExpirations(req: NextRequest) {
   // Optional security check: if CRON_SECRET is set, enforce authorization header
@@ -12,12 +9,8 @@ async function handleCheckExpirations(req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  if (!supabaseUrl || !supabaseServiceKey) {
-    return NextResponse.json({ error: 'Database environment variables are not configured' }, { status: 500 });
-  }
-
   try {
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    const supabase = createAdminClient();
     const now = new Date().toISOString();
 
     // Query active subscriptions that have expired
@@ -57,7 +50,7 @@ async function handleCheckExpirations(req: NextRequest) {
       return NextResponse.json({ error: updateErr.message }, { status: 500 });
     }
 
-    console.log(`Deactivated ${expiredIds.length} expired subscriptions:`, expiredIds);
+    console.log(`Deactivated ${expiredIds.length} expired subscriptions successfully.`);
 
     return NextResponse.json({
       success: true,

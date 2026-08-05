@@ -46,7 +46,7 @@ export default function PublicNavbar({ activeTab, onSignUp }: PublicNavbarProps)
         {/* Logo Wordmark Only (No Icon) */}
         <Link href="/" className="flex items-center cursor-pointer hover:opacity-90 transition-opacity group">
           <img 
-            src="/assets/logo/seccion-wordmark-light.png" 
+            src="/assets/logo/logo-wordmark.png" 
             alt="SECCION" 
             className="h-7 sm:h-8 md:h-9 object-contain drop-shadow-[0_0_20px_rgba(0,240,255,0.4)] group-hover:drop-shadow-[0_0_30px_rgba(0,240,255,0.7)] transition-all duration-300"
           />

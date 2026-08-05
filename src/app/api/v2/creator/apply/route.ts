@@ -1,31 +1,35 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { createAdminClient } from "@/lib/supabase/admin-client";
+import { sendTelegramNotification } from "@/lib/telegram";
+import { z } from "zod";
 
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+const creatorApplySchema = z.object({
+  fullName: z.string().min(2, "Full name must be at least 2 characters").max(100),
+  email: z.string().email("Invalid email address format"),
+  phone: z.string().min(5, "Phone number too short").max(30),
+  telegram: z.string().min(2, "Telegram handle required").max(50),
+  link1: z.string().url("link1 must be a valid URL"),
+  link2: z.string().url("link2 must be a valid URL").optional().or(z.literal("")),
+  link3: z.string().url("link3 must be a valid URL").optional().or(z.literal("")),
+  city: z.string().max(100).optional(),
+  claimOffer: z.boolean().optional(),
+});
+
+const supabaseAdmin = createAdminClient();
 
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json();
-    const { fullName, email, phone, telegram, link1, link2, link3, city, claimOffer } = body;
+    const rawBody = await req.json().catch(() => null);
+    const parsed = creatorApplySchema.safeParse(rawBody);
 
-    // Validate required fields
-    if (!fullName || !email || !phone || !telegram || !link1) {
+    if (!parsed.success) {
       return NextResponse.json(
-        { error: "Missing required fields: fullName, email, phone, telegram, link1" },
+        { error: "Invalid application payload", details: parsed.error.format() },
         { status: 400 }
       );
     }
 
-    // Validate email format
-    if (!/\S+@\S+\.\S+/.test(email)) {
-      return NextResponse.json(
-        { error: "Invalid email format" },
-        { status: 400 }
-      );
-    }
+    const { fullName, email, phone, telegram, link1, link2, link3, city, claimOffer } = parsed.data;
 
     // Check for duplicate email
     const { data: existing } = await supabaseAdmin
@@ -69,6 +73,18 @@ export async function POST(req: NextRequest) {
         { status: 500 }
       );
     }
+
+    // Trigger instant Telegram alert to founder
+    const msg = `🚨 <b>NEW CREATOR APPLICATION!</b>\n\n` +
+      `👤 <b>Name:</b> ${fullName.trim()}\n` +
+      `📧 <b>Email:</b> ${email.trim()}\n` +
+      `📱 <b>Phone:</b> ${phone.trim()}\n` +
+      `✈️ <b>Telegram:</b> ${telegram.trim()}\n` +
+      `📍 <b>City:</b> ${city || "Not specified"}\n` +
+      `🔗 <b>Link:</b> ${link1.trim()}\n` +
+      `🎁 <b>Founding Offer:</b> ${claimOffer ? "YES (10% Rate)" : "NO"}`;
+    
+    sendTelegramNotification(msg).catch(() => {});
 
     return NextResponse.json(
       {

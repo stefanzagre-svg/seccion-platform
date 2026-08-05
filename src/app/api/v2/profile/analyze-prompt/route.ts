@@ -7,12 +7,13 @@ interface AnalyzePromptRequest {
   promptQuestion: string;
   promptAnswer: string;
   promptIndex?: number;
+  activePurposes?: string[];
 }
 
 export async function POST(req: NextRequest) {
   try {
     const body = (await req.json()) as AnalyzePromptRequest;
-    const { promptCategory, promptQuestion, promptAnswer, promptIndex = 1 } = body;
+    const { promptCategory, promptQuestion, promptAnswer, promptIndex = 1, activePurposes = [] } = body;
 
     if (!promptCategory || !promptQuestion || !promptAnswer) {
       return NextResponse.json(
@@ -36,11 +37,37 @@ export async function POST(req: NextRequest) {
       try {
         const ai = new GoogleGenAI({ apiKey: geminiKey });
         
+        const isDating = activePurposes.includes('dating') || activePurposes.includes('intimate');
+        const isLifestyle = activePurposes.includes('lifestyle');
+        
+        let vectorsStr = "";
+        let schemaStr = "";
+        
+        if (isDating || (!isDating && !isLifestyle)) { // Default to dating if none
+          vectorsStr += `\n1. "Emotional_Vector": Vulnerability_Score (0.0 to 1.0), Defensive_Score (0.0 to 1.0), and Idealization_Bias (0.0 to 1.0).`;
+          schemaStr += `
+  "Emotional_Vector": {
+    "Vulnerability_Score": number,
+    "Defensive_Score": number,
+    "Idealization_Bias": number
+  },`;
+        }
+        
+        if (isLifestyle) {
+          vectorsStr += `\n- "Lifestyle_Vector": Ambition_Score (0.0 to 1.0), Networking_Score (0.0 to 1.0), and Independence_Score (0.0 to 1.0).`;
+          schemaStr += `
+  "Lifestyle_Vector": {
+    "Ambition_Score": number,
+    "Networking_Score": number,
+    "Independence_Score": number
+  },`;
+        }
+
         const systemInstruction = `
 You are an expert Relational Psychologist and Personality Analyzer.
 Analyze the user's narrative response to a modern dating and connection profile prompt.
 Your task is to extract scores for:
-1. "Emotional_Vector": Vulnerability_Score (0.0 to 1.0), Defensive_Score (0.0 to 1.0), and Idealization_Bias (0.0 to 1.0).
+${vectorsStr}
 2. "Interaction_Style": Directness (High/Moderate/Low), Witty (High/Moderate/Low), and Introspective (High/Moderate/Low/Very High).
 3. "Behavioral_Pattern": Investment_Driver (array of motivations, e.g., "Experience", "Emotional Connection", "Security", "Validation", "Intellectual Stimulation") and Red_Flags (array of potential negative traits, e.g., "Idealization Bias", "Low Vulnerability", "High Defensiveness", "Conflict Avoidance").
 
@@ -54,12 +81,7 @@ Prompt Question: "${promptQuestion}"
 User's Answer: "${promptAnswer}"
 
 Return a JSON matching this schema:
-{
-  "Emotional_Vector": {
-    "Vulnerability_Score": number,
-    "Defensive_Score": number,
-    "Idealization_Bias": number
-  },
+{${schemaStr}
   "Interaction_Style": {
     "Directness": "High" | "Moderate" | "Low",
     "Witty": "High" | "Moderate" | "Low",
@@ -113,12 +135,10 @@ Return a JSON matching this schema:
       if (defensive > 0.6) redFlags.push('High Defensiveness');
       if (idealization > 0.7) redFlags.push('Idealization Bias');
 
+      const isDating = activePurposes.includes('dating') || activePurposes.includes('intimate');
+      const isLifestyle = activePurposes.includes('lifestyle');
+
       analysisResult = {
-        Emotional_Vector: {
-          Vulnerability_Score: parseFloat(vulnerability.toFixed(2)),
-          Defensive_Score: parseFloat(defensive.toFixed(2)),
-          Idealization_Bias: parseFloat(idealization.toFixed(2))
-        },
         Interaction_Style: {
           Directness: directness,
           Witty: witty,
@@ -129,6 +149,26 @@ Return a JSON matching this schema:
           Red_Flags: redFlags
         }
       };
+
+      if (isDating || (!isDating && !isLifestyle)) {
+        analysisResult.Emotional_Vector = {
+          Vulnerability_Score: parseFloat(vulnerability.toFixed(2)),
+          Defensive_Score: parseFloat(defensive.toFixed(2)),
+          Idealization_Bias: parseFloat(idealization.toFixed(2))
+        };
+      }
+      
+      if (isLifestyle) {
+        const ambition = Math.min(0.95, Math.max(0.4, 0.5 + (length / 1000) + (lowerAnswer.includes('work') || lowerAnswer.includes('goal') ? 0.3 : 0)));
+        const networking = Math.min(0.9, Math.max(0.3, 0.4 + (lowerAnswer.includes('people') || lowerAnswer.includes('network') ? 0.4 : 0)));
+        const independence = Math.min(0.95, Math.max(0.5, 0.6 + (lowerAnswer.includes('myself') || lowerAnswer.includes('alone') ? 0.2 : 0)));
+        
+        analysisResult.Lifestyle_Vector = {
+          Ambition_Score: parseFloat(ambition.toFixed(2)),
+          Networking_Score: parseFloat(networking.toFixed(2)),
+          Independence_Score: parseFloat(independence.toFixed(2))
+        };
+      }
     }
 
     // 2. Update user's profile in Supabase

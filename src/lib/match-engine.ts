@@ -65,6 +65,10 @@ export interface UserProfile {
       Red_Flags?: string[];
     };
   };
+  /** Whether the user has at least 2 public albums (Phase 14 feed rules) */
+  hasPublicAlbums?: boolean;
+  /** Member's active purposes */
+  memberPurposes?: string[];
 }
 
 export interface MatchBreakdown {
@@ -290,59 +294,74 @@ function isHabitOpposed(habitA: string, habitB: string, category: string): boole
 }
 
 function checkHardBlockers(userA: UserProfile, userB: UserProfile): string | null {
-  // 1. Sexual Preference Gate
-  const prefA = (userA.sexualPreferences || []).map(s => s.toLowerCase());
-  const prefB = (userB.sexualPreferences || []).map(s => s.toLowerCase());
-  const genderA = (userA.gender || '').toLowerCase();
-  const genderB = (userB.gender || '').toLowerCase();
-
-  const openPrefs = ['everyone', 'open to exploring', 'pansexual', 'bisexual', 'queer'];
-
-  if (prefA.length > 0 && !prefA.some(p => openPrefs.includes(p)) && !prefA.includes(genderB)) {
-    return 'sexual_preference_mismatch';
-  }
-  if (prefB.length > 0 && !prefB.some(p => openPrefs.includes(p)) && !prefB.includes(genderA)) {
-    return 'sexual_preference_mismatch';
+  // 0. Purpose Overlap Gate
+  const purposesA = userA.memberPurposes || ['lifestyle']; // default to lifestyle if missing
+  const purposesB = userB.memberPurposes || ['lifestyle'];
+  
+  const hasSharedPurpose = purposesA.some(p => purposesB.includes(p));
+  if (!hasSharedPurpose) {
+    return 'purpose_mismatch';
   }
 
-  // 2. Relationship Goals
-  const goalsA = (userA.relationshipGoal || '').toLowerCase();
-  const goalsB = (userB.relationshipGoal || '').toLowerCase();
-  const flexGoals = ['open to possibilities', 'not sure yet', 'still figuring it out', 'new friends'];
+  const isDatingA = purposesA.includes('dating') || purposesA.includes('intimate');
+  const isDatingB = purposesB.includes('dating') || purposesB.includes('intimate');
+  
+  // Only enforce dating/intimate blockers if BOTH users are looking for dating
+  if (isDatingA && isDatingB) {
+    // 1. Sexual Preference Gate
+    const prefA = (userA.sexualPreferences || []).map(s => s.toLowerCase());
+    const prefB = (userB.sexualPreferences || []).map(s => s.toLowerCase());
+    const genderA = (userA.gender || '').toLowerCase();
+    const genderB = (userB.gender || '').toLowerCase();
 
-  if (goalsA !== goalsB && !flexGoals.includes(goalsA) && !flexGoals.includes(goalsB)) {
-    if (
-      (goalsA.includes('short') && goalsB.includes('long')) ||
-      (goalsA.includes('long') && goalsB.includes('short'))
-    ) {
-      if (!goalsA.includes('open to') && !goalsB.includes('open to')) {
-        return 'relationship_goal_conflict';
+    const openPrefs = ['everyone', 'open to exploring', 'pansexual', 'bisexual', 'queer'];
+
+    if (prefA.length > 0 && !prefA.some(p => openPrefs.includes(p)) && !prefA.includes(genderB)) {
+      return 'sexual_preference_mismatch';
+    }
+    if (prefB.length > 0 && !prefB.some(p => openPrefs.includes(p)) && !prefB.includes(genderA)) {
+      return 'sexual_preference_mismatch';
+    }
+
+    // 2. Relationship Goals
+    const goalsA = (userA.relationshipGoal || '').toLowerCase();
+    const goalsB = (userB.relationshipGoal || '').toLowerCase();
+    const flexGoals = ['open to possibilities', 'not sure yet', 'still figuring it out', 'new friends'];
+
+    if (goalsA !== goalsB && !flexGoals.includes(goalsA) && !flexGoals.includes(goalsB)) {
+      if (
+        (goalsA.includes('short') && goalsB.includes('long')) ||
+        (goalsA.includes('long') && goalsB.includes('short'))
+      ) {
+        if (!goalsA.includes('open to') && !goalsB.includes('open to')) {
+          return 'relationship_goal_conflict';
+        }
       }
     }
-  }
 
-  // 3. Relationship Type
-  const typeA = (userA.relationshipType || '').toLowerCase();
-  const typeB = (userB.relationshipType || '').toLowerCase();
-  if (typeA !== typeB) {
-    const openTypes = ['polyamorous', 'open relationship'];
-    if (
-      (typeA === 'monogamous' && openTypes.includes(typeB)) ||
-      (typeB === 'monogamous' && openTypes.includes(typeA))
-    ) {
-      return 'relationship_type_conflict';
+    // 3. Relationship Type
+    const typeA = (userA.relationshipType || '').toLowerCase();
+    const typeB = (userB.relationshipType || '').toLowerCase();
+    if (typeA !== typeB) {
+      const openTypes = ['polyamorous', 'open relationship'];
+      if (
+        (typeA === 'monogamous' && openTypes.includes(typeB)) ||
+        (typeB === 'monogamous' && openTypes.includes(typeA))
+      ) {
+        return 'relationship_type_conflict';
+      }
     }
+
+    // 4. Family Goals
+    const famA = (userA.familyGoals || '').toLowerCase();
+    const famB = (userB.familyGoals || '').toLowerCase();
+    const famConflict =
+      (famA.includes('want') && !famA.includes("don't") && famB.includes("don't want")) ||
+      (famB.includes('want') && !famB.includes("don't") && famA.includes("don't want"));
+    if (famConflict) return 'family_goals_conflict';
   }
 
-  // 4. Family Goals
-  const famA = (userA.familyGoals || '').toLowerCase();
-  const famB = (userB.familyGoals || '').toLowerCase();
-  const famConflict =
-    (famA.includes('want') && !famA.includes("don't") && famB.includes("don't want")) ||
-    (famB.includes('want') && !famB.includes("don't") && famA.includes("don't want"));
-  if (famConflict) return 'family_goals_conflict';
-
-  // 5. Smoking / Drinking Opposition
+  // 5. Smoking / Drinking Opposition (Applies to all purposes)
   const lifestyleA = Object.fromEntries(
     Object.entries(userA.lifestyle || {}).map(([k, v]) => [k.toLowerCase(), v])
   );
@@ -651,8 +670,14 @@ export function calculateMatch(userA: UserProfile, userB: UserProfile): MatchRes
     narrativeResonance: scoreNarrativeResonance(userA, userB),
   };
 
+  // Bonus for keeping content public (Incentivize feed visibility)
+  let publicBonus = 0;
+  if (userB.hasPublicAlbums) {
+    publicBonus = 12; // Massive algorithmic boost to prioritize public members
+  }
+
   // Weighted sum → final 0–100 score
-  const totalScore = Math.min(100, Math.round(
+  let totalScore = Math.round(
     breakdown.archetypeChemistry * SIGNAL_WEIGHTS.archetypeChemistry +
     breakdown.lifestyleSync      * SIGNAL_WEIGHTS.lifestyleSync +
     breakdown.hobbyOverlap       * SIGNAL_WEIGHTS.hobbyOverlap +
@@ -660,7 +685,9 @@ export function calculateMatch(userA: UserProfile, userB: UserProfile): MatchRes
     breakdown.temporalSignal     * SIGNAL_WEIGHTS.temporalSignal +
     breakdown.geoProximity       * SIGNAL_WEIGHTS.geoProximity +
     breakdown.narrativeResonance * SIGNAL_WEIGHTS.narrativeResonance
-  ));
+  );
+  
+  totalScore = Math.min(100, totalScore + publicBonus);
 
   const tier = classifyTier(totalScore);
 

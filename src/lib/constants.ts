@@ -34,11 +34,10 @@ export const RELATIONSHIP_GOALS = [
   'Not limit myself',
   "Let's figure after a date.",
   'Travel Companion',
-  'Distant Relationship',
-  'New Friends',
+  'Make New Frends',
   'Flat Mate',
   'Social & Economical Support',
-  'Content Provider',
+  'Sex Mate',
 ];
 
 export const RELATIONSHIP_TYPES = [
@@ -49,6 +48,9 @@ export const RELATIONSHIP_TYPES = [
   'Open to Explore',
   'Libertinism Mindset',
   'Swinging Open',
+  'Open to Distant Relation',
+  'Digital Relationship',
+  'FWB',
   'Not sure yet',
 ];
 
@@ -459,3 +461,172 @@ export const CREATOR_SPECIALIZATIONS: CreatorSpecialization[] = [
   },
 ];
 
+// ─── Purpose Segmentation ─────────────────────────────────────────────────────
+
+export const MEMBER_PURPOSES = [
+  { 
+    id: 'dating', 
+    label: 'Dating & Romance', 
+    emoji: '🩷', 
+    description: 'Find your match — dating, relationships & romance',
+    color: 'from-pink-500/20 to-rose-500/20 border-pink-500/40',
+    features: ['Sexual preference matching', 'Relationship goal alignment', 'AI Wingman chat moves', 'Family planning compatibility'],
+    requiresAgeVerification: true,
+    connectionHorizonDefault: 'intimate',
+  },
+  { 
+    id: 'lifestyle', 
+    label: 'Lifestyle & Growth', 
+    emoji: '🎓', 
+    description: 'Mentorship, career coaching & skill building',
+    color: 'from-cyan-500/20 to-blue-500/20 border-cyan-500/40',
+    features: ['Skill masterclasses', 'Career coaching', 'Wellness guidance', 'Creative collaboration'],
+    requiresAgeVerification: true,
+    connectionHorizonDefault: 'growth',
+  },
+  { 
+    id: 'explicit', 
+    label: 'Explicit Content (18+)', 
+    emoji: '🔞', 
+    description: 'Adult content discovery & interaction',
+    color: 'from-red-600/20 to-pink-600/20 border-red-500/40',
+    features: ['18+ content unlocked', 'Explicit creator discovery', 'Behind-closed-doors access'],
+    requiresAgeVerification: true, // mandatory, not optional
+    connectionHorizonDefault: 'intimate',
+  },
+  { 
+    id: 'creator', 
+    label: 'Become a Creator', 
+    emoji: '🎬', 
+    description: 'Monetize your content & build your audience',
+    color: 'from-amber-500/20 to-orange-500/20 border-amber-500/40',
+    features: ['Content monetization', 'Subscription tiers', 'Creator AI assistant'],
+    requiresAgeVerification: true,
+    requiresKyc: true,
+    connectionHorizonDefault: 'dual',
+  },
+] as const;
+
+export type MemberPurposeId = typeof MEMBER_PURPOSES[number]['id'];
+
+export const PURPOSE_PROMPTS: Record<MemberPurposeId, Record<string, { categoryName: string; prompts: string[] }>> = {
+  dating: {
+    chemistry: {
+      categoryName: "Chemistry & Connection",
+      prompts: [
+        "What is your dream first date?",
+        "What is your biggest green flag in a partner?",
+        "How do you show someone you care?"
+      ]
+    },
+    conflict: {
+      categoryName: "Vibes & Communication",
+      prompts: [
+        "When stressed, do you prefer space or talking it out?",
+        "What is a funny or annoying pet peeve of yours?",
+        "Do you resolve arguments immediately or cool down first?"
+      ]
+    },
+    investment: {
+      categoryName: "Lifestyle & Space",
+      prompts: [
+        "Cozy homebody or active explorer on weekends?",
+        "What is a thoughtful gesture you always appreciate?",
+        "How would you spend a perfect free day?"
+      ]
+    },
+    archetype: {
+      categoryName: "Passions & Vibe",
+      prompts: [
+        "What hobby could you talk about for hours?",
+        "What song or movie always boosts your mood?",
+        "What is a simple daily pleasure you love?"
+      ]
+    },
+    ethics: {
+      categoryName: "Growth & Values",
+      prompts: [
+        "What is a goal you're excited about right now?",
+        "What is an important relationship boundary for you?"
+      ]
+    }
+  },
+  lifestyle: {
+    ambition: {
+      categoryName: "Ambition & Drive",
+      prompts: [
+        "What would you build if money and time were unlimited?",
+        "What is a recent achievement you're genuinely proud of?",
+        "What drives you to keep going when things get hard?"
+      ]
+    },
+    skills: {
+      categoryName: "Skills & Learning",
+      prompts: [
+        "What skill are you currently obsessed with mastering?",
+        "Who is a mentor or role model that shaped your path?",
+        "What is the last thing you taught someone?"
+      ]
+    },
+    collaboration: {
+      categoryName: "Collaboration & Growth",
+      prompts: [
+        "Describe your ideal creative or business partner.",
+        "What project would you love to co-create with someone?",
+        "What is a lesson failure taught you that success couldn't?"
+      ]
+    },
+    wellness: {
+      categoryName: "Wellness & Balance",
+      prompts: [
+        "How do you recharge after an intense work sprint?",
+        "What daily ritual keeps you grounded?",
+        "What does 'success' look like to you outside of money?"
+      ]
+    },
+    creative: {
+      categoryName: "Creative Vision",
+      prompts: [
+        "If you could master one creative craft overnight, what would it be?",
+        "What content or creator inspires you most right now?",
+        "What would your dream workshop or masterclass be about?"
+      ]
+    }
+  },
+  explicit: {
+    desires: {
+      categoryName: "Desires & Boundaries",
+      prompts: [
+        "What makes you feel most confident and desired?",
+        "What is your biggest non-negotiable in intimacy?",
+        "Describe the energy you're looking for in a connection."
+      ]
+    },
+    chemistry: {
+      categoryName: "Chemistry & Attraction",
+      prompts: [
+        "What is the first thing that catches your attention about someone?",
+        "What kind of tension do you enjoy most — playful, mysterious, or direct?",
+        "What is your guilty pleasure that you'd share with the right person?"
+      ]
+    },
+    fantasy: {
+      categoryName: "Fantasy & Expression",
+      prompts: [
+        "If you could set the mood for one perfect night, what would it look like?",
+        "What is the boldest thing you've ever done to get someone's attention?",
+        "What is your definition of 'exclusive access'?"
+      ]
+    }
+  },
+  creator: {
+    identity: {
+      categoryName: "Creator Identity",
+      prompts: [
+        "What makes your content different from everyone else's?",
+        "What is the one thing your audience always comes back for?",
+        "If you could collaborate with any creator in the world, who and why?"
+      ]
+    }
+  }
+};

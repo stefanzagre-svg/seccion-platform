@@ -9,22 +9,14 @@ interface ChatRequest {
 
 export async function POST(req: NextRequest) {
   try {
-    const devUserId = req.headers.get('x-dev-user-id');
-    const isDevBypass = process.env.NODE_ENV === 'development' && !!devUserId;
-    const supabase = isDevBypass ? createAdminClient() : await createClient();
+    const supabase = await createClient();
 
-    // 1. Authenticate user (with x-dev-user-id support in dev mode)
-    let userId = null;
-
-    if (isDevBypass) {
-      userId = devUserId;
-    } else {
-      const { data: { session }, error: authError } = await supabase.auth.getSession();
-      if (authError || !session?.user) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-      }
-      userId = session.user.id;
+    // 1. Authenticate user strictly via Supabase auth server
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+    const userId = user.id;
 
     // 2. Fetch User Profile
     const { data: profile, error: profileError } = await supabase
@@ -59,31 +51,43 @@ export async function POST(req: NextRequest) {
     const isTrial = daysDiff <= 30;
     const trialDaysLeft = Math.max(0, Math.ceil(30 - daysDiff));
 
-    // 6. Calculate Credits (Pay-Per-Query fallback using JSONB privacy_settings)
+    // 6. Calculate Credits & Gating (Atomic RPC for race safety outside trial)
     let credits = profile.privacy_settings?.wingman_credits ?? 10;
-
-    // 7. Gating logic
-    if (!isTrial && credits <= 0) {
-      return NextResponse.json({
-        error: 'credits_exhausted',
-        isTrial: false,
-        trialDaysLeft: 0,
-        credits: 0
-      }, { status: 402 }); // Payment Required
-    }
-
-    // 8. Decrement credits if outside trial
     let remainingCredits = credits;
-    if (!isTrial) {
-      remainingCredits = Math.max(0, credits - 1);
-      const updates = {
-        privacy_settings: {
-          ...(profile.privacy_settings || {}),
-          wingman_credits: remainingCredits
-        }
-      };
 
-      await supabase.from('profiles').update(updates).eq('id', userId);
+    if (!isTrial) {
+      // H6 FIX: Atomic RPC check-and-decrement to prevent concurrent race condition bypasses
+      const { data: rpcRes, error: rpcErr } = await supabase.rpc('consume_wingman_credit', { p_user_id: userId });
+
+      if (!rpcErr && rpcRes) {
+        if (!rpcRes.success) {
+          return NextResponse.json({
+            error: 'credits_exhausted',
+            isTrial: false,
+            trialDaysLeft: 0,
+            credits: 0
+          }, { status: 402 });
+        }
+        remainingCredits = rpcRes.remaining_credits;
+      } else {
+        // Fallback if RPC is not yet created in Supabase
+        if (credits <= 0) {
+          return NextResponse.json({
+            error: 'credits_exhausted',
+            isTrial: false,
+            trialDaysLeft: 0,
+            credits: 0
+          }, { status: 402 });
+        }
+        remainingCredits = Math.max(0, credits - 1);
+        const updates = {
+          privacy_settings: {
+            ...(profile.privacy_settings || {}),
+            wingman_credits: remainingCredits
+          }
+        };
+        await supabase.from('profiles').update(updates).eq('id', userId);
+      }
     }
 
     // 9. Fetch top compatible creators/candidates for context

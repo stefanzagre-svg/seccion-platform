@@ -1,12 +1,20 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import PlatformFeed from '@/components/PlatformFeed';
+import dynamic from "next/dynamic";
 import LandingPageHook from "@/components/onboarding/LandingPageHook";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import { Loader2, MessageSquare, Send, X, Bot, Sparkles } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+
+const PlatformFeed = dynamic(() => import('@/components/PlatformFeed'), {
+  loading: () => (
+    <div className="min-h-screen bg-[#050505] flex items-center justify-center">
+      <Loader2 className="w-8 h-8 animate-spin text-cyan-400" />
+    </div>
+  ),
+});
 
 import { useTranslation } from "@/context/LanguageContext";
 

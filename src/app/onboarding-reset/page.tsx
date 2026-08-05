@@ -1,22 +1,36 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { createClient } from '@/lib/supabase/client';
+import { supabase } from '@/lib/supabase';
 
 export default function OnboardingReset() {
-  const router = useRouter();
-  const supabase = createClient();
-
   useEffect(() => {
     const doReset = async () => {
       console.log('Resetting local session...');
       
-      // 1. Sign out from Supabase auth
+      // 1. Reset profile fields in Supabase database & Sign out
       try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user?.id) {
+          await supabase.from('profiles').update({
+            member_purposes: null,
+            core_passion: null,
+            privacy_settings: null,
+            avatar_url: null,
+            bio: null,
+            bio_prompt_answer: null,
+            bio_prompt_answer_2: null,
+            bio_prompt_question: null,
+            bio_prompt_question_2: null,
+            sexual_preference: null,
+            relationship_goals: null,
+            relationship_types: null,
+            archetype: null,
+          }).eq('id', session.user.id);
+        }
         await supabase.auth.signOut();
       } catch (err) {
-        console.warn('Error signing out:', err);
+        console.warn('Error during reset & signout:', err);
       }
 
       // 2. Clear all browser storage
@@ -32,20 +46,20 @@ export default function OnboardingReset() {
         document.cookie.split(";").forEach((c) => {
           document.cookie = c
             .replace(/^ +/, "")
-            .replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
+            .replace(/=.*/, "=;expires=" + new Date(0).toUTCString() + ";path=/");
         });
       } catch (err) {
         console.warn('Error clearing cookies:', err);
       }
 
-      // 4. Redirect to onboarding landing page
+      // 4. Hard redirect to onboarding landing page with fresh flag
       setTimeout(() => {
-        router.push('/onboarding');
-      }, 500);
+        window.location.href = '/onboarding?fresh=true';
+      }, 400);
     };
 
     doReset();
-  }, [router, supabase]);
+  }, []);
 
   return (
     <div className="min-h-screen bg-black flex items-center justify-center text-white p-6">

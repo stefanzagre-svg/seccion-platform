@@ -7,6 +7,7 @@ import { motion } from "framer-motion";
 import { createClient } from "@/lib/supabase/client";
 import { Loader2, Key, Mail, Lock, ArrowLeft, AlertCircle, ShieldAlert, Sparkles, Crown } from "lucide-react";
 import PrelaunchModal from "@/components/PrelaunchModal";
+import AgeGateSplash from "@/components/onboarding/AgeGateSplash";
 
 // Double bezel card wrapper
 function DoubleBezelCard({ children, className = "" }: { children: React.ReactNode; className?: string }) {
@@ -25,48 +26,94 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [useMagicLink, setUseMagicLink] = useState(false);
+  const [sentMode, setSentMode] = useState<'code' | 'link'>('code');
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [magicLinkSent, setMagicLinkSent] = useState(false);
+  const [otpCode, setOtpCode] = useState("");
+  const [verifyingOtp, setVerifyingOtp] = useState(false);
   const [isPrelaunchModalOpen, setIsPrelaunchModalOpen] = useState(false);
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleVerifyOtp = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!otpCode || !email) return;
+    setVerifyingOtp(true);
+    setErrorMsg(null);
+
+    const supabase = createClient();
+    try {
+      const { error } = await supabase.auth.verifyOtp({
+        email,
+        token: otpCode.trim(),
+        type: 'email',
+      });
+      if (error) throw error;
+      window.location.href = '/onboarding';
+    } catch (err: any) {
+      console.error("OTP Verification Error:", err);
+      setErrorMsg(err.message || "Invalid or expired code. Check your email for the 6-digit passcode.");
+    } finally {
+      setVerifyingOtp(false);
+    }
+  };
+
+  const handleMagicOtp = async (mode: 'code' | 'link') => {
     if (!email) return;
     setLoading(true);
     setErrorMsg(null);
+    setSentMode(mode);
 
     const supabase = createClient();
 
     try {
-      if (useMagicLink) {
-        const { error } = await supabase.auth.signInWithOtp({
-          email,
-          options: {
-            emailRedirectTo: `${window.location.origin}/auth/callback`,
-          },
-        });
-        if (error) throw error;
-        setMagicLinkSent(true);
-      } else {
-        // Call server-side auth route to guarantee HTTP cookies are set cleanly
-        const res = await fetch('/api/admin/auth/founder-login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, password }),
-        });
+      const options = mode === 'link' ? {
+        emailRedirectTo: `${window.location.origin}/auth/callback?next=/onboarding`,
+      } : undefined;
 
-        const json = await res.json();
-        if (!res.ok) {
-          throw new Error(json.error || 'Failed to authenticate.');
-        }
+      const { error } = await supabase.auth.signInWithOtp({
+        email,
+        ...(options && { options }),
+      });
+      if (error) throw error;
+      setMagicLinkSent(true);
+    } catch (err: any) {
+      console.error("Magic link error:", err);
+      setErrorMsg(err.message || "Failed to send magic authentication.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-        const searchParams = new URLSearchParams(window.location.search);
-        const nextTarget = searchParams.get('next') || json.redirectUrl || '/admin';
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email) return;
 
-        // Hard navigation so browser sends fresh auth cookies to Cloudflare Worker
-        window.location.href = nextTarget;
+    if (useMagicLink) {
+      return handleMagicOtp(sentMode);
+    }
+
+    setLoading(true);
+    setErrorMsg(null);
+    const supabase = createClient();
+
+    try {
+      // Call server-side auth route to guarantee HTTP cookies are set cleanly
+      const res = await fetch('/api/admin/auth/founder-login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const json = await res.json();
+      if (!res.ok) {
+        throw new Error(json.error || 'Failed to authenticate.');
       }
+
+      const searchParams = new URLSearchParams(window.location.search);
+      const nextTarget = searchParams.get('next') || json.redirectUrl || '/admin';
+
+      // Hard navigation so browser sends fresh auth cookies to Cloudflare Worker
+      window.location.href = nextTarget;
     } catch (err: any) {
       console.error("Login error:", err);
       setErrorMsg(err.message || "Failed to authenticate. Only approved creators & founders have active pre-launch accounts.");
@@ -117,7 +164,7 @@ export default function LoginPage() {
           <div className="space-y-6 text-left">
             <div className="text-center space-y-2">
               <img 
-                src="/assets/logo/seccion-wordmark-light.png" 
+                src="/assets/logo/logo-wordmark.png" 
                 alt="SECCION" 
                 className="h-8 mx-auto object-contain drop-shadow-[0_0_20px_rgba(0,251,251,0.4)]"
               />
@@ -138,11 +185,58 @@ export default function LoginPage() {
             )}
 
             {magicLinkSent ? (
-              <div className="p-4 bg-emerald-500/5 border border-emerald-500/20 text-emerald-400 text-xs rounded-xl space-y-2 text-center">
-                <h4 className="font-bold uppercase tracking-wider">Magic Link Sent!</h4>
-                <p className="text-[10px] text-[#b9cac9] leading-relaxed">
-                  We sent a secure magic sign-in link to **{email}**. Check your inbox and click the link to sign in instantly.
-                </p>
+              <div className="space-y-4">
+                {sentMode === 'code' ? (
+                  <>
+                    <div className="p-4 bg-[#00fbfb]/5 border border-[#00fbfb]/20 text-[#00fbfb] text-xs rounded-xl space-y-1.5 text-center">
+                      <h4 className="font-bold uppercase tracking-wider text-white">Magic Passcode Sent!</h4>
+                      <p className="text-[10px] text-[#b9cac9] leading-relaxed">
+                        We sent a passcode to <strong className="text-white">{email}</strong>.
+                      </p>
+                    </div>
+
+                    <form onSubmit={handleVerifyOtp} className="space-y-3 p-4 bg-white/5 border border-white/10 rounded-2xl">
+                      <label className="block text-[10px] font-mono text-[#00fbfb] uppercase font-bold tracking-wider text-center">
+                        Enter Passcode:
+                      </label>
+                      <input
+                        type="text"
+                        maxLength={8}
+                        value={otpCode}
+                        onChange={(e) => setOtpCode(e.target.value)}
+                        placeholder="123456"
+                        className="w-full bg-black/60 border border-white/20 focus:border-[#00fbfb] rounded-xl py-3 text-center text-lg font-mono tracking-[0.2em] font-bold outline-none transition text-white"
+                      />
+                      <button
+                        type="submit"
+                        disabled={verifyingOtp || otpCode.length < 6}
+                        className="w-full py-3 bg-[#00fbfb] text-black font-mono text-xs font-black uppercase tracking-wider rounded-xl hover:shadow-[0_0_15px_rgba(0,251,251,0.5)] transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-40"
+                      >
+                        {verifyingOtp ? <Loader2 className="w-4 h-4 animate-spin" /> : "Verify Code & Enter App →"}
+                      </button>
+                    </form>
+                  </>
+                ) : (
+                  <div className="p-4 bg-emerald-500/5 border border-emerald-500/20 text-emerald-400 text-xs rounded-xl space-y-2 text-center">
+                    <h4 className="font-bold uppercase tracking-wider">Magic Link Sent!</h4>
+                    <p className="text-[10px] text-[#b9cac9] leading-relaxed">
+                      We sent a secure magic link to <strong className="text-white">{email}</strong>. Open your email on this browser and click the link to sign in instantly.
+                    </p>
+                  </div>
+                )}
+
+                <div className="text-center">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMagicLinkSent(false);
+                      setErrorMsg(null);
+                    }}
+                    className="text-[10px] font-mono text-white/40 hover:text-white underline uppercase cursor-pointer"
+                  >
+                    ← Try another email or method
+                  </button>
+                </div>
               </div>
             ) : (
               <form onSubmit={handleLogin} className="space-y-4">
@@ -193,25 +287,57 @@ export default function LoginPage() {
                     }}
                     className="text-[9px] font-mono font-bold text-[#ffabf3] hover:underline uppercase tracking-wide cursor-pointer"
                   >
-                    {useMagicLink ? "Sign in with password" : "Send magic link instead"}
+                    {useMagicLink ? "Sign in with password" : "Passwordless sign in instead"}
                   </button>
                 </div>
 
-                {/* Login Button */}
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full py-3 bg-[#00fbfb] text-black font-mono text-xs font-black uppercase tracking-wider rounded-xl hover:shadow-[0_0_15px_rgba(0,251,251,0.5)] transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-40"
-                >
-                  {loading ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <>
-                      <Key className="w-4 h-4" />
-                      <span>{useMagicLink ? "Send Magic Link" : "Sign In to Creator / Admin"}</span>
-                    </>
-                  )}
-                </button>
+                {/* Login Action Buttons */}
+                {useMagicLink ? (
+                  <div className="space-y-2 pt-1">
+                    <button
+                      type="button"
+                      onClick={() => handleMagicOtp('code')}
+                      disabled={loading}
+                      className="w-full py-3 bg-[#00fbfb] text-black font-mono text-xs font-black uppercase tracking-wider rounded-xl hover:shadow-[0_0_15px_rgba(0,251,251,0.5)] transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-40"
+                    >
+                      {loading && sentMode === 'code' ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <>
+                          <Key className="w-4 h-4" />
+                          <span>📱 I have the App (Send Magic Code)</span>
+                        </>
+                      )}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleMagicOtp('link')}
+                      disabled={loading}
+                      className="w-full py-2.5 bg-white/5 border border-white/10 text-white font-mono text-[10px] font-bold uppercase tracking-wider rounded-xl hover:bg-white/10 transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-40"
+                    >
+                      {loading && sentMode === 'link' ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <span>🌐 I don't have the App (Send Magic Link)</span>
+                      )}
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="w-full py-3 bg-[#00fbfb] text-black font-mono text-xs font-black uppercase tracking-wider rounded-xl hover:shadow-[0_0_15px_rgba(0,251,251,0.5)] transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-40"
+                  >
+                    {loading ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <>
+                        <Key className="w-4 h-4" />
+                        <span>Sign In to Creator / Admin</span>
+                      </>
+                    )}
+                  </button>
+                )}
               </form>
             )}
 

@@ -6,6 +6,9 @@ const PUBLIC_ROUTES = ['/admin', '/onboarding', '/onboarding/step-2', '/auth/cal
 // Routes that authenticated users should be redirected away from
 const AUTH_ROUTES = ['/onboarding', '/onboarding/step-2'];
 
+// Cookie name written by onboarding/step-2/page.tsx on completion
+const ONBOARDING_DONE_COOKIE = 'sb_ob';
+
 export async function middleware(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
 
@@ -50,14 +53,33 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(url);
     }
   } else {
-    // User is logged in. Query profiles table to check onboarding status.
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('archetype, lifestyle_habits')
-      .eq('id', user.id)
-      .single();
+    // H1 FIX: Read the lightweight onboarding-complete cookie first.
+    // This avoids a cold Supabase DB query (100-400ms) on EVERY authenticated request.
+    // The cookie is set by onboarding/step-2/page.tsx once lifestyle_habits is saved.
+    // Fallback: if cookie is absent, query DB once (first login after onboarding, or cookie cleared).
+    const onboardingCookie = request.cookies.get(ONBOARDING_DONE_COOKIE)?.value;
+    let onboardingCompleted = onboardingCookie === '1';
 
-    const onboardingCompleted = !!(profile?.archetype && profile?.lifestyle_habits);
+    if (!onboardingCompleted) {
+      // Cookie missing — do the DB check once and set the cookie for next time
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('archetype, lifestyle_habits')
+        .eq('id', user.id)
+        .single();
+
+      onboardingCompleted = !!(profile?.archetype && profile?.lifestyle_habits);
+
+      // Backfill the cookie so subsequent requests skip this query
+      if (onboardingCompleted) {
+        supabaseResponse.cookies.set(ONBOARDING_DONE_COOKIE, '1', {
+          path: '/',
+          maxAge: 60 * 60 * 24 * 30, // 30 days
+          sameSite: 'lax',
+          httpOnly: false, // Must be readable by client JS on step-2 completion
+        });
+      }
+    }
 
     if (onboardingCompleted) {
       // Redirect fully onboarded authenticated users away from onboarding pages
@@ -80,16 +102,14 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  runtime: 'experimental-edge',
   matcher: [
     /*
      * Match all request paths except:
      * - _next/static (static files)
      * - _next/image (image optimization)
-     * - favicon.ico
-     * - public assets (svg, png, jpg, etc.)
-     * - sitemap.xml, robots.txt, llms.txt, manifest (must return correct Content-Type, not HTML)
+     * - favicon.ico, favicon.png, apple-touch-icon.png
+     * - public assets (.svg, .png, .jpg, .jpeg, .gif, .webp, .ico, .txt, .xml, .webmanifest, .html, .js)
      */
-    '/((?!_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt|llms.txt|manifest.webmanifest|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    '/((?!_next/static|_next/image|favicon\\.ico|sitemap\\.xml|robots\\.txt|llms\\.txt|manifest\\.webmanifest|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|txt|xml|webmanifest|html|js)$).*)',
   ],
 };

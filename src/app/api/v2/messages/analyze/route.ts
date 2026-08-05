@@ -1,26 +1,32 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenAI } from '@google/genai';
-import { createClient } from '@supabase/supabase-js';
+import { createClient } from '@/lib/supabase/server';
 
 interface AnalyzeRequest {
-  userId?: string;
   targetId?: string;
   messages?: { sender: string; text: string; }[];
 }
 
 export async function POST(req: NextRequest) {
   try {
-    const body = (await req.json()) as AnalyzeRequest;
-    const { userId, targetId, messages: customMessages } = body;
+    // C3 FIX: Authenticate caller via server-validated getUser() — not cookie-spoofable
+    const supabase = await createClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
 
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
-    const supabase = createClient(supabaseUrl, supabaseServiceKey || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '');
+    if (authError || !user) {
+      return NextResponse.json({ error: 'Unauthorized. Please log in.' }, { status: 401 });
+    }
+
+    // userId is now derived from the verified session — not from the request body
+    const userId = user.id;
+
+    const body = (await req.json()) as AnalyzeRequest;
+    const { targetId, messages: customMessages } = body;
 
     let messages = customMessages;
 
-    // 1. Fetch messages from database if userId and targetId are provided and messages are not
-    if (userId && targetId && !messages) {
+    // 1. Fetch messages from database if targetId is provided and messages are not
+    if (targetId && !messages) {
       const { data: dbMsgs, error: dbError } = await supabase
         .from('messages')
         .select('*')
@@ -101,7 +107,7 @@ Return ONLY a valid JSON object matching this schema:
 
     // 5. Apply Dynamic Score Adjustments & DB update
     let bonusApplied = 0;
-    if (userId && targetId) {
+    if (targetId) {
       const gravity = analysis.conversationGravity;
       if (gravity >= 60) {
         bonusApplied = 10;

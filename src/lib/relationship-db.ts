@@ -46,14 +46,24 @@ export async function fetchSwipeableProfiles(currentUserId: string): Promise<Pro
 
     if (intError) throw intError;
 
+    // Fetch blocked users (where user is blocker or blocked)
+    const { data: blocks, error: blockError } = await supabase
+      .from('blocked_users')
+      .select('blocker_id, blocked_id')
+      .or(`blocker_id.eq.${currentUserId},blocked_id.eq.${currentUserId}`);
+      
+    if (blockError) throw blockError;
+
     const interactedIds = (interactions || []).map(i => i.target_id);
-    interactedIds.push(currentUserId); // Exclude self
+    const blockedIds = (blocks || []).map(b => b.blocker_id === currentUserId ? b.blocked_id : b.blocker_id);
+    
+    const excludedIds = Array.from(new Set([...interactedIds, ...blockedIds, currentUserId]));
 
     // 2. Fetch profiles not in that list
     const { data: profiles, error: profError } = await supabase
       .from('profiles')
       .select('*')
-      .not('id', 'in', `(${interactedIds.join(',')})`)
+      .not('id', 'in', `(${excludedIds.join(',')})`)
       .limit(10);
 
     if (profError) throw profError;
@@ -167,17 +177,32 @@ export async function recordInteraction(
  */
 export async function fetchMatches(userId: string): Promise<MatchInfo[]> {
   try {
-    const { data: relationships, error } = await supabase
+    const { data: blocks, error: blockError } = await supabase
+      .from('blocked_users')
+      .select('blocker_id, blocked_id')
+      .or(`blocker_id.eq.${userId},blocked_id.eq.${userId}`);
+      
+    if (blockError) throw blockError;
+    const blockedIds = (blocks || []).map(b => b.blocker_id === userId ? b.blocked_id : b.blocker_id);
+
+    let query = supabase
       .from('relationships')
       .select(`
         id,
         current_level,
         gauge_score,
         is_matched,
+        target_id,
         target_profile:profiles!relationships_target_id_fkey(*)
       `)
       .eq('user_id', userId)
       .eq('is_matched', true);
+
+    if (blockedIds.length > 0) {
+      query = query.not('target_id', 'in', `(${blockedIds.join(',')})`);
+    }
+
+    const { data: relationships, error } = await query;
 
     if (error) throw error;
 
@@ -519,6 +544,8 @@ export interface ProfileMedia {
   created_at?: string;
   face_blur_enabled?: boolean;
   face_coordinates?: any;
+  video_start_time?: number | null;
+  video_end_time?: number | null;
 }
 
 /**
@@ -586,5 +613,49 @@ export async function deleteProfileMedia(mediaId: string): Promise<boolean> {
   } catch (err) {
     console.error('Error deleting profile media:', err);
     return false;
+  }
+}
+
+/**
+ * Check if the user meets the minimum of 2 public photos/videos requirement in member_albums
+ */
+export async function checkPublicPhotoRequirement(userId: string): Promise<boolean> {
+  try {
+    const { count: countAlbums } = await supabase
+      .from('member_albums')
+      .select('id', { count: 'exact', head: true })
+      .eq('member_id', userId)
+      .eq('visibility', 'public');
+
+    const { count: countMedia } = await supabase
+      .from('profile_media')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', userId)
+      .eq('is_hidden', false);
+
+    const totalPublic = (countAlbums || 0) + (countMedia || 0);
+    return totalPublic >= 2;
+  } catch (err) {
+    console.error('Error checking public photo requirement:', err);
+    return false;
+  }
+}
+
+/**
+ * Fetch member albums
+ */
+export async function fetchMemberAlbums(userId: string): Promise<any[]> {
+  try {
+    const { data, error } = await supabase
+      .from('member_albums')
+      .select('*')
+      .eq('member_id', userId)
+      .order('created_at', { ascending: true });
+
+    if (error) throw error;
+    return data || [];
+  } catch (err) {
+    console.error('Error fetching member albums:', err);
+    return [];
   }
 }

@@ -103,11 +103,11 @@ export default function PWAInstallPrompt() {
         </button>
 
         <div className="flex items-center gap-3.5 mb-3">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-500 p-0.5 shadow-lg shadow-purple-500/30 shrink-0">
+          <div className="w-12 h-12 rounded-2xl bg-black border border-white/10 shadow-lg shadow-black/50 shrink-0 flex items-center justify-center">
             <img
-              src="/assets/logo/seccion-icon-light.png"
+              src="/assets/logo/logo-mark.png"
               alt="SECCION Logo"
-              className="w-full h-full object-contain p-1"
+              className="w-full h-full object-contain p-2"
             />
           </div>
           <div>

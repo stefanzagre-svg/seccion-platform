@@ -177,6 +177,18 @@ export default function CreatorProfile() {
     }
   };
 
+  const handleRevokeCreatorMode = async () => {
+    if (!confirm('Are you sure you want to revert to Member status? Your Creator data will be frozen but not deleted. You can re-activate it by completing the creator onboarding again.')) return;
+    try {
+      const { error } = await supabase.from('profiles').update({ role: 'member' }).eq('id', creatorId);
+      if (error) throw error;
+      window.location.href = '/profile/member';
+    } catch (e) {
+      console.error(e);
+      alert('Failed to revoke creator mode.');
+    }
+  };
+
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const tab = params.get('activeTab');
@@ -230,6 +242,11 @@ export default function CreatorProfile() {
             <p className="text-muted-foreground mt-1 text-xs uppercase tracking-widest font-bold opacity-60">Manage your empire and scale your influence.</p>
           </div>
           <div className="flex gap-3">
+            <button 
+              onClick={handleRevokeCreatorMode}
+              className="px-4 py-2 bg-red-500/10 text-red-400 border border-red-500/20 rounded-xl hover:bg-red-500/20 transition flex items-center gap-2 text-[10px] font-black uppercase tracking-widest">
+              <EyeOff className="w-4 h-4" /> Revoke Creator Mode
+            </button>
             <button className="px-4 py-2 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition flex items-center gap-2 text-[10px] font-black uppercase tracking-widest">
               <Settings className="w-4 h-4" /> Settings
             </button>

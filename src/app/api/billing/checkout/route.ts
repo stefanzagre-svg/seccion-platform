@@ -1,59 +1,80 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { z } from 'zod';
+import { BillingCheckoutResponse } from '@/types/api-responses';
+
+const checkoutSchema = z.object({
+  subscriberId: z.string().uuid({ message: 'Invalid subscriberId UUID format' }),
+  creatorId: z.string().uuid({ message: 'Invalid creatorId UUID format' }),
+  tier: z.string().optional().default('member'),
+  price: z.number().positive({ message: 'Price must be a positive number' }),
+  type: z.enum(['subscription', 'private_call', 'tip', 'unlock']).optional(),
+  callId: z.string().optional(),
+  duration: z.number().positive().optional(),
+});
 
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json();
-    const { subscriberId, creatorId, tier, price } = body;
+    const rawBody = await req.json().catch(() => null);
+    const parsed = checkoutSchema.safeParse(rawBody);
 
-    if (!subscriberId || !creatorId || !tier || !price) {
-      return NextResponse.json({ error: 'Missing required parameters' }, { status: 400 });
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: 'Invalid checkout parameters', details: parsed.error.format() },
+        { status: 400 }
+      );
     }
 
-    const supabase = await createClient();
+    const { subscriberId, creatorId, tier, price, type, callId, duration } = parsed.data;
 
-    // Fetch creator profile for reference
-    const { data: creatorProfile } = await supabase
-      .from('profiles')
-      .select('username, display_name')
-      .eq('id', creatorId)
-      .single();
+    // Phase 15: Enforce email verification before purchasing
+    const supabase = await createClient();
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    
+    if (userError || !user) {
+      return NextResponse.json({ error: 'Unauthorized. Please log in.' }, { status: 401 });
+    }
+
+    if (!user.email_confirmed_at) {
+      return NextResponse.json({ error: 'Email verification required before purchasing.' }, { status: 403 });
+    }
 
     const origin = req.nextUrl.origin;
-    const segpayEticketId = process.env.SEGPAY_ETICKET_ID || 'demo';
-    const isDemoMode = !process.env.SEGPAY_ETICKET_ID || process.env.SEGPAY_ETICKET_ID === 'demo';
+    const merchantId = process.env.SEGPAY_MERCHANT_ID;
+    const packageId = process.env.SEGPAY_PACKAGE_ID;
+    
+    const isPrivateCall = type === 'private_call';
+    const custom3 = isPrivateCall ? 'private_call' : tier;
+    const custom4 = isPrivateCall && callId ? callId : '';
+    const custom5 = isPrivateCall && duration ? duration.toString() : '';
 
-    // Price point IDs configured in Segpay Merchant Portal
-    const pricepointId = tier === 'master' 
-      ? (process.env.SEGPAY_PRICEPOINT_MASTER || 'pricepoint_master_002')
-      : (process.env.SEGPAY_PRICEPOINT_VIP || 'pricepoint_vip_001');
-
-    if (isDemoMode) {
+    if (!merchantId || !packageId || merchantId === 'placeholder_merchant_id') {
       // Mock Sandbox Checkout Redirection for Local / Dev testing
-      console.log(`[Segpay Demo Mode] Generating mock Join Link for ${tier.toUpperCase()} subscription:`, {
-        subscriberId,
-        creatorId,
-        tier,
-        price,
-        pricepointId
-      });
+      const maskedSub = subscriberId ? `${subscriberId.slice(0, 4)}...${subscriberId.slice(-4)}` : 'anon';
+      const maskedCreator = creatorId ? `${creatorId.slice(0, 4)}...${creatorId.slice(-4)}` : 'anon';
+      console.log(`[Segpay Demo Mode] Generating mock Join Link for ${isPrivateCall ? 'Private Call' : tier} (sub: ${maskedSub}, creator: ${maskedCreator})`);
       return NextResponse.json({ 
-        url: `${origin}/profile/member?checkout=success&tier=${tier}&processor=segpay&mock=true` 
+        url: `${origin}/profile/member?checkout=success&type=${type || 'subscription'}&mock=true` 
       });
     }
 
-    // Segpay Production Join Link Generator
-    const SEGPAY_BASE_URL = 'https://secure2.segpay.com/billing/poset.cgi';
-    const approvedUrl = `${origin}/profile/member?checkout=success&tier=${tier}&processor=segpay`;
+    // Segpay Dynamic Pricing POS Link Generator
+    // Action: auth (or sale)
+    const SEGPAY_BASE_URL = 'https://secure2.segpay.com/billing/pos';
+    const approvedUrl = `${origin}/profile/member?checkout=success&tier=${tier || 'call'}&processor=segpay`;
     const declinedUrl = `${origin}/profile/member?checkout=cancelled&processor=segpay`;
 
     const params = new URLSearchParams({
-      'x-eticketid': segpayEticketId,
-      'pricepoint_id': pricepointId,
-      'extra_member_id': subscriberId,
-      'extra_creator_id': creatorId,
-      'extra_tier': tier,
-      'extra_price': price.toString(),
+      'action': 'auth',
+      'merchantid': merchantId,
+      'packageid': packageId,
+      'price': price.toString(),
+      'currency': 'USD', // Adjust if supporting multiple
+      'custom1': subscriberId,
+      'custom2': creatorId,
+      'custom3': custom3,
+      'custom4': custom4,
+      'custom5': custom5,
       'approved_url': approvedUrl,
       'declined_url': declinedUrl,
     });

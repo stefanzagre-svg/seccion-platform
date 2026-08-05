@@ -38,6 +38,7 @@ export interface SuggestionMove {
   label: string;
   emoji: string;
   kycRequired: boolean;
+  purposeCategory?: ('dating' | 'lifestyle' | 'intimate' | 'all')[];
 }
 
 /** What the actor's individual gauge shows relative to the target's gauge */
@@ -156,9 +157,9 @@ export const RELATIONSHIP_LEVELS: RelationshipLevel[] = [
     color: '#93C5FD',       // blue-300
     kycRequired: false,
     suggestionMoves: [
-      { id: 'follow',    label: 'Send a Hi five',      emoji: '🖐️', kycRequired: false },
-      { id: 'poke',      label: 'Send a Poke',         emoji: '👉', kycRequired: false },
-      { id: 'punch',     label: 'Send a Punch Line',   emoji: '🎙️', kycRequired: false },
+      { id: 'follow',    label: 'Send a Hi five',      emoji: '🖐️', kycRequired: false, purposeCategory: ['all'] },
+      { id: 'poke',      label: 'Send a Poke',         emoji: '👉', kycRequired: false, purposeCategory: ['dating', 'intimate'] },
+      { id: 'punch',     label: 'Send a Punch Line',   emoji: '🎙️', kycRequired: false, purposeCategory: ['all'] },
     ],
   },
   {
@@ -169,20 +170,23 @@ export const RELATIONSHIP_LEVELS: RelationshipLevel[] = [
     color: '#60A5FA',       // blue-400
     kycRequired: false,
     suggestionMoves: [
-      { id: 'reaction',           label: 'Send a Reaction',                 emoji: '🎉', kycRequired: false },
-      { id: 'compliment',         label: 'Send a Compliment',               emoji: '💬', kycRequired: false },
-      { id: 'introduce_yourself', label: 'Send your presentation',          emoji: '📝', kycRequired: false },
-      { id: 'playlist',           label: 'Share your playlist',             emoji: '🎵', kycRequired: false },
-      { id: 'movie',              label: 'Share your Favorite Movies/Series', emoji: '🎬', kycRequired: false },
-      { id: 'gaming',             label: 'Ask online Gaming Session',       emoji: '🎮', kycRequired: false },
-      { id: 'gift',               label: 'Send a gift',                     emoji: '🎁', kycRequired: false },
-      { id: 'online',             label: 'Propose Online Date',             emoji: '💻', kycRequired: false },
-      { id: 'learn',              label: 'Suggest Online Masterclass',      emoji: '📚', kycRequired: false },
-      { id: 'mentorship',         label: 'Book 1-on-1 Skill Mentorship',    emoji: '🎓', kycRequired: false },
-      { id: 'career_advice',      label: 'Ask for Career / Business Advice',emoji: '📈', kycRequired: false },
-      { id: 'wellness_session',   label: 'Join Wellness & Mindfulness Stream', emoji: '🧘', kycRequired: false },
-      { id: 'live_streaming_performance', label: 'Live Streaming performance', emoji: '📹', kycRequired: false },
-      { id: 'live_stream_introduction', label: 'Live Stream introduction', emoji: '🎙️', kycRequired: false },
+      { id: 'reaction',           label: 'Send a Reaction',                 emoji: '🎉', kycRequired: false, purposeCategory: ['all'] },
+      { id: 'compliment',         label: 'Send a Compliment',               emoji: '💬', kycRequired: false, purposeCategory: ['dating', 'intimate'] },
+      { id: 'introduce_yourself', label: 'Send your presentation',          emoji: '📝', kycRequired: false, purposeCategory: ['all'] },
+      { id: 'playlist',           label: 'Share your playlist',             emoji: '🎵', kycRequired: false, purposeCategory: ['all'] },
+      { id: 'movie',              label: 'Share your Favorite Movies/Series', emoji: '🎬', kycRequired: false, purposeCategory: ['all'] },
+      { id: 'gaming',             label: 'Ask online Gaming Session',       emoji: '🎮', kycRequired: false, purposeCategory: ['lifestyle', 'dating'] },
+      { id: 'gift',               label: 'Send a gift',                     emoji: '🎁', kycRequired: false, purposeCategory: ['all'] },
+      { id: 'online',             label: 'Propose Online Date',             emoji: '💻', kycRequired: false, purposeCategory: ['dating', 'intimate'] },
+      { id: 'learn',              label: 'Suggest Online Masterclass',      emoji: '📚', kycRequired: false, purposeCategory: ['lifestyle'] },
+      { id: 'mentorship',         label: 'Book 1-on-1 Skill Mentorship',    emoji: '🎓', kycRequired: false, purposeCategory: ['lifestyle'] },
+      { id: 'career_advice',      label: 'Ask for Career / Business Advice',emoji: '📈', kycRequired: false, purposeCategory: ['lifestyle'] },
+      { id: 'wellness_session',   label: 'Join Wellness & Mindfulness Stream', emoji: '🧘', kycRequired: false, purposeCategory: ['lifestyle'] },
+      { id: 'tutorial_dining',    label: 'Tutorial: Perfect First Date Dinner', emoji: '🍽️', kycRequired: false, purposeCategory: ['lifestyle'] },
+      { id: 'tutorial_styling',   label: 'Tutorial: Outfit & Styling Check',    emoji: '👗', kycRequired: false, purposeCategory: ['lifestyle'] },
+      { id: 'course_confidence',  label: 'Course: Confidence & Charisma',       emoji: '✨', kycRequired: false, purposeCategory: ['lifestyle'] },
+      { id: 'live_streaming_performance', label: 'Live Streaming performance', emoji: '📹', kycRequired: false, purposeCategory: ['all'] },
+      { id: 'live_stream_introduction', label: 'Live Stream introduction', emoji: '🎙️', kycRequired: false, purposeCategory: ['all'] },
     ],
   },
   {
@@ -193,29 +197,31 @@ export const RELATIONSHIP_LEVELS: RelationshipLevel[] = [
     color: '#F59E0B',       // amber-400
     kycRequired: true,      // Changed to true based on user feedback
     suggestionMoves: [
-      { id: 'coffee',     label: 'Propose Coffee Date',              emoji: '☕', kycRequired: true },
-      { id: 'picnic',     label: 'Propose Picnic Date',              emoji: '🧺', kycRequired: true },
-      { id: 'city',       label: 'Propose City/Park walk',           emoji: '🌳', kycRequired: true },
-      { id: 'culture',    label: 'Propose Cultural Visit',           emoji: '🏛️', kycRequired: true },
-      { id: 'mastermind', label: 'Propose Business / Tech Mastermind', emoji: '🚀', kycRequired: true },
-      { id: 'co_working', label: 'Propose Co-Working Session',       emoji: '💻', kycRequired: true },
-      { id: 'beach',      label: 'Propose Beach Activities',         emoji: '🏖️', kycRequired: true },
-      { id: 'beach_bar',  label: 'Propose beach bar/Party',          emoji: '🍹', kycRequired: true },
-      { id: 'lunch',      label: 'Propose Lunch out',                emoji: '🍱', kycRequired: true },
-      { id: 'brunch',     label: 'Propose Brunch out',               emoji: '🥞', kycRequired: true },
-      { id: 'shopping',   label: 'Suggest to go to Shopping together', emoji: '🛍️', kycRequired: true },
-      { id: 'happy',      label: 'Propose happy hour',               emoji: '🍻', kycRequired: true },
-      { id: 'concert',    label: 'Propose to go to Concert Live',    emoji: '🎸', kycRequired: true },
-      { id: 'tour',       label: 'Propose City Tour',                emoji: '🚌', kycRequired: true },
-      { id: 'yoga',       label: 'Propose Yoga Session',             emoji: '🧘', kycRequired: true },
-      { id: 'run',        label: 'Suggest Running mate',             emoji: '🏃', kycRequired: true },
-      { id: 'outdoor',    label: 'suggest outdoors Excursion',       emoji: '🥾', kycRequired: true },
-      { id: 'drink',      label: 'Propose night out',                emoji: '🥂', kycRequired: true },
-      { id: 'restaurant', label: 'propose dinner out',               emoji: '🍴', kycRequired: true },
-      { id: 'exhibition', label: 'suggest an exhibition',            emoji: '🎨', kycRequired: true },
-      { id: 'show',       label: 'Propose a Restaurant Live',        emoji: '🎪', kycRequired: true },
-      { id: 'sport',      label: 'Suggest Sport activities',         emoji: '⚽', kycRequired: true },
-      { id: 'cook',       label: 'Propose to cook together',         emoji: '🧑‍🍳', kycRequired: true },
+      { id: 'coffee',     label: 'Propose Coffee Date',              emoji: '☕', kycRequired: true, purposeCategory: ['dating', 'intimate'] },
+      { id: 'picnic',     label: 'Propose Picnic Date',              emoji: '🧺', kycRequired: true, purposeCategory: ['dating', 'intimate'] },
+      { id: 'city',       label: 'Propose City/Park walk',           emoji: '🌳', kycRequired: true, purposeCategory: ['dating', 'lifestyle'] },
+      { id: 'culture',    label: 'Propose Cultural Visit',           emoji: '🏛️', kycRequired: true, purposeCategory: ['lifestyle', 'dating'] },
+      { id: 'mastermind', label: 'Propose Business / Tech Mastermind', emoji: '🚀', kycRequired: true, purposeCategory: ['lifestyle'] },
+      { id: 'co_working', label: 'Propose Co-Working Session',       emoji: '💻', kycRequired: true, purposeCategory: ['lifestyle'] },
+      { id: 'beach',      label: 'Propose Beach Activities',         emoji: '🏖️', kycRequired: true, purposeCategory: ['lifestyle', 'dating'] },
+      { id: 'beach_bar',  label: 'Propose beach bar/Party',          emoji: '🍹', kycRequired: true, purposeCategory: ['dating', 'lifestyle'] },
+      { id: 'lunch',      label: 'Propose Lunch out',                emoji: '🍱', kycRequired: true, purposeCategory: ['all'] },
+      { id: 'brunch',     label: 'Propose Brunch out',               emoji: '🥞', kycRequired: true, purposeCategory: ['all'] },
+      { id: 'shopping',   label: 'Suggest to go to Shopping together', emoji: '🛍️', kycRequired: true, purposeCategory: ['lifestyle', 'dating'] },
+      { id: 'happy',      label: 'Propose happy hour',               emoji: '🍻', kycRequired: true, purposeCategory: ['all'] },
+      { id: 'concert',    label: 'Propose to go to Concert Live',    emoji: '🎸', kycRequired: true, purposeCategory: ['all'] },
+      { id: 'tour',       label: 'Propose City Tour',                emoji: '🚌', kycRequired: true, purposeCategory: ['lifestyle', 'dating'] },
+      { id: 'yoga',       label: 'Propose Yoga Session',             emoji: '🧘', kycRequired: true, purposeCategory: ['lifestyle', 'dating'] },
+      { id: 'run',        label: 'Suggest Running mate',             emoji: '🏃', kycRequired: true, purposeCategory: ['lifestyle', 'dating'] },
+      { id: 'outdoor',    label: 'suggest outdoors Excursion',       emoji: '🥾', kycRequired: true, purposeCategory: ['lifestyle', 'dating'] },
+      { id: 'drink',      label: 'Propose night out',                emoji: '🥂', kycRequired: true, purposeCategory: ['dating', 'intimate'] },
+      { id: 'restaurant', label: 'propose dinner out',               emoji: '🍴', kycRequired: true, purposeCategory: ['dating', 'intimate'] },
+      { id: 'exhibition', label: 'suggest an exhibition',            emoji: '🎨', kycRequired: true, purposeCategory: ['lifestyle', 'dating'] },
+      { id: 'show',       label: 'Propose a Restaurant Live',        emoji: '🎪', kycRequired: true, purposeCategory: ['dating', 'lifestyle'] },
+      { id: 'sport',      label: 'Suggest Sport activities',         emoji: '⚽', kycRequired: true, purposeCategory: ['lifestyle'] },
+      { id: 'coach_dating', label: '1-on-1 Dating Strategy Coaching',     emoji: '🎯', kycRequired: true, purposeCategory: ['lifestyle'] },
+      { id: 'coach_career', label: '1-on-1 Executive Presence Coaching',  emoji: '💼', kycRequired: true, purposeCategory: ['lifestyle'] },
+      { id: 'cook',       label: 'Propose to cook together',         emoji: '🧑‍🍳', kycRequired: true, purposeCategory: ['dating', 'intimate'] },
     ],
   },
   {
@@ -226,15 +232,15 @@ export const RELATIONSHIP_LEVELS: RelationshipLevel[] = [
     color: '#F472B6',       // pink-400
     kycRequired: true,
     suggestionMoves: [
-      { id: 'cook',        label: 'Propose to cook together', emoji: '🧑‍🍳', kycRequired: true },
-      { id: 'spa',         label: 'Spa day',                  emoji: '💆', kycRequired: true },
-      { id: 'karaoke',     label: 'karaoke date',             emoji: '🎤', kycRequired: true },
-      { id: 'local',       label: 'Local Short Trip',         emoji: '🚗', kycRequired: true },
-      { id: 'appetizer',   label: 'Libertine appetizer',      emoji: '🍢', kycRequired: true },
-      { id: 'club',        label: 'Night club/ lounge bar',   emoji: '🕺', kycRequired: true },
-      { id: 'home',        label: 'Invitation home',          emoji: '🏠', kycRequired: true },
-      { id: 'relax',       label: 'Massage/Relaxation',       emoji: '🕯️', kycRequired: true },
-      { id: 'performance', label: 'Sexual partner',           emoji: '🫦', kycRequired: true },
+      { id: 'cook',        label: 'Propose to cook together', emoji: '🧑‍🍳', kycRequired: true, purposeCategory: ['dating', 'intimate'] },
+      { id: 'spa',         label: 'Spa day',                  emoji: '💆', kycRequired: true, purposeCategory: ['dating', 'intimate'] },
+      { id: 'karaoke',     label: 'karaoke date',             emoji: '🎤', kycRequired: true, purposeCategory: ['dating', 'intimate'] },
+      { id: 'local',       label: 'Local Short Trip',         emoji: '🚗', kycRequired: true, purposeCategory: ['dating', 'intimate'] },
+      { id: 'appetizer',   label: 'Libertine appetizer',      emoji: '🍢', kycRequired: true, purposeCategory: ['intimate'] },
+      { id: 'club',        label: 'Night club/ lounge bar',   emoji: '🕺', kycRequired: true, purposeCategory: ['dating', 'intimate'] },
+      { id: 'home',        label: 'Invitation home',          emoji: '🏠', kycRequired: true, purposeCategory: ['dating', 'intimate'] },
+      { id: 'relax',       label: 'Massage/Relaxation',       emoji: '🕯️', kycRequired: true, purposeCategory: ['dating', 'intimate'] },
+      { id: 'performance', label: 'Sexual partner',           emoji: '🫦', kycRequired: true, purposeCategory: ['intimate'] },
     ],
   },
   {
@@ -245,10 +251,10 @@ export const RELATIONSHIP_LEVELS: RelationshipLevel[] = [
     color: '#F97316',       // orange-500
     kycRequired: true,
     suggestionMoves: [
-      { id: 'escape',        label: 'impromptu escape',   emoji: '🏝️', kycRequired: true },
-      { id: 'surprise',      label: 'surprise plan',      emoji: '🎊', kycRequired: true },
-      { id: 'international', label: 'International trip', emoji: '✈️', kycRequired: true },
-      { id: 'swing',         label: 'Swinger Party',      emoji: '😈', kycRequired: true },
+      { id: 'escape',        label: 'impromptu escape',   emoji: '🏝️', kycRequired: true, purposeCategory: ['dating', 'intimate'] },
+      { id: 'surprise',      label: 'surprise plan',      emoji: '🎊', kycRequired: true, purposeCategory: ['dating', 'intimate'] },
+      { id: 'international', label: 'International trip', emoji: '✈️', kycRequired: true, purposeCategory: ['dating', 'intimate'] },
+      { id: 'swing',         label: 'Swinger Party',      emoji: '😈', kycRequired: true, purposeCategory: ['intimate'] },
     ],
   },
   {
@@ -259,15 +265,15 @@ export const RELATIONSHIP_LEVELS: RelationshipLevel[] = [
     color: '#10B981',       // emerald-500
     kycRequired: true,
     suggestionMoves: [
-      { id: 'collab',       label: 'Business/Social/Creative collaboration', emoji: '🎨', kycRequired: true },
-      { id: 'sponsor',      label: 'Financial/Social sponsor',               emoji: '💎', kycRequired: true },
-      { id: 'inner_circle', label: 'inner circle meet',                      emoji: '🤝', kycRequired: true },
-      { id: 'engagement',   label: 'being engage',                           emoji: '💍', kycRequired: true },
-      { id: 'move_in',      label: 'Co-Living ready',                        emoji: '🏠', kycRequired: true },
-      { id: 'family',       label: 'build a Family',                         emoji: '👨‍👩‍👧‍👦', kycRequired: true },
-      { id: 'investment',   label: 'Economical/Social investment together',  emoji: '📈', kycRequired: true },
-      { id: 'house',        label: 'buy a property',                         emoji: '🏡', kycRequired: true },
-      { id: 'parents',      label: 'meet parents',                           emoji: '👥', kycRequired: true },
+      { id: 'collab',       label: 'Business/Social/Creative collaboration', emoji: '🎨', kycRequired: true, purposeCategory: ['lifestyle'] },
+      { id: 'sponsor',      label: 'Financial/Social sponsor',               emoji: '💎', kycRequired: true, purposeCategory: ['lifestyle'] },
+      { id: 'inner_circle', label: 'inner circle meet',                      emoji: '🤝', kycRequired: true, purposeCategory: ['lifestyle', 'dating'] },
+      { id: 'engagement',   label: 'being engage',                           emoji: '💍', kycRequired: true, purposeCategory: ['dating', 'intimate'] },
+      { id: 'move_in',      label: 'Co-Living ready',                        emoji: '🏠', kycRequired: true, purposeCategory: ['dating', 'intimate'] },
+      { id: 'family',       label: 'build a Family',                         emoji: '👨‍👩‍👧‍👦', kycRequired: true, purposeCategory: ['dating', 'intimate'] },
+      { id: 'investment',   label: 'Economical/Social investment together',  emoji: '📈', kycRequired: true, purposeCategory: ['lifestyle'] },
+      { id: 'house',        label: 'buy a property',                         emoji: '🏡', kycRequired: true, purposeCategory: ['dating', 'intimate'] },
+      { id: 'parents',      label: 'meet parents',                           emoji: '👥', kycRequired: true, purposeCategory: ['dating', 'intimate'] },
     ],
   },
   {
@@ -278,9 +284,9 @@ export const RELATIONSHIP_LEVELS: RelationshipLevel[] = [
     color: '#DC2626',       // crimson
     kycRequired: true,
     suggestionMoves: [
-      { id: 'partner',  label: 'Life Partner',     emoji: '💖', kycRequired: true },
-      { id: 'business', label: 'Business Partner', emoji: '💼', kycRequired: true },
-      { id: 'adopt',    label: 'Adopt a child',    emoji: '👶', kycRequired: true },
+      { id: 'partner',  label: 'Life Partner',     emoji: '💖', kycRequired: true, purposeCategory: ['dating', 'intimate'] },
+      { id: 'business', label: 'Business Partner', emoji: '💼', kycRequired: true, purposeCategory: ['lifestyle'] },
+      { id: 'adopt',    label: 'Adopt a child',    emoji: '👶', kycRequired: true, purposeCategory: ['dating', 'intimate'] },
     ],
   },
 ];
@@ -517,7 +523,8 @@ export function populateRelationshipLevels(moves: any[]) {
         id: move.id,
         label: move.label,
         emoji: move.emoji || '',
-        kycRequired: move.kyc_required ?? move.kycRequired ?? false
+        kycRequired: move.kyc_required ?? move.kycRequired ?? false,
+        purposeCategory: move.purpose_category ?? move.purposeCategory ?? ['all']
       });
     }
   }
@@ -530,7 +537,7 @@ export async function syncSuggestionMoves(supabase: any) {
   try {
     const { data: dbMoves, error } = await supabase
       .from('suggestion_moves')
-      .select('id, label, emoji, kyc_required, relationship_level');
+      .select('id, label, emoji, kyc_required, relationship_level, purpose_category');
     
     if (error) throw error;
     if (dbMoves) {

@@ -22,6 +22,15 @@ export interface RateeProfile {
   engagementScore?: number;
 }
 
+export interface RatingTargetProfile {
+  id?: string;
+  is_kyc_verified?: boolean;
+  isKycVerified?: boolean;
+  engagement_score?: number;
+  engagementScore?: number;
+  [key: string]: unknown;
+}
+
 /**
  * Checks if a rater is eligible to rate a ratee based on Seccion platform rules.
  */
@@ -75,7 +84,7 @@ export function calculateDynamicRating(scores: number[]): number {
 /**
  * Computes base score for a Creator (Max 17.00)
  */
-export function getCreatorBaseScore(profile: Record<string, unknown>): number {
+export function getCreatorBaseScore(profile: RatingTargetProfile): number {
   const base = 10.00;
   
   // Engagement contribution (Max 5.00): e.g. score of 100 = 5.00
@@ -92,7 +101,7 @@ export function getCreatorBaseScore(profile: Record<string, unknown>): number {
 /**
  * Computes base score for a Member (Max 17.00)
  */
-export function getMemberBaseScore(profile: Record<string, unknown>, avgChemistry = 75): number {
+export function getMemberBaseScore(profile: RatingTargetProfile, avgChemistry = 75): number {
   const base = 10.00;
 
   // KYC concern bonus (Max 3.00): shows commitment to verification and safety
@@ -109,7 +118,7 @@ export function getMemberBaseScore(profile: Record<string, unknown>, avgChemistr
  * Calculates creator's overall rating score (10.00 - 20.00)
  * Uses dynamic reviews if available, combined with creator base metrics.
  */
-export function calculateCreatorRating(profile: Record<string, unknown>, ratingScores: number[] = []): number {
+export function calculateCreatorRating(profile: RatingTargetProfile, ratingScores: number[] = []): number {
   const baseScore = getCreatorBaseScore(profile);
 
   if (ratingScores.length === 0) {
@@ -129,7 +138,7 @@ export function calculateCreatorRating(profile: Record<string, unknown>, ratingS
  * Calculates member's overall rating score (10.00 - 20.00)
  */
 export function calculateMemberRating(
-  profile: Record<string, unknown>,
+  profile: RatingTargetProfile,
   avgChemistry = 75,
   ratingScores: number[] = []
 ): number {

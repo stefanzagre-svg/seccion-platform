@@ -16,6 +16,8 @@ export default function RegistrationGate({ onComplete }: RegistrationGateProps) 
   const { t } = useTranslation();
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [shakeTerms, setShakeTerms] = useState(false);
+  const [acceptedPrivacy, setAcceptedPrivacy] = useState(false);
+  const [shakePrivacy, setShakePrivacy] = useState(false);
   const [showAgeVerification, setShowAgeVerification] = useState(false);
   const [ageVerificationData, setAgeVerificationData] = useState<{ birthDate: string; countryCode: string; verificationTier: string } | null>(null);
   const [showEmailForm, setShowEmailForm] = useState(false);
@@ -23,6 +25,7 @@ export default function RegistrationGate({ onComplete }: RegistrationGateProps) 
   const [showOtpScreen, setShowOtpScreen] = useState(false);
   const [isMockPhoneMode, setIsMockPhoneMode] = useState(false);
   const [isSignUp, setIsSignUp] = useState(true);
+  const [isForgotPassword, setIsForgotPassword] = useState(false);
   
   // Auth Form State
   const [email, setEmail] = useState('');
@@ -37,9 +40,10 @@ export default function RegistrationGate({ onComplete }: RegistrationGateProps) 
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   const handleProviderSelect = (provider: string) => {
-    if (!acceptedTerms) {
-      setError("Please accept the terms and verify you are 18+ to proceed.");
-      setShakeTerms(true);
+    if (!acceptedTerms || !acceptedPrivacy) {
+      setError("Please accept both the terms and the privacy processing agreement to proceed.");
+      if (!acceptedTerms) setShakeTerms(true);
+      if (!acceptedPrivacy) setShakePrivacy(true);
       return;
     }
     setError(null);
@@ -62,13 +66,21 @@ export default function RegistrationGate({ onComplete }: RegistrationGateProps) 
 
   const handleAuthSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!acceptedTerms) return;
+    if (!acceptedTerms || !acceptedPrivacy) return;
     setError(null);
     setSuccessMessage(null);
     setIsSubmitting(true);
 
     try {
-      if (isSignUp) {
+      if (isForgotPassword) {
+        if (!email) throw new Error("Email is required for password reset.");
+        const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
+          redirectTo: `${window.location.origin}/auth/update-password`,
+        });
+        if (resetError) throw resetError;
+        setSuccessMessage("Password reset link sent! Check your email.");
+        setIsForgotPassword(false);
+      } else if (isSignUp) {
         if (!username.trim()) {
           throw new Error('Username is required.');
         }
@@ -167,7 +179,7 @@ export default function RegistrationGate({ onComplete }: RegistrationGateProps) 
 
   const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!acceptedTerms) return;
+    if (!acceptedTerms || !acceptedPrivacy) return;
     if (!phone.trim()) {
       setError('Phone number is required.');
       return;
@@ -247,7 +259,7 @@ export default function RegistrationGate({ onComplete }: RegistrationGateProps) 
       }
 
       if (isMockPhoneMode && otpCode.trim() === '123456') {
-        const mockUserId = 'demo-phone-' + Math.random().toString(36).substring(2, 12);
+        const mockUserId = 'demo-phone-' + crypto.randomUUID().replace(/-/g, '').substring(0, 12);
         const finalUsername = isSignUp ? username.trim() : `user_${mockUserId.substring(11, 16)}`;
         const isCreatorMode = typeof window !== "undefined" && !!sessionStorage.getItem("_onboarding_creator_archive_choice");
         const userRole = isCreatorMode ? 'creator' : 'member';
@@ -320,9 +332,10 @@ export default function RegistrationGate({ onComplete }: RegistrationGateProps) 
   const handleDemoLogin = async () => {
     setError(null);
     setIsSubmitting(true);
-    const demoEmail = `guest_${Math.floor(Math.random() * 10000)}@session.com`;
+    const guestUid = crypto.randomUUID().replace(/-/g, '').substring(0, 12);
+    const demoEmail = `guest_${guestUid}@session.com`;
     const demoPass = 'DemoPassword123!';
-    const demoUsername = `Guest_${Math.floor(Math.random() * 10000)}`;
+    const demoUsername = `Guest_${guestUid}`;
 
     // 1. Try anonymous sign-in first
     try {
@@ -419,7 +432,7 @@ export default function RegistrationGate({ onComplete }: RegistrationGateProps) 
 
       console.warn("Supabase SignUp error, falling back to mock localStorage session:", err);
       // Fallback guest setup if Supabase has limits or SMTP issues
-      const mockId = 'demo-guest-' + Math.random().toString(36).substring(2, 12);
+      const mockId = 'demo-guest-' + crypto.randomUUID().replace(/-/g, '').substring(0, 12);
       localStorage.setItem('fusion_onboarding_core', JSON.stringify({
         userId: mockId,
         username: demoUsername
@@ -507,7 +520,7 @@ export default function RegistrationGate({ onComplete }: RegistrationGateProps) 
               exit={{ opacity: 0, x: -10 }}
               className="flex flex-col gap-4"
             >
-              {isSignUp && (
+              {isSignUp && !isForgotPassword && (
                 <div className="space-y-1.5">
                   <label className="text-[9px] uppercase tracking-widest font-black text-white/40">Username</label>
                   <div className="relative">
@@ -517,7 +530,7 @@ export default function RegistrationGate({ onComplete }: RegistrationGateProps) 
                       placeholder="alex_n" 
                       value={username}
                       onChange={(e) => setUsername(e.target.value)}
-                      required
+                      required={isSignUp && !isForgotPassword}
                       className="w-full pl-10 pr-4 py-2.5 bg-black/40 border border-white/10 rounded-xl text-xs text-white placeholder-white/20 focus:border-primary focus:outline-none transition"
                     />
                   </div>
@@ -539,48 +552,71 @@ export default function RegistrationGate({ onComplete }: RegistrationGateProps) 
                 </div>
               </div>
 
-              <div className="space-y-1.5">
-                <label className="text-[9px] uppercase tracking-widest font-black text-white/40">Password</label>
-                <div className="relative">
-                  <Key className="absolute left-3.5 top-3 w-4 h-4 text-white/30" />
-                  <input 
-                    type="password" 
-                    placeholder="••••••••" 
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    className="w-full pl-10 pr-4 py-2.5 bg-black/40 border border-white/10 rounded-xl text-xs text-white placeholder-white/20 focus:border-primary focus:outline-none transition"
-                  />
+              {!isForgotPassword && (
+                <div className="space-y-1.5">
+                  <label className="text-[9px] uppercase tracking-widest font-black text-white/40">Password</label>
+                  <div className="relative">
+                    <Key className="absolute left-3.5 top-3 w-4 h-4 text-white/30" />
+                    <input 
+                      type="password" 
+                      placeholder="••••••••" 
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required={!isForgotPassword}
+                      className="w-full pl-10 pr-4 py-2.5 bg-black/40 border border-white/10 rounded-xl text-xs text-white placeholder-white/20 focus:border-primary focus:outline-none transition"
+                    />
+                  </div>
                 </div>
-              </div>
+              )}
+
+              {!isForgotPassword && !isSignUp && (
+                <div className="flex justify-end mt-[-8px]">
+                  <button 
+                    type="button"
+                    onClick={() => setIsForgotPassword(true)}
+                    className="text-[10px] text-white/40 hover:text-white transition"
+                  >
+                    Forgot Password?
+                  </button>
+                </div>
+              )}
 
               <button 
                 type="submit"
-                disabled={isSubmitting || !acceptedTerms}
+                disabled={isSubmitting || !acceptedTerms || !acceptedPrivacy}
                 className="w-full bg-primary text-black font-black uppercase tracking-widest py-3.5 rounded-xl transition-all hover:shadow-[0_0_20px_rgba(102,252,241,0.4)] disabled:opacity-50 text-[10px] flex items-center justify-center gap-2"
               >
                 {isSubmitting ? (
                   <Loader2 className="w-4 h-4 animate-spin text-black" />
+                ) : isForgotPassword ? (
+                  'Send Reset Link'
+                ) : isSignUp ? (
+                  'Create Account'
                 ) : (
-                  isSignUp ? 'Create Account' : 'Sign In'
+                  'Sign In'
                 )}
               </button>
 
               <div className="flex justify-between items-center mt-2 text-[10px] font-bold">
                 <button 
                   type="button" 
-                  onClick={() => setShowEmailForm(false)} 
+                  onClick={() => {
+                    if (isForgotPassword) setIsForgotPassword(false);
+                    else setShowEmailForm(false);
+                  }} 
                   className="text-white/40 hover:text-white transition"
                 >
-                  ← Other options
+                  ← {isForgotPassword ? 'Back to Sign In' : 'Other options'}
                 </button>
-                <button 
-                  type="button" 
-                  onClick={() => setIsSignUp(!isSignUp)} 
-                  className="text-primary hover:underline transition"
-                >
-                  {isSignUp ? 'Already have an account? Sign In' : "Don't have an account? Sign Up"}
-                </button>
+                {!isForgotPassword && (
+                  <button 
+                    type="button" 
+                    onClick={() => setIsSignUp(!isSignUp)} 
+                    className="text-primary hover:underline transition"
+                  >
+                    {isSignUp ? 'Already have an account? Sign In' : "Don't have an account? Sign Up"}
+                  </button>
+                )}
               </div>
             </motion.form>
           ) : (
@@ -627,7 +663,7 @@ export default function RegistrationGate({ onComplete }: RegistrationGateProps) 
 
                 <button 
                   type="submit"
-                  disabled={isSubmitting || !acceptedTerms}
+                  disabled={isSubmitting || !acceptedTerms || !acceptedPrivacy}
                   className="w-full bg-primary text-black font-black uppercase tracking-widest py-3.5 rounded-xl transition-all hover:shadow-[0_0_20px_rgba(102,252,241,0.4)] disabled:opacity-50 text-[10px] flex items-center justify-center gap-2"
                 >
                   {isSubmitting ? (
@@ -720,6 +756,7 @@ export default function RegistrationGate({ onComplete }: RegistrationGateProps) 
               onVerified={(data) => {
                 setAgeVerificationData(data);
                 setAcceptedTerms(true);
+                setAcceptedPrivacy(true);
                 setShowAgeVerification(false);
                 setError(null);
                 sessionStorage.setItem('_user_age_verified', JSON.stringify(data));
@@ -755,7 +792,38 @@ export default function RegistrationGate({ onComplete }: RegistrationGateProps) 
                 setAcceptedTerms(!acceptedTerms);
                 setError(null);
               }}>
-                I confirm I am 18+ and accept the <span className="text-white font-medium underline decoration-white/30">General Platform Conditions</span> and <span className="text-white font-medium underline decoration-white/30">Privacy Policy</span>.
+                I confirm I am 18+ and accept the <span className="text-white font-medium underline decoration-white/30">General Platform Conditions</span>.
+              </p>
+            </div>
+
+            <div className="flex items-start gap-3">
+              <motion.button 
+                onClick={() => {
+                  setAcceptedPrivacy(!acceptedPrivacy);
+                  setError(null);
+                }}
+                animate={shakePrivacy ? { x: [0, -6, 6, -6, 6, 0] } : {}}
+                transition={{ duration: 0.4 }}
+                onAnimationComplete={() => setShakePrivacy(false)}
+                className={`flex-shrink-0 w-5 h-5 rounded border flex items-center justify-center transition-all duration-300 mt-0.5 ${
+                  acceptedPrivacy 
+                    ? 'bg-primary border-primary text-black' 
+                    : shakePrivacy
+                      ? 'bg-red-500/10 border-red-500 shadow-[0_0_12px_rgba(239,68,68,0.7)]' 
+                      : 'bg-transparent border-white/20 hover:border-white/40'
+                }`}
+              >
+                {acceptedPrivacy && (
+                  <svg className="w-3.5 h-3.5 text-black stroke-[3]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                  </svg>
+                )}
+              </motion.button>
+              <p className="text-[10px] text-gray-400 leading-relaxed cursor-pointer" onClick={() => {
+                setAcceptedPrivacy(!acceptedPrivacy);
+                setError(null);
+              }}>
+                I explicitly consent to the processing of my <span className="text-white font-medium underline decoration-white/30">Special Category Data</span> (biometrics and preferences) as outlined in the <span className="text-white font-medium underline decoration-white/30">Privacy Policy</span>.
               </p>
             </div>
 

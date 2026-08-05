@@ -21,6 +21,7 @@ export default function Navbar() {
 
   // Exclude navbar in onboarding, auth callback, admin pages, or landing page when user is not logged in
   const isExcludedPage = 
+    pathname?.startsWith('/early-access') ||
     pathname?.startsWith('/onboarding') || 
     pathname?.startsWith('/auth') || 
     pathname?.startsWith('/admin') ||
@@ -172,7 +173,7 @@ export default function Navbar() {
         
         <Link href="/" className="flex items-center cursor-pointer hover:opacity-90 transition-opacity group">
           <img 
-            src="/assets/logo/seccion-wordmark-light.png" 
+            src="/assets/logo/logo-wordmark.png" 
             alt="SECCION" 
             className="h-7 sm:h-8 md:h-9 object-contain drop-shadow-[0_0_20px_rgba(0,240,255,0.4)] group-hover:drop-shadow-[0_0_30px_rgba(0,240,255,0.7)] transition-all duration-300" 
           />
@@ -340,7 +341,7 @@ export default function Navbar() {
       </nav>
 
       {/* Mobile Bottom Navigation Bar */}
-      <div className="mobile-bottom-nav fixed bottom-0 left-0 right-0 z-50 md:hidden bg-black/85 backdrop-blur-2xl border-t border-white/10 px-6 py-2.5 shadow-2xl flex justify-between items-center transition-all duration-300">
+      <div className="mobile-bottom-nav fixed bottom-0 left-0 right-0 z-50 md:hidden bg-black/85 backdrop-blur-2xl border-t border-white/10 px-6 pt-2.5 pb-[calc(0.625rem+env(safe-area-inset-bottom,0px))] shadow-2xl flex justify-between items-center transition-all duration-300">
         <Link 
           href="/" 
           className={`flex flex-col items-center gap-1.5 py-1 px-3 transition ${

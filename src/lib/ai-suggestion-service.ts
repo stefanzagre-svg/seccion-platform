@@ -322,7 +322,7 @@ export function generateLocalSuggestions(
   const pool = candidatesPool && candidatesPool.length > 0 ? candidatesPool : SUGGESTION_CANDIDATES;
 
   const bundles: SignalBundle[] = pool.map((candidate) =>
-    computeSignals(currentUserProfile, candidate, baseGauge + Math.random() * 15)
+    computeSignals(currentUserProfile, candidate, baseGauge)
   );
 
   // Rank by composite score descending

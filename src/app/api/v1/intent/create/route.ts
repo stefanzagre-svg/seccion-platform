@@ -1,6 +1,17 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { checkUserQuota, createDatePlan } from '@/lib/date-plan-db';
+import { z } from 'zod';
+
+const intentCreateSchema = z.object({
+  intent_type: z.enum(['Offer', 'LookingFor']),
+  plan_scope: z.enum(['In-Person', 'Digital Screen', 'Hybrid']),
+  start_timestamp_utc: z.string().datetime({ message: 'Invalid start_timestamp_utc ISO date format' }).or(z.string().min(10)),
+  end_timestamp_utc: z.string().datetime({ message: 'Invalid end_timestamp_utc ISO date format' }).or(z.string().min(10)),
+  max_applications_int: z.number().int().positive().optional(),
+  plan_scope_geo_point: z.object({ lat: z.number(), lng: z.number() }).nullable().optional(),
+  allowed_move_tags_array: z.array(z.string()).nullable().optional(),
+});
 
 export async function POST(request: Request) {
   try {
@@ -33,8 +44,17 @@ export async function POST(request: Request) {
       }, { status: 403 });
     }
 
-    // 4. Parse request payload
-    const body = await request.json();
+    // 4. Parse & validate request payload
+    const rawBody = await request.json().catch(() => null);
+    const parsed = intentCreateSchema.safeParse(rawBody);
+
+    if (!parsed.success) {
+      return NextResponse.json({
+        error: 'Invalid intent payload',
+        details: parsed.error.format()
+      }, { status: 400 });
+    }
+
     const {
       intent_type,
       plan_scope,
@@ -43,14 +63,7 @@ export async function POST(request: Request) {
       max_applications_int,
       plan_scope_geo_point,
       allowed_move_tags_array
-    } = body;
-
-    // Validate required fields
-    if (!intent_type || !plan_scope || !start_timestamp_utc || !end_timestamp_utc) {
-      return NextResponse.json({
-        error: 'Missing required fields: intent_type, plan_scope, start_timestamp_utc, end_timestamp_utc'
-      }, { status: 400 });
-    }
+    } = parsed.data;
 
     // 5. Create the Date Plan
     const newPlan = await createDatePlan({

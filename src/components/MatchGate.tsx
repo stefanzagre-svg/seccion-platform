@@ -338,17 +338,47 @@ export default function MatchGate({
       </div>
 
       {/* Primary Actions */}
-      <div className="relative z-10 mt-6 flex justify-center">
+      <div className="relative z-10 mt-6 flex flex-col md:flex-row items-center justify-center gap-3">
         <AnimatePresence mode="wait">
+          {scanStep === -1 && (
+            <motion.button
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              onClick={() => {
+                setScanStep(6);
+                setRunningScore(matchResult?.totalScore || 88);
+              }}
+              className="px-8 py-4 bg-gradient-to-r from-primary via-accent to-purple-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-[0.3em] shadow-[0_15px_40px_rgba(255,0,127,0.4)] hover:scale-105 active:scale-95 transition-all cursor-pointer flex items-center gap-2"
+            >
+              <Unlock className="w-4 h-4" /> Decrypt & Unlock Stream Now
+            </motion.button>
+          )}
+
+          {scanStep >= 0 && scanStep < 6 && (
+            <motion.button
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              onClick={() => {
+                setScanStep(6);
+                setRunningScore(matchResult?.totalScore || 88);
+              }}
+              className="px-6 py-3 bg-white/10 hover:bg-white/20 text-white border border-white/20 rounded-2xl text-[9px] font-black uppercase tracking-widest transition-all cursor-pointer"
+            >
+              Fast Forward Decrypt ⚡
+            </motion.button>
+          )}
+
           {scanStep === 6 && matchResult && (
             <motion.button 
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
               onClick={onUnlocked}
-              className="px-8 py-4 bg-gradient-to-r from-primary to-accent text-white rounded-2xl text-[10px] font-black uppercase tracking-[0.3em] shadow-[0_15px_40px_rgba(255,0,127,0.3)] hover:scale-105 active:scale-95 transition-all"
+              className="px-8 py-4 bg-gradient-to-r from-primary to-accent text-white rounded-2xl text-[10px] font-black uppercase tracking-[0.3em] shadow-[0_15px_40px_rgba(255,0,127,0.4)] hover:scale-105 active:scale-95 transition-all cursor-pointer flex items-center gap-2"
             >
-              Decrypt & Enter Stream
+              <Unlock className="w-4 h-4" /> Enter Live Stream Hub
             </motion.button>
           )}
 
@@ -358,7 +388,7 @@ export default function MatchGate({
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
               onClick={startSequence}
-              className="px-8 py-4 bg-white/5 border border-white/10 text-white/60 rounded-2xl text-[9px] font-black uppercase tracking-widest hover:bg-white/10 transition-all flex items-center gap-2"
+              className="px-8 py-4 bg-white/5 border border-white/10 text-white/60 rounded-2xl text-[9px] font-black uppercase tracking-widest hover:bg-white/10 transition-all flex items-center gap-2 cursor-pointer"
             >
               <RefreshCw className="w-3.5 h-3.5" /> Re-Calibrate Match
             </motion.button>

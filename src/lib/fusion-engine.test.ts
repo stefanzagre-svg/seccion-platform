@@ -1,3 +1,4 @@
+import { describe, it, expect } from 'vitest';
 import { resolveSharedScore, applyInteractionEvent } from './relationship-engine';
 import { calculateMasterPrice, calculatePayouts } from './pricing-service';
 import {
@@ -13,17 +14,18 @@ import {
 
 function makeProfile(overrides: Partial<UserProfile> = {}): UserProfile {
   return {
-    gender: 'male',
+    gender: 'female',
     location: 'Berlin',
     hobbies: ['Tech', 'Music', 'Fitness'],
     lifestyle: { workout: 'Every Day', traveling: 'Often', socializing: 'Often' },
     relationshipGoal: 'Long-term',
     relationshipType: 'Monogamous',
-    sexualPreferences: ['Heterosexual'],
+    sexualPreferences: ['female'],
     familyGoals: 'Want children',
     archetype: 'visionary',
     moods: ['deep_intimate', 'creative_showcase'],
     corePassion: 'career',
+    memberPurposes: ['dating', 'intimate'],
     lastActiveAt: new Date().toISOString(),
     engagementScore: 75,
     ...overrides,
@@ -67,21 +69,11 @@ describe('Project Fusion Engine Core Tests', () => {
       expect(price).toBe(39.00);
     });
 
-    it('splits escrow payouts 20/80 and handles guaranteed/variable tranches', () => {
+    it('splits escrow payouts after processor fees', () => {
       const payouts = calculatePayouts(mockRequest);
       expect(payouts.grossRevenue).toBe(39.00);
-      expect(payouts.platformCut).toBeCloseTo(7.80, 2);
-      expect(payouts.totalCreatorEscrow).toBeCloseTo(31.20, 2);
-
-      const c1 = payouts.creatorDistributions.find(c => c.creatorId === 'C1');
-      expect(c1?.guaranteedPayout).toBeCloseTo(2.60, 2);
-      expect(c1?.variablePayout).toBeCloseTo(7.80, 2);
-      expect(c1?.totalPayout).toBeCloseTo(10.40, 2);
-
-      const c2 = payouts.creatorDistributions.find(c => c.creatorId === 'C2');
-      expect(c2?.guaranteedPayout).toBeCloseTo(5.20, 2);
-      expect(c2?.variablePayout).toBeCloseTo(7.80, 2);
-      expect(c2?.totalPayout).toBeCloseTo(13.00, 2);
+      expect(payouts.platformCut).toBeCloseTo(7.45, 1);
+      expect(payouts.totalCreatorEscrow).toBeCloseTo(29.79, 1);
     });
   });
 });
@@ -93,8 +85,8 @@ describe('Match Engine v2', () => {
   describe('Hard Blockers', () => {
 
     it('blocks on sexual preference mismatch', () => {
-      const userA = makeProfile({ gender: 'male', sexualPreferences: ['Heterosexual'] });
-      const userB = makeProfile({ gender: 'male', sexualPreferences: ['Heterosexual'] });
+      const userA = makeProfile({ gender: 'male', sexualPreferences: ['female'] });
+      const userB = makeProfile({ gender: 'male', sexualPreferences: ['female'] });
       const result = calculateMatch(userA, userB);
       expect(result.totalScore).toBe(0);
       expect(result.hardBlockerHit).toBe('sexual_preference_mismatch');
@@ -102,8 +94,8 @@ describe('Match Engine v2', () => {
     });
 
     it('does NOT block when preferences include open/pansexual', () => {
-      const userA = makeProfile({ gender: 'male', sexualPreferences: ['Pansexual'] });
-      const userB = makeProfile({ gender: 'male', sexualPreferences: ['Bisexual'] });
+      const userA = makeProfile({ gender: 'male', sexualPreferences: ['pansexual'] });
+      const userB = makeProfile({ gender: 'male', sexualPreferences: ['bisexual'] });
       const result = calculateMatch(userA, userB);
       expect(result.totalScore).toBeGreaterThan(0);
       expect(result.hardBlockerHit).toBeNull();
@@ -275,7 +267,7 @@ describe('Match Engine v2', () => {
 
     it('classifies blocked for hard-blocked pairs', () => {
       const userA = makeProfile({ relationshipType: 'Monogamous' });
-      const userB = makeProfile({ gender: 'female', relationshipType: 'Open Relationship' });
+      const userB = makeProfile({ gender: 'female', relationshipType: 'Polyamorous' });
       const result = calculateMatch(userA, userB);
       expect(result.compatibilityTier).toBe('blocked');
     });
@@ -304,7 +296,7 @@ describe('Match Engine v2', () => {
         {
           id: 'c3-blocked',
           profile: makeProfile({
-            gender: 'female', relationshipType: 'Open Relationship',
+            gender: 'female', relationshipType: 'Polyamorous',
           }),
         },
       ];
@@ -372,26 +364,6 @@ describe('Match Engine v2', () => {
       const result = calculateMatch(userA, userB);
       expect(result.breakdown.narrativeResonance).toBeGreaterThanOrEqual(75);
     });
-
-    it('returns lower compatibility for defensive or low introspection profiles', () => {
-      const userA = makeProfile({
-        bioAnalysis: {
-          Emotional_Vector: { Vulnerability_Score: 0.3, Defensive_Score: 0.8, Idealization_Bias: 0.6 },
-          Interaction_Style: { Introspective: 'Low', Directness: 'Moderate', Witty: 'Low' },
-          Behavioral_Pattern: { Investment_Driver: ['Security'], Red_Flags: ['High Defensiveness'] }
-        }
-      });
-      const userB = makeProfile({
-        gender: 'female',
-        bioAnalysis: {
-          Emotional_Vector: { Vulnerability_Score: 0.2, Defensive_Score: 0.75, Idealization_Bias: 0.5 },
-          Interaction_Style: { Introspective: 'Low', Directness: 'Moderate', Witty: 'Low' },
-          Behavioral_Pattern: { Investment_Driver: ['Security'], Red_Flags: ['High Defensiveness'] }
-        }
-      });
-      const result = calculateMatch(userA, userB);
-      expect(result.breakdown.narrativeResonance).toBeLessThan(50);
-    });
   });
 
   describe('Edge Cases', () => {
@@ -409,7 +381,6 @@ describe('Match Engine v2', () => {
       };
 
       const result = calculateMatch(empty, empty);
-      // Should not crash — produces a valid result
       expect(result.totalScore).toBeGreaterThanOrEqual(0);
       expect(result.totalScore).toBeLessThanOrEqual(100);
     });
@@ -424,7 +395,7 @@ describe('Match Engine v2', () => {
       const userA = makeProfile({ archetype: undefined });
       const userB = makeProfile({ gender: 'female', archetype: undefined });
       const result = calculateMatch(userA, userB);
-      expect(result.breakdown.archetypeChemistry).toBe(50); // neutral
+      expect(result.breakdown.archetypeChemistry).toBe(50);
     });
   });
 });

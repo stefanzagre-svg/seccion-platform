@@ -6,11 +6,12 @@ import { Sparkles, Heart, Compass, Award, Rocket, ShieldCheck, Globe, Video, Zap
 import { useTranslation } from '@/context/LanguageContext';
 
 interface ArchetypeSelectorProps {
+  activePurposes?: string[];
   onSelect: (archetype: string, data: any) => Promise<void>;
   onProceed: () => void;
 }
 
-const ARCHETYPES = [
+export const ARCHETYPES = [
   {
     id: 'dreamer',
     title: 'The Dreamer',
@@ -175,21 +176,21 @@ export default function ArchetypeSelector({ onSelect, onProceed }: ArchetypeSele
                   key={arc.id}
                   whileHover={{ y: -5 }}
                   onClick={() => setSelected(arc.id)}
-                  className={`relative p-5 pb-6 rounded-3xl border bg-gradient-to-b text-left transition-all duration-300 shadow-xl flex flex-col justify-between min-h-[300px] h-full ${
+                  className={`relative p-6 pb-7 rounded-3xl border bg-gradient-to-b text-left transition-all duration-300 shadow-xl flex flex-col justify-between min-h-[350px] h-full ${
                     isSelected 
-                    ? `border-primary bg-primary/5 ring-1 ring-primary` 
-                    : `border-white/10 ${arc.color} hover:border-white/20`
+                    ? `border-primary bg-primary/10 ring-2 ring-primary shadow-[0_0_25px_rgba(0,251,251,0.25)]` 
+                    : `border-white/10 ${arc.color} hover:border-white/30`
                   }`}
                 >
-                  <div>
-                    <div className="mb-6">{arc.icon}</div>
-                    <h2 className="text-2xl font-bold text-white mb-2">{title}</h2>
-                    <p className="text-white/60 text-xs leading-relaxed">{description}</p>
+                  <div className="space-y-3">
+                    <div className="mb-4">{arc.icon}</div>
+                    <h2 className="text-xl font-extrabold text-white tracking-tight">{title}</h2>
+                    <p className="text-white/70 text-xs leading-relaxed font-normal">{description}</p>
                   </div>
                   
-                  <div className="mt-4 flex flex-wrap gap-1">
-                    {arc.hobbies.slice(0, 3).map((h, i) => (
-                      <span key={i} className="text-[9px] bg-white/5 border border-white/5 text-white/80 px-2 py-0.5 rounded-full font-medium">
+                  <div className="mt-6 flex flex-wrap gap-1.5 pt-3 border-t border-white/5">
+                    {arc.hobbies.slice(0, 4).map((h, i) => (
+                      <span key={i} className="text-[10px] bg-white/10 border border-white/10 text-white/90 px-2.5 py-1 rounded-full font-medium tracking-wide">
                         {h}
                       </span>
                     ))}

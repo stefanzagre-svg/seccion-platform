@@ -21,6 +21,7 @@ const MOCK_CREATORS: SponsoredCreator[] = [
 export default function SponsoredCreators() {
   const [cancelledIds, setCancelledIds] = useState<string[]>([]);
   const [loadingId, setLoadingId] = useState<string | null>(null);
+  const [pendingCancelId, setPendingCancelId] = useState<string | null>(null);
 
   const handleCancelSubscription = async (creatorId: string) => {
     setLoadingId(creatorId);
@@ -43,6 +44,7 @@ export default function SponsoredCreators() {
       console.error('Error during cancellation:', error);
     } finally {
       setLoadingId(null);
+      setPendingCancelId(null);
     }
   };
 
@@ -105,7 +107,7 @@ export default function SponsoredCreators() {
                 </div>
 
                 {/* Cancel Action Footer */}
-                <div className="flex items-center justify-between pt-2 border-t border-white/5 mt-1">
+                <div className="flex items-center justify-between pt-2 border-t border-white/5 mt-1 relative">
                   {isCancelled ? (
                     <span className="text-[8px] font-black uppercase tracking-wider text-red-400 flex items-center gap-1">
                       <XCircle className="w-3.5 h-3.5" /> Auto-Renewal Inactive
@@ -118,16 +120,35 @@ export default function SponsoredCreators() {
 
                   {!isCancelled && (
                     <button
-                      onClick={() => handleCancelSubscription(creator.id)}
+                      onClick={() => setPendingCancelId(creator.id)}
                       disabled={isLoading}
-                      className="px-2.5 py-1 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 text-red-400 text-[8px] font-black uppercase tracking-widest rounded-md transition duration-200 flex items-center gap-1 disabled:opacity-50"
+                      className="px-2.5 py-1 bg-white/5 hover:bg-white/10 border border-white/10 text-white/70 text-[8px] font-black uppercase tracking-widest rounded-md transition duration-200 flex items-center gap-1 disabled:opacity-50"
                     >
-                      {isLoading ? (
-                        <Loader2 className="w-2.5 h-2.5 animate-spin" />
-                      ) : (
-                        'Cancel Auto-Renew'
-                      )}
+                      Cancel Auto-Renew
                     </button>
+                  )}
+                  
+                  {/* Two-Click Cancellation Confirmation Overlay */}
+                  {pendingCancelId === creator.id && !isCancelled && (
+                    <div className="absolute inset-0 bg-black/90 backdrop-blur-md rounded-md border border-red-500/30 flex items-center justify-between px-2 py-1 z-20">
+                      <span className="text-[8px] font-black uppercase tracking-wider text-white">Confirm?</span>
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={() => handleCancelSubscription(creator.id)}
+                          disabled={isLoading}
+                          className="px-2 py-1 bg-red-500 hover:bg-red-600 text-white text-[8px] font-black uppercase tracking-widest rounded transition duration-200"
+                        >
+                          {isLoading ? <Loader2 className="w-2.5 h-2.5 animate-spin mx-auto" /> : 'Yes, Cancel'}
+                        </button>
+                        <button
+                          onClick={() => setPendingCancelId(null)}
+                          disabled={isLoading}
+                          className="px-2 py-1 bg-white/10 hover:bg-white/20 text-white text-[8px] font-black uppercase tracking-widest rounded transition duration-200"
+                        >
+                          Keep
+                        </button>
+                      </div>
+                    </div>
                   )}
                 </div>
               </motion.div>

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { createAdminClient } from '@/lib/supabase/admin-client';
 
 export async function POST(req: NextRequest) {
   try {
@@ -9,12 +9,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Missing required field: messageId' }, { status: 400 });
     }
 
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
-    const supabase = createClient(
-      supabaseUrl,
-      supabaseServiceKey || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
-    );
+    const supabase = createAdminClient();
 
     // 1. Fetch message details to get the media URL
     const { data: message, error: fetchError } = await supabase

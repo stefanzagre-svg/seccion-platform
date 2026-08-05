@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
 import { GoogleGenAI } from '@google/genai';
 import { scoreToLevel, resolveSharedScore, MIN_MATCHES_FOR_AUTO_CHAT } from '@/lib/relationship-engine';
+import { createAdminClient } from '@/lib/supabase/admin-client';
+import { createClient as createServerClient } from '@/lib/supabase/server';
 
 /**
  * Sandbox / Development convenience:
@@ -31,12 +32,10 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const supabaseUrl        = process.env.NEXT_PUBLIC_SUPABASE_URL       || '';
-    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY      || '';
-    const supabaseAnonKey    = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY  || '';
-    const sandboxMode        = IS_DEV && !supabaseServiceKey;
+    const hasServiceKey = !!process.env.SUPABASE_SERVICE_ROLE_KEY;
+    const sandboxMode = IS_DEV && !hasServiceKey;
 
-    const supabase = createClient(supabaseUrl, supabaseServiceKey || supabaseAnonKey);
+    const supabase: any = hasServiceKey ? createAdminClient() : await createServerClient();
 
     // ── 1. Fetch Creator Profile ─────────────────────────────────────────────
     const { data: creatorProfile, error: profileError } = await supabase
@@ -123,8 +122,8 @@ export async function POST(req: NextRequest) {
 
       if (relError) console.error('[AI Copilot] Error fetching relationships:', relError);
 
-      const myScore    = rels?.find(r => r.user_id === creatorId)?.gauge_score ?? 0;
-      const theirScore = rels?.find(r => r.user_id === targetId)?.gauge_score  ?? 0;
+      const myScore    = rels?.find((r: any) => r.user_id === creatorId)?.gauge_score ?? 0;
+      const theirScore = rels?.find((r: any) => r.user_id === targetId)?.gauge_score  ?? 0;
       sharedScore = resolveSharedScore(myScore, theirScore);
     }
 
@@ -177,7 +176,7 @@ Draft a single-sentence or double-sentence casual reply. Keep it very conversati
         });
 
         replyText = response.text || '';
-      } catch (geminiError) {
+      } catch (geminiError: any) {
         console.warn('[AI Copilot] Gemini unavailable, using local reply generator:', geminiError);
         replyText = getLocalSimulatedReply(creatorName, messageContext);
       }
@@ -195,7 +194,7 @@ Draft a single-sentence or double-sentence casual reply. Keep it very conversati
         is_ai_generated: true,
         resolved_level_key: currentLevel.key,
       })
-      .then(({ error }) => {
+      .then(({ error }: { error: any }) => {
         if (error) console.warn('[AI Copilot] Interaction log insert failed (non-fatal):', error.message);
       });
 

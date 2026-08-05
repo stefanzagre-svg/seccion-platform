@@ -6,16 +6,20 @@
     "build": "next build --webpack",
     "dev": "next dev",
     "start": "next start",
+    "test": "vitest run --globals",
     "lint": "eslint",
     "pages:build": "npx @cloudflare/next-on-pages",
     "pages:deploy": "npm run pages:build && npx wrangler pages deploy .vercel/output/static",
     "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
     "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
     "upload": "opennextjs-cloudflare build && opennextjs-cloudflare upload",
-    "cf-typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts"
+    "cf-typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts",
+    "db:seed": "node --env-file=.env.local scripts/seed_database.js"
   },
   "dependencies": {
     "@google/genai": "^2.7.0",
+    "@livekit/components-react": "^2.9.23",
+    "@livekit/components-styles": "^1.2.0",
     "@opennextjs/cloudflare": "^1.19.11",
     "@supabase/ssr": "^0.10.3",
     "@supabase/supabase-js": "^2.105.4",
@@ -23,6 +27,8 @@
     "framer-motion": "^12.38.0",
     "hls.js": "^1.6.16",
     "jpeg-js": "^0.4.4",
+    "livekit-client": "^2.21.0",
+    "livekit-server-sdk": "^2.17.0",
     "lucide-react": "^1.16.0",
     "next": "16.2.6",
     "pngjs": "^7.0.0",
@@ -30,7 +36,8 @@
     "react-dom": "19.2.4",
     "recharts": "^3.8.1",
     "stripe": "^22.2.0",
-    "tailwind-merge": "^3.6.0"
+    "tailwind-merge": "^3.6.0",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@cloudflare/next-on-pages": "^1.13.16",
@@ -43,6 +50,7 @@
     "eslint-config-next": "16.2.6",
     "tailwindcss": "^4",
     "typescript": "^5",
+    "vitest": "^4.1.10",
     "wrangler": "^4.104.0"
   }
 }

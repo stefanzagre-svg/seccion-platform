@@ -96,6 +96,10 @@ export default function OnboardingStepTwo() {
 
       if (updateError) throw updateError;
 
+      // H1 FIX: Set onboarding-complete cookie so middleware skips the DB query on every request
+      // 30-day expiry — SameSite=Lax so it works across magic-link redirects
+      document.cookie = `sb_ob=1; path=/; max-age=${60 * 60 * 24 * 30}; SameSite=Lax`;
+
       // Clean up localStorage
       localStorage.removeItem('fusion_onboarding_core');
 

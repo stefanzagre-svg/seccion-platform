@@ -16,7 +16,7 @@ interface CreatorQuestProps {
 }
 
 export default function CreatorQuest({ onSignUp, onSwitchToMember, onClose }: CreatorQuestProps) {
-  const { t: translate, language: lang, setLanguage: setLang } = useTranslation();
+  const { t: translate, locale: lang, setLocale: setLang } = useTranslation();
   
   const t = {
     lobby_title: translate("creatorQuest.main.lobby_title", "Welcome to SECCION Studio Tour"),
@@ -89,7 +89,6 @@ export default function CreatorQuest({ onSignUp, onSwitchToMember, onClose }: Cr
     
     const utterance = new SpeechSynthesisUtterance(text);
     if (lang === "es") utterance.lang = "es-ES";
-    else if (lang === "fr") utterance.lang = "fr-FR";
     else utterance.lang = "en-US";
 
     utterance.rate = 1.05;

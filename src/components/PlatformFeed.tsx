@@ -8,20 +8,24 @@ import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { calculateMatch, UserProfile } from '@/lib/match-engine';
 import { fetchMatches, fetchPendingMatches, recordInteraction } from '@/lib/relationship-db';
+import dynamic from 'next/dynamic';
 import SafetyWarning from '@/components/SafetyWarning';
 import ContentPolicyWarning from '@/components/ContentPolicyWarning';
-import ProfileDetailsModal from '@/components/ProfileDetailsModal';
-import AISuggestionPanel from '@/components/AISuggestionPanel';
 import { calculateCreatorRating } from '@/lib/rating-engine';
 import BlurredFaceImage from '@/components/BlurredFaceImage';
-import ReportModal from '@/components/modals/ReportModal';
 import { RELATIONSHIP_LEVELS, syncSuggestionMoves } from '@/lib/relationship-engine';
-import CreateDatePlanModal from '@/components/CreateDatePlanModal';
-import ManageApplicantsModal from '@/components/ManageApplicantsModal';
-import { useLanguage } from '@/context/LanguageContext';
+import { useTranslation } from '@/context/LanguageContext';
 import ProvenanceBadge from '@/components/ProvenanceBadge';
 import { type ProvenanceLevel } from '@/lib/content-provenance';
 import { awardXp } from '@/lib/xp-service';
+import { cn } from '@/lib/utils';
+
+// Dynamic imports for heavy modals (loaded on-demand when opened)
+const ProfileDetailsModal = dynamic(() => import('@/components/ProfileDetailsModal'), { ssr: false });
+const AISuggestionPanel = dynamic(() => import('@/components/AISuggestionPanel'), { ssr: false });
+const ReportModal = dynamic(() => import('@/components/modals/ReportModal'), { ssr: false });
+const CreateDatePlanModal = dynamic(() => import('@/components/CreateDatePlanModal'), { ssr: false });
+const ManageApplicantsModal = dynamic(() => import('@/components/ManageApplicantsModal'), { ssr: false });
 
 // Default User Profile for Fallbacks
 const DEFAULT_USER_PROFILE: UserProfile = {
@@ -107,7 +111,7 @@ function parseDescription(description: string) {
 }
 
 export default function PlatformFeed() {
-  const { translate } = useLanguage();
+  const { t } = useTranslation();
   const router = useRouter();
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [optimisticLikes, setOptimisticLikes] = useState<Record<string, boolean>>({});
@@ -251,8 +255,40 @@ export default function PlatformFeed() {
         `)
         .order('created_at', { ascending: false });
 
-      if (contentError) throw contentError;
-      setFeedContent(content && content.length > 0 ? content : []);
+      let baseContent = content && content.length > 0 ? content : [];
+
+      // Phase 14: Surface members with public albums in the feed
+      const { data: publicAlbums } = await supabase
+        .from('member_albums')
+        .select('*, profile:profiles(*)')
+        .eq('visibility', 'public')
+        .order('created_at', { ascending: false })
+        .limit(3);
+
+      if (publicAlbums && publicAlbums.length > 0) {
+        const albumPosts = publicAlbums.map((album: any) => ({
+          id: `album-${album.id}`,
+          creator_id: album.member_id,
+          creator: album.profile?.username || 'Member',
+          type: 'public',
+          content: 'Just uploaded to their public album! 📸 Match to see more.',
+          image: album.media_url,
+          timestamp: new Date(album.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
+          locked: false,
+          relationship: 'none',
+          media_type: album.media_type,
+          teaser_type: 'none',
+          avatar_url: album.profile?.avatar_url,
+          matchScore: 0,
+          creator_profile: album.profile,
+          face_blur_active: album.profile?.face_blur_active,
+          avatar_face_coordinates: album.profile?.avatar_face_coordinates
+        }));
+        
+        baseContent = [...albumPosts, ...baseContent];
+      }
+
+      setFeedContent(baseContent);
     } catch (err) {
       console.error('Error loading feed content:', err);
     }
@@ -932,10 +968,10 @@ export default function PlatformFeed() {
                       ? 'bg-primary text-black border-primary shadow-[0_0_15px_rgba(102,252,241,0.45)] font-black' 
                       : 'bg-white/5 text-white/70 border-white/10 hover:bg-white/10'
                   }`}
-                  title={translate('platformFeed.advancedFiltersTitle', "Toggle Advanced Search Filters")}
+                  title={t('platformFeed.advancedFiltersTitle', "Toggle Advanced Search Filters")}
                 >
                   <SlidersHorizontal className="w-3.5 h-3.5" />
-                  <span>{translate('platformFeed.advancedFiltersBtn', 'Advanced Filters')}</span>
+                  <span>{t('platformFeed.advancedFiltersBtn', 'Advanced Filters')}</span>
                 </button>
               </div>
 

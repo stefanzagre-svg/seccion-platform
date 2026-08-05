@@ -17,7 +17,7 @@ import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import CreatorGoalProgress, { type CreatorGoal } from '@/components/CreatorGoalProgress';
 import SuggestionMovesModal from '@/components/SuggestionMovesModal';
-import { useLanguage } from '@/context/LanguageContext';
+import { useTranslation } from '@/context/LanguageContext';
 import CreatorOrdersPanel from '@/components/CreatorOrdersPanel';
 import SafetyPatrolPanel from '@/components/SafetyPatrolPanel';
 import ConfigPanel from '@/components/AIAssistant/ConfigPanel';
@@ -282,7 +282,7 @@ class CreatorParticle {
 }
 
 export default function CreatorStudio() {
-  const { translate } = useLanguage();
+  const { t } = useTranslation();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<'content' | 'live' | 'analytics' | 'settings' | 'goals' | 'safety_ops' | 'orders' | 'consent_inbox'>('content');
   const [customRequestPermission, setCustomRequestPermission] = useState<'anyone' | 'restricted'>('anyone');
@@ -689,6 +689,7 @@ export default function CreatorStudio() {
   const [legalBusinessName, setLegalBusinessName] = useState<string>('');
   const [taxIdNumber, setTaxIdNumber] = useState<string>('');
   const [vatGstNumber, setVatGstNumber] = useState<string>('');
+  const [paxumEmail, setPaxumEmail] = useState<string>('');
   const [creatorResidence, setCreatorResidence] = useState<string>('');
   const taxFormat = getTaxFormatForResidence(creatorResidence);
 
@@ -856,6 +857,7 @@ export default function CreatorStudio() {
             setLegalBusinessName(privacy.legal_business_name || '');
             setTaxIdNumber(privacy.tax_id_number || '');
             setVatGstNumber(privacy.vat_gst_number || '');
+            setPaxumEmail(privacy.paxum_email || '');
             setCreatorResidence(profileData.residence || '');
             
             // Load Calendar Status
@@ -1015,7 +1017,7 @@ export default function CreatorStudio() {
     setSaveError(null);
     
     try {
-      // Fetch latest privacy settings to avoid overwriting fields (like stripe_connect_id)
+      // Fetch latest privacy settings to avoid overwriting fields
       const { data: latestProfile } = await supabase
         .from('profiles')
         .select('privacy_settings')
@@ -1035,6 +1037,7 @@ export default function CreatorStudio() {
         legal_business_name: legalBusinessName,
         tax_id_number: taxIdNumber,
         vat_gst_number: vatGstNumber,
+        paxum_email: paxumEmail,
         custom_request_permission: customRequestPermission,
         face_blur_default: faceBlurDefault,
       };
@@ -1793,7 +1796,7 @@ export default function CreatorStudio() {
                 {/* Uploaded Posts List */}
                 <div className="space-y-6">
                   <div className="flex items-center justify-between">
-                    <h2 className="text-xl font-black tracking-tight text-white">{translate('creatorStudio.recentUploads', 'UPLOADED CONTENT')}</h2>
+                    <h2 className="text-xl font-black tracking-tight text-white">{t('creatorStudio.recentUploads', 'UPLOADED CONTENT')}</h2>
                     <div className="flex items-center gap-2 text-[9px] text-white/40 font-black uppercase tracking-widest bg-white/5 px-3 py-1.5 rounded-lg">
                       Total Assets: {uploadedPosts.length}
                     </div>
@@ -3389,6 +3392,20 @@ export default function CreatorStudio() {
                             onChange={(e) => setVatGstNumber(e.target.value)}
                             className="w-full px-4 py-3 bg-black/40 border border-white/10 rounded-xl text-xs text-white placeholder-white/20 focus:border-primary focus:outline-none transition font-mono"
                           />
+                        </div>
+
+                        <div className="space-y-2">
+                          <label className="text-[9px] uppercase tracking-widest font-black text-[#5CC1F9]">Paxum Email (Payout Method)</label>
+                          <input 
+                            type="email" 
+                            placeholder="Enter your Paxum Account Email" 
+                            value={paxumEmail}
+                            onChange={(e) => setPaxumEmail(e.target.value)}
+                            className="w-full px-4 py-3 bg-[#5CC1F9]/10 border border-[#5CC1F9]/30 rounded-xl text-xs text-[#5CC1F9] placeholder-[#5CC1F9]/50 focus:border-[#5CC1F9] focus:outline-none transition font-mono"
+                          />
+                          <p className="text-[8px] text-white/40 uppercase tracking-widest leading-none mt-1">
+                            Used by the platform for manual earnings payouts.
+                          </p>
                         </div>
                       </div>
                     </div>

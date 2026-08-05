@@ -3,10 +3,12 @@
 import React from "react";
 import PublicNavbar from "@/components/PublicNavbar";
 import { WaitlistSignup } from "@/components/WaitlistSignup";
+import AgeGateSplash from "@/components/onboarding/AgeGateSplash";
 
 export default function EarlyAccessPage() {
   return (
     <div className="min-h-screen bg-[#050505] text-white flex flex-col items-center p-4 relative overflow-hidden font-sans">
+      <AgeGateSplash />
       <PublicNavbar />
 
       {/* Background Cyber Grid */}

@@ -80,15 +80,7 @@ export async function GET(request: Request) {
   const userId = searchParams.get('userId');
   const creatorId = searchParams.get('creatorId');
 
-  let supabase = await createClient();
-  const devUserId = request.headers.get('x-dev-user-id');
-  if (process.env.NODE_ENV === 'development' && devUserId) {
-    try {
-      supabase = createAdminClient();
-    } catch (e) {
-      console.warn('Could not create admin client for testing:', e);
-    }
-  }
+  const supabase = await createClient();
 
   try {
     let query = supabase.from('calendar_events').select('*');

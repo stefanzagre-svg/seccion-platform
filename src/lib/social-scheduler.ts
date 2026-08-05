@@ -2,7 +2,7 @@
  * Social Media Scheduler Helper — SECCIØN Platform
  * Integrates with Supabase Storage (for media hosting) and Make.com Webhook
  */
-import { createClient } from '@supabase/supabase-js';
+import { createAdminClient } from './supabase/admin-client';
 import fs from 'fs';
 import path from 'path';
 
@@ -10,6 +10,7 @@ export interface SocialDraftPayload {
   text: string;
   mediaUrls?: string[]; // Array of absolute local file paths to upload
   platforms?: ('instagram' | 'tiktok' | 'twitter' | 'facebook')[];
+  scheduledAt?: string;
 }
 
 export interface SocialDraftResponse {
@@ -22,13 +23,7 @@ const MAKE_WEBHOOK_URL = 'https://hook.eu1.make.com/zc2jronounqeqzvnq1iorj8tu8h7
 
 // Lazy initialization to ensure env vars are loaded first
 function getSupabaseAdmin() {
-  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
-    throw new Error('Supabase environment variables are missing.');
-  }
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.SUPABASE_SERVICE_ROLE_KEY
-  );
+  return createAdminClient();
 }
 
 export async function uploadMediaToSupabase(localFilePath: string): Promise<string> {

@@ -145,7 +145,7 @@ export default function LandingPageHook({ onAccept, onBecomeCreator }: { onAccep
                 <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-center font-['Plus_Jakarta_Sans'] text-base sm:text-[22px] md:text-[24px] font-extrabold leading-tight tracking-tight text-white mb-2">
                   <span>{t("landing.swipeToSignUp", "SWIPE TO SIGN UP TO")}</span>
                   <img 
-                    src="/assets/logo/seccion-wordmark-light.png" 
+                    src="/assets/logo/logo-wordmark.png" 
                     alt="SECCION" 
                     className="h-5 sm:h-6 md:h-7 object-contain inline-block drop-shadow-[0_0_15px_rgba(0,251,251,0.6)] group-hover:drop-shadow-[0_0_25px_rgba(0,251,251,0.9)] transition-all duration-300"
                   />
@@ -170,7 +170,7 @@ export default function LandingPageHook({ onAccept, onBecomeCreator }: { onAccep
                 <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-center font-['Plus_Jakarta_Sans'] text-base sm:text-[22px] md:text-[24px] font-extrabold leading-tight tracking-tight text-white mb-2">
                   <span>{t("landing.swipeToSignUp", "SWIPE TO SIGN UP TO")}</span>
                   <img 
-                    src="/assets/logo/seccion-wordmark-light.png" 
+                    src="/assets/logo/logo-wordmark.png" 
                     alt="SECCION" 
                     className="h-5 sm:h-6 md:h-7 object-contain inline-block drop-shadow-[0_0_15px_rgba(0,251,251,0.6)] group-hover:drop-shadow-[0_0_25px_rgba(0,251,251,0.9)] transition-all duration-300"
                   />

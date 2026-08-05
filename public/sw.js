@@ -1,5 +1,5 @@
-const CACHE_NAME = "seccion-pwa-static-v1";
-const DYNAMIC_CACHE = "seccion-pwa-dynamic-v1";
+const CACHE_NAME = "seccion-pwa-static-v3";
+const DYNAMIC_CACHE = "seccion-pwa-dynamic-v3";
 
 const STATIC_ASSETS = [
   "/",
