@@ -10,18 +10,29 @@ export interface Profile {
   role: 'member' | 'creator';
   bio: string;
   hobbies: string[];
-  lifestyle_habits: string[];
+  lifestyle_habits: Record<string, string>;
   astro_sign: string;
   relationship_goals: string[];
+  relationship_types?: string[];
+  sexual_preferences?: string[];
+  spoken_languages?: string[];
+  album_photos?: string[];
+  core_passion?: string;
   bio_prompt_category?: string;
   bio_prompt_question?: string;
   bio_prompt_answer?: string;
+  bio_prompt_category_2?: string;
+  bio_prompt_question_2?: string;
+  bio_prompt_answer_2?: string;
   bio_analysis?: any;
   face_blur_active?: boolean;
   avatar_face_coordinates?: any;
   native_town?: string;
   residence?: string;
   current_location?: string;
+  origins?: string;
+  privacy_settings?: Record<string, any>;
+  is_kyc_verified?: boolean;
 }
 
 export interface MatchInfo {

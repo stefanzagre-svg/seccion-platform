@@ -4,6 +4,7 @@ import { SupportedLocale } from "@/context/LanguageContext";
 import en from "@/locales/en.json";
 import es from "@/locales/es.json";
 import ClientPage from "./page-client";
+import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 export async function generateMetadata(): Promise<Metadata> {
   const cookieStore = await cookies();
@@ -20,6 +21,23 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-export default function Page() {
-  return <ClientPage />;
+export default async function Page() {
+  const supabase = await createServerSupabaseClient();
+  const { data: { session } } = await supabase.auth.getSession();
+  
+  let profile = null;
+  
+  if (session?.user) {
+    const { data } = await supabase
+      .from('profiles')
+      .select('display_name, username, origins')
+      .eq('id', session.user.id)
+      .single();
+    
+    if (data) {
+       profile = data;
+    }
+  }
+
+  return <ClientPage initialProfile={profile} userEmail={session?.user?.email} />;
 }

@@ -102,6 +102,21 @@ export const LANGUAGES = [
   'Arabic', 'Hindi', 'Dutch', 'Turkish', 'Swedish', 'Polish'
 ];
 
+export const EDUCATION_LEVELS = [
+  'High School Diploma',
+  'Tech/Trade School',
+  'Currently in College',
+  'Bachelor\'s Degree',
+  'Master\'s Degree',
+  'Doctorate/PhD',
+  'Life experience'
+];
+
+export const ASTRO_SIGNS = [
+  'Aries', 'Taurus', 'Gemini', 'Cancer', 'Leo', 'Virgo', 
+  'Libra', 'Scorpio', 'Sagittarius', 'Capricorn', 'Aquarius', 'Pisces'
+];
+
 // ─── Onboarding Quest — Stage 1 Quick Win ────────────────────────────────────
 
 /** Vibe Check Mood Cards — Step 2 of Stage 1 */

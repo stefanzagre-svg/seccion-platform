@@ -70,7 +70,7 @@ function MonoNumber({ value, suffix = "" }: { value: string | number; suffix?: s
   );
 }
 
-export default function BecomeCreatorPage() {
+export default function BecomeCreatorPage({ initialProfile, userEmail }: { initialProfile?: any, userEmail?: string }) {
   const { t, locale } = useTranslation();
   // Tour State
   const [isTourOpen, setIsTourOpen] = useState<boolean>(false);
@@ -84,11 +84,11 @@ export default function BecomeCreatorPage() {
   // Form Flow States
   const [formStep, setFormStep] = useState<"input" | "submitting" | "success">("input");
   const [formData, setFormData] = useState({
-    fullName: "",
-    email: "",
+    fullName: initialProfile?.display_name || initialProfile?.username || "",
+    email: userEmail || "",
     phone: "",
     telegram: "",
-    city: "",
+    city: initialProfile?.origins || "",
     link1: "",
     link2: "",
     link3: "",

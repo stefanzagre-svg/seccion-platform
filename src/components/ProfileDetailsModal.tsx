@@ -1,10 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { X, MessageSquare, ShieldCheck, Heart, Trophy, MapPin, Zap, Ban, Flag, Phone, Loader2, Video } from 'lucide-react';
+import { X, MessageSquare, ShieldCheck, Heart, Trophy, MapPin, Zap, Ban, Flag, Phone, Loader2, Video, Image as ImageIcon, Briefcase, GraduationCap, Moon, BookOpen, Sparkles, Globe, Lock, Users } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import BlurredFaceImage from '@/components/BlurredFaceImage';
-import { scoreToLevel } from '@/lib/relationship-engine';
+import { scoreToLevel, RELATIONSHIP_LEVELS } from '@/lib/relationship-engine';
 import { calculateMatchProbability } from '@/lib/match-engine';
 import { getRelationshipState } from '@/lib/relationship-db';
 import Link from 'next/link';
@@ -61,7 +61,18 @@ export default function ProfileDetailsModal({ profileId, onClose, currentUserId 
           .select('*')
           .eq('id', profileId)
           .single();
-        if (prof) setProfile(prof);
+
+        // 1.5 Fetch profile media
+        const { data: media } = await supabase
+          .from('profile_media')
+          .select('*')
+          .eq('profile_id', profileId)
+          .order('display_order', { ascending: true });
+
+        if (prof) {
+          prof.album_media = media || [];
+          setProfile(prof);
+        }
 
         // 2. Fetch current user session
         const actualUserId = currentUserId || (await supabase.auth.getSession()).data.session?.user?.id;
@@ -207,6 +218,47 @@ export default function ProfileDetailsModal({ profileId, onClose, currentUserId 
     : 75;
 
   const levelObj = relationship ? scoreToLevel(relationship.gauge_score) : scoreToLevel(0);
+  const viewerScore = relationship?.gauge_score ?? 0;
+  
+  const hiddenValues = profile.privacy_settings?.hidden_values || {};
+  const getHiddenCount = (fieldKey: string) => {
+    if (!hiddenValues[fieldKey]) return 0;
+    let count = 0;
+    for (const val in hiddenValues[fieldKey]) {
+      const requiredLevelKey = hiddenValues[fieldKey][val];
+      const requiredLevel = RELATIONSHIP_LEVELS.find(l => l.key === requiredLevelKey);
+      if (requiredLevel && viewerScore < requiredLevel.minScore) {
+        count++;
+      }
+    }
+    return count;
+  };
+  
+  const isItemHidden = (fieldKey: string, itemValue: string) => {
+    if (!hiddenValues[fieldKey]?.[itemValue]) return false;
+    const requiredLevelKey = hiddenValues[fieldKey][itemValue];
+    const requiredLevel = RELATIONSHIP_LEVELS.find(l => l.key === requiredLevelKey);
+    return requiredLevel && viewerScore < requiredLevel.minScore;
+  };
+
+  const renderHiddenBadge = (count: number) => {
+    if (count === 0) return null;
+    const label = count === 1 ? "Hidden" : `Hidden +${count}`;
+    return (
+      <div className="flex items-center gap-1.5 text-[10px] font-bold text-amber-400 bg-amber-400/10 border border-amber-400/20 px-2.5 py-1 rounded-xl">
+        <Lock className="w-3 h-3" /> {label}
+      </div>
+    );
+  };
+  
+  const displayAge = profile.privacy_settings?.display_age || "18+";
+  const languages = profile.spoken_languages && profile.spoken_languages.length > 0
+    ? profile.spoken_languages
+    : ["English"];
+
+  const mediaItems = profile.album_media && profile.album_media.length > 0 
+    ? profile.album_media 
+    : (profile.album_photos || []).map((url: string) => ({ media_type: "image", media_url: url }));
 
   return (
     <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
@@ -253,75 +305,339 @@ export default function ProfileDetailsModal({ profileId, onClose, currentUserId 
             </button>
           </div>
           {/* Identity Row */}
-          <div className="flex items-center gap-5">
-            <div className="w-20 h-20 rounded-3xl overflow-hidden border border-white/15 shadow-xl shrink-0 relative">
+          <div className="flex items-center gap-4">
+            <div className="w-20 h-20 rounded-2xl overflow-hidden border border-[#00fbfb]/30 shadow-[0_0_15px_rgba(0,251,251,0.2)] shrink-0 relative">
               <BlurredFaceImage
                 src={profile.avatar_url}
                 alt={profile.username}
                 sharedScore={relationship?.gauge_score ?? 0}
                 isEnabledByOwner={profile.face_blur_active || false}
                 faceCoordinates={profile.avatar_face_coordinates}
-                className="w-full h-full"
+                className="w-full h-full object-cover"
               />
             </div>
             
-            <div className="min-w-0">
+            <div className="min-w-0 space-y-1">
               <div className="flex items-center gap-2 flex-wrap">
-                <h2 className="text-2xl font-black tracking-tight text-white">@{profile.username}</h2>
+                <h2 className="text-xl font-black tracking-tight text-white">{profile.display_name || `@${profile.username}`}</h2>
                 {profile.is_kyc_verified && (
-                  <span className="p-0.5 bg-green-500/10 rounded border border-green-500/20 text-green-400">
+                  <span className="p-0.5 bg-green-500/10 rounded border border-green-500/20 text-green-400" title="Verified">
                     <ShieldCheck className="w-4 h-4" />
                   </span>
                 )}
-                <span className="text-[10px] font-black uppercase tracking-wider bg-white/5 px-2.5 py-1 rounded-md text-white/50">
+                <span className="text-xs font-bold text-[#00fbfb] bg-[#00fbfb]/10 border border-[#00fbfb]/30 px-2 py-0.5 rounded-full flex items-center gap-1 shrink-0">
+                  <ShieldCheck className="w-3 h-3" /> {displayAge}
+                </span>
+                <span className="text-[10px] font-black uppercase tracking-wider bg-white/5 px-2.5 py-1 rounded-full text-white/50 border border-white/10">
                   {profile.role}
                 </span>
               </div>
-              <p className="text-sm text-white/60 mt-1 flex items-center gap-1">
-                <MapPin className="w-3.5 h-3.5 text-primary" /> {profile.origins || 'Paris, France'}
-              </p>
-            </div>
-          </div>
+              
+              <p className="text-xs text-white/50 font-mono">@{profile.username}</p>
 
-          {/* Bio section */}
-          {profile.bio && (
-            <div className="p-4 bg-white/[0.02] border border-white/5 rounded-2xl">
-              <p className="text-xs uppercase font-black text-white/40 tracking-wider mb-1.5">Biography</p>
-              <p className="text-xs leading-relaxed text-white/80">{profile.bio}</p>
-            </div>
-          )}
-
-          {/* Compatibility Match stats */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="p-4 bg-primary/5 border border-primary/20 rounded-2xl flex items-center gap-3">
-              <Zap className="w-6 h-6 text-primary animate-pulse" />
-              <div>
-                <p className="text-[8px] font-black text-white/40 uppercase tracking-widest">Vibe Score</p>
-                <p className="text-lg font-black text-primary">{matchScore}% Chemistry</p>
-              </div>
-            </div>
-
-            <div className="p-4 bg-accent/5 border border-accent/20 rounded-2xl flex items-center gap-3">
-              <Heart className="w-6 h-6 text-accent fill-current" />
-              <div>
-                <p className="text-[8px] font-black text-white/40 uppercase tracking-widest">Relationship Status</p>
-                <p className="text-xs font-black text-accent">{levelObj.label}</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Lifestyle habits (fully written) */}
-          <div className="space-y-3">
-            <p className="text-[10px] font-black text-white/40 uppercase tracking-wider flex items-center gap-1.5">
-              <Trophy className="w-4 h-4 text-yellow-500" /> Lifestyle & Habits
-            </p>
-            <div className="grid grid-cols-2 gap-2 max-h-[140px] overflow-y-auto pr-1">
-              {Object.entries(profile.lifestyle_habits || {}).map(([key, val]: any) => (
-                <div key={key} className="p-2.5 bg-white/[0.01] border border-white/5 rounded-xl text-left flex flex-col justify-center">
-                  <span className="text-[8px] font-black uppercase text-white/40 tracking-widest">{key}</span>
-                  <span className="text-[10px] font-bold text-white/80 mt-0.5 uppercase tracking-wider">{val}</span>
+              {profile.core_passion && (
+                <div className="pt-1 flex items-center gap-2">
+                  <span className="text-[10px] bg-primary/10 text-primary border border-primary/30 px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider inline-block">
+                    🔥 {profile.core_passion}
+                  </span>
+                  {renderHiddenBadge(getHiddenCount("core_passion"))}
                 </div>
-              ))}
+              )}
+            </div>
+          </div>
+          
+          <div className="max-h-[50vh] overflow-y-auto pr-2 custom-scrollbar space-y-6">
+
+            {/* PUBLIC ALBUM (PRIORITIZED AT TOP) */}
+            {mediaItems.length > 0 && (
+              <div className="space-y-3 pt-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-black uppercase tracking-widest text-white/70 flex items-center gap-1.5">
+                    <ImageIcon className="w-3.5 h-3.5 text-[#00fbfb]" /> Media Album ({mediaItems.length})
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-3 gap-2">
+                  {mediaItems.map((media: any, i: number) => (
+                    <div key={i} className="aspect-square rounded-2xl overflow-hidden border border-white/10 bg-black/40 relative group">
+                      {media.media_type === "video" ? (
+                        <>
+                          <Video className="w-5 h-5 text-white/50 absolute top-2 right-2 z-10" />
+                          <video 
+                            src={media.video_start_time != null && media.video_end_time != null ? `${media.media_url}#t=${media.video_start_time},${media.video_end_time}` : media.media_url} 
+                            className="w-full h-full object-cover" 
+                            muted 
+                            loop 
+                            autoPlay 
+                            playsInline 
+                          />
+                        </>
+                      ) : (
+                        <img src={media.media_url || media.url} alt={`Album ${i+1}`} className="w-full h-full object-cover" />
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Compatibility Match stats */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="p-4 bg-primary/5 border border-primary/20 rounded-2xl flex items-center gap-3">
+                <Zap className="w-6 h-6 text-primary animate-pulse shrink-0" />
+                <div>
+                  <p className="text-[8px] font-black text-white/40 uppercase tracking-widest">Vibe Score</p>
+                  <p className="text-lg font-black text-primary">{matchScore}% Chemistry</p>
+                </div>
+              </div>
+
+              <div className="p-4 bg-accent/5 border border-accent/20 rounded-2xl flex items-center gap-3">
+                <Heart className="w-6 h-6 text-accent fill-current shrink-0" />
+                <div>
+                  <p className="text-[8px] font-black text-white/40 uppercase tracking-widest">Relationship Status</p>
+                  <p className="text-xs font-black text-accent">{levelObj.label}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* CORE IDENTITY SECTION */}
+            <div className="space-y-4 pt-2">
+              <h3 className="text-[10px] font-black uppercase tracking-widest text-[#00fbfb] flex items-center gap-2 border-b border-white/10 pb-2">
+                Core Identity
+              </h3>
+
+              {/* Bio & Basic Info Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {profile.bio && (
+                  <div className="md:col-span-2 p-4 rounded-2xl bg-white/5 border border-white/10">
+                    <span className="text-[10px] font-black uppercase text-white/50 tracking-wider flex items-center gap-1.5 mb-2">
+                      <BookOpen className="w-3 h-3" /> Biography
+                    </span>
+                    <div className="flex items-start justify-between gap-4">
+                      {!isItemHidden("bio", profile.bio) && (
+                        <p className="text-xs text-white/80 leading-relaxed italic border-l-2 border-primary/50 pl-3">"{profile.bio}"</p>
+                      )}
+                      {renderHiddenBadge(getHiddenCount("bio"))}
+                    </div>
+                  </div>
+                )}
+
+                {profile.education_level && (
+                  <div className="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-1">
+                    <span className="text-[10px] font-black uppercase text-white/50 tracking-wider flex items-center gap-1.5">
+                      <GraduationCap className="w-3 h-3 text-[#00fbfb]" /> Education
+                    </span>
+                    <div className="flex items-center justify-between gap-2">
+                      {!isItemHidden("education_level", profile.education_level) && (
+                        <span className="text-xs font-semibold text-white/90">{profile.education_level}</span>
+                      )}
+                      {renderHiddenBadge(getHiddenCount("education_level"))}
+                    </div>
+                  </div>
+                )}
+
+                {profile.career && (
+                  <div className="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-1">
+                    <span className="text-[10px] font-black uppercase text-white/50 tracking-wider flex items-center gap-1.5">
+                      <Briefcase className="w-3 h-3 text-[#00fbfb]" /> Career / Passion
+                    </span>
+                    <div className="flex items-center justify-between gap-2">
+                      {!isItemHidden("career", profile.career) && (
+                        <span className="text-xs font-semibold text-white/90">{profile.career}</span>
+                      )}
+                      {renderHiddenBadge(getHiddenCount("career"))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Spoken Languages */}
+              {languages.length > 0 && (
+                <div className="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-2">
+                  <span className="text-[10px] font-black uppercase text-white/50 tracking-wider flex items-center gap-1.5">
+                    <Globe className="w-3 h-3 text-[#00fbfb]" /> Languages
+                  </span>
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    {languages.filter((l: string) => !isItemHidden("spoken_languages", l)).map((lang: string, idx: number) => (
+                      <span key={idx} className="text-xs bg-white/10 text-white px-3 py-1 rounded-full font-medium">
+                        {idx === 0 ? `🗣️ ${lang}` : `🌐 ${lang}`}
+                      </span>
+                    ))}
+                    {renderHiddenBadge(getHiddenCount("spoken_languages"))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* RELATIONAL INSIGHTS SECTION */}
+            <div className="space-y-4 pt-4">
+              <h3 className="text-[10px] font-black uppercase tracking-widest text-primary flex items-center gap-2 border-b border-white/10 pb-2">
+                Relational Insights
+              </h3>
+
+              {/* Astro Sign */}
+              {profile.astro_sign && (
+                <div className="p-4 rounded-2xl bg-[#7c3aed]/10 border border-[#7c3aed]/30 flex flex-col justify-center">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="space-y-0.5">
+                      <span className="text-[10px] font-black uppercase tracking-widest text-[#7c3aed] flex items-center gap-1.5">
+                        <Moon className="w-3 h-3" /> Astro Sign
+                      </span>
+                      {!isItemHidden("astro_sign", profile.astro_sign) && (
+                        <h4 className="text-sm font-extrabold text-white">{profile.astro_sign}</h4>
+                      )}
+                    </div>
+                    {renderHiddenBadge(getHiddenCount("astro_sign"))}
+                  </div>
+                </div>
+              )}
+
+              {/* Connection Desires */}
+              {((profile.relationship_goals && profile.relationship_goals.length > 0) || 
+                (profile.relationship_types && profile.relationship_types.length > 0) || 
+                (profile.sexual_preferences && profile.sexual_preferences.length > 0) || 
+                profile.lifestyle_habits?.family_goals) && (
+                <div className="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-4">
+                  <span className="text-[10px] font-black uppercase text-white/50 tracking-wider flex items-center gap-1.5 border-b border-white/5 pb-2">
+                    <Heart className="w-3 h-3 text-primary" /> Connection Desires
+                  </span>
+
+                  {profile.relationship_goals && profile.relationship_goals.length > 0 && (
+                    <div className="space-y-1.5">
+                      <span className="text-[9px] font-black uppercase text-white/40">Looking For</span>
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        {profile.relationship_goals.filter((g: string) => !isItemHidden("relationship_goals", g)).map((goal: string, i: number) => (
+                          <span key={i} className="text-[10px] bg-white/10 text-white px-2 py-1 rounded-md font-bold uppercase tracking-wider">
+                            {goal}
+                          </span>
+                        ))}
+                        {renderHiddenBadge(getHiddenCount("relationship_goals"))}
+                      </div>
+                    </div>
+                  )}
+
+                  {profile.relationship_types && profile.relationship_types.length > 0 && (
+                    <div className="space-y-1.5">
+                      <span className="text-[9px] font-black uppercase text-primary/70">Relationship Type</span>
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        {profile.relationship_types.filter((t: string) => !isItemHidden("relationship_types", t)).map((type: string, i: number) => (
+                          <span key={i} className="text-[10px] bg-primary/10 text-primary border border-primary/20 px-2 py-1 rounded-md font-bold uppercase tracking-wider">
+                            {type}
+                          </span>
+                        ))}
+                        {renderHiddenBadge(getHiddenCount("relationship_types"))}
+                      </div>
+                    </div>
+                  )}
+
+                  {profile.sexual_preferences && profile.sexual_preferences.length > 0 && (
+                    <div className="space-y-1.5">
+                      <span className="text-[9px] font-black uppercase text-[#ff00ff]/70">Preferences</span>
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        {profile.sexual_preferences.filter((p: string) => !isItemHidden("sexual_preferences", p)).map((pref: string, i: number) => (
+                          <span key={i} className="text-[10px] bg-[#ff00ff]/10 text-[#ff00ff] border border-[#ff00ff]/20 px-2 py-1 rounded-md font-bold uppercase tracking-wider">
+                            {pref}
+                          </span>
+                        ))}
+                        {renderHiddenBadge(getHiddenCount("sexual_preferences"))}
+                      </div>
+                    </div>
+                  )}
+
+                  {profile.lifestyle_habits?.family_goals && (
+                    <div className="space-y-1.5">
+                      <span className="text-[9px] font-black uppercase text-emerald-400/70">Family Goals</span>
+                      <div className="flex items-center gap-2">
+                        {!isItemHidden("family_goals", profile.lifestyle_habits.family_goals) && (
+                          <span className="text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-1 rounded-md font-bold uppercase tracking-wider">
+                            {profile.lifestyle_habits.family_goals}
+                          </span>
+                        )}
+                        {renderHiddenBadge(getHiddenCount("family_goals"))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Hobbies & Habits */}
+              {((profile.hobbies && profile.hobbies.length > 0) || (profile.lifestyle_habits?.habits && profile.lifestyle_habits.habits.length > 0)) && (
+                <div className="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-4">
+                  <span className="text-[10px] font-black uppercase text-white/50 tracking-wider flex items-center gap-1.5 border-b border-white/5 pb-2">
+                    <Users className="w-3 h-3 text-[#00fbfb]" /> Lifestyle
+                  </span>
+
+                  {profile.hobbies && profile.hobbies.length > 0 && (
+                    <div className="space-y-2">
+                      <span className="text-[9px] font-black uppercase text-white/40">Hobbies & Passions</span>
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        {profile.hobbies.filter((h: string) => !isItemHidden("hobbies", h)).map((h: string, i: number) => (
+                          <span key={i} className="text-[10px] bg-white/10 text-white/90 px-2.5 py-1 rounded-full font-medium">
+                            ⚡ {h}
+                          </span>
+                        ))}
+                        {renderHiddenBadge(getHiddenCount("hobbies"))}
+                      </div>
+                    </div>
+                  )}
+
+                  {profile.lifestyle_habits?.habits && profile.lifestyle_habits.habits.length > 0 && (
+                    <div className="space-y-2">
+                      <span className="text-[9px] font-black uppercase text-white/40">Habits</span>
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        {profile.lifestyle_habits.habits.filter((h: string) => !isItemHidden("habits", h)).map((h: string, i: number) => (
+                          <span key={i} className="text-[10px] border border-white/20 text-white/70 px-2.5 py-1 rounded-full font-medium">
+                            {h}
+                          </span>
+                        ))}
+                        {renderHiddenBadge(getHiddenCount("habits"))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Relational Prompts */}
+              {(profile.bio_prompt_answer || profile.bio_prompt_answer_2) && (
+                <div className="space-y-3 pt-2">
+                  <span className="text-[10px] font-black uppercase tracking-widest text-primary flex items-center gap-1.5">
+                    <Sparkles className="w-3.5 h-3.5" /> Prompt Answers
+                  </span>
+                  
+                  {profile.bio_prompt_answer && (
+                    <div className="p-4 rounded-2xl bg-black/40 border border-primary/20 space-y-1.5">
+                      <p className="text-[10px] font-bold text-primary uppercase tracking-widest">
+                        {profile.bio_prompt_question || "What is your dream first date?"}
+                      </p>
+                      <div className="flex items-center gap-2">
+                        {!isItemHidden("bio_prompt_answer", profile.bio_prompt_answer) && (
+                          <p className="text-sm text-white leading-relaxed italic">
+                            "{profile.bio_prompt_answer}"
+                          </p>
+                        )}
+                        {renderHiddenBadge(getHiddenCount("bio_prompt_answer"))}
+                      </div>
+                    </div>
+                  )}
+
+                  {profile.bio_prompt_answer_2 && (
+                    <div className="p-4 rounded-2xl bg-black/40 border border-[#ff00ff]/20 space-y-1.5">
+                      <p className="text-[10px] font-bold text-[#ff00ff] uppercase tracking-widest">
+                        {profile.bio_prompt_question_2 || "What is your biggest green flag?"}
+                      </p>
+                      <div className="flex items-center gap-2">
+                        {!isItemHidden("bio_prompt_answer_2", profile.bio_prompt_answer_2) && (
+                          <p className="text-sm text-white leading-relaxed italic">
+                            "{profile.bio_prompt_answer_2}"
+                          </p>
+                        )}
+                        {renderHiddenBadge(getHiddenCount("bio_prompt_answer_2"))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
             </div>
           </div>
 

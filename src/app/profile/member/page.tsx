@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 const framerMotion = motion;
 import ProfilePreviewModal from "@/components/ProfilePreviewModal";
+import EditProfileTab from "@/components/profile/EditProfileTab";
 import {
   Calendar,
   Video,
@@ -55,6 +56,7 @@ import {
   Image,
   Flag,
   Globe,
+  Edit3,
 } from "lucide-react";
 
 export interface PrivacySettings {
@@ -379,7 +381,7 @@ export default function MemberProfile() {
   const { t } = useTranslation();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<
-    "status" | "calendar" | "livestream" | "track" | "master" | "insights" | "media" | "preferences"
+    "status" | "calendar" | "livestream" | "track" | "master" | "insights" | "media" | "edit" | "preferences"
   >("status");
 
   // Profile Album Media States
@@ -1377,6 +1379,28 @@ export default function MemberProfile() {
     }
   };
 
+  const handleUpdateProfileField = async (field: string, value: any) => {
+    if (currentUserProfile) {
+      const updatedProfile = {
+        ...currentUserProfile,
+        [field]: value,
+      };
+      setCurrentUserProfile(updatedProfile);
+
+      if (currentUser) {
+        try {
+          const { error } = await supabase
+            .from("profiles")
+            .update({ [field]: value })
+            .eq("id", currentUser.id);
+          if (error) throw error;
+        } catch (err) {
+          console.error(`Failed to update ${field}:`, err);
+        }
+      }
+    }
+  };
+
   const handleUpdateHabit = async (category: string, value: string) => {
     const currentLifestyle =
       currentUserProfile?.lifestyle_habits || MOCK_USER.habits;
@@ -1928,15 +1952,22 @@ export default function MemberProfile() {
                 { id: "calendar", label: "Calendar Events", icon: Calendar },
                 { id: "livestream", label: "Live Pulse Hub", icon: Video },
                 { id: "master", label: "My Sponsored Creators", icon: Crown },
+                { id: "edit", label: "Edit Profile", icon: Edit3 },
                 { id: "media", label: "My Media Album", icon: Image },
-                { id: "preferences", label: "Edit Preferences", icon: Settings },
+                { id: "preferences", label: "Account Settings", icon: Settings },
               ].map((tab) => {
                 const Icon = tab.icon;
                 const isSelected = activeTab === tab.id;
                 return (
                   <button
                     key={tab.id}
-                    onClick={() => setActiveTab(tab.id as any)}
+                    onClick={() => {
+                      if (tab.id === "preferences") {
+                        router.push("/settings");
+                      } else {
+                        setActiveTab(tab.id as any);
+                      }
+                    }}
                     className={`shrink-0 md:shrink w-auto md:w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] group hover:scale-[1.02] active:scale-[0.98] ${
                       isSelected
                         ? "bg-primary text-black font-black shadow-[0_0_20px_rgba(102,252,241,0.4)] border border-primary/20"
@@ -1966,286 +1997,18 @@ export default function MemberProfile() {
             className="bg-white/[0.02] border border-white/5 p-2 rounded-[2.5rem] shadow-[0_30px_60px_-15px_rgba(0,0,0,0.8)] backdrop-blur-xl min-h-[500px]"
           >
             <div className="bg-black/40 border border-white/5 rounded-[2rem] p-6 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)] h-full min-h-[484px]">
-            {activeTab === "preferences" && (
-              <div className="space-y-6 text-left">
-                <div className="flex items-center justify-between border-b border-white/5 pb-4">
-                  <div>
-                    <h2 className="text-2xl font-bold uppercase tracking-tighter flex items-center gap-2 text-white">
-                      <Settings className="text-primary w-6 h-6" /> Edit Profile & Preferences
-                    </h2>
-                    <p className="text-[10px] text-white/40 uppercase font-bold tracking-widest mt-1">
-                      Configure your relationship goals, orientations, family plans, hobbies, and languages.
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    <button
-                      type="button"
-                      onClick={() => setShowMemberPreviewModal(true)}
-                      className="px-3.5 py-1.5 bg-[#00fbfb]/10 border border-[#00fbfb]/30 rounded-xl text-[#00fbfb] text-[10px] font-black uppercase tracking-wider hover:bg-[#00fbfb]/20 transition flex items-center gap-1.5 cursor-pointer shadow-lg"
-                    >
-                      <Eye className="w-3.5 h-3.5" /> Preview Profile
-                    </button>
-                    <p className="text-[9px] font-black text-primary uppercase tracking-[0.2em] bg-primary/10 px-3 py-1.5 rounded-xl border border-primary/20">
-                      Configuration Cockpit
-                    </p>
-                  </div>
-                </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* Card 1: Core Relationship Preferences */}
-                  <div className="glass-card p-6 bg-white/2 border border-white/5 rounded-3xl space-y-4">
-                    <h3 className="text-xs font-bold uppercase tracking-widest text-primary flex items-center gap-2">
-                      <Heart className="w-4 h-4" /> Connection Settings
-                    </h3>
-                    
-                    <div className="space-y-4">
-                      <div>
-                        <div className="flex items-center justify-between mb-1.5">
-                          <p className="text-[10px] font-black uppercase text-white/80 tracking-widest flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-white" /> Relationship Goals</p>
-                          {renderPrivacyToggle("relationship_goals", "all")}
-                        </div>
-                        <div className="flex flex-wrap gap-1.5">
-                          {(mappedCurrentUser.relationshipGoals || []).map((goal: string, idx: number) => (
-                            <span 
-                              key={idx}
-                              onClick={() => handleOpenMultiSelect("relationship_goals", "Relationship Goals", RELATIONSHIP_GOALS, mappedCurrentUser.relationshipGoals || [])}
-                              className="text-[10px] bg-white/5 hover:bg-white/10 text-white font-bold uppercase tracking-widest px-3 py-1.5 rounded-xl border border-white/10 cursor-pointer hover:border-primary transition flex items-center gap-1"
-                            >
-                              {goal}
-                              {renderPrivacyToggle("relationship_goals", goal)}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-
-                      <div>
-                        <div className="flex items-center justify-between mb-1.5">
-                          <p className="text-[10px] font-black uppercase text-primary tracking-widest flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-primary" /> Relationship Types</p>
-                          {renderPrivacyToggle("relationship_types", "all")}
-                        </div>
-                        <div className="flex flex-wrap gap-1.5">
-                          {(mappedCurrentUser.relationshipTypes || []).map((type: string, idx: number) => (
-                            <span 
-                              key={idx}
-                              onClick={() => handleOpenMultiSelect("relationship_types", "Relationship Types", RELATIONSHIP_TYPES, mappedCurrentUser.relationshipTypes || [])}
-                              className="text-[10px] bg-primary/10 hover:bg-primary/20 text-primary font-bold uppercase tracking-widest px-3 py-1.5 rounded-xl border border-primary/25 cursor-pointer hover:border-primary transition flex items-center gap-1"
-                            >
-                              {type}
-                              {renderPrivacyToggle("relationship_types", type)}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-
-                      <div>
-                        <div className="flex items-center justify-between mb-1.5">
-                          <p className="text-[10px] font-black uppercase text-accent tracking-widest flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-accent" /> Sexual Preferences</p>
-                          {renderPrivacyToggle("sexual_preferences", "all")}
-                        </div>
-                        <div className="flex flex-wrap gap-1.5">
-                          {(mappedCurrentUser.sexualPreferences || []).map((pref: string, idx: number) => (
-                            <span 
-                              key={idx}
-                              onClick={() => handleOpenMultiSelect("sexual_preferences", "Sexual Preferences", SEXUAL_PREFERENCES, mappedCurrentUser.sexualPreferences)}
-                              className="text-[10px] bg-accent/10 hover:bg-accent/20 text-accent font-bold uppercase tracking-widest px-3 py-1.5 rounded-xl border border-accent/25 cursor-pointer hover:border-accent transition flex items-center gap-1"
-                            >
-                              {pref}
-                              {renderPrivacyToggle("sexual_preferences", pref)}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Card 2: Lifestyle & Social Preferences */}
-                  <div className="glass-card p-6 bg-white/2 border border-white/5 rounded-3xl space-y-4">
-                    <h3 className="text-xs font-bold uppercase tracking-widest text-primary flex items-center gap-2">
-                      <Users className="w-4 h-4" /> Lifestyle & Family
-                    </h3>
-
-                    <div className="space-y-4">
-                      <div>
-                        <div className="flex items-center justify-between mb-1.5">
-                          <p className="text-[10px] font-black uppercase text-accent tracking-widest flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-accent" /> Family Goals</p>
-                          {renderPrivacyToggle("familyGoals", "all")}
-                        </div>
-                        <button
-                          onClick={handleCycleFamilyGoals}
-                          className="flex items-center gap-2 text-[10px] text-white/80 font-bold uppercase tracking-widest bg-white/5 px-4 py-2 rounded-xl border border-white/10 cursor-pointer hover:text-accent hover:border-accent transition"
-                        >
-                          <Users className="w-4 h-4 text-accent" />
-                          {mappedCurrentUser.familyGoals}
-                        </button>
-                      </div>
-
-                      <div>
-                        <div className="flex items-center justify-between mb-1.5">
-                          <p className="text-[10px] font-black uppercase text-white/80 tracking-widest flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-white/45" /> Hobbies & Interests</p>
-                          {renderPrivacyToggle("hobbies", "all")}
-                        </div>
-                        <div className="flex flex-wrap gap-1.5">
-                          {(mappedCurrentUser.hobbies && mappedCurrentUser.hobbies.length > 0 ? mappedCurrentUser.hobbies : ["Add Hobbies"]).map((hobby: string) => (
-                            <span 
-                              key={hobby}
-                              onClick={() => handleOpenMultiSelect("hobbies", "Hobbies & Interests", HOBBIES, mappedCurrentUser.hobbies)}
-                              className="text-[10px] bg-white/5 hover:bg-white/10 text-white/80 font-bold uppercase tracking-widest px-3 py-1.5 rounded-xl border border-white/10 cursor-pointer hover:border-primary transition flex items-center gap-1"
-                            >
-                              {hobby}
-                              {renderPrivacyToggle("hobbies", hobby)}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Card 3: Languages */}
-                  <div className="glass-card p-6 bg-white/2 border border-white/5 rounded-3xl space-y-4 md:col-span-2">
-                    <h3 className="text-xs font-bold uppercase tracking-widest text-primary flex items-center gap-2">
-                      <Globe className="w-4 h-4" /> Languages Configuration
-                    </h3>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div>
-                        <p className="text-[10px] font-black uppercase text-primary tracking-widest mb-1.5 flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-primary" /> Favorite Languages (Primary)</p>
-                        <div className="flex flex-wrap gap-1.5">
-                          {(mappedCurrentUser.favoriteLanguages?.length > 0 ? mappedCurrentUser.favoriteLanguages : ["Add Favorite Language"]).map((lang: string) => (
-                            <span 
-                              key={lang}
-                              onClick={() => handleOpenMultiSelect("favorite_languages", "Favorite Language(s)", LANGUAGES, mappedCurrentUser.favoriteLanguages)}
-                              className="text-[10px] text-primary font-bold uppercase tracking-widest bg-white/5 px-3 py-1.5 rounded-xl border border-white/10 cursor-pointer hover:border-primary transition"
-                            >
-                              {lang}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-
-                      <div>
-                        <p className="text-[10px] font-black uppercase text-white/80 tracking-widest mb-1.5 flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-white/45" /> Additional Languages</p>
-                        <div className="flex flex-wrap gap-1.5">
-                          {(mappedCurrentUser.additionalLanguages?.length > 0 ? mappedCurrentUser.additionalLanguages : ["Add Additional Language"]).map((lang: string) => (
-                            <span 
-                              key={lang}
-                              onClick={() => handleOpenMultiSelect("additional_languages", "Additional Language(s)", LANGUAGES, mappedCurrentUser.additionalLanguages)}
-                              className="text-[10px] text-white/70 font-bold uppercase tracking-widest bg-white/5 px-3 py-1.5 rounded-xl border border-white/10 cursor-pointer hover:border-white transition"
-                            >
-                              {lang}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Card 4: Face Blur Settings */}
-                  <div className="glass-card p-6 bg-white/2 border border-white/5 rounded-3xl space-y-4 md:col-span-2">
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-1 pr-4 text-left">
-                        <h3 className="text-xs font-bold uppercase tracking-widest text-primary flex items-center gap-2">
-                          <Lock className="w-4 h-4" /> Face Blur Privacy
-                        </h3>
-                        <p className="text-[10px] text-white/50 leading-relaxed font-semibold">
-                          When active, your profile images will remain encrypted (blurred) for connections until you reach Level 3 relationship status.
-                        </p>
-                      </div>
-
-                      <button
-                        onClick={async () => {
-                          const nextVal = !mappedCurrentUser.face_blur_active;
-                          if (currentUser) {
-                            const { error } = await supabase
-                              .from("profiles")
-                              .update({ face_blur_active: nextVal })
-                              .eq("id", currentUser.id);
-                            if (error) {
-                              console.error("Error updating face blur:", error);
-                              return;
-                            }
-                          }
-                          setCurrentUserProfile((prev: any) => ({
-                            ...prev,
-                            face_blur_active: nextVal
-                          }));
-                        }}
-                        className={`px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-300 shrink-0 ${
-                          mappedCurrentUser.face_blur_active
-                            ? "bg-primary text-black shadow-[0_0_15px_rgba(102,252,241,0.4)] border border-primary/20"
-                            : "bg-white/5 text-white/40 border border-white/10 hover:bg-white/10"
-                        }`}
-                      >
-                        {mappedCurrentUser.face_blur_active ? "Blur: Enabled" : "Blur: Disabled"}
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Card 4.5: Pause Account (Math-to-Magic Tone) */}
-                  <div className="glass-card p-6 bg-[#00fbfb]/5 border border-[#00fbfb]/20 rounded-3xl space-y-4 md:col-span-2 mt-4 text-left">
-                    <div className="flex items-start justify-between flex-wrap gap-4">
-                      <div className="space-y-1.5 flex-1 min-w-[240px]">
-                        <div className="flex items-center gap-2">
-                          <PauseCircle className="w-5 h-5 text-[#00fbfb]" />
-                          <h3 className="text-sm font-extrabold uppercase tracking-wider text-white">
-                            🎮 Take a Breather (Pause Account)
-                          </h3>
-                        </div>
-                        <p className="text-xs text-white/70 leading-relaxed font-normal">
-                          Going off-grid for a bit? Pausing your account hides your profile from new discovery feeds and matchmaking decks. Don't worry—your existing matches can still message you in your inbox, and your XP, vibes, and unlocked connections stay safe until you unpause!
-                        </p>
-                      </div>
-
-                      <button
-                        onClick={async () => {
-                          const newPausedState = !currentUserProfile?.is_paused;
-                          if (currentUser) {
-                            await supabase
-                              .from("profiles")
-                              .update({ is_paused: newPausedState })
-                              .eq("id", currentUser.id);
-                          }
-                          setCurrentUserProfile((prev: any) => ({
-                            ...prev,
-                            is_paused: newPausedState,
-                          }));
-                        }}
-                        className={`px-5 py-3 rounded-2xl text-xs font-black uppercase tracking-wider transition-all shadow-lg shrink-0 cursor-pointer ${
-                          currentUserProfile?.is_paused
-                            ? "bg-emerald-500 text-black shadow-emerald-500/20 hover:bg-emerald-400"
-                            : "bg-[#00fbfb]/15 text-[#00fbfb] border border-[#00fbfb]/40 hover:bg-[#00fbfb]/30"
-                        }`}
-                      >
-                        {currentUserProfile?.is_paused ? "▶️ Resume Discovery (Unpause)" : "⏸️ Pause Account"}
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Card 5: Danger Zone */}
-                  <div className="glass-card p-6 bg-red-900/10 border border-red-500/20 rounded-3xl space-y-4 md:col-span-2 mt-4">
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-1 pr-4 text-left">
-                        <h3 className="text-xs font-bold uppercase tracking-widest text-red-500 flex items-center gap-2">
-                          <AlertCircle className="w-4 h-4" /> Danger Zone
-                        </h3>
-                        <p className="text-[10px] text-red-400/70 leading-relaxed font-semibold">
-                          Irreversibly delete your account, matches, media, and all personal data. This action cannot be undone.
-                        </p>
-                      </div>
-
-                      <button
-                        onClick={() => {
-                          setDeleteConfirmation("");
-                          setShowDeleteModal(true);
-                        }}
-                        className="px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-300 shrink-0 bg-red-500/10 text-red-500 border border-red-500/20 hover:bg-red-500 hover:text-white"
-                      >
-                        Delete Account
-                      </button>
-                    </div>
-                  </div>
-
-                </div>
-              </div>
+            
+            {activeTab === "edit" && (
+              <EditProfileTab
+                mappedCurrentUser={mappedCurrentUser}
+                currentUserProfile={currentUserProfile}
+                handleOpenMultiSelect={handleOpenMultiSelect}
+                renderPrivacyToggle={renderPrivacyToggle}
+                handleCycleFamilyGoals={handleCycleFamilyGoals}
+                handleUpdateHabit={handleUpdateHabit}
+                handleUpdateProfileField={handleUpdateProfileField}
+              />
             )}
 
             {activeTab === "media" && (
@@ -4214,7 +3977,18 @@ export default function MemberProfile() {
           privacy_settings: (currentUserProfile as any)?.privacy_settings,
           spoken_languages: (currentUserProfile as any)?.spoken_languages || (mappedCurrentUser as any)?.favoriteLanguages || ["English"],
           album_photos: (mediaItems || []).map((p: any) => p.media_url || p.url),
+          album_media: mediaItems || [],
           role: "member",
+          education_level: (currentUserProfile as any)?.education_level,
+          career: (currentUserProfile as any)?.career,
+          astro_sign: (currentUserProfile as any)?.astro_sign,
+          habits: (currentUserProfile as any)?.lifestyle_habits?.habits || [],
+          relationship_goals: (currentUserProfile as any)?.relationship_goals,
+          relationship_types: (currentUserProfile as any)?.relationship_types,
+          sexual_preferences: (currentUserProfile as any)?.sexual_preferences,
+          family_goals: (currentUserProfile as any)?.lifestyle_habits?.family_goals,
+          hobbies: (currentUserProfile as any)?.hobbies,
+          bio: (currentUserProfile as any)?.bio,
         }}
       />
     </div>
