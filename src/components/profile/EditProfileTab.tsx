@@ -2,6 +2,7 @@
 
 import React from "react";
 import { Heart, Users, User, Edit3, Briefcase, Star, ChevronDown, Book, GraduationCap, Sparkles } from "lucide-react";
+import { useTranslation } from "@/context/LanguageContext";
 import {
   RELATIONSHIP_GOALS,
   RELATIONSHIP_TYPES,
@@ -25,6 +26,16 @@ interface EditProfileTabProps {
 }
 
 export default function EditProfileTab({
+  mappedCurrentUser,
+  currentUserProfile,
+  handleOpenMultiSelect,
+  renderPrivacyToggle,
+  handleCycleFamilyGoals,
+  handleUpdateHabit,
+  handleUpdateProfileField,
+}: EditProfileTabProps) {
+  const { t: translate } = useTranslation();
+  const { t: translate } = useTranslation();
   mappedCurrentUser,
   currentUserProfile,
   handleOpenMultiSelect,
@@ -277,7 +288,7 @@ export default function EditProfileTab({
               {/* Habits */}
               <div className="border-t border-white/5 pt-5">
                 <div className="flex items-center justify-between mb-4">
-                  <p className="text-[10px] font-black uppercase text-white/50 tracking-widest">Lifestyle & Habits</p>
+                  <p className="text-[10px] font-black uppercase text-white/50 tracking-widest">{translate("profile.lifestyle_habits", "Lifestyle & Habits")}</p>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   {HABIT_CATEGORIES.map((category) => {

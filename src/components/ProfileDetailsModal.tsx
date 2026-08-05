@@ -492,7 +492,7 @@ export default function ProfileDetailsModal({ profileId, onClose, currentUserId 
                 </div>
               )}
 
-              {/* Connection Desires */}
+              {/* {translate("profile.connection_desires", "Connection Desires")} */}
               {((profile.relationship_goals && profile.relationship_goals.length > 0) || 
                 (profile.relationship_types && profile.relationship_types.length > 0) || 
                 (profile.sexual_preferences && profile.sexual_preferences.length > 0) || 
@@ -532,7 +532,7 @@ export default function ProfileDetailsModal({ profileId, onClose, currentUserId 
 
                   {profile.sexual_preferences && profile.sexual_preferences.length > 0 && (
                     <div className="space-y-1.5">
-                      <span className="text-[9px] font-black uppercase text-[#ff00ff]/70">Preferences</span>
+                      <span className="text-[9px] font-black uppercase text-[#ff00ff]/70">{translate("profile.preferences", "Preferences")}</span>
                       <div className="flex flex-wrap items-center gap-1.5">
                         {profile.sexual_preferences.filter((p: string) => !isItemHidden("sexual_preferences", p)).map((pref: string, i: number) => (
                           <span key={i} className="text-[10px] bg-[#ff00ff]/10 text-[#ff00ff] border border-[#ff00ff]/20 px-2 py-1 rounded-md font-bold uppercase tracking-wider">
@@ -597,7 +597,7 @@ export default function ProfileDetailsModal({ profileId, onClose, currentUserId 
                 </div>
               )}
 
-              {/* Relational Prompts */}
+              {/* {translate("profile.relational_prompts", "Relational Prompts")} */}
               {(profile.bio_prompt_answer || profile.bio_prompt_answer_2) && (
                 <div className="space-y-3 pt-2">
                   <span className="text-[10px] font-black uppercase tracking-widest text-primary flex items-center gap-1.5">

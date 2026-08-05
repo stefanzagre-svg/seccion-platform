@@ -5,8 +5,10 @@ import { useRouter } from "next/navigation";
 import { Settings, Lock, PauseCircle, AlertCircle, ArrowLeft, Mic, Crown, Bell, Moon, Map, LifeBuoy, FileText, Shield, MessageSquare } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { getResilientSession, getResilientProfile } from "@/lib/supabase-safe";
+import { useTranslation } from "@/context/LanguageContext";
 
 export default function SettingsPage() {
+  const { t: translate } = useTranslation();
   const router = useRouter();
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [currentUserProfile, setCurrentUserProfile] = useState<any>(null);
@@ -68,10 +70,10 @@ export default function SettingsPage() {
         <div className="flex items-center justify-between border-b border-white/5 pb-4">
           <div>
             <h2 className="text-2xl font-bold uppercase tracking-tighter flex items-center gap-2 text-white">
-              <Settings className="text-primary w-6 h-6" /> Account & App Preferences
+              <Settings className="text-primary w-6 h-6" /> {translate("settings.title", "Account & {translate("settings.app_prefs", "App Preferences")}")}
             </h2>
             <p className="text-[10px] text-white/40 uppercase font-bold tracking-widest mt-1">
-              Configure your account settings, privacy gates, and app preferences.
+              {translate("settings.subtitle", "Configure your account settings, privacy gates, and app preferences.")}
             </p>
           </div>
         </div>
@@ -82,10 +84,10 @@ export default function SettingsPage() {
             <div className="flex items-center justify-between">
               <div className="space-y-1 pr-4 text-left">
                 <h3 className="text-xs font-bold uppercase tracking-widest text-primary flex items-center gap-2">
-                  <Lock className="w-4 h-4" /> Face Blur Privacy
+                  <Lock className="w-4 h-4" /> {translate("settings.face_blur", "Face Blur Privacy")}
                 </h3>
                 <p className="text-[10px] text-white/50 leading-relaxed font-semibold">
-                  When active, your profile images will remain encrypted (blurred) for connections until you reach Level 3 relationship status.
+                  {translate("settings.face_blur_desc", "When active, your profile images will remain encrypted (blurred) for connections until you reach Level 3 relationship status.")}
                 </p>
               </div>
 
@@ -113,7 +115,7 @@ export default function SettingsPage() {
                     : "bg-white/5 text-white/40 border border-white/10 hover:bg-white/10"
                 }`}
               >
-                {currentUserProfile?.face_blur_active ? "Blur: Enabled" : "Blur: Disabled"}
+                {currentUserProfile?.face_blur_active ? "{translate("settings.blur_enabled", "Blur: Enabled")}" : "{translate("settings.blur_disabled", "Blur: Disabled")}"}
               </button>
             </div>
           </div>
@@ -158,7 +160,7 @@ export default function SettingsPage() {
             </div>
           </div>
 
-          {/* Premium Upgrades (Speech to Speech & VIP) */}
+          {/* {translate("settings.premium", "Premium Upgrades")} (Speech to Speech & VIP) */}
           <div className="glass-card p-6 bg-gradient-to-br from-[#ff00ff]/10 to-[#7c3aed]/10 border border-[#ff00ff]/20 rounded-3xl space-y-4 md:col-span-2 mt-4 text-left">
             <h3 className="text-xs font-bold uppercase tracking-widest text-[#ff00ff] flex items-center gap-2 mb-4">
               <Crown className="w-4 h-4" /> Premium Upgrades
@@ -168,26 +170,26 @@ export default function SettingsPage() {
               <div className="p-4 bg-black/40 rounded-2xl border border-white/5 space-y-3">
                 <div className="flex items-center gap-2">
                   <Mic className="w-4 h-4 text-accent" />
-                  <span className="text-sm font-extrabold uppercase tracking-wider text-white">Speech-to-Speech</span>
+                  <span className="text-sm font-extrabold uppercase tracking-wider text-white">{translate("settings.speech", "Speech-to-Speech")}</span>
                 </div>
                 <p className="text-[10px] text-white/50 leading-relaxed font-semibold">
-                  Unlock real-time voice cloning and speech-to-speech translation in 14 languages. Requires the Creator Ultimate Pack or an active promo.
+                  {translate("settings.speech_desc", "Unlock real-time voice cloning and speech-to-speech translation in 14 languages. Requires the Creator Ultimate Pack or an active promo.")}
                 </p>
                 <button className="w-full px-4 py-2 bg-[#ff00ff]/20 text-[#ff00ff] border border-[#ff00ff]/50 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-[#ff00ff]/40 transition">
-                  Unlock Feature
+                  {translate("settings.unlock_btn", "Unlock Feature")}
                 </button>
               </div>
 
               <div className="p-4 bg-black/40 rounded-2xl border border-white/5 space-y-3">
                 <div className="flex items-center gap-2">
                   <Crown className="w-4 h-4 text-yellow-400" />
-                  <span className="text-sm font-extrabold uppercase tracking-wider text-white">VIP Subscription</span>
+                  <span className="text-sm font-extrabold uppercase tracking-wider text-white">{translate("settings.vip", "VIP Subscription")}</span>
                 </div>
                 <p className="text-[10px] text-white/50 leading-relaxed font-semibold">
-                  Get priority matchmaking, unlimited swipes, advanced read receipts, and exclusive profile badges.
+                  {translate("settings.vip_desc", "Get priority matchmaking, unlimited swipes, advanced read receipts, and exclusive profile badges.")}
                 </p>
                 <button className="w-full px-4 py-2 bg-yellow-400/20 text-yellow-400 border border-yellow-400/50 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-yellow-400/40 transition">
-                  Upgrade to VIP
+                  {translate("settings.upgrade_btn", "Upgrade to VIP")}
                 </button>
               </div>
             </div>
@@ -203,30 +205,30 @@ export default function SettingsPage() {
               <div className="flex items-center justify-between p-3 bg-white/5 rounded-2xl">
                 <div className="flex items-center gap-3">
                   <Moon className="w-4 h-4 text-white/50" />
-                  <span className="text-xs font-bold text-white/80">Theme Display</span>
+                  <span className="text-xs font-bold text-white/80">{translate("settings.theme", "Theme Display")}</span>
                 </div>
                 <select className="bg-black/50 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none">
-                  <option>Dark Mode</option>
-                  <option>Light Mode</option>
-                  <option>System Default</option>
+                  <option>{translate("settings.dark_mode", "Dark Mode")}</option>
+                  <option>{translate("settings.light_mode", "Light Mode")}</option>
+                  <option>{translate("settings.system_default", "System Default")}</option>
                 </select>
               </div>
 
               <div className="flex items-center justify-between p-3 bg-white/5 rounded-2xl">
                 <div className="flex items-center gap-3">
                   <Map className="w-4 h-4 text-white/50" />
-                  <span className="text-xs font-bold text-white/80">Distance Unit</span>
+                  <span className="text-xs font-bold text-white/80">{translate("settings.distance", "Distance Unit")}</span>
                 </div>
                 <select className="bg-black/50 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none">
-                  <option>Kilometers (km)</option>
-                  <option>Miles (mi)</option>
+                  <option>{translate("settings.km", "Kilometers (km)")}</option>
+                  <option>{translate("settings.mi", "Miles (mi)")}</option>
                 </select>
               </div>
 
               <div className="flex items-center justify-between p-3 bg-white/5 rounded-2xl">
                 <div className="flex items-center gap-3">
                   <Bell className="w-4 h-4 text-white/50" />
-                  <span className="text-xs font-bold text-white/80">Notifications</span>
+                  <span className="text-xs font-bold text-white/80">{translate("settings.notifications", "Notifications")}</span>
                 </div>
                 <button className="px-4 py-1.5 bg-white/10 text-white border border-white/20 rounded-lg text-xs font-bold hover:bg-white/20 transition">
                   Manage Alerts
@@ -235,7 +237,7 @@ export default function SettingsPage() {
             </div>
           </div>
 
-          {/* Support & Legal */}
+          {/* {translate("settings.support_legal", "Support & Legal")} */}
           <div className="glass-card p-6 bg-white/2 border border-white/5 rounded-3xl space-y-4 md:col-span-2 mt-4 text-left">
             <h3 className="text-xs font-bold uppercase tracking-widest text-white/50 flex items-center gap-2 mb-4">
               <LifeBuoy className="w-4 h-4" /> Support & Legal
@@ -244,19 +246,19 @@ export default function SettingsPage() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
               <button className="flex flex-col items-center gap-2 p-4 bg-white/5 hover:bg-white/10 rounded-2xl transition border border-white/5 text-white/70 hover:text-white">
                 <LifeBuoy className="w-5 h-5" />
-                <span className="text-[10px] font-bold uppercase tracking-wider">Help & Support</span>
+                <span className="text-[10px] font-bold uppercase tracking-wider">{translate("settings.help", "Help & Support")}</span>
               </button>
               <button className="flex flex-col items-center gap-2 p-4 bg-white/5 hover:bg-white/10 rounded-2xl transition border border-white/5 text-white/70 hover:text-white">
                 <MessageSquare className="w-5 h-5" />
-                <span className="text-[10px] font-bold uppercase tracking-wider">Contact Us</span>
+                <span className="text-[10px] font-bold uppercase tracking-wider">{translate("settings.contact", "Contact Us")}</span>
               </button>
               <button className="flex flex-col items-center gap-2 p-4 bg-white/5 hover:bg-white/10 rounded-2xl transition border border-white/5 text-white/70 hover:text-white">
                 <FileText className="w-5 h-5" />
-                <span className="text-[10px] font-bold uppercase tracking-wider">Terms of Service</span>
+                <span className="text-[10px] font-bold uppercase tracking-wider">{translate("settings.terms", "Terms of Service")}</span>
               </button>
               <button className="flex flex-col items-center gap-2 p-4 bg-white/5 hover:bg-white/10 rounded-2xl transition border border-white/5 text-white/70 hover:text-white">
                 <Shield className="w-5 h-5" />
-                <span className="text-[10px] font-bold uppercase tracking-wider">Privacy Policy</span>
+                <span className="text-[10px] font-bold uppercase tracking-wider">{translate("settings.privacy", "Privacy Policy")}</span>
               </button>
             </div>
           </div>
@@ -269,7 +271,7 @@ export default function SettingsPage() {
                   <AlertCircle className="w-4 h-4" /> Danger Zone
                 </h3>
                 <p className="text-[10px] text-red-400/70 leading-relaxed font-semibold">
-                  Irreversibly delete your account, matches, media, and all personal data. This action cannot be undone.
+                  {translate("settings.delete_desc", "Irreversibly delete your account, matches, media, and all personal data. This action cannot be undone.")}
                 </p>
               </div>
 
@@ -279,9 +281,7 @@ export default function SettingsPage() {
                   setShowDeleteModal(true);
                 }}
                 className="px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-300 shrink-0 bg-red-500/10 text-red-500 border border-red-500/20 hover:bg-red-500 hover:text-white"
-              >
-                Delete Account
-              </button>
+              > {translate("settings.delete_btn", "Delete Account")} </button>
             </div>
           </div>
 
@@ -292,7 +292,7 @@ export default function SettingsPage() {
       {showDeleteModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
           <div className="glass-card bg-[#0c1017] border border-red-500/30 rounded-3xl p-6 w-full max-w-md">
-            <h2 className="text-xl font-bold uppercase tracking-tighter text-red-500 mb-2">Delete Account</h2>
+            <h2 className="text-xl font-bold uppercase tracking-tighter text-red-500 mb-2"> {translate("settings.delete_btn", "Delete Account")} </h2>
             <p className="text-sm text-white/70 mb-6">
               This action is permanent and cannot be undone. Please type <span className="text-red-400 font-bold">DELETE</span> to confirm.
             </p>

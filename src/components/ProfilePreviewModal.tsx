@@ -83,7 +83,7 @@ export default function ProfilePreviewModal({
             <div className="flex items-center gap-2">
               <Eye className="w-4 h-4 text-[#00fbfb]" />
               <span className="text-xs font-black uppercase tracking-wider text-[#00fbfb]">
-                Public Profile Preview
+                {translate("profile.public_preview", "Public Profile Preview")}
               </span>
               <span className="text-[9px] bg-white/10 px-2 py-0.5 rounded-full text-white/60 font-mono">
                 How others see you
@@ -290,7 +290,7 @@ export default function ProfilePreviewModal({
                 )}
               </div>
 
-              {/* Connection Desires */}
+              {/* {translate("profile.connection_desires", "Connection Desires")} */}
               {((profile.relationship_goals && profile.relationship_goals.length > 0) || 
                 (profile.relationship_types && profile.relationship_types.length > 0) || 
                 (profile.sexual_preferences && profile.sexual_preferences.length > 0) || 
@@ -330,7 +330,7 @@ export default function ProfilePreviewModal({
 
                   {profile.sexual_preferences && profile.sexual_preferences.length > 0 && (
                     <div className="space-y-1.5">
-                      <span className="text-[9px] font-black uppercase text-[#ff00ff]/70">Preferences</span>
+                      <span className="text-[9px] font-black uppercase text-[#ff00ff]/70">{translate("profile.preferences", "Preferences")}</span>
                       <div className="flex flex-wrap items-center gap-1.5">
                         {profile.sexual_preferences.filter(p => !hiddenValues["sexual_preferences"]?.[p]).map((pref, i) => (
                           <span key={i} className="text-[10px] bg-[#ff00ff]/10 text-[#ff00ff] border border-[#ff00ff]/20 px-2 py-1 rounded-md font-bold uppercase tracking-wider">
@@ -395,7 +395,7 @@ export default function ProfilePreviewModal({
                 </div>
               )}
 
-              {/* Relational Prompts */}
+              {/* {translate("profile.relational_prompts", "Relational Prompts")} */}
               {(profile.bio_prompt_answer || profile.bio_prompt_answer_2) && (
                 <div className="space-y-3 pt-2">
                   <span className="text-[10px] font-black uppercase tracking-widest text-primary flex items-center gap-1.5">
