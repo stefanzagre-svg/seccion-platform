@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Settings, Lock, PauseCircle, AlertCircle, ArrowLeft } from "lucide-react";
+import { Settings, Lock, PauseCircle, AlertCircle, ArrowLeft, Mic, Crown, Bell, Moon, Map, LifeBuoy, FileText, Shield, MessageSquare } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { getResilientSession, getResilientProfile } from "@/lib/supabase-safe";
 
@@ -154,6 +154,109 @@ export default function SettingsPage() {
                 }`}
               >
                 {currentUserProfile?.is_paused ? "▶️ Resume Discovery (Unpause)" : "⏸️ Pause Account"}
+              </button>
+            </div>
+          </div>
+
+          {/* Premium Upgrades (Speech to Speech & VIP) */}
+          <div className="glass-card p-6 bg-gradient-to-br from-[#ff00ff]/10 to-[#7c3aed]/10 border border-[#ff00ff]/20 rounded-3xl space-y-4 md:col-span-2 mt-4 text-left">
+            <h3 className="text-xs font-bold uppercase tracking-widest text-[#ff00ff] flex items-center gap-2 mb-4">
+              <Crown className="w-4 h-4" /> Premium Upgrades
+            </h3>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="p-4 bg-black/40 rounded-2xl border border-white/5 space-y-3">
+                <div className="flex items-center gap-2">
+                  <Mic className="w-4 h-4 text-accent" />
+                  <span className="text-sm font-extrabold uppercase tracking-wider text-white">Speech-to-Speech</span>
+                </div>
+                <p className="text-[10px] text-white/50 leading-relaxed font-semibold">
+                  Unlock real-time voice cloning and speech-to-speech translation in 14 languages. Requires the Creator Ultimate Pack or an active promo.
+                </p>
+                <button className="w-full px-4 py-2 bg-[#ff00ff]/20 text-[#ff00ff] border border-[#ff00ff]/50 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-[#ff00ff]/40 transition">
+                  Unlock Feature
+                </button>
+              </div>
+
+              <div className="p-4 bg-black/40 rounded-2xl border border-white/5 space-y-3">
+                <div className="flex items-center gap-2">
+                  <Crown className="w-4 h-4 text-yellow-400" />
+                  <span className="text-sm font-extrabold uppercase tracking-wider text-white">VIP Subscription</span>
+                </div>
+                <p className="text-[10px] text-white/50 leading-relaxed font-semibold">
+                  Get priority matchmaking, unlimited swipes, advanced read receipts, and exclusive profile badges.
+                </p>
+                <button className="w-full px-4 py-2 bg-yellow-400/20 text-yellow-400 border border-yellow-400/50 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-yellow-400/40 transition">
+                  Upgrade to VIP
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* App Preferences */}
+          <div className="glass-card p-6 bg-white/2 border border-white/5 rounded-3xl space-y-4 md:col-span-2 mt-4 text-left">
+            <h3 className="text-xs font-bold uppercase tracking-widest text-primary flex items-center gap-2 mb-4">
+              <Settings className="w-4 h-4" /> App Preferences
+            </h3>
+            
+            <div className="space-y-4">
+              <div className="flex items-center justify-between p-3 bg-white/5 rounded-2xl">
+                <div className="flex items-center gap-3">
+                  <Moon className="w-4 h-4 text-white/50" />
+                  <span className="text-xs font-bold text-white/80">Theme Display</span>
+                </div>
+                <select className="bg-black/50 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none">
+                  <option>Dark Mode</option>
+                  <option>Light Mode</option>
+                  <option>System Default</option>
+                </select>
+              </div>
+
+              <div className="flex items-center justify-between p-3 bg-white/5 rounded-2xl">
+                <div className="flex items-center gap-3">
+                  <Map className="w-4 h-4 text-white/50" />
+                  <span className="text-xs font-bold text-white/80">Distance Unit</span>
+                </div>
+                <select className="bg-black/50 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none">
+                  <option>Kilometers (km)</option>
+                  <option>Miles (mi)</option>
+                </select>
+              </div>
+
+              <div className="flex items-center justify-between p-3 bg-white/5 rounded-2xl">
+                <div className="flex items-center gap-3">
+                  <Bell className="w-4 h-4 text-white/50" />
+                  <span className="text-xs font-bold text-white/80">Notifications</span>
+                </div>
+                <button className="px-4 py-1.5 bg-white/10 text-white border border-white/20 rounded-lg text-xs font-bold hover:bg-white/20 transition">
+                  Manage Alerts
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Support & Legal */}
+          <div className="glass-card p-6 bg-white/2 border border-white/5 rounded-3xl space-y-4 md:col-span-2 mt-4 text-left">
+            <h3 className="text-xs font-bold uppercase tracking-widest text-white/50 flex items-center gap-2 mb-4">
+              <LifeBuoy className="w-4 h-4" /> Support & Legal
+            </h3>
+            
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+              <button className="flex flex-col items-center gap-2 p-4 bg-white/5 hover:bg-white/10 rounded-2xl transition border border-white/5 text-white/70 hover:text-white">
+                <LifeBuoy className="w-5 h-5" />
+                <span className="text-[10px] font-bold uppercase tracking-wider">Help & Support</span>
+              </button>
+              <button className="flex flex-col items-center gap-2 p-4 bg-white/5 hover:bg-white/10 rounded-2xl transition border border-white/5 text-white/70 hover:text-white">
+                <MessageSquare className="w-5 h-5" />
+                <span className="text-[10px] font-bold uppercase tracking-wider">Contact Us</span>
+              </button>
+              <button className="flex flex-col items-center gap-2 p-4 bg-white/5 hover:bg-white/10 rounded-2xl transition border border-white/5 text-white/70 hover:text-white">
+                <FileText className="w-5 h-5" />
+                <span className="text-[10px] font-bold uppercase tracking-wider">Terms of Service</span>
+              </button>
+              <button className="flex flex-col items-center gap-2 p-4 bg-white/5 hover:bg-white/10 rounded-2xl transition border border-white/5 text-white/70 hover:text-white">
+                <Shield className="w-5 h-5" />
+                <span className="text-[10px] font-bold uppercase tracking-wider">Privacy Policy</span>
               </button>
             </div>
           </div>
