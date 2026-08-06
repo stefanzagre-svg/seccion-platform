@@ -2,7 +2,7 @@ import React from 'react';
 
 interface SeccionWordmarkProps {
   className?: string;
-  variant?: 'cyan' | 'white' | 'dark' | 'current';
+  variant?: 'cyan' | 'white' | 'dark' | 'pink' | 'current';
   alt?: string;
 }
 
@@ -11,7 +11,9 @@ export default function SeccionWordmark({
   variant = "cyan",
   alt = "SECCION"
 }: SeccionWordmarkProps) {
-  const imageSrc = variant === 'dark'
+  const imageSrc = variant === 'pink'
+    ? '/assets/logo/seccion-official-wordmark-pink.png'
+    : variant === 'dark'
     ? '/assets/logo/seccion-official-wordmark-dark-transparent.png'
     : variant === 'white'
     ? '/assets/logo/seccion-official-wordmark-white.png'
