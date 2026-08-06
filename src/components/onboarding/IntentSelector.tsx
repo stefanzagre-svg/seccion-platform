@@ -38,7 +38,9 @@ const CORE_PASSIONS = [
   { id: 'travel', label: 'Travel & Languages', icon: <Plane className="w-8 h-8 text-[#3b82f6]" />, desc: 'Cultural exchange & global trips', color: 'border-[#3b82f6]/30 shadow-[#3b82f6]/20 bg-[#3b82f6]/10' },
 ];
 
-export default function IntentSelector({ activePurposes, onContinue }: { activePurposes: MemberPurposeId[], onContinue: (intents: string[], displayAge: number, corePassion: string) => void }) {
+import SeccionWordmark from '@/components/ui/SeccionWordmark';
+
+export default function IntentSelector({ activePurposes, onContinue }: { activePurposes: MemberPurposeId[], onContinue: (intents: string[], displayAge: number, corePassion: string) => Promise<void> | void }) {
   const { t } = useTranslation();
   const [step, setStep] = useState(1);
   const [name, setName] = useState('');
@@ -47,6 +49,7 @@ export default function IntentSelector({ activePurposes, onContinue }: { activeP
   const [zkpLog, setZkpLog] = useState<string>('');
   const [selectedIntents, setSelectedIntents] = useState<string[]>([]);
   const [selectedPassion, setSelectedPassion] = useState<string>('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const toggleIntent = (id: string) => {
     setSelectedIntents(prev => 
@@ -54,11 +57,18 @@ export default function IntentSelector({ activePurposes, onContinue }: { activeP
     );
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (step === 1 && name.trim().length > 0) setStep(2);
     else if (step === 2 && zkpStatus === 'success') setStep(3);
     else if (step === 3 && selectedIntents.length > 0) setStep(4);
-    else if (step === 4 && selectedPassion.length > 0) onContinue(selectedIntents, displayAge, selectedPassion);
+    else if (step === 4 && selectedPassion.length > 0) {
+      setIsSubmitting(true);
+      try {
+        await onContinue(selectedIntents, displayAge, selectedPassion);
+      } finally {
+        setIsSubmitting(false);
+      }
+    }
   };
 
   const triggerZkpVerification = async () => {
@@ -321,11 +331,20 @@ export default function IntentSelector({ activePurposes, onContinue }: { activeP
               
               <button 
                 onClick={handleNext}
-                disabled={selectedPassion.length === 0}
-                className="w-full py-4 rounded-2xl bg-gradient-to-r from-primary to-emerald-400 text-black font-black uppercase tracking-wider disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_0_20px_rgba(102,252,241,0.4)] transition-transform active:scale-95 flex items-center justify-center gap-2 text-xs"
+                disabled={selectedPassion.length === 0 || isSubmitting}
+                className="w-full py-4 rounded-2xl bg-gradient-to-r from-primary to-emerald-400 text-black font-black uppercase tracking-wider disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_0_20px_rgba(102,252,241,0.4)] transition-transform active:scale-95 flex items-center justify-center gap-2.5 text-xs cursor-pointer"
               >
-                <span>Enter the</span>
-                <img src="/assets/logo/seccion-wordmark-dark.png" alt="SECCION" className="h-4 object-contain inline-block" />
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin text-black" />
+                    <span>Entering SECCION...</span>
+                  </>
+                ) : (
+                  <>
+                    <span className="font-black text-[#050505] tracking-wider text-xs">Enter the</span>
+                    <SeccionWordmark variant="dark" className="h-4 sm:h-5 inline-block" />
+                  </>
+                )}
               </button>
             </motion.div>
           )}

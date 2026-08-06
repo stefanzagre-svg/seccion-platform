@@ -6,6 +6,8 @@ import { MEMBER_PURPOSES, type MemberPurposeId } from '@/lib/constants';
 import { ArrowRight, Info, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { useTranslation } from '@/context/LanguageContext';
 
+import SeccionWordmark from '@/components/ui/SeccionWordmark';
+
 interface PurposeSelectorProps {
   onContinue: (purposes: MemberPurposeId[], isCreator: boolean) => void;
 }
@@ -47,9 +49,9 @@ export default function PurposeSelector({ onContinue }: PurposeSelectorProps) {
       className="w-full max-w-4xl mx-auto flex flex-col items-center justify-center min-h-[70vh] px-4"
     >
       <div className="text-center space-y-4 mb-8">
-        <h1 className="text-3xl md:text-5xl font-light text-white tracking-wide flex items-center justify-center flex-wrap gap-2">
+        <h1 className="text-3xl md:text-5xl font-light text-white tracking-wide flex items-center justify-center flex-wrap gap-2.5">
           <span>What brings you to</span>
-          <img src="/assets/logo/seccion-wordmark-light.png" alt="SECCION" className="h-8 md:h-12 object-contain inline-block drop-shadow-[0_0_15px_rgba(0,251,251,0.5)]" />
+          <SeccionWordmark variant="cyan" className="h-8 md:h-12 inline-block drop-shadow-[0_0_20px_rgba(0,251,251,0.6)]" />
           <span>?</span>
         </h1>
         <p className="text-slate-400 text-lg md:text-xl max-w-2xl mx-auto">

@@ -194,6 +194,7 @@ export default function OnboardingFlow() {
       const dataUrl = event.target?.result as string;
       if (dataUrl) {
         setAvatarUrl(dataUrl);
+        saveOnboardingState({ avatarUrl: dataUrl, step: "profile-checklist", activeItem: "photo" });
         setLivenessVerified(false);
         setLivenessStep(0);
       }
@@ -320,6 +321,18 @@ export default function OnboardingFlow() {
   const completedCount = checklist.filter((i) => i.completed).length;
   // Gestalt ring starts at 25% (base), and remaining 75% is divided by checklist items
   const progress = 25 + Math.round((completedCount / checklist.length) * 75);
+  const saveOnboardingState = (updates: Record<string, any>) => {
+    if (typeof window === "undefined") return;
+    try {
+      const existingStr = localStorage.getItem("_seccion_onboarding_state");
+      const existing = existingStr ? JSON.parse(existingStr) : {};
+      const merged = { ...existing, ...updates };
+      localStorage.setItem("_seccion_onboarding_state", JSON.stringify(merged));
+    } catch (e) {
+      console.warn("Failed to save onboarding state to localStorage:", e);
+    }
+  };
+
   // Check active session on mount to skip login/sign up if already authenticated
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -333,6 +346,25 @@ export default function OnboardingFlow() {
     async function checkSession() {
       const params = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : new URLSearchParams();
       const isFresh = params.get("fresh") === "true" || params.get("reset") === "true";
+
+      // 1. Check local storage backup state first (prevents mobile phone photo upload reset!)
+      if (typeof window !== "undefined" && !isFresh) {
+        const savedStateStr = localStorage.getItem("_seccion_onboarding_state");
+        if (savedStateStr) {
+          try {
+            const savedState = JSON.parse(savedStateStr);
+            if (savedState.step) setStep(savedState.step);
+            if (savedState.activePurposes?.length) setActivePurposes(savedState.activePurposes);
+            if (savedState.intents?.length) setIntents(savedState.intents);
+            if (savedState.displayAge) setDisplayAge(savedState.displayAge);
+            if (savedState.avatarUrl) setAvatarUrl(savedState.avatarUrl);
+            if (savedState.albumPhotos?.length) setAlbumPhotos(savedState.albumPhotos);
+            if (savedState.activeItem) setActiveItem(savedState.activeItem);
+          } catch (e) {
+            console.warn("Failed to parse saved onboarding state:", e);
+          }
+        }
+      }
 
       const session = await getResilientSession(4000);
       if (session?.user) {
@@ -692,39 +724,58 @@ export default function OnboardingFlow() {
                 onContinue={async (selected, chosenAge, corePassion) => {
                   setIntents(selected);
                   setDisplayAge(chosenAge);
-                  let currentUserId = userId;
-                  if (!currentUserId) {
-                    const { data: { session } } = await supabase.auth.getSession();
-                    currentUserId = session?.user?.id || null;
-                  }
-                  if (!currentUserId && typeof window !== "undefined") {
-                    const stored = localStorage.getItem("fusion_onboarding_core");
-                    if (stored) {
-                      try {
-                        currentUserId = JSON.parse(stored).userId;
-                      } catch (e) {}
+                  
+                  saveOnboardingState({
+                    intents: selected,
+                    displayAge: chosenAge,
+                    corePassion,
+                    step: "profile-checklist"
+                  });
+
+                  try {
+                    let currentUserId = userId;
+                    if (!currentUserId) {
+                      const { data: { session } } = await supabase.auth.getSession();
+                      currentUserId = session?.user?.id || null;
                     }
+                    if (!currentUserId && typeof window !== "undefined") {
+                      const stored = localStorage.getItem("fusion_onboarding_core");
+                      if (stored) {
+                        try {
+                          currentUserId = JSON.parse(stored).userId;
+                        } catch (e) {}
+                      }
+                    }
+                    if (currentUserId) {
+                      setUserId(currentUserId);
+                      
+                      const dbQueryPromise = (async () => {
+                        const { data } = await supabase
+                          .from("profiles")
+                          .select("privacy_settings")
+                          .eq("id", currentUserId)
+                          .single();
+                        const settings = data?.privacy_settings || {};
+                        await supabase
+                          .from("profiles")
+                          .update({
+                            core_passion: corePassion,
+                            privacy_settings: {
+                              ...settings,
+                              display_age: chosenAge,
+                            },
+                          })
+                          .eq("id", currentUserId);
+                      })();
+
+                      const timeoutPromise = new Promise((r) => setTimeout(r, 3000));
+                      await Promise.race([dbQueryPromise, timeoutPromise]);
+                    }
+                  } catch (err) {
+                    console.warn("Non-fatal DB update delay on intent submit:", err);
+                  } finally {
+                    setStep("profile-checklist");
                   }
-                  if (currentUserId) {
-                    setUserId(currentUserId);
-                    const { data } = await supabase
-                      .from("profiles")
-                      .select("privacy_settings")
-                      .eq("id", currentUserId)
-                      .single();
-                    const settings = data?.privacy_settings || {};
-                    await supabase
-                      .from("profiles")
-                      .update({
-                        core_passion: corePassion,
-                        privacy_settings: {
-                          ...settings,
-                          display_age: chosenAge,
-                        },
-                      })
-                      .eq("id", currentUserId);
-                  }
-                  setStep("profile-checklist");
                 }}
               />
             </motion.div>
@@ -974,7 +1025,11 @@ export default function OnboardingFlow() {
                                     reader.onload = (event) => {
                                       const res = event.target?.result as string;
                                       if (res) {
-                                        setAlbumPhotos((prev) => [...prev, res]);
+                                        setAlbumPhotos((prev) => {
+                                          const next = [...prev, res];
+                                          saveOnboardingState({ albumPhotos: next, step: "profile-checklist", activeItem: "photo" });
+                                          return next;
+                                        });
                                       }
                                     };
                                     reader.readAsDataURL(file);
