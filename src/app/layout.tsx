@@ -41,7 +41,7 @@ export async function generateMetadata(): Promise<Metadata> {
     "alternateName": ["Seccion", "seccion.ai"],
     "url": "https://seccion.ai",
     "logo": "https://seccion.ai/assets/logo/logo-wordmark.png",
-    "description": "SECCION is the first fusion platform combining AI-driven dating matchmaking with live streaming content creators. Creators keep 90% of revenue with built-in DRM protection and AI operations assistant.",
+    "description": "SECCION aligns real-life vibe synergy with AI Co-Op logic and live content creators. Creators keep 90% revenue with built-in DRM protection and AI operations assistant.",
     "foundingDate": "2025",
     "areaServed": ["CO", "ES", "US"],
     "knowsLanguage": ["es", "en", "fr"],
@@ -63,7 +63,7 @@ export async function generateMetadata(): Promise<Metadata> {
     "@type": "WebSite",
     "name": "SECCION",
     "url": "https://seccion.ai",
-    "description": "The first fusion platform combining AI matchmaking with live content creators.",
+    "description": "High-chemistry AI matchmaking, real-life date quests, and live creator streams.",
     "potentialAction": {
       "@type": "SearchAction",
       "target": "https://seccion.ai/vibe-radar?q={search_term_string}",

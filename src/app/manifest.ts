@@ -2,10 +2,10 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "SECCION Platform | Authentic Connections & Content",
+    name: "SECCION | Unlock Real Synergy & Vibe Co-Op",
     short_name: "SECCION",
     description:
-      "1st Fusion Platform Dating App & Live Streaming Content Creators",
+      "High-chemistry AI matchmaking, real-life date quests & live creator streams.",
     start_url: "/",
     scope: "/",
     display: "standalone",
