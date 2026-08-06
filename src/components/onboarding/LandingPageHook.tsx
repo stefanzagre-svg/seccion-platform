@@ -159,7 +159,7 @@ export default function LandingPageHook({ onAccept, onBecomeCreator }: { onAccep
                 <div className="absolute inset-0 border border-white/5 rounded-[1.5rem] sm:rounded-[2rem] pointer-events-none" />
                 <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-center font-['Plus_Jakarta_Sans'] text-base sm:text-[22px] md:text-[24px] font-extrabold leading-tight tracking-tight text-white mb-2">
                   <span>{t("landing.swipeToSignUp", "SWIPE TO SIGN UP TO")}</span>
-                  <SeccionWordmark variant="cyan" className="h-8 sm:h-10 md:h-12 inline-block drop-shadow-[0_0_20px_rgba(0,251,251,0.9)] group-hover:drop-shadow-[0_0_30px_rgba(0,251,251,1)] transition-all duration-300" />
+                  <SeccionWordmark variant="cyan" className="h-9 sm:h-12 md:h-14 inline-block drop-shadow-[0_0_25px_rgba(0,251,251,1)] group-hover:drop-shadow-[0_0_35px_rgba(0,251,251,1)] transition-all duration-300" />
                 </div>
                 <div className="flex justify-center items-center gap-4 mt-4">
                   <div className="h-[1px] w-12 bg-gradient-to-r from-transparent to-[#00fbfb]/50 group-hover:to-[#00fbfb] transition-all duration-300"></div>
@@ -180,7 +180,7 @@ export default function LandingPageHook({ onAccept, onBecomeCreator }: { onAccep
                 <div className="absolute inset-0 border border-white/5 rounded-[1.5rem] sm:rounded-[2rem] pointer-events-none" />
                 <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-center font-['Plus_Jakarta_Sans'] text-base sm:text-[22px] md:text-[24px] font-extrabold leading-tight tracking-tight text-white mb-2">
                   <span>{t("landing.swipeToSignUp", "SWIPE TO SIGN UP TO")}</span>
-                  <SeccionWordmark variant="cyan" className="h-8 sm:h-10 md:h-12 inline-block drop-shadow-[0_0_20px_rgba(0,251,251,0.9)] group-hover:drop-shadow-[0_0_30px_rgba(0,251,251,1)] transition-all duration-300" />
+                  <SeccionWordmark variant="cyan" className="h-9 sm:h-12 md:h-14 inline-block drop-shadow-[0_0_25px_rgba(0,251,251,1)] group-hover:drop-shadow-[0_0_35px_rgba(0,251,251,1)] transition-all duration-300" />
                 </div>
                 <div className="flex justify-center items-center gap-4 mt-4">
                   <div className="h-[1px] w-12 bg-gradient-to-r from-transparent to-[#00fbfb]/50 group-hover:to-[#00fbfb] transition-all duration-300"></div>

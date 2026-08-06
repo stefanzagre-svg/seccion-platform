@@ -13,7 +13,9 @@ export default function SeccionWordmark({
 }: SeccionWordmarkProps) {
   const imageSrc = variant === 'dark'
     ? '/assets/logo/seccion-official-wordmark-dark-transparent.png'
-    : '/assets/logo/seccion-official-wordmark-transparent.png';
+    : variant === 'white'
+    ? '/assets/logo/seccion-official-wordmark-white.png'
+    : '/assets/logo/seccion-official-wordmark-cyan.png';
 
   return (
     <img 
