@@ -51,7 +51,7 @@ export default function PurposeSelector({ onContinue }: PurposeSelectorProps) {
       <div className="text-center space-y-4 mb-8">
         <h1 className="text-3xl md:text-5xl font-light text-white tracking-wide flex items-center justify-center flex-wrap gap-2.5">
           <span>What brings you to</span>
-          <SeccionWordmark variant="cyan" className="h-8 md:h-12 inline-block drop-shadow-[0_0_20px_rgba(0,251,251,0.6)]" />
+          <SeccionWordmark variant="cyan" className="h-12 md:h-20 lg:h-24 inline-block drop-shadow-[0_0_30px_rgba(0,251,251,0.9)]" />
           <span>?</span>
         </h1>
         <p className="text-slate-400 text-lg md:text-xl max-w-2xl mx-auto">

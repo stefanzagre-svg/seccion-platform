@@ -342,7 +342,7 @@ export default function IntentSelector({ activePurposes, onContinue }: { activeP
                 ) : (
                   <>
                     <span className="font-black text-[#050505] tracking-wider text-xs">Enter the</span>
-                    <SeccionWordmark variant="dark" className="h-4 sm:h-5 inline-block" />
+                    <SeccionWordmark variant="dark" className="h-7 sm:h-8 md:h-9 inline-block drop-shadow-sm" />
                   </>
                 )}
               </button>
