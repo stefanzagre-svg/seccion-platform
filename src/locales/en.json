@@ -19,9 +19,11 @@
   "prelaunch": {
     "breaking": "EXCLUSIVE PRE-LAUNCH",
     "engineLive": "Content Engine: LIVE",
+    "popupTitle": "SECCION Pre-Launch Is Live!",
     "desc": "Streams and Content OPEN NATIONWIDE! Local dating active city by city (Medellín Soft Launch).",
     "creatorCta": "Creators: Claim 90% Revenue",
-    "memberCta": "Early Members: VIP Rewards"
+    "memberCta": "Early Members: VIP Rewards",
+    "gotIt": "I GOT IT"
   },
   "footer": {
     "privacy": "Your Privacy",

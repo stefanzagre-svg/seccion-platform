@@ -19,9 +19,11 @@
   "prelaunch": {
     "breaking": "PRE-LANZAMIENTO EXCLUSIVO",
     "engineLive": "Content Engine: LIVE",
+    "popupTitle": "¡El Pre-Lanzamiento de SECCION está Activo!",
     "desc": "¡Streams y Contenido LIVE abiertos a nivel nacional! Citas locales activas ciudad por ciudad (Soft Launch Medellín).",
     "creatorCta": "Creators: Consigue 90% de Ingresos",
-    "memberCta": "Primeros Miembros: Recompensas VIP"
+    "memberCta": "Primeros Miembros: Recompensas VIP",
+    "gotIt": "ENTENDIDO"
   },
   "footer": {
     "privacy": "Tu Privacidad",
