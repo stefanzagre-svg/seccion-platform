@@ -16,6 +16,7 @@ import { useTranslation } from "@/context/LanguageContext";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/lib/supabase";
 import { getResilientSession, getResilientProfile, safeSupabaseQuery } from "@/lib/supabase-safe";
+import { compressImageFile } from "@/lib/image-compressor";
 import {
   SEXUAL_ORIENTATIONS,
   RELATIONSHIP_GOALS,
@@ -184,58 +185,48 @@ export default function OnboardingFlow() {
     setIsUploadingPhoto(true);
     setFormError(null);
 
-    // 1. Convert to Data URL immediately for instant UI preview
-    const reader = new FileReader();
-    reader.onerror = () => {
-      setFormError("Failed to read image file from device.");
-      setIsUploadingPhoto(false);
-    };
-    reader.onload = async (event) => {
-      const dataUrl = event.target?.result as string;
-      if (dataUrl) {
-        setAvatarUrl(dataUrl);
-        saveOnboardingState({ avatarUrl: dataUrl, step: "profile-checklist", activeItem: "photo" });
-        setLivenessVerified(false);
-        setLivenessStep(0);
-      }
+    try {
+      // 1. Compress image client-side to prevent memory choke & network timeout
+      const { blob, dataUrl } = await compressImageFile(file, 1200, 0.82);
 
-      // 2. Upload to Supabase Storage bucket 'avatars' if session exists
-      try {
-        const fileExt = file.name.split('.').pop() || 'jpg';
-        const fileName = `${userId || 'guest'}_${Date.now()}.${fileExt}`;
-        const filePath = `avatars/${fileName}`;
+      setAvatarUrl(dataUrl);
+      saveOnboardingState({ avatarUrl: dataUrl, step: "profile-checklist", activeItem: "photo" });
+      setLivenessVerified(false);
+      setLivenessStep(0);
 
-        const uploadPromise = supabase.storage
-          .from('avatars')
-          .upload(filePath, file, {
-            cacheControl: '3600',
-            upsert: true
-          });
-          
-        const timeoutPromise = new Promise<{data: any, error: any}>((_, reject) => 
-          setTimeout(() => reject(new Error("Upload timeout exceeded")), 12000)
-        );
+      // 2. Upload compressed blob to Supabase Storage bucket 'avatars'
+      const fileExt = "jpg";
+      const fileName = `${userId || 'guest'}_${Date.now()}.${fileExt}`;
+      const filePath = `avatars/${fileName}`;
 
-        const { data, error } = await Promise.race([uploadPromise, timeoutPromise]);
+      const uploadPromise = supabase.storage
+        .from('avatars')
+        .upload(filePath, blob, {
+          cacheControl: '3600',
+          upsert: true,
+          contentType: 'image/jpeg'
+        });
         
-        if (error) throw error;
+      const timeoutPromise = new Promise<{data: any, error: any}>((_, reject) => 
+        setTimeout(() => reject(new Error("Upload timeout exceeded")), 15000)
+      );
 
-        if (data) {
-          const { data: { publicUrl } } = supabase.storage
-            .from('avatars')
-            .getPublicUrl(filePath);
-          if (publicUrl) {
-            setAvatarUrl(publicUrl);
-          }
+      const { data, error } = await Promise.race([uploadPromise, timeoutPromise]);
+      
+      if (!error && data) {
+        const { data: { publicUrl } } = supabase.storage
+          .from('avatars')
+          .getPublicUrl(filePath);
+        if (publicUrl) {
+          setAvatarUrl(publicUrl);
+          saveOnboardingState({ avatarUrl: publicUrl, step: "profile-checklist", activeItem: "photo" });
         }
-      } catch (err) {
-        console.warn("Storage upload fallback to Data URL:", err);
-      } finally {
-        setIsUploadingPhoto(false);
       }
-    };
-
-    reader.readAsDataURL(file);
+    } catch (err) {
+      console.warn("Storage upload fallback to compressed Data URL:", err);
+    } finally {
+      setIsUploadingPhoto(false);
+    }
   };
 
   // Biometric Liveness Check states
@@ -608,13 +599,19 @@ export default function OnboardingFlow() {
           .eq("id", userId);
           
         const timeoutPromise = new Promise<{data: any, error: any}>((_, reject) => 
-          setTimeout(() => reject(new Error("Database update timeout exceeded")), 8000)
+          setTimeout(() => reject(new Error("Database update timeout exceeded")), 15000)
         );
         
-        const { error } = await Promise.race([updatePromise, timeoutPromise]);
-
-        if (error) throw error;
+        try {
+          const { error } = await Promise.race([updatePromise, timeoutPromise]);
+          if (error) console.warn("Background DB update warning:", error);
+        } catch (dbErr) {
+          console.warn("Database network response took long; state preserved locally:", dbErr);
+        }
       }
+
+      // Save onboarding state locally to guarantee user can advance
+      saveOnboardingState({ step: "profile-checklist", activeItem: type, avatarUrl });
 
       // Mark item completed
       setChecklist((prev) =>
