@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import PublicNavbar from '../PublicNavbar';
 import { useTranslation } from '@/context/LanguageContext';
 import { Heart, Flame, Compass, Cpu, Zap, EyeOff, UserCheck, ShieldCheck, Landmark, Sparkles } from 'lucide-react';
+import SeccionWordmark from '@/components/ui/SeccionWordmark';
 
 // Custom Hook for Mouse Tracking on Glass Cards
 function useMouseTracking() {
@@ -119,17 +120,31 @@ export default function LandingPageHook({ onAccept, onBecomeCreator }: { onAccep
       <PublicNavbar onSignUp={onAccept} />
 
       {/* Main Content Canvas */}
-      <main className="relative pt-28 sm:pt-36 pb-24 sm:pb-36 px-4 sm:px-6 md:px-12 lg:px-20 max-w-[1440px] mx-auto min-h-[calc(100vh-80px)] flex items-center">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center w-full z-40 relative">
+      <main className="relative pt-20 sm:pt-32 pb-16 sm:pb-36 px-4 sm:px-6 md:px-12 lg:px-20 max-w-[1440px] mx-auto min-h-[calc(100vh-70px)] flex items-center">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-12 items-center w-full z-40 relative">
           
           {/* Left Column: Hero H1 + Swipe to Sign Up */}
-          <div className="col-span-12 lg:col-span-6 space-y-6 sm:space-y-10 flex flex-col justify-center relative z-40">
-            <div className="space-y-3 sm:space-y-4">
-              <h1 className="font-['Plus_Jakarta_Sans'] font-black leading-[1.05] tracking-[-0.04em] text-left">
-                <span className="block text-white text-3xl sm:text-5xl md:text-7xl lg:text-8xl">{t("landing.fusionTitle", "Fusion Platform")}</span>
-                <span className="block text-[#00fbfb] drop-shadow-[0_0_25px_rgba(0,251,251,0.3)] text-2xl sm:text-4xl md:text-6xl mt-1 sm:mt-2">{t("landing.dating", "Dating")}</span>
-                <span className="block text-[#00fbfb] drop-shadow-[0_0_25px_rgba(0,251,251,0.3)] text-2xl sm:text-4xl md:text-6xl mt-0.5 sm:mt-1">{t("landing.liveStreaming", "Live Streaming")}</span>
-                <span className="block text-[#ffabf3] drop-shadow-[0_0_25px_rgba(255,171,243,0.3)] text-2xl sm:text-4xl md:text-6xl mt-0.5 sm:mt-1">{t("landing.contentCreators", "Content Creators")}</span>
+          <div className="col-span-12 lg:col-span-6 space-y-5 sm:space-y-8 flex flex-col justify-center relative z-40">
+            <div className="space-y-2 sm:space-y-3">
+              {/* Eyebrow Pill */}
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#00fbfb]/10 border border-[#00fbfb]/30 backdrop-blur-xl mb-1 shadow-[0_0_15px_rgba(0,251,251,0.15)] self-start">
+                <span className="w-2 h-2 rounded-full bg-[#00fbfb] animate-pulse" />
+                <span className="text-[10px] font-black uppercase tracking-[0.22em] text-[#00fbfb]">NEXT-GEN FUSION PLATFORM</span>
+              </div>
+
+              <h1 className="font-['Plus_Jakarta_Sans'] font-black leading-[1.02] tracking-[-0.04em] text-left">
+                <span className="block text-white text-4xl xs:text-5xl sm:text-7xl lg:text-8xl tracking-tight bg-gradient-to-r from-white via-slate-100 to-white/80 bg-clip-text text-transparent mb-1.5">
+                  {t("landing.fusionTitle", "Fusion Platform")}
+                </span>
+                <span className="block text-[#00fbfb] drop-shadow-[0_0_25px_rgba(0,251,251,0.45)] text-3xl xs:text-4xl sm:text-6xl lg:text-7xl font-black bg-gradient-to-r from-[#00fbfb] via-[#66fcf1] to-[#38bdf8] bg-clip-text text-transparent mt-1">
+                  {t("landing.dating", "Dating")}
+                </span>
+                <span className="block text-[#00fbfb] drop-shadow-[0_0_25px_rgba(0,251,251,0.45)] text-3xl xs:text-4xl sm:text-6xl lg:text-7xl font-black bg-gradient-to-r from-[#38bdf8] via-[#00fbfb] to-[#818cf8] bg-clip-text text-transparent mt-1">
+                  {t("landing.liveStreaming", "Live Streaming")}
+                </span>
+                <span className="block text-[#ffabf3] drop-shadow-[0_0_25px_rgba(255,171,243,0.5)] text-3xl xs:text-4xl sm:text-6xl lg:text-7xl font-black bg-gradient-to-r from-[#ffabf3] via-[#f472b6] to-[#ec4899] bg-clip-text text-transparent mt-1">
+                  {t("landing.contentCreators", "Content Creators")}
+                </span>
               </h1>
             </div>
 
@@ -144,11 +159,7 @@ export default function LandingPageHook({ onAccept, onBecomeCreator }: { onAccep
                 <div className="absolute inset-0 border border-white/5 rounded-[1.5rem] sm:rounded-[2rem] pointer-events-none" />
                 <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-center font-['Plus_Jakarta_Sans'] text-base sm:text-[22px] md:text-[24px] font-extrabold leading-tight tracking-tight text-white mb-2">
                   <span>{t("landing.swipeToSignUp", "SWIPE TO SIGN UP TO")}</span>
-                  <img 
-                    src="/assets/logo/logo-wordmark.png" 
-                    alt="SECCION" 
-                    className="h-5 sm:h-6 md:h-7 object-contain inline-block drop-shadow-[0_0_15px_rgba(0,251,251,0.6)] group-hover:drop-shadow-[0_0_25px_rgba(0,251,251,0.9)] transition-all duration-300"
-                  />
+                  <SeccionWordmark variant="cyan" className="h-5 sm:h-6 md:h-7 inline-block drop-shadow-[0_0_15px_rgba(0,251,251,0.6)] group-hover:drop-shadow-[0_0_25px_rgba(0,251,251,0.9)] transition-all duration-300" />
                 </div>
                 <div className="flex justify-center items-center gap-4 mt-4">
                   <div className="h-[1px] w-12 bg-gradient-to-r from-transparent to-[#00fbfb]/50 group-hover:to-[#00fbfb] transition-all duration-300"></div>
@@ -169,11 +180,7 @@ export default function LandingPageHook({ onAccept, onBecomeCreator }: { onAccep
                 <div className="absolute inset-0 border border-white/5 rounded-[1.5rem] sm:rounded-[2rem] pointer-events-none" />
                 <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-center font-['Plus_Jakarta_Sans'] text-base sm:text-[22px] md:text-[24px] font-extrabold leading-tight tracking-tight text-white mb-2">
                   <span>{t("landing.swipeToSignUp", "SWIPE TO SIGN UP TO")}</span>
-                  <img 
-                    src="/assets/logo/logo-wordmark.png" 
-                    alt="SECCION" 
-                    className="h-5 sm:h-6 md:h-7 object-contain inline-block drop-shadow-[0_0_15px_rgba(0,251,251,0.6)] group-hover:drop-shadow-[0_0_25px_rgba(0,251,251,0.9)] transition-all duration-300"
-                  />
+                  <SeccionWordmark variant="cyan" className="h-5 sm:h-6 md:h-7 inline-block drop-shadow-[0_0_15px_rgba(0,251,251,0.6)] group-hover:drop-shadow-[0_0_25px_rgba(0,251,251,0.9)] transition-all duration-300" />
                 </div>
                 <div className="flex justify-center items-center gap-4 mt-4">
                   <div className="h-[1px] w-12 bg-gradient-to-r from-transparent to-[#00fbfb]/50 group-hover:to-[#00fbfb] transition-all duration-300"></div>
