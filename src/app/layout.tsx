@@ -79,9 +79,6 @@ export async function generateMetadata(): Promise<Metadata> {
     },
     description: dict.metadata.description,
     keywords: dict.metadata.keywords.split(", ").concat(["SECCION"]),
-    alternates: {
-      canonical: "https://seccion.ai",
-    },
     icons: {
       icon: [
         { url: '/favicon.ico', sizes: 'any' },
