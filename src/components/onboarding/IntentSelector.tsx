@@ -8,25 +8,25 @@ import { type MemberPurposeId } from '@/lib/constants';
 
 const INTENTS = [
   // Learning, Mentorship & Growth Vibes (Knowledge & Growth)
-  { id: 'skill_learning', label: 'Skill Growth & Mentorship', icon: '🎓', description: 'Masterclasses, 1-on-1 coaching & skill transfer', type: 'growth' },
-  { id: 'career_finance', label: 'Career & Financial Strategy', icon: '📈', description: 'Startup advice, career coaching & wealth building', type: 'growth' },
-  { id: 'wellness_mindset', label: 'Mindset & Wellness Guidance', icon: '🧘', description: 'Mindfulness, biohacking & health optimization', type: 'growth' },
-  { id: 'mastermind_collab', label: 'Build & Co-Create', icon: '🚀', description: 'Co-founding projects, brainstorming & masterminds', type: 'growth' },
-  { id: 'language_culture', label: 'Language & Culture Exchange', icon: '🗣️', description: 'Fluent conversation & cultural immersion', type: 'growth' },
+  { id: 'skill_learning', label: 'Skill & Mentorship', icon: '🎓', description: 'Masterclasses, 1-on-1 coaching & skill transfer', type: 'growth' },
+  { id: 'career_finance', label: 'Career & Wealth', icon: '📈', description: 'Startup advice, career coaching & wealth building', type: 'growth' },
+  { id: 'zen_alignment', label: 'Zen & Alignment', icon: '🧘‍♀️', description: 'Meditation, spiritual growth & high frequency', type: 'growth' },
+  { id: 'late_night_brainstorm', label: 'Late Night Brainstorm', icon: '🧠', description: 'Co-founders, hackathons & endless ideas', type: 'growth' },
+  { id: 'cultural_exchange', label: 'Cultural Exchange', icon: '🗣️', description: 'Fluent conversation & cultural immersion', type: 'growth' },
 
-  // Digital / Connection Vibes (Behind Screen)
+  // Digital / Connection Vibes (Online / Creator / Explicit)
   { id: 'flirty_playful', label: 'Flirty & Playful', icon: '😈', description: 'Lighthearted, teasing & fun', type: 'online' },
-  { id: 'deep_intimate', label: 'Deep Connection', icon: '🖤', description: 'No Small talk & Open Minded', type: 'online' },
+  { id: 'secret_confessions', label: 'Secret Confessions', icon: '🤫', description: 'No judgment, deep secrets & anonymity', type: 'online' },
   { id: 'creative_showcase', label: 'Creative Stream', icon: '🎬', description: 'Watch me & perform', type: 'online' },
-  { id: 'exclusive_vip', label: 'Exclusive VIP', icon: '💎', description: 'Premium & behind closed doors', type: 'online' },
-  { id: 'high_energy', label: 'High Energy Live', icon: '⚡', description: 'Loud, chaotic & entertaining', type: 'online' },
+  { id: 'after_hours_raw', label: 'After Hours Unfiltered', icon: '🔞', description: 'Raw, bold & completely uncensored', type: 'online' },
+  { id: 'co_op_gaming', label: 'Co-Op Gaming', icon: '🎮', description: 'Late night lobbies & chill streams', type: 'online' },
 
   // IRL / Real Meeting Vibes (Date Real)
-  { id: 'dinner_date', label: 'Dinner Date', icon: '🍽️', description: 'Fine dining & romance', type: 'irl' },
-  { id: 'grab_drink', label: 'Grab a Drink', icon: '🍸', description: 'Cocktails & conversation, Picnic', type: 'irl' },
-  { id: 'party_dance', label: 'Party & Dance', icon: '🪩', description: 'Clubs & festivals', type: 'irl' },
-  { id: 'workout_mate', label: 'Workout Mate', icon: '🏃', description: 'Running, gym & Health', type: 'irl' },
-  { id: 'travel_trip', label: 'Travel & Trips', icon: '✈️', description: 'Weekend getaways & adventures', type: 'irl' },
+  { id: 'dinner_date', label: 'Dinner & Romance', icon: '🍽️', description: 'Fine dining & romance', type: 'irl' },
+  { id: 'late_night_drive', label: 'Late Night Drive', icon: '🥂', description: 'Good music, deep talks & no destination', type: 'irl' },
+  { id: 'art_aesthetics', label: 'Art & Aesthetics', icon: '🎨', description: 'Gallery openings, museums & vibe curation', type: 'irl' },
+  { id: 'adrenaline_junkie', label: 'Adrenaline Junkie', icon: '🏃', description: 'Extreme sports, fast cars & high thrills', type: 'irl' },
+  { id: 'vip_lifestyle', label: 'VIP Lifestyle', icon: '✈️', description: 'Exclusive access, high-end events & luxury', type: 'irl' },
 ];
 
 const CORE_PASSIONS = [

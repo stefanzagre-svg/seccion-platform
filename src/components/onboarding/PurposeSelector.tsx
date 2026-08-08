@@ -54,8 +54,12 @@ export default function PurposeSelector({ onContinue }: PurposeSelectorProps) {
           <SeccionWordmark variant="cyan" className="h-12 md:h-20 lg:h-24 inline-block drop-shadow-[0_0_30px_rgba(0,251,251,0.9)]" />
           <span>?</span>
         </h1>
-        <p className="text-slate-400 text-lg md:text-xl max-w-2xl mx-auto">
-          Select all that apply. Your experience will adapt to your goals.
+        <p className="text-slate-400 text-base md:text-lg max-w-2xl mx-auto">
+          {t("purposeSelector.subtitle", "Select all that apply. Your experience will adapt to your goals.")}
+        </p>
+        <p className="text-xs md:text-sm text-cyan-400/90 font-medium tracking-wide flex items-center justify-center gap-1.5 pt-1">
+          <Info className="w-3.5 h-3.5 flex-shrink-0" />
+          <span>{t("purposeSelector.modifiableNote", "You can modify your purpose & goals anytime in your profile settings.")}</span>
         </p>
       </div>
 

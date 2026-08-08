@@ -185,7 +185,7 @@ export default function AIWingmanBubble() {
   };
 
   return (
-    <div className="fixed bottom-6 right-6 z-[60] font-sans">
+    <div className="fixed bottom-[calc(4.75rem+env(safe-area-inset-bottom,0px))] right-4 md:bottom-6 md:right-6 z-[60] font-sans">
       <AnimatePresence>
         {/* Expanded Chat Pane */}
         {isOpen && (
@@ -194,7 +194,7 @@ export default function AIWingmanBubble() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 50, scale: 0.95 }}
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            className="fixed bottom-20 right-4 left-4 sm:left-auto sm:right-6 sm:bottom-20 z-50 w-auto sm:w-[360px] h-[480px] max-h-[75vh] bg-black/95 border border-white/10 rounded-[2rem] sm:rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,251,251,0.2)] flex flex-col overflow-hidden backdrop-blur-2xl"
+            className="fixed bottom-[calc(8.75rem+env(safe-area-inset-bottom,0px))] right-4 left-4 sm:left-auto sm:right-6 sm:bottom-24 z-50 w-auto sm:w-[360px] h-[460px] max-h-[65vh] bg-black/95 border border-white/10 rounded-[2rem] sm:rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,251,251,0.2)] flex flex-col overflow-hidden backdrop-blur-2xl"
           >
             {/* Header */}
             <header className="p-4 border-b border-white/5 bg-gradient-to-r from-cyan-950/20 to-purple-950/20 flex items-center justify-between">

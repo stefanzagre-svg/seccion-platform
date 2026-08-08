@@ -60,15 +60,53 @@ export async function middleware(request: NextRequest) {
     const onboardingCookie = request.cookies.get(ONBOARDING_DONE_COOKIE)?.value;
     let onboardingCompleted = onboardingCookie === '1';
 
+    // Purpose Eligibility Checker
+    const checkPurposeEligibility = (profile: any) => {
+      // Basic check from old logic + new purpose array
+      if (!profile?.archetype || !profile?.lifestyle_habits) return false;
+      if (!profile?.active_purposes || profile.active_purposes.length === 0) return false;
+
+      const hasVisible = (array: any[], hiddenKey: string) => {
+        if (!array || array.length === 0) return false;
+        const hiddenValues = profile.privacy_settings?.[hiddenKey] || [];
+        return array.filter((v: any) => !hiddenValues.includes(v)).length > 0;
+      };
+
+      const isDating = profile.active_purposes.includes('dating');
+      const isGrowth = profile.active_purposes.includes('growth');
+      const isExplicit = profile.active_purposes.includes('explicit');
+
+      if (isDating) {
+        if (!hasVisible(profile.sexual_preferences, 'sexual_preferences_hidden')) return false;
+        if (!hasVisible(profile.relationship_goals, 'relationship_goals_hidden')) return false;
+        if (!hasVisible(profile.relationship_types, 'relationship_types_hidden')) return false;
+        if (!profile.current_location) return false;
+        if (profile.privacy_settings?.current_location_hidden) return false;
+      }
+
+      if (isGrowth) {
+        if (!profile.career || !profile.education_level || !profile.income_bracket) return false;
+        if (Object.keys(profile.lifestyle_habits || {}).length < 10) return false;
+        if ((profile.hobbies || []).length < 10) return false;
+      }
+
+      if (isExplicit) {
+        if (!hasVisible(profile.sexual_preferences, 'sexual_preferences_hidden')) return false;
+        if (!hasVisible(profile.relationship_types, 'relationship_types_hidden')) return false;
+        if (!profile.nsfw_boundaries || profile.nsfw_boundaries.length < 1) return false;
+      }
+
+      return true;
+    };
     if (!onboardingCompleted) {
       // Cookie missing — do the DB check once and set the cookie for next time
       const { data: profile } = await supabase
         .from('profiles')
-        .select('archetype, lifestyle_habits')
+        .select('archetype, lifestyle_habits, active_purposes, privacy_settings, sexual_preferences, relationship_goals, relationship_types, current_location, career, education_level, hobbies, income_bracket, nsfw_boundaries')
         .eq('id', user.id)
         .single();
 
-      onboardingCompleted = !!(profile?.archetype && profile?.lifestyle_habits);
+      onboardingCompleted = checkPurposeEligibility(profile);
 
       // Backfill the cookie so subsequent requests skip this query
       if (onboardingCompleted) {

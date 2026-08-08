@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Heart, Users, User, Edit3, Briefcase, Star, ChevronDown, Book, GraduationCap, Sparkles } from "lucide-react";
+import { Heart, Users, User, Edit3, Briefcase, Star, ChevronDown, Book, GraduationCap, Sparkles, Ruler, MapPin, Globe, Lock } from "lucide-react";
 import { useTranslation } from "@/context/LanguageContext";
 import {
   RELATIONSHIP_GOALS,
@@ -75,7 +75,6 @@ export default function EditProfileTab({
               <div>
                  <div className="flex items-center justify-between mb-2">
                   <p className="text-[10px] font-black uppercase text-white/80 tracking-widest flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-white/45" /> About Me</p>
-                  {renderPrivacyToggle("bio", "all")}
                  </div>
                  <textarea
                    className="w-full bg-black/40 border border-white/10 rounded-xl p-3 text-[12px] text-white placeholder-white/30 focus:border-primary focus:ring-1 focus:ring-primary/50 transition resize-none h-24"
@@ -89,7 +88,6 @@ export default function EditProfileTab({
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <p className="text-[10px] font-black uppercase text-white/80 tracking-widest flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-white/45" /> Education</p>
-                  {renderPrivacyToggle("education_level", "all")}
                 </div>
                 <button
                   onClick={() => handleCycleSingleField("education_level", currentUserProfile?.education_level, EDUCATION_LEVELS)}
@@ -103,18 +101,53 @@ export default function EditProfileTab({
                 </button>
               </div>
 
-              {/* Career */}
+              {/* Height */}
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <p className="text-[10px] font-black uppercase text-white/80 tracking-widest flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-white/45" /> Career</p>
-                  {renderPrivacyToggle("career", "all")}
+                  <p className="text-[10px] font-black uppercase text-white/80 tracking-widest flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-white/45" /> Height</p>
                 </div>
-                <input
-                   className="w-full bg-black/40 border border-white/10 rounded-xl p-3 text-[12px] text-white placeholder-white/30 focus:border-primary focus:ring-1 focus:ring-primary/50 transition"
-                   placeholder="E.g. Software Engineer, Designer"
-                   value={currentUserProfile?.career || ""}
-                   onChange={(e) => handleUpdateProfileField && handleUpdateProfileField("career", e.target.value)}
-                 />
+                <div className="relative flex items-center">
+                  <Ruler className="w-4 h-4 text-white/40 absolute left-3 pointer-events-none" />
+                  <input
+                    className="w-full bg-black/40 border border-white/10 rounded-xl py-3 pl-9 pr-3 text-[12px] text-white placeholder-white/30 focus:border-primary focus:ring-1 focus:ring-primary/50 transition"
+                    placeholder="E.g. 178 cm / 5'10&quot;"
+                    value={currentUserProfile?.height || mappedCurrentUser?.height || ""}
+                    onChange={(e) => handleUpdateProfileField && handleUpdateProfileField("height", e.target.value)}
+                  />
+                </div>
+              </div>
+
+              {/* Current Location */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-[10px] font-black uppercase text-white/80 tracking-widest flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-white/45" /> Current Location</p>
+                  {renderPrivacyToggle("location", "all")}
+                </div>
+                <div className="relative flex items-center">
+                  <MapPin className="w-4 h-4 text-white/40 absolute left-3 pointer-events-none" />
+                  <input
+                    className="w-full bg-black/40 border border-white/10 rounded-xl py-3 pl-9 pr-3 text-[12px] text-white placeholder-white/30 focus:border-primary focus:ring-1 focus:ring-primary/50 transition"
+                    placeholder="E.g. Miami, USA"
+                    value={currentUserProfile?.location || currentUserProfile?.residence || mappedCurrentUser?.location || ""}
+                    onChange={(e) => handleUpdateProfileField && handleUpdateProfileField("location", e.target.value)}
+                  />
+                </div>
+              </div>
+
+              {/* Originally From (City, Country) */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-[10px] font-black uppercase text-white/80 tracking-widest flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-white/45" /> Originally From (City, Country)</p>
+                </div>
+                <div className="relative flex items-center">
+                  <Globe className="w-4 h-4 text-white/40 absolute left-3 pointer-events-none" />
+                  <input
+                    className="w-full bg-black/40 border border-white/10 rounded-xl py-3 pl-9 pr-3 text-[12px] text-white placeholder-white/30 focus:border-primary focus:ring-1 focus:ring-primary/50 transition"
+                    placeholder="E.g. Medellín, Colombia"
+                    value={currentUserProfile?.origins || currentUserProfile?.native_town || mappedCurrentUser?.origins || ""}
+                    onChange={(e) => handleUpdateProfileField && handleUpdateProfileField("origins", e.target.value)}
+                  />
+                </div>
               </div>
 
               {/* Sexual Preferences */}
@@ -211,7 +244,6 @@ export default function EditProfileTab({
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <p className="text-[10px] font-black uppercase text-accent tracking-widest flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-accent" /> Family Plan</p>
-                  {renderPrivacyToggle("familyGoals", "all")}
                 </div>
                 <button
                   onClick={handleCycleFamilyGoals}
@@ -223,6 +255,64 @@ export default function EditProfileTab({
                   </div>
                   <ChevronDown className="w-4 h-4 text-white/40" />
                 </button>
+              </div>
+            </div>
+          </div>
+
+          {/* SENSITIVE PURPOSE FIELDS */}
+          <div className="glass-card p-6 bg-white/2 border border-white/5 rounded-3xl space-y-6 relative overflow-hidden group">
+            <h3 className="text-sm font-black uppercase tracking-widest text-primary flex items-center gap-2">
+              <Lock className="w-5 h-5" /> Verified & Sensitive
+            </h3>
+            
+            <div className="space-y-5 relative z-10">
+              {/* Age */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-[10px] font-black uppercase text-white/80 tracking-widest flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-white/45" /> Age</p>
+                  {renderPrivacyToggle("age", "all")}
+                </div>
+                <div className="relative flex items-center">
+                  <div className="w-full bg-black/40 border border-white/10 rounded-xl py-3 px-3 text-[12px] text-white/60">
+                    {mappedCurrentUser?.age ? `${mappedCurrentUser.age} years old (Verified via KYC)` : "Verified via KYC"}
+                  </div>
+                </div>
+              </div>
+
+              {/* Income Bracket */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-[10px] font-black uppercase text-white/80 tracking-widest flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-white/45" /> Income Bracket (Growth)</p>
+                  {renderPrivacyToggle("income_bracket", "all")}
+                </div>
+                <button
+                  onClick={() => handleCycleSingleField("income_bracket", currentUserProfile?.income_bracket, ["$0-$50k", "$50k-$100k", "$100k-$250k", "$250k+"])}
+                  className="flex items-center gap-2 text-[11px] text-white/90 font-bold tracking-widest bg-white/5 hover:bg-white/10 px-4 py-2.5 rounded-xl border border-white/10 cursor-pointer hover:border-white/30 transition w-full justify-between"
+                >
+                  <div className="flex items-center gap-2">
+                    {currentUserProfile?.income_bracket || "Not specified"}
+                  </div>
+                  <ChevronDown className="w-4 h-4 text-white/40" />
+                </button>
+              </div>
+
+              {/* NSFW Boundaries */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-[10px] font-black uppercase text-accent tracking-widest flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-accent" /> Explicit Boundaries</p>
+                  {renderPrivacyToggle("nsfw_boundaries", "all")}
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {(currentUserProfile?.nsfw_boundaries && currentUserProfile.nsfw_boundaries.length > 0 ? currentUserProfile.nsfw_boundaries : ["Add Boundaries"]).map((boundary: string, idx: number) => (
+                    <span 
+                      key={idx}
+                      onClick={() => handleOpenMultiSelect("nsfw_boundaries", "Explicit Boundaries", ["No Nudity", "Artistic Nudity", "Implied", "Full Explicit", "Fetish/Kink"], currentUserProfile?.nsfw_boundaries || [])}
+                      className="text-[11px] bg-accent/10 hover:bg-accent/20 text-accent font-bold tracking-widest px-3 py-1.5 rounded-xl border border-accent/25 cursor-pointer hover:border-accent transition flex items-center gap-1"
+                    >
+                      {boundary}
+                    </span>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
@@ -243,7 +333,6 @@ export default function EditProfileTab({
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <p className="text-[10px] font-black uppercase text-white/80 tracking-widest flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-white/45" /> Astrology Sign</p>
-                  {renderPrivacyToggle("astro_sign", "all")}
                 </div>
                 <button
                   onClick={() => handleCycleSingleField("astro_sign", currentUserProfile?.astro_sign, ASTRO_SIGNS)}
@@ -261,7 +350,6 @@ export default function EditProfileTab({
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <p className="text-[10px] font-black uppercase text-white/80 tracking-widest flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-white/45" /> Hobbies & Interests</p>
-                  {renderPrivacyToggle("hobbies", "all")}
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {(mappedCurrentUser.hobbies && mappedCurrentUser.hobbies.length > 0 ? mappedCurrentUser.hobbies : ["Add Hobbies"]).map((hobby: string) => (

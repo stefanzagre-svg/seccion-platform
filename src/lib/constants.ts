@@ -91,9 +91,14 @@ export const SEXUAL_ORIENTATIONS = [
 ];
 
 export const HOBBIES = [
-  'Fitness', 'Tech', 'Music', 'Art', 'Gaming',
-  'Cooking', 'Traveling', 'Reading', 'Photography',
-  'Yoga', 'Dancing', 'Fashion', 'Cars', 'Outdoors',
+  'Fitness & Gym', 'Tech & AI', 'Live Music & Concerts', 'Fine Art & Museums',
+  'Gaming & Esports', 'Gourmet Cooking', 'World Travel', 'Reading & Books',
+  'Photography', 'Yoga & Wellness', 'Dancing & Nightlife', 'Fashion & Styling',
+  'Cars & Motorsports', 'Outdoors & Hiking', 'Entrepreneurship & Startups',
+  'Mentorship & Coaching', 'Investments & Crypto', 'Meditation & Mindfulness',
+  'Mixology & Wine Tasting', 'Language Exchange', 'Podcasting & Streaming',
+  'Cosplay & Anime', 'Glamour & Modeling', 'Exotic Fitness & Dance',
+  'Film & Cinema', 'Coffee & Tea Culture', 'Board Games & Trivia', 'Pet Care & Animals'
 ];
 
 export const LANGUAGES = [
@@ -121,19 +126,26 @@ export const ASTRO_SIGNS = [
 
 /** Vibe Check Mood Cards — Step 2 of Stage 1 */
 export const MOODS = [
-  // Digital / Streaming Vibes (Behind Screen)
+  // Learning, Mentorship & Growth Vibes (Knowledge & Growth)
+  { id: 'skill_learning', label: 'Skill & Mentorship', emoji: '🎓', description: 'Masterclasses, 1-on-1 coaching & skill transfer', gradient: 'from-cyan-900/80 to-blue-900/60' },
+  { id: 'career_finance', label: 'Career & Wealth', emoji: '📈', description: 'Startup advice, career coaching & wealth building', gradient: 'from-emerald-900/80 to-teal-900/60' },
+  { id: 'zen_alignment', label: 'Zen & Alignment', emoji: '🧘‍♀️', description: 'Meditation, spiritual growth & high frequency', gradient: 'from-indigo-900/80 to-purple-900/60' },
+  { id: 'late_night_brainstorm', label: 'Late Night Brainstorm', emoji: '🧠', description: 'Co-founders, hackathons & endless ideas', gradient: 'from-fuchsia-900/80 to-pink-900/60' },
+  { id: 'cultural_exchange', label: 'Cultural Exchange', emoji: '🗣️', description: 'Fluent conversation & cultural immersion', gradient: 'from-orange-900/80 to-amber-900/60' },
+
+  // Digital / Connection Vibes (Online / Creator / Explicit)
   { id: 'flirty_playful', label: 'Flirty & Playful', emoji: '😈', description: 'Lighthearted, teasing & fun', gradient: 'from-pink-900/80 to-purple-900/60' },
-  { id: 'deep_intimate',  label: 'Deep Connection',  emoji: '🖤', description: 'No Small talk & Open Minded', gradient: 'from-slate-800/80 to-stone-900/60' },
+  { id: 'secret_confessions', label: 'Secret Confessions', emoji: '🤫', description: 'No judgment, deep secrets & anonymity', gradient: 'from-slate-800/80 to-stone-900/60' },
   { id: 'creative_showcase', label: 'Creative Stream', emoji: '🎬', description: 'Watch me & perform', gradient: 'from-indigo-900/80 to-blue-900/60' },
-  { id: 'exclusive_vip',  label: 'Exclusive VIP',    emoji: '💎', description: 'Premium & behind closed doors', gradient: 'from-fuchsia-900/70 to-pink-900/50' },
-  { id: 'high_energy',    label: 'High Energy Live', emoji: '⚡', description: 'Loud, chaotic & entertaining', gradient: 'from-yellow-800/60 to-orange-700/50' },
+  { id: 'after_hours_raw', label: 'After Hours Unfiltered', emoji: '🔞', description: 'Raw, bold & completely uncensored', gradient: 'from-red-900/80 to-rose-900/60' },
+  { id: 'co_op_gaming', label: 'Co-Op Gaming', emoji: '🎮', description: 'Late night lobbies & chill streams', gradient: 'from-violet-900/80 to-fuchsia-900/60' },
   
   // IRL / Real Meeting Vibes (Date Real)
-  { id: 'dinner_date',    label: 'Dinner Date',      emoji: '🍽️', description: 'Fine dining & romance', gradient: 'from-red-900/70 to-rose-900/50' },
-  { id: 'grab_drink',     label: 'Grab a Drink',     emoji: '🍸', description: 'Cocktails & conversation, Picnic', gradient: 'from-teal-900/70 to-cyan-900/50' },
-  { id: 'party_dance',    label: 'Party & Dance',    emoji: '🪩', description: 'Clubs & festivals', gradient: 'from-purple-900/70 to-violet-900/50' },
-  { id: 'workout_mate',   label: 'Workout Mate',     emoji: '🏃', description: 'Running, gym & Health', gradient: 'from-emerald-900/70 to-green-900/50' },
-  { id: 'travel_trip',    label: 'Travel & Trips',   emoji: '✈️', description: 'Weekend getaways & adventures', gradient: 'from-sky-900/70 to-blue-900/50' },
+  { id: 'dinner_date',    label: 'Dinner & Romance', emoji: '🍽️', description: 'Fine dining & romance', gradient: 'from-red-900/70 to-rose-900/50' },
+  { id: 'late_night_drive', label: 'Late Night Drive', emoji: '🥂', description: 'Good music, deep talks & no destination', gradient: 'from-slate-900/80 to-blue-900/60' },
+  { id: 'art_aesthetics', label: 'Art & Aesthetics', emoji: '🎨', description: 'Gallery openings, museums & vibe curation', gradient: 'from-purple-900/70 to-violet-900/50' },
+  { id: 'adrenaline_junkie', label: 'Adrenaline Junkie', emoji: '🏃', description: 'Extreme sports, fast cars & high thrills', gradient: 'from-orange-900/70 to-red-900/50' },
+  { id: 'vip_lifestyle', label: 'VIP Lifestyle', emoji: '✈️', description: 'Exclusive access, high-end events & luxury', gradient: 'from-amber-900/80 to-yellow-900/60' },
 ] as const;
 
 export type MoodId = typeof MOODS[number]['id'];

@@ -135,17 +135,30 @@ export default function ArchetypeSelector({ onSelect, onProceed }: ArchetypeSele
       };
 
       try {
-        await onSelect(arc.id, data);
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error("Timeout configuring profile")), 6000)
+        );
+
+        await Promise.race([onSelect(arc.id, data), timeoutPromise]);
+
         setRewardData({
           title: t(`archetypes.${arc.id}.title`, arc.title),
           points: 100,
           badge: 'Explorer Badge 🏅'
         });
       } catch (e) {
-        console.error(e);
+        console.warn("Archetype selection proceed fallback:", e);
+        setRewardData({
+          title: t(`archetypes.${arc.id}.title`, arc.title),
+          points: 100,
+          badge: 'Explorer Badge 🏅'
+        });
+      } finally {
+        setIsSubmitting(false);
       }
+    } else {
+      setIsSubmitting(false);
     }
-    setIsSubmitting(false);
   };
 
   return (

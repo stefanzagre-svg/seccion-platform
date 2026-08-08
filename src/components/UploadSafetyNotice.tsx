@@ -89,7 +89,7 @@ export default function UploadSafetyNotice({ onAccept, onCancel, type = 'post' }
               </button>
               <button 
                 onClick={handleAccept}
-                className="flex-[2] py-4 bg-primary text-white rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] shadow-[0_10px_30px_rgba(255,0,127,0.4)] hover:scale-[1.02] active:scale-[0.98] transition-all"
+                className="flex-[2] py-4 bg-primary text-black rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] shadow-[0_10px_30px_rgba(0,251,251,0.4)] hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer"
               >
                 I Understand & Accept
               </button>

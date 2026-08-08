@@ -80,7 +80,7 @@ export default function MultiSelectModal({
           </span>
         </p>
 
-        <div className="space-y-2 max-h-[40vh] overflow-y-auto custom-scrollbar pr-2 mb-6">
+        <div className="space-y-2 max-h-[50vh] overflow-y-auto custom-scrollbar pr-2 mb-6">
           {options.map((option) => {
             const isSelected = selected.includes(option);
             return (
@@ -115,7 +115,7 @@ export default function MultiSelectModal({
           </button>
           <button
             onClick={handleSave}
-            className="flex-1 py-4 bg-primary text-white rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-[0_0_20px_rgba(255,0,127,0.3)] hover:scale-[1.02] transition"
+            className="flex-1 py-4 bg-primary text-black rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-[0_0_20px_rgba(0,251,251,0.4)] hover:scale-[1.02] transition cursor-pointer"
           >
             Save Selection ({selected.length})
           </button>

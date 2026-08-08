@@ -33,6 +33,13 @@ export interface Profile {
   origins?: string;
   privacy_settings?: Record<string, any>;
   is_kyc_verified?: boolean;
+  active_purposes?: string[];
+  income_bracket?: string;
+  dealbreakers?: string[];
+  love_languages?: string[];
+  nsfw_boundaries?: string[];
+  career?: string;
+  education_level?: string;
 }
 
 export interface MatchInfo {
@@ -457,8 +464,14 @@ export async function sendMessage(
  */
 export async function updateProfileArchetype(userId: string, data: any) {
   try {
-    // Award Profile Completion XP (+250 XP)
-    await awardXp(userId, 250);
+    if (!userId) return;
+
+    // Safely attempt awarding XP
+    try {
+      await awardXp(userId, 250);
+    } catch (xpErr) {
+      console.warn('Non-fatal awardXp error:', xpErr);
+    }
 
     const { error } = await supabase
       .from('profiles')
@@ -472,10 +485,11 @@ export async function updateProfileArchetype(userId: string, data: any) {
       })
       .eq('id', userId);
 
-    if (error) throw error;
+    if (error) {
+      console.warn('Profile update warning:', error);
+    }
   } catch (err) {
     console.error('Error updating archetype profile details:', err);
-    throw err;
   }
 }
 

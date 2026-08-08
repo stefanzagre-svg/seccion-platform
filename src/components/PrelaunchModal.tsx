@@ -163,10 +163,10 @@ export default function PrelaunchModal({ isOpen, onClose }: PrelaunchModalProps)
                   <Link
                     href="/become-creator#apply"
                     onClick={onClose}
-                    className="w-full py-3 bg-[#00fbfb] text-black font-mono text-xs font-black uppercase tracking-wider rounded-xl hover:shadow-[0_0_20px_rgba(0,251,251,0.6)] transition flex items-center justify-center gap-2 cursor-pointer"
+                    className="w-full py-3 px-3 bg-[#00fbfb] text-black font-mono text-[10px] sm:text-xs font-black uppercase tracking-wide rounded-xl hover:shadow-[0_0_20px_rgba(0,251,251,0.6)] transition flex items-center justify-center gap-2 text-center leading-snug cursor-pointer"
                   >
                     <span>Apply for Creator Pre-Launch Access</span>
-                    <ArrowRight className="w-4 h-4" />
+                    <ArrowRight className="w-4 h-4 shrink-0" />
                   </Link>
                 </div>
               </motion.div>
@@ -210,10 +210,10 @@ export default function PrelaunchModal({ isOpen, onClose }: PrelaunchModalProps)
                   <Link
                     href="/vibe-radar#waitlist"
                     onClick={onClose}
-                    className="w-full py-3 bg-[#ffabf3] text-black font-mono text-xs font-black uppercase tracking-wider rounded-xl hover:shadow-[0_0_20px_rgba(255,171,243,0.6)] transition flex items-center justify-center gap-2 cursor-pointer"
+                    className="w-full py-3 px-3 bg-[#ffabf3] text-black font-mono text-[10px] sm:text-xs font-black uppercase tracking-wide rounded-xl hover:shadow-[0_0_20px_rgba(255,171,243,0.6)] transition flex items-center justify-center gap-2 text-center leading-snug cursor-pointer"
                   >
                     <span>Join Early Member Waitlist</span>
-                    <ArrowRight className="w-4 h-4" />
+                    <ArrowRight className="w-4 h-4 shrink-0" />
                   </Link>
                 </div>
               </motion.div>

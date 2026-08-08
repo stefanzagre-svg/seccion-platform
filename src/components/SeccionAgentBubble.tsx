@@ -117,7 +117,7 @@ export default function SeccionAgentBubble() {
   };
 
   return (
-    <div className="fixed bottom-4 right-4 sm:right-6 sm:bottom-6 z-[9990] font-sans">
+    <div className="fixed bottom-[calc(4.75rem+env(safe-area-inset-bottom,0px))] right-4 md:bottom-6 md:right-6 z-[9990] font-sans">
       <AnimatePresence>
         {/* Expanded SECCION Agent Chat Box */}
         {isOpen && (
@@ -126,7 +126,7 @@ export default function SeccionAgentBubble() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 30, scale: 0.95 }}
             transition={{ type: 'spring', damping: 25, stiffness: 220 }}
-            className="fixed bottom-20 right-4 left-4 sm:left-auto sm:right-6 sm:bottom-20 z-[9995] w-auto sm:w-[370px] h-[480px] max-h-[78vh] bg-[#0A0A12]/95 border border-white/10 rounded-[2rem] shadow-[0_20px_60px_rgba(0,240,255,0.2)] flex flex-col overflow-hidden backdrop-blur-2xl"
+            className="fixed bottom-[calc(8.75rem+env(safe-area-inset-bottom,0px))] right-4 left-4 sm:left-auto sm:right-6 sm:bottom-24 z-[9995] w-auto sm:w-[370px] h-[460px] max-h-[65vh] bg-[#0A0A12]/95 border border-white/10 rounded-[2rem] shadow-[0_20px_60px_rgba(0,240,255,0.2)] flex flex-col overflow-hidden backdrop-blur-2xl"
           >
             {/* Header */}
             <header className="p-4 border-b border-white/10 bg-gradient-to-r from-[#00fbfb]/10 via-purple-950/20 to-[#ec4899]/10 flex items-center justify-between shrink-0">

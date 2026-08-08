@@ -326,9 +326,9 @@ export default function HowWeDoPage() {
             <div className="relative w-20 h-20 rounded-full bg-black/40 border border-white/10 flex items-center justify-center shadow-[0_0_30px_rgba(0,251,251,0.2),0_0_50px_rgba(255,171,243,0.15)] group hover:scale-105 transition-all duration-500">
               <div className="absolute inset-0 rounded-full border border-[#00fbfb]/30 animate-pulse pointer-events-none" />
               <img 
-                src="/images/s-logo-user.png" 
+                src="/assets/logo/seccion-icon-3d.png" 
                 alt="SECCION Icon" 
-                className="w-10 h-14 object-contain drop-shadow-[0_0_15px_rgba(0,251,251,0.6)]" 
+                className="w-12 h-14 object-contain drop-shadow-[0_0_15px_rgba(0,251,251,0.6)]" 
               />
             </div>
             <h2 className="font-['Outfit'] text-2xl sm:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-[#00fbfb] via-white to-[#ffabf3] uppercase tracking-tight">

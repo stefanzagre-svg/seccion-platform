@@ -312,7 +312,7 @@ const MOCK_CANDIDATES = [
     sexualPreferences: ["Gay"],
     familyGoals: "Want children",
     archetype: "protector" as ArchetypeId,
-    moods: ["deep_intimate"] as MoodId[],
+    moods: ["secret_confessions"] as MoodId[],
     corePassion: "career" as PassionId,
     age: 30,
     isKycVerified: true,
@@ -382,7 +382,7 @@ export default function MemberProfile() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<
     "status" | "calendar" | "livestream" | "track" | "master" | "insights" | "media" | "edit" | "preferences"
-  >("status");
+  >("edit");
 
   // Profile Album Media States
   const [mediaItems, setMediaItems] = useState<ProfileMedia[]>([]);
@@ -701,71 +701,9 @@ export default function MemberProfile() {
           matchesData,
         );
       } else {
-        const fallbackMatches = [
-          {
-            relationship_id: "mock-rel-elena",
-            target_profile: {
-              id: "elena",
-              username: "Elena",
-              display_name: "Elena",
-              avatar_url:
-                "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=200&q=80",
-              role: "creator",
-              bio: "Fitness & lifestyle enthusiast",
-              hobbies: ["Fitness", "Music", "Traveling"],
-              lifestyle_habits: [],
-              astro_sign: "Leo",
-              relationship_goals: ["Good Vibe Instant Crush"],
-            },
-            current_level: "friendly",
-            gauge_score: 22,
-            is_matched: true,
-          },
-          {
-            relationship_id: "mock-rel-sofia",
-            target_profile: {
-              id: "sofia",
-              username: "Sofia",
-              display_name: "Sofia",
-              avatar_url:
-                "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&q=80",
-              role: "creator",
-              bio: "Tech & gaming enthusiast",
-              hobbies: ["Tech", "Gaming", "Art"],
-              lifestyle_habits: [],
-              astro_sign: "Gemini",
-              relationship_goals: ["Open to possibilities"],
-            },
-            current_level: "close",
-            gauge_score: 35,
-            is_matched: true,
-          },
-          {
-            relationship_id: "mock-rel-valentina",
-            target_profile: {
-              id: "valentina",
-              username: "Valentina",
-              display_name: "Valentina",
-              avatar_url:
-                "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=200&q=80",
-              role: "creator",
-              bio: "Music & fashion enthusiast",
-              hobbies: ["Music", "Yoga", "Fashion"],
-              lifestyle_habits: [],
-              astro_sign: "Libra",
-              relationship_goals: ["Casual"],
-            },
-            current_level: "soulmate",
-            gauge_score: 95,
-            is_matched: true,
-          },
-        ];
-        setLiveMatches(fallbackMatches);
-        await selectMatch(
-          userId,
-          fallbackMatches[0].target_profile.id,
-          fallbackMatches,
-        );
+        setLiveMatches([]);
+        setSelectedMatchId("");
+        setSelectedMatchState(null);
       }
     } catch (e) {
       console.error("Failed to load matches:", e);
@@ -1518,6 +1456,23 @@ export default function MemberProfile() {
   const handleUpdatePrivacy = async (field: string, value: string, required_level: string) => {
     if (!currentUser) return;
     
+    // Check "One Visible, Four Hidden" rule for sensitive array fields
+    if (['sexual_preferences', 'relationship_goals', 'relationship_types', 'nsfw_boundaries'].includes(field)) {
+      const selectedItems = currentUserProfile?.[field] || [];
+      const currentlyHiddenValues = privacySettings?.hidden_values?.[field] || {};
+      
+      // Calculate how many items are currently hidden
+      const currentlyHiddenCount = Object.keys(currentlyHiddenValues).length;
+      
+      // If we are hiding a new item, check if it leaves at least 1 visible
+      if (!currentlyHiddenValues[value]) {
+        if (selectedItems.length - currentlyHiddenCount <= 1) {
+          alert(`You must keep at least one ${field.replace('_', ' ')} visible.`);
+          return;
+        }
+      }
+    }
+
     const newSettings = JSON.parse(JSON.stringify(privacySettings));
     if (!newSettings.hidden_values) newSettings.hidden_values = {};
     if (!newSettings.hidden_values[field]) newSettings.hidden_values[field] = {};
@@ -1716,10 +1671,12 @@ export default function MemberProfile() {
         username:
           currentUserProfile.username ||
           currentUserProfile.display_name ||
-          "Alex_N",
+          (currentUser?.email ? currentUser.email.split('@')[0] : "Member"),
         avatar:
           currentUserProfile.avatar_url ||
-          "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800&q=80",
+          currentUserProfile.avatar ||
+          "/assets/logo/seccion-icon-3d.png",
+        height: currentUserProfile.height || "",
         bioPromptCategory: currentUserProfile.bio_prompt_category || "",
         bioPromptQuestion: currentUserProfile.bio_prompt_question || "",
         bioPromptAnswer: currentUserProfile.bio_prompt_answer || "",
@@ -1946,14 +1903,14 @@ export default function MemberProfile() {
               }}
             >
               {[
+                { id: "edit", label: "Edit Profile", icon: Edit3 },
+                { id: "media", label: "My Media Album", icon: Image },
                 { id: "status", label: "Status Lists", icon: ListOrdered },
                 { id: "insights", label: "Relational Insights", icon: Brain },
                 { id: "track", label: "Track Record", icon: Activity },
                 { id: "calendar", label: "Calendar Events", icon: Calendar },
                 { id: "livestream", label: "Live Pulse Hub", icon: Video },
                 { id: "master", label: "My Sponsored Creators", icon: Crown },
-                { id: "edit", label: "Edit Profile", icon: Edit3 },
-                { id: "media", label: "My Media Album", icon: Image },
                 { id: "preferences", label: "Account Settings", icon: Settings },
               ].map((tab) => {
                 const Icon = tab.icon;
@@ -2711,8 +2668,7 @@ export default function MemberProfile() {
             })()}
 
             {activeTab === "status" && (
-              <>
-                <div className="space-y-6">
+              <div className="space-y-6">
                   <div className="flex items-center justify-between">
                     <h2 className="text-2xl font-bold flex items-center gap-2">
                       <Heart className="text-accent" /> Connection Status
@@ -2832,7 +2788,7 @@ export default function MemberProfile() {
                               )}
                                 <button
                                   onClick={() => setIsMoveModalOpen(true)}
-                                  className="px-4 py-2.5 bg-primary hover:bg-primary/90 text-white rounded-xl text-[9px] font-black uppercase tracking-widest transition shadow-lg shadow-primary/15"
+                                  className="px-4 py-2.5 bg-primary hover:bg-primary/90 text-black rounded-xl text-[9px] font-black uppercase tracking-widest transition shadow-lg shadow-primary/15"
                                 >
                                   Propose Action Move
                                 </button>
@@ -2925,8 +2881,6 @@ export default function MemberProfile() {
                       }}
                     />
                   )}
-                </div>
-
 
                 {/* PURPOSE PREFERENCES CARD */}
                 <div className="mt-10 p-6 bg-[#0c1017] border border-[#00fbfb]/30 rounded-3xl shadow-xl space-y-4 text-white">
@@ -2999,131 +2953,7 @@ export default function MemberProfile() {
                     })}
                   </div>
                 </div>
-
-                <div className="mt-12 pt-12 border-t border-white/5">
-                  <h2 className="text-2xl font-black mb-2 flex items-center gap-2">
-                    <Activity className="text-primary" /> LIFESTYLE & HABITS
-                  </h2>
-                  <p className="text-[10px] text-white/40 uppercase font-bold tracking-[0.2em] mb-8">
-                    Connection depth depends on your lifestyle vibe sync.
-                  </p>
-
-                  <div className="space-y-6">
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                      {HABIT_CATEGORIES.map((category) => {
-                        const Icon = LIFESTYLE_ICONS[category] || Activity;
-                        const currentValue = (mappedCurrentUser.lifestyle as any)[category] || "";
-                        const HABIT_LABELS: Record<string, string> = {
-                          workout: 'Workout',
-                          traveling: 'Traveling',
-                          partying: 'Partying',
-                          'healthy eating': 'Healthy Eating',
-                          socializing: 'Socializing',
-                          reading: 'Reading',
-                          sleep: 'Sleep',
-                          smoking: 'Smoking',
-                          drinking: 'Drinking',
-                          'social media': 'Social Media',
-                          pets: 'Pet Lover',
-                          'morning/night': 'Morning / Night',
-                          'creative flow': 'Creative Flow',
-                          'adventure seek': 'Adventure',
-                          'love style': 'Love Style',
-                          communication: 'Communication',
-                        };
-                        const label = HABIT_LABELS[category] ?? category;
-                        const hasValue = !!currentValue;
-                        return (
-                          <div
-                            key={category}
-                            className={`relative p-4 rounded-2xl border transition-all duration-200 flex flex-col gap-3 group ${
-                              hasValue
-                                ? 'bg-primary/[0.04] border-primary/20 hover:border-primary/40'
-                                : 'bg-white/[0.02] border-white/5 hover:border-white/15'
-                            }`}
-                          >
-                            {/* Category header */}
-                            <div className="flex items-center gap-2">
-                              <div className={`w-7 h-7 rounded-xl flex items-center justify-center shrink-0 border transition-all ${
-                                hasValue
-                                  ? 'bg-primary/20 border-primary/30'
-                                  : 'bg-white/5 border-white/10'
-                              }`}>
-                                <Icon className={`w-3.5 h-3.5 transition-colors ${hasValue ? 'text-primary' : 'text-white/40'}`} />
-                              </div>
-                              <p className={`text-[10px] font-black uppercase tracking-widest leading-tight transition-colors ${
-                                hasValue ? 'text-white/80' : 'text-white/40'
-                              }`}>
-                                {label}
-                              </p>
-                            </div>
-
-                            {/* Selected value display + dropdown */}
-                            <div className="flex flex-col gap-1.5">
-                              {hasValue && (
-                                <span className="text-[9px] font-black uppercase tracking-widest text-primary bg-primary/10 border border-primary/20 px-2 py-1 rounded-lg leading-none w-fit">
-                                  {currentValue}
-                                </span>
-                              )}
-                              <select
-                                value={currentValue}
-                                onChange={(e) => handleUpdateHabit(category, e.target.value)}
-                                className={`w-full bg-black/40 border rounded-xl px-2.5 py-2 text-[9px] font-black uppercase outline-none focus:border-primary transition-colors cursor-pointer appearance-none ${
-                                  hasValue
-                                    ? 'border-white/10 text-white/60 focus:text-white'
-                                    : 'border-white/10 text-white/40 focus:text-white'
-                                }`}
-                              >
-                                <option value="" disabled>— Select —</option>
-                                {(HABIT_CHOICES as any)[category].map((option: string) => (
-                                  <option key={option} value={option} className="bg-[#11111A] text-white">
-                                    {option}
-                                  </option>
-                                ))}
-                              </select>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-8 pt-8 border-t border-white/5">
-                      <div className="flex flex-col gap-3">
-                        <p className="text-xs font-black uppercase tracking-widest text-primary">
-                          Career / Profession
-                        </p>
-                        <input
-                          type="text"
-                          value={mappedCurrentUser.career}
-                          onChange={(e) =>
-                            handleUpdateHabit("career", e.target.value)
-                          }
-                          placeholder="e.g. Software Engineer, Artist, Founder"
-                          className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-xs font-semibold focus:border-primary focus:outline-none transition-colors"
-                        />
-                      </div>
-
-                      <div className="flex flex-col gap-3">
-                        <p className="text-xs font-black uppercase tracking-widest text-primary">
-                          Family Goals
-                        </p>
-                        <select
-                          value={mappedCurrentUser.familyGoals || ""}
-                          onChange={(e) => handleUpdateFamilyGoals(e.target.value)}
-                          className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-xs font-semibold focus:border-primary focus:outline-none transition-colors cursor-pointer text-white/80"
-                        >
-                          <option value="" disabled>Select Family Goals...</option>
-                          {FAMILY_GOALS.map((option) => (
-                            <option key={option} value={option} className="bg-[#11111A] text-white">
-                              {option}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </>
+              </div>
             )}
 
             {activeTab === "track" && (
@@ -3879,7 +3709,7 @@ export default function MemberProfile() {
           options={multiSelectConfig.options}
           initialSelected={multiSelectConfig.initialSelected}
           minSelections={1}
-          maxSelections={multiSelectConfig.fieldKey === "sexual_preferences" ? 1 : 5}
+          maxSelections={multiSelectConfig.fieldKey === "hobbies" ? 10 : multiSelectConfig.fieldKey === "sexual_preferences" ? 1 : 5}
           onSave={handleSaveMultiSelect}
         />
       )}

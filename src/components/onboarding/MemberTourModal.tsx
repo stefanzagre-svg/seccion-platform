@@ -37,7 +37,7 @@ function InfoBubble({ title, content }: { title: string; content: string }) {
         onMouseEnter={() => setIsOpen(true)}
         onMouseLeave={() => setIsOpen(false)}
         onClick={() => setIsOpen(!isOpen)}
-        className="w-4 h-4 rounded-full bg-[#00fbfb]/10 border border-[#00fbfb]/50 text-[#00fbfb] hover:bg-[#00fbfb]/30 hover:border-[#00fbfb] flex items-center justify-center text-[10px] font-bold font-mono transition-all animate-pulse cursor-pointer"
+        className="w-5 h-5 rounded-full bg-[#00fbfb]/15 border border-[#00fbfb]/60 text-[#00fbfb] hover:bg-[#00fbfb]/30 hover:border-[#00fbfb] flex items-center justify-center text-xs font-bold font-mono transition-all cursor-pointer shadow-[0_0_10px_rgba(0,251,251,0.2)]"
       >
         ?
       </button>
@@ -47,12 +47,13 @@ function InfoBubble({ title, content }: { title: string; content: string }) {
             initial={{ opacity: 0, scale: 0.95, y: -5 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: -5 }}
-            className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-52 p-3 bg-[#0F0F1A] border border-white/10 rounded-xl shadow-2xl backdrop-blur-md text-left z-50 pointer-events-none"
+            className="absolute bottom-full left-0 sm:left-1/2 sm:-translate-x-1/2 mb-2 w-60 sm:w-64 max-w-[80vw] p-3 bg-[#0c0c18] border border-[#00fbfb]/30 rounded-xl shadow-2xl backdrop-blur-xl text-left z-50 pointer-events-auto"
           >
-            <h5 className="text-[9px] font-mono font-bold text-[#00fbfb] uppercase tracking-wider mb-1">
-              {title}
+            <h5 className="text-[10px] font-mono font-bold text-[#00fbfb] uppercase tracking-wider mb-1 flex items-center justify-between">
+              <span>{title}</span>
+              <button onClick={() => setIsOpen(false)} className="text-white/40 hover:text-white text-[10px] sm:hidden">✕</button>
             </h5>
-            <p className="text-[9px] text-[#b9cac9] leading-relaxed font-sans font-medium">
+            <p className="text-[10px] text-[#b9cac9] leading-relaxed font-sans font-medium break-words">
               {content}
             </p>
           </motion.div>
@@ -158,24 +159,24 @@ export default function MemberTourModal({ isOpen, onClose, onStartQuest }: Membe
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-[#050505]/95 backdrop-blur-2xl overflow-y-auto flex items-center justify-center p-4 md:p-8 font-sans">
+    <div className="fixed inset-0 z-50 bg-[#050505]/95 backdrop-blur-2xl overflow-y-auto flex items-start sm:items-center justify-center p-2 sm:p-4 md:p-8 font-sans">
       
       {/* Container Box */}
-      <div className="w-full max-w-[1000px] min-h-[550px] bg-[#0F0F1A]/95 border border-white/10 rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col lg:flex-row relative">
+      <div className="w-full max-w-[1000px] bg-[#0F0F1A]/95 border border-white/10 rounded-[2rem] sm:rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col lg:flex-row relative my-auto max-h-[95vh] lg:max-h-none overflow-y-auto lg:overflow-visible">
         
         {/* Absolute Close */}
         <button 
           onClick={onClose}
-          className="absolute top-6 right-6 z-50 p-2.5 rounded-full bg-white/5 border border-white/10 text-white/50 hover:text-white transition cursor-pointer"
+          className="absolute top-4 right-4 sm:top-6 sm:right-6 z-50 p-2 sm:p-2.5 rounded-full bg-white/10 border border-white/20 text-white/70 hover:text-white transition cursor-pointer"
         >
           <X className="w-4 h-4" />
         </button>
 
         {/* LEFT PANE: Mobile App Frame Mockup (Touch & Screen view) */}
-        <div className="w-full lg:w-[450px] bg-black/40 border-b lg:border-b-0 lg:border-r border-white/5 p-6 md:p-10 flex flex-col items-center justify-center relative shrink-0">
+        <div className="w-full lg:w-[420px] bg-black/40 border-b lg:border-b-0 lg:border-r border-white/5 p-4 sm:p-6 md:p-8 flex flex-col items-center justify-center relative shrink-0">
           
           {/* Simulated Mobile Outer Frame */}
-          <div className="relative w-[280px] h-[500px] rounded-[3rem] border-[6px] border-white/10 bg-[#07070E] shadow-[0_0_40px_rgba(0,251,251,0.15)] flex flex-col overflow-hidden select-none">
+          <div className="relative w-[240px] sm:w-[270px] h-[360px] sm:h-[460px] rounded-[2.5rem] sm:rounded-[3rem] border-[4px] sm:border-[6px] border-white/10 bg-[#07070E] shadow-[0_0_40px_rgba(0,251,251,0.15)] flex flex-col overflow-hidden select-none">
             
             {/* Phone Top Notch */}
             <div className="absolute top-0 left-1/2 -translate-x-1/2 w-28 h-5 bg-black rounded-b-xl z-30 flex items-center justify-center">

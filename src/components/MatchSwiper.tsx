@@ -31,7 +31,7 @@ const DEFAULT_USER_PROFILE: UserProfile = {
   sexualPreferences: ['Heterosexual'],
   familyGoals: 'Want children',
   archetype: 'caregiver',
-  moods: ['flirty_playful', 'exclusive_vip'],
+  moods: ['flirty_playful', 'vip_lifestyle'],
   corePassion: 'fitness',
   age: 28,
   isKycVerified: true,

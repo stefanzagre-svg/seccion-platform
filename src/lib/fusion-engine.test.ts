@@ -23,7 +23,7 @@ function makeProfile(overrides: Partial<UserProfile> = {}): UserProfile {
     sexualPreferences: ['female'],
     familyGoals: 'Want children',
     archetype: 'visionary',
-    moods: ['deep_intimate', 'creative_showcase'],
+    moods: ['secret_confessions', 'creative_showcase'],
     corePassion: 'career',
     memberPurposes: ['dating', 'intimate'],
     lastActiveAt: new Date().toISOString(),
@@ -189,7 +189,7 @@ describe('Match Engine v2', () => {
         gender: 'female',
         archetype: 'dreamer',
         corePassion: 'art',
-        moods: ['creative_showcase', 'deep_intimate'],
+        moods: ['creative_showcase', 'secret_confessions'],
       });
 
       const result = calculateMatch(userA, userB);
@@ -227,9 +227,9 @@ describe('Match Engine v2', () => {
     });
 
     it('scores mood resonance higher when passions match', () => {
-      const userA = makeProfile({ corePassion: 'travel', moods: ['travel_trip', 'grab_drink'] });
-      const userBMatch = makeProfile({ gender: 'female', corePassion: 'travel', moods: ['travel_trip', 'party_dance'] });
-      const userBNoMatch = makeProfile({ gender: 'female', corePassion: 'fitness', moods: ['workout_mate'] });
+      const userA = makeProfile({ corePassion: 'travel', moods: ['vip_lifestyle', 'late_night_drive'] });
+      const userBMatch = makeProfile({ gender: 'female', corePassion: 'travel', moods: ['vip_lifestyle', 'art_aesthetics'] });
+      const userBNoMatch = makeProfile({ gender: 'female', corePassion: 'fitness', moods: ['adrenaline_junkie'] });
 
       const resultMatch = calculateMatch(userA, userBMatch);
       const resultNoMatch = calculateMatch(userA, userBNoMatch);
@@ -246,7 +246,7 @@ describe('Match Engine v2', () => {
         hobbies: ['Cooking', 'Reading', 'Music', 'Yoga', 'Art'],
         lifestyle: { workout: 'Every Day', socializing: 'Every Day', 'healthy eating': 'Every Day' },
         corePassion: 'art',
-        moods: ['deep_intimate', 'dinner_date'],
+        moods: ['secret_confessions', 'dinner_date'],
         location: 'Milan',
       });
       const userB = makeProfile({
@@ -255,7 +255,7 @@ describe('Match Engine v2', () => {
         hobbies: ['Cooking', 'Reading', 'Music', 'Yoga', 'Art'],
         lifestyle: { workout: 'Every Day', socializing: 'Every Day', 'healthy eating': 'Every Day' },
         corePassion: 'art',
-        moods: ['deep_intimate', 'dinner_date'],
+        moods: ['secret_confessions', 'dinner_date'],
         location: 'Milan',
         engagementScore: 95,
       });
