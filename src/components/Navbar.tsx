@@ -65,7 +65,7 @@ export default function Navbar() {
     loadUnreadCount();
 
     const channel = supabase
-      .channel('navbar_suggestion_caches_unread')
+      .channel(`navbar_suggestion_caches_unread_${Math.random()}`)
       .on(
         'postgres_changes',
         {
