@@ -156,6 +156,7 @@ export default function PlatformFeed() {
   const [minMatchScore, setMinMatchScore] = useState<string>('');
   const [locationType, setLocationType] = useState<string>('All');
   const [relationshipLevel, setRelationshipLevel] = useState<string>('All');
+  const [profileStatus, setProfileStatus] = useState<string>('All');
   
   // Cost & Results States
   const [searchXpBalance, setSearchXpBalance] = useState<number | null>(null);
@@ -198,7 +199,8 @@ export default function PlatformFeed() {
           relationshipType: relationshipType !== 'All' ? relationshipType : null,
           minMatchScore: minMatchScore ? parseInt(minMatchScore) : null,
           locationType,
-          relationshipLevel
+          relationshipLevel,
+          profileStatus
         })
       });
 
@@ -226,6 +228,8 @@ export default function PlatformFeed() {
     setMinMatchScore('');
     setLocationType('All');
     setRelationshipLevel('All');
+    setProfileStatus('All');
+    setSearchQuery('');
   };
 
   const loadDatePlans = async () => {
@@ -1019,6 +1023,8 @@ export default function PlatformFeed() {
                     <div className="flex gap-2">
                       <input 
                         type="number" 
+                        min="18"
+                        max="100"
                         placeholder="Min" 
                         value={minAge} 
                         onChange={(e) => setMinAge(e.target.value)}
@@ -1026,6 +1032,8 @@ export default function PlatformFeed() {
                       />
                       <input 
                         type="number" 
+                        min="18"
+                        max="100"
                         placeholder="Max" 
                         value={maxAge} 
                         onChange={(e) => setMaxAge(e.target.value)}
@@ -1040,6 +1048,8 @@ export default function PlatformFeed() {
                     <div className="flex gap-2">
                       <input 
                         type="number" 
+                        min="100"
+                        max="250"
                         placeholder="Min" 
                         value={minHeight} 
                         onChange={(e) => setMinHeight(e.target.value)}
@@ -1047,6 +1057,8 @@ export default function PlatformFeed() {
                       />
                       <input 
                         type="number" 
+                        min="100"
+                        max="250"
                         placeholder="Max" 
                         value={maxHeight} 
                         onChange={(e) => setMaxHeight(e.target.value)}
@@ -1102,6 +1114,20 @@ export default function PlatformFeed() {
                       <option value="Short term fun">Short-term fun</option>
                       <option value="Casual">Casual</option>
                       <option value="Open to explore">Open to explore</option>
+                    </select>
+                  </div>
+
+                  {/* Profile Status */}
+                  <div className="space-y-1.5">
+                    <label className="text-[9px] uppercase tracking-widest font-black text-white/40">Profile Status</label>
+                    <select 
+                      value={profileStatus} 
+                      onChange={(e) => setProfileStatus(e.target.value)}
+                      className="w-full px-3 py-2.5 bg-black border border-white/10 rounded-xl text-white text-xs focus:border-primary focus:outline-none"
+                    >
+                      <option value="All">All Profiles</option>
+                      <option value="Member">Members Only</option>
+                      <option value="Creator">Creators Only</option>
                     </select>
                   </div>
 

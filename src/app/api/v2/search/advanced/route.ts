@@ -20,6 +20,7 @@ export async function POST(request: NextRequest) {
       categoryTag,
       specialization,
       includeAdultContent = false,
+      profileStatus,
     } = await request.json();
 
     if (!userId) {
@@ -102,6 +103,10 @@ export async function POST(request: NextRequest) {
 
     if (query) {
       dbQuery = dbQuery.or(`username.ilike.%${query}%,display_name.ilike.%${query}%,bio.ilike.%${query}%`);
+    }
+
+    if (profileStatus && profileStatus !== 'All') {
+      dbQuery = dbQuery.eq('role', profileStatus.toLowerCase());
     }
 
     // Apply basic SQL filters
