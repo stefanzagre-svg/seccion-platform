@@ -116,7 +116,7 @@ export default function PlatformFeed() {
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [optimisticLikes, setOptimisticLikes] = useState<Record<string, boolean>>({});
   const [currentUserProfile, setCurrentUserProfile] = useState<UserProfile>(DEFAULT_USER_PROFILE);
-  const [activeFilter, setActiveFilter] = useState<'all' | 'live' | 'subscribed' | 'matched' | 'date_plans'>('all');
+  const [activeFilter, setActiveFilter] = useState<string>('all');
   const [showAdvancedSearch, setShowAdvancedSearch] = useState(false);
   const [userTier, setUserTier] = useState<'free' | 'vip' | 'master'>('free');
   const [sidebarTab, setSidebarTab] = useState<'matches' | 'likes'>('matches');
@@ -807,7 +807,8 @@ export default function PlatformFeed() {
       teaser_type: teaser.teaser_type || 'none',
       video_start_time: teaser.video_start_time || 0,
       thumbnail_url: teaser.thumbnail_url || null,
-      thumbnail_type: teaser.thumbnail_type || null
+      thumbnail_type: teaser.thumbnail_type || null,
+      specialization: creatorProf?.specialization || null
     };
   });
 
@@ -829,7 +830,8 @@ export default function PlatformFeed() {
           ratingScore: calculateCreatorRating(item.profile, ratingsMap[item.id] || []),
           face_blur_active: isFaceBlurCreator,
           avatar_face_coordinates: isFaceBlurCreator ? { x: 0.5, y: 0.35, r: 0.18 } : null,
-          locked: isLocked
+          locked: isLocked,
+          specialization: (item as any).specialization || (item.profile as any).specialization || null
         };
       });
 
@@ -837,7 +839,9 @@ export default function PlatformFeed() {
     if (activeFilter === 'subscribed') return item.relationship === 'subscribed';
     if (activeFilter === 'matched') return item.isMatched || item.matchScore >= 80;
     if (activeFilter === 'live') return item.type === 'live';
-    return true;
+    if (activeFilter === 'all' || activeFilter === 'date_plans') return true;
+    // Otherwise, it's a specialization filter
+    return item.specialization === activeFilter;
   }).filter(item => {
     if (!searchQuery) return true;
     const q = searchQuery.toLowerCase();
@@ -951,12 +955,12 @@ export default function PlatformFeed() {
             
             {/* Feed Filters & Mode Badge Row */}
             <div className="flex flex-wrap items-center justify-between gap-4 p-4 rounded-3xl border border-white/10 bg-white/[0.02] backdrop-blur-xl relative z-30">
-              <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide">
-                {['all', 'live', 'subscribed', 'matched', 'date_plans'].map((f) => (
+              <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide py-1">
+                {['all', 'live', 'subscribed', 'matched', 'date_plans', 'Beauty', 'Gaming', 'Explicit', 'Social & Communication', 'Economy & Finance', 'Dating & Marriage', 'Cooking', 'Fitness & Wellness', 'Health & Psychology', 'Art & Music'].map((f) => (
                   <button 
                     key={f}
-                    onClick={() => setActiveFilter(f as any)}
-                    className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-300 ${activeFilter === f ? 'bg-primary text-black font-black shadow-[0_0_20px_rgba(102,252,241,0.4)] scale-105 border border-primary/20' : 'bg-white/5 text-white/40 border border-white/10 hover:bg-white/10 hover:text-white'}`}
+                    onClick={() => setActiveFilter(f)}
+                    className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-300 whitespace-nowrap ${activeFilter === f ? 'bg-primary text-black font-black shadow-[0_0_20px_rgba(102,252,241,0.4)] scale-105 border border-primary/20' : 'bg-white/5 text-white/40 border border-white/10 hover:bg-white/10 hover:text-white'}`}
                   >
                     {f.replace('_', ' ')}
                   </button>

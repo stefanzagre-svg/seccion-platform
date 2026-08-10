@@ -48,7 +48,7 @@ export async function generateMetadata(): Promise<Metadata> {
     "sameAs": [
       "https://www.instagram.com/seccionplatform",
       "https://www.tiktok.com/@seccionplatform",
-      "https://x.com/seccionplatfrom"
+      "https://x.com/seccionplatform"
     ],
     "contactPoint": {
       "@type": "ContactPoint",
@@ -71,6 +71,37 @@ export async function generateMetadata(): Promise<Metadata> {
     }
   };
 
+  const faqSchema = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "What is SECCION?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "SECCION is the first fusion platform combining high-chemistry AI dating matchmaking with a live streaming creator economy."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "How do creators monetize on SECCION?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Creators monetize directly with dynamic pay-per-view (PPV), VIP sub passes, live stream tipping, and escrow-backed custom content orders. Creators keep 90% of the revenue."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "How does AI matchmaking work on SECCION?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "SECCION uses a dynamic 8-level Relationship Level System (RLS v2.0) and interactive AI Suggestion Moves to align real-life vibe synergy between members."
+        }
+      }
+    ]
+  };
+
   return {
     metadataBase: new URL("https://seccion.ai"),
     title: {
@@ -78,7 +109,7 @@ export async function generateMetadata(): Promise<Metadata> {
       template: "%s | SECCION",
     },
     description: dict.metadata.description,
-    keywords: dict.metadata.keywords.split(", ").concat(["SECCION"]),
+    keywords: dict.metadata.keywords.split(", ").concat(["SECCION", "AI dating app for creators", "live streaming matchmaking app"]),
     icons: {
       icon: [
         { url: '/favicon.ico', sizes: 'any' },
@@ -103,25 +134,27 @@ export async function generateMetadata(): Promise<Metadata> {
       siteName: "SECCION",
       images: [
         {
-          url: "/assets/logo/logo-wordmark.png",
-          width: 766,
-          height: 191,
-          alt: "SECCION Logo",
+          url: "https://seccion.ai/assets/seo/og-image.jpg",
+          width: 1200,
+          height: 630,
+          alt: "SECCION Platform",
         },
       ],
-      locale: savedLocale === "es" ? "es_ES" : "en_US",
+      locale: savedLocale,
       type: "website",
     },
     twitter: {
       card: "summary_large_image",
       title: dict.metadata.defaultTitle,
       description: dict.metadata.description,
-      images: ["/assets/logo/logo-wordmark.png"],
+      images: ["https://seccion.ai/assets/seo/og-image.jpg"],
+      creator: "@seccionplatform",
     },
     // JSON-LD structured data injected via metadata 'other' — works in RSC streaming
     other: {
       "script:ld+json:organization": JSON.stringify(organizationSchema),
       "script:ld+json:website": JSON.stringify(websiteSchema),
+      "script:ld+json:faq": JSON.stringify(faqSchema),
     },
   };
 }

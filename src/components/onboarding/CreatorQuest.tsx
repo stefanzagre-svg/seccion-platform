@@ -10,7 +10,7 @@ import MonetizationSuiteDemo from "./MonetizationSuiteDemo";
 import { useTranslation } from "@/context/LanguageContext";
 
 interface CreatorQuestProps {
-  onSignUp: (data: { archetype: string; role: string }) => void;
+  onSignUp: (data: { archetype: string; role: string; creator_purposes: string[]; specialization: string; sexual_preference: string; relationship_goal: string; relationship_type: string; is_adult_content: boolean }) => void;
   onSwitchToMember: () => void;
   onClose: () => void;
 }
@@ -46,13 +46,27 @@ export default function CreatorQuest({ onSignUp, onSwitchToMember, onClose }: Cr
     { id: "HYBRID", emoji: "⚡", name: translate("creatorQuest.main.archetype_hybrid", "Hybrid Creator"), desc: translate("creatorQuest.main.archetype_hybrid_desc", "Mixes free DMs, AI auto-upsells, and private consultations.") }
   ];
   const [step, setStep] = useState<
-    "lobby" | "mode-select" | "revenue-engine" | "profile-setup" | "stream-station" | "monetization-suite" | "secret"
+    "lobby" | "mode-select" | "identity-setup" | "revenue-engine" | "profile-setup" | "stream-station" | "monetization-suite" | "secret"
   >("lobby");
   const [selectedVibe, setSelectedVibe] = useState("STREAMER");
   const [faceBlurActive, setFaceBlurActive] = useState(true);
   const [tierPrice, setTierPrice] = useState(9.99);
   const [residence, setResidence] = useState("");
   const [residenceError, setResidenceError] = useState(false);
+
+  // Identity Setup States
+  const [creatorPurposes, setCreatorPurposes] = useState<string[]>([]);
+  const [specialization, setSpecialization] = useState("");
+  const [sexualPreference, setSexualPreference] = useState("");
+  const [relationshipGoal, setRelationshipGoal] = useState("");
+  const [relationshipType, setRelationshipType] = useState("");
+
+  const PURPOSES = ["Lifestyle", "Gaming", "Explicit 18+", "Coaching", "Education", "Expertise"];
+  const SPECIALIZATIONS = ["Beauty", "Gaming", "Explicit", "Social & Communication", "Economy & Finance", "Dating & Marriage", "Cooking", "Fitness & Wellness", "Health & Psychology", "Art & Music"];
+
+  const isExplicit = creatorPurposes.includes("Explicit 18+");
+  const isDatingOrCoaching = specialization === "Dating & Marriage" || creatorPurposes.includes("Coaching");
+  const needsRelFields = isExplicit || isDatingOrCoaching;
 
   // Audio Synthesis & Subtitle states
   const [speechSupported, setSpeechSupported] = useState(false);
@@ -160,12 +174,21 @@ export default function CreatorQuest({ onSignUp, onSwitchToMember, onClose }: Cr
       language: lang,
       monetization_tier_price: tierPrice,
       privacy_face_blur: faceBlurActive,
-      residence: residence.trim()
+      residence: residence.trim(),
+      creator_purposes: creatorPurposes,
+      specialization: specialization,
+      sexual_preference: sexualPreference,
+      relationship_goal: relationshipGoal,
+      relationship_type: relationshipType,
+      is_adult_content: isExplicit
     };
     sessionStorage.setItem("_onboarding_creator_archive_choice", selectedVibe);
     sessionStorage.setItem("_onboarding_creator_tier_price", tierPrice.toString());
     sessionStorage.setItem("_onboarding_creator_face_blur", faceBlurActive ? "true" : "false");
     sessionStorage.setItem("_onboarding_creator_residence", residence.trim());
+    sessionStorage.setItem("_onboarding_creator_purposes", JSON.stringify(creatorPurposes));
+    sessionStorage.setItem("_onboarding_creator_spec", specialization);
+    sessionStorage.setItem("_onboarding_creator_is_adult", isExplicit ? "true" : "false");
     return data;
   };
 
@@ -269,7 +292,7 @@ export default function CreatorQuest({ onSignUp, onSwitchToMember, onClose }: Cr
 
                 {/* Continue as Creator */}
                 <div
-                  onClick={() => setStep("revenue-engine")}
+                  onClick={() => setStep("identity-setup")}
                   className="glass-card p-5 rounded-2xl border border-primary/20 bg-primary/5 hover:bg-primary/10 cursor-pointer text-left transition flex flex-col justify-between min-h-[160px] shadow-[0_0_15px_rgba(0,255,255,0.05)]"
                 >
                   <div>
@@ -284,6 +307,140 @@ export default function CreatorQuest({ onSignUp, onSwitchToMember, onClose }: Cr
                   </span>
                 </div>
               </div>
+            </motion.div>
+          )}
+
+          {/* IDENTITY SETUP */}
+          {step === "identity-setup" && (
+            <motion.div
+              key="identity-setup"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="w-full space-y-6 max-w-xl text-left mx-auto"
+            >
+              <div className="text-center space-y-2 mb-6">
+                <h3 className="text-2xl font-black uppercase Outfit">Identity Keys Unlocked</h3>
+                <p className="text-xs text-white/50">Define your creator aura and get matched to the right audience immediately.</p>
+              </div>
+
+              {/* Archetype */}
+              <div className="space-y-3">
+                <label className="text-[10px] font-black uppercase text-white/50 tracking-wider">Studio Archetype</label>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  {CREATOR_ARCHETYPES.map((arch) => (
+                    <div 
+                      key={arch.id}
+                      onClick={() => setSelectedVibe(arch.id)}
+                      className={`p-4 rounded-xl border cursor-pointer transition flex flex-col items-center text-center space-y-2 ${selectedVibe === arch.id ? 'bg-primary/10 border-primary shadow-[0_0_15px_rgba(102,252,241,0.2)]' : 'bg-black/40 border-white/10 hover:border-white/20'}`}
+                    >
+                      <span className="text-2xl">{arch.emoji}</span>
+                      <span className="text-[10px] font-black uppercase tracking-wider text-white">{arch.name}</span>
+                      <p className="text-[9px] text-white/40 leading-tight">{arch.desc}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Creator Purposes */}
+              <div className="space-y-3">
+                <label className="text-[10px] font-black uppercase text-white/50 tracking-wider">Creator Intent Auras (Select Multiple)</label>
+                <div className="flex flex-wrap gap-2">
+                  {PURPOSES.map(p => (
+                    <button
+                      key={p}
+                      onClick={() => {
+                        if (creatorPurposes.includes(p)) {
+                          setCreatorPurposes(creatorPurposes.filter(x => x !== p));
+                        } else {
+                          setCreatorPurposes([...creatorPurposes, p]);
+                        }
+                      }}
+                      className={`px-3 py-1.5 rounded-lg border text-xs font-bold transition ${creatorPurposes.includes(p) ? 'bg-primary border-primary text-black' : 'bg-black/40 border-white/20 text-white hover:border-white/40'}`}
+                    >
+                      {p}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Specialization */}
+              <div className="space-y-3">
+                <label className="text-[10px] font-black uppercase text-white/50 tracking-wider">Primary Content Synergy</label>
+                <select 
+                  value={specialization}
+                  onChange={(e) => setSpecialization(e.target.value)}
+                  className="w-full px-4 py-3 bg-black/40 border border-white/10 rounded-xl text-xs text-white focus:border-primary outline-none"
+                >
+                  <option value="">Select your main domain...</option>
+                  {SPECIALIZATIONS.map(s => (
+                    <option key={s} value={s}>{s}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Conditional Required Fields based on Purpose */}
+              {needsRelFields && (
+                <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} className="space-y-4 pt-4 border-t border-white/10">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-sm">🔥</span>
+                    <h4 className="text-[11px] font-black uppercase tracking-widest text-primary">Advanced Audience Targeting</h4>
+                  </div>
+                  <p className="text-[10px] text-white/50 leading-relaxed mb-4">Because your intent includes specialized or mature themes, we require your audience mapping preferences. Age and strict location will be securely locked via Shufti KYC in the next step.</p>
+                  
+                  {isExplicit && (
+                    <div className="space-y-1.5">
+                      <label className="text-[9px] font-black uppercase text-white/40 tracking-wider">Sexual Preference Matrix</label>
+                      <select value={sexualPreference} onChange={(e) => setSexualPreference(e.target.value)} className="w-full px-4 py-3 bg-black/40 border border-white/10 rounded-xl text-xs text-white focus:border-primary outline-none">
+                        <option value="">Select Preference...</option>
+                        <option value="Straight">Straight</option>
+                        <option value="Gay">Gay</option>
+                        <option value="Lesbian">Lesbian</option>
+                        <option value="Bisexual">Bisexual</option>
+                      </select>
+                    </div>
+                  )}
+
+                  <div className="space-y-1.5">
+                    <label className="text-[9px] font-black uppercase text-white/40 tracking-wider">Relationship Goal Vector</label>
+                    <select value={relationshipGoal} onChange={(e) => setRelationshipGoal(e.target.value)} className="w-full px-4 py-3 bg-black/40 border border-white/10 rounded-xl text-xs text-white focus:border-primary outline-none">
+                      <option value="">Select Goal...</option>
+                      <option value="Casual">Casual Dynamics</option>
+                      <option value="Short term fun">Short-term Fun</option>
+                      <option value="Long term partner">Long-term Connection</option>
+                      <option value="Marriage">Marriage Oriented</option>
+                    </select>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-[9px] font-black uppercase text-white/40 tracking-wider">Relationship Type Archetype</label>
+                    <select value={relationshipType} onChange={(e) => setRelationshipType(e.target.value)} className="w-full px-4 py-3 bg-black/40 border border-white/10 rounded-xl text-xs text-white focus:border-primary outline-none">
+                      <option value="">Select Type...</option>
+                      <option value="Monogamous">Monogamous</option>
+                      <option value="Non-monogamous">Non-monogamous</option>
+                      <option value="Open Relationship">Open Relationship</option>
+                      <option value="Polyamorous">Polyamorous</option>
+                    </select>
+                  </div>
+                </motion.div>
+              )}
+
+              <button
+                onClick={() => {
+                  if (creatorPurposes.length === 0 || !specialization) {
+                    alert("Please select at least one Intent Aura and your Content Synergy to proceed.");
+                    return;
+                  }
+                  if (needsRelFields && (!relationshipGoal || !relationshipType || (isExplicit && !sexualPreference))) {
+                    alert("Please complete all Advanced Audience Targeting fields required for your intent.");
+                    return;
+                  }
+                  setStep("revenue-engine");
+                }}
+                className="w-full bg-primary text-black font-black uppercase tracking-widest py-4 rounded-xl hover:shadow-[0_0_20px_rgba(102,252,241,0.4)] transition text-xs flex items-center justify-center gap-2 mt-6"
+              >
+                Engage Revenue Engine &rarr;
+              </button>
             </motion.div>
           )}
 
@@ -479,7 +636,29 @@ export default function CreatorQuest({ onSignUp, onSwitchToMember, onClose }: Cr
 
               <div className="flex flex-col gap-3 max-w-xs mx-auto mt-8">
                 <button
-                  onClick={() => onSignUp(getSubmitsData())}
+                  onClick={() => {
+                    if (typeof window !== "undefined") {
+                      sessionStorage.setItem("_onboarding_creator_vibe", selectedVibe);
+                      sessionStorage.setItem("_onboarding_creator_tier_price", tierPrice.toString());
+                      sessionStorage.setItem("_onboarding_creator_face_blur", faceBlurActive.toString());
+                      sessionStorage.setItem("_onboarding_creator_residence", residence);
+                      sessionStorage.setItem("_onboarding_creator_purposes", JSON.stringify(creatorPurposes));
+                      sessionStorage.setItem("_onboarding_creator_specialization", specialization);
+                      sessionStorage.setItem("_onboarding_creator_sexual_preference", sexualPreference);
+                      sessionStorage.setItem("_onboarding_creator_relationship_goal", relationshipGoal);
+                      sessionStorage.setItem("_onboarding_creator_relationship_type", relationshipType);
+                    }
+                    onSignUp({
+                      archetype: selectedVibe,
+                      role: "creator",
+                      creator_purposes: creatorPurposes,
+                      specialization: specialization,
+                      sexual_preference: sexualPreference,
+                      relationship_goal: relationshipGoal,
+                      relationship_type: relationshipType,
+                      is_adult_content: isExplicit
+                    });
+                  }}
                   className="w-full bg-primary text-black font-black uppercase tracking-widest py-4 rounded-xl hover:shadow-[0_0_20px_rgba(102,252,241,0.4)] transition text-xs flex items-center justify-center gap-2"
                 >
                   {t.secret_cta}

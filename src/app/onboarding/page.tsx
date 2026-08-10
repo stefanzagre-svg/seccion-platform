@@ -12,6 +12,7 @@ import CompletionChecklist, {
   ChecklistItem,
 } from "@/components/onboarding/CompletionChecklist";
 import FoundersWelcome from "@/components/onboarding/FoundersWelcome";
+import CreatorQuest from "@/components/onboarding/CreatorQuest";
 import { useTranslation } from "@/context/LanguageContext";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/lib/supabase";
@@ -51,6 +52,7 @@ type OnboardingStep =
   | "purpose"
   | "intent"
   | "profile-checklist"
+  | "creator-quest"
   | "welcome";
 
 const MOCK_AVATARS = [
@@ -113,15 +115,23 @@ export default function OnboardingFlow() {
           const tierPrice = sessionStorage.getItem("_onboarding_creator_tier_price");
           const faceBlur = sessionStorage.getItem("_onboarding_creator_face_blur");
           const residence = sessionStorage.getItem("_onboarding_creator_residence");
-          if (tierPrice) {
-            updatePayload.base_subscription_price = parseFloat(tierPrice);
-          }
-          if (faceBlur) {
-            updatePayload.face_blur_active = faceBlur === "true";
-          }
-          if (residence) {
-            updatePayload.residence = residence;
-          }
+          const vibe = sessionStorage.getItem("_onboarding_creator_vibe");
+          const purposesStr = sessionStorage.getItem("_onboarding_creator_purposes");
+          const specialization = sessionStorage.getItem("_onboarding_creator_specialization");
+          const sexualPreference = sessionStorage.getItem("_onboarding_creator_sexual_preference");
+          const relationshipGoal = sessionStorage.getItem("_onboarding_creator_relationship_goal");
+          const relationshipType = sessionStorage.getItem("_onboarding_creator_relationship_type");
+
+          if (tierPrice) updatePayload.base_subscription_price = parseFloat(tierPrice);
+          if (faceBlur) updatePayload.face_blur_active = faceBlur === "true";
+          if (residence) updatePayload.residence = residence;
+          if (vibe) updatePayload.archetype = vibe;
+          if (purposesStr) updatePayload.member_purposes = JSON.parse(purposesStr);
+          if (specialization) updatePayload.specialization = specialization;
+          
+          if (sexualPreference) updatePayload.sexual_preference = sexualPreference;
+          if (relationshipGoal) updatePayload.relationship_goals = [relationshipGoal];
+          if (relationshipType) updatePayload.relationship_types = [relationshipType];
         }
 
         await supabase
@@ -138,7 +148,13 @@ export default function OnboardingFlow() {
         console.error("Failed to save tutorial archetype on signup:", err);
       }
     }
-    setStep("purpose");
+    
+    // For creators, skip purpose/intent and go straight to profile-checklist (photo + bio)
+    if (isCreator) {
+      setStep("profile-checklist");
+    } else {
+      setStep("purpose");
+    }
   };
 
   // Active item in detail checklist panel
@@ -668,10 +684,25 @@ export default function OnboardingFlow() {
                 onAccept={() => setStep("registration")}
                 onBecomeCreator={() => {
                   setTutorialRole("creator");
-                  setStep("registration");
+                  setStep("creator-quest");
                 }}
               />
             </motion.div>
+          )}
+
+          {step === "creator-quest" && (
+            <CreatorQuest
+              key="creator-quest"
+              onSignUp={() => {
+                setTutorialRole("creator");
+                setStep("registration");
+              }}
+              onSwitchToMember={() => {
+                setTutorialRole("member");
+                setStep("registration");
+              }}
+              onClose={() => setStep("value-proposition")}
+            />
           )}
 
           {step === "registration" && (
@@ -813,7 +844,7 @@ export default function OnboardingFlow() {
 
                   <div className="w-full mt-4">
                     <CompletionChecklist
-                      items={checklist}
+                      items={checklist.filter(item => !(item.id === "preferences" && (tutorialRole === "creator" || isCreatorMode)))}
                       onItemClick={(id) => setActiveItem(id as any)}
                     />
                   </div>
@@ -831,7 +862,7 @@ export default function OnboardingFlow() {
                     </span>
                   </div>
                   <div className="grid grid-cols-3 gap-2">
-                    {checklist.map((item) => {
+                    {checklist.filter(item => !(item.id === "preferences" && (tutorialRole === "creator" || isCreatorMode))).map((item) => {
                       const isActive = activeItem === item.id;
                       const isDone = item.completed;
                       let label = t("onboarding.main.tabPhoto", "1. Photo");
@@ -1279,6 +1310,16 @@ export default function OnboardingFlow() {
                               promptStep === 1 ? "Analyze & Save Prompt 1" : "Analyze & Save Prompt 2"
                             )}
                           </button>
+                          
+                          {/* If Creator and bio is done, proceed to welcome */}
+                          {(tutorialRole === "creator" || isCreatorMode) && promptStep === 2 && completedPrompt1 && (
+                             <button
+                               onClick={() => setStep("welcome")}
+                               className="w-full mt-3 bg-white/10 text-white font-black uppercase tracking-widest py-3 rounded-xl hover:bg-white/20 transition text-xs"
+                             >
+                               Continue to Dashboard &rarr;
+                             </button>
+                          )}
                         </div>
                       </motion.div>
                     )}

@@ -57,6 +57,12 @@ export default function PWAInstallPrompt() {
       setInstalled(true);
       setShowPrompt(false);
       setDeferredPrompt(null);
+      // Attempt to close the browser so the user opens the native app
+      setTimeout(() => {
+        try {
+          window.close();
+        } catch (e) {}
+      }, 1500);
     };
 
     window.addEventListener("appinstalled", handleAppInstalled);
@@ -81,6 +87,11 @@ export default function PWAInstallPrompt() {
     if (choiceResult.outcome === "accepted") {
       setInstalled(true);
       setShowPrompt(false);
+      setTimeout(() => {
+        try {
+          window.close();
+        } catch (e) {}
+      }, 1500);
     }
     setDeferredPrompt(null);
   };

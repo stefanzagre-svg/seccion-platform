@@ -103,6 +103,19 @@ export default function RegistrationGate({ onComplete }: RegistrationGateProps) 
           const isCreatorMode = typeof window !== "undefined" && !!sessionStorage.getItem("_onboarding_creator_archive_choice");
           const userRole = isCreatorMode ? 'creator' : 'member';
           const residenceChoice = isCreatorMode && typeof window !== "undefined" ? sessionStorage.getItem("_onboarding_creator_residence") || '' : '';
+          
+          let creatorPurposes = null;
+          let specialization = null;
+          let isAdultContent = false;
+          if (isCreatorMode && typeof window !== "undefined") {
+            try {
+              creatorPurposes = JSON.parse(sessionStorage.getItem("_onboarding_creator_purposes") || "[]");
+            } catch (e) {
+              creatorPurposes = [];
+            }
+            specialization = sessionStorage.getItem("_onboarding_creator_spec") || null;
+            isAdultContent = sessionStorage.getItem("_onboarding_creator_is_adult") === "true";
+          }
 
           // 2. Create Profile row
           const { error: profileError } = await supabase
@@ -112,7 +125,10 @@ export default function RegistrationGate({ onComplete }: RegistrationGateProps) 
               username: username.trim().toLowerCase(),
               display_name: username.trim(),
               role: userRole,
-              residence: residenceChoice || undefined
+              residence: residenceChoice || undefined,
+              creator_purposes: creatorPurposes,
+              specialization: specialization,
+              is_adult_content: isAdultContent
             });
 
           if (profileError) {

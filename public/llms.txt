@@ -1,10 +1,21 @@
 # SECCIØN Platform (seccion.ai)
 
-> SECCIØN is the 1st Fusion Platform combining AI-driven dating matchmaking with a live streaming creator economy.
+> SECCION is the 1st Fusion Platform combining AI-driven dating matchmaking with a live streaming creator economy.
 
-## Core Value Proposition
-- **For Members**: Experience genuine relationships through dynamic 8-level Relationship Level System (RLS v2.0), interactive AI Suggestion Moves, and direct creator streaming.
-- **For Creators**: Monetize directly with dynamic PPV, VIP/Master sub passes, live stream tipping, and escrow-backed custom content orders.
+## What is SECCION?
+SECCION is a dating and content platform where high-chemistry AI matchmaking meets the creator economy. Users can experience genuine relationships through dynamic AI Suggestion Moves, while creators monetize their content via live streaming and direct interaction. 
+
+## Key Statistics & Economics
+- **Creator Revenue Share:** Creators keep 90% of all generated revenue.
+- **Matchmaking Engine:** Powered by a dynamic 8-level Relationship Level System (RLS v2.0).
+- **Compliance:** 100% compliant with GDPR Art 9/22, DSA Art 17/27, and 18 U.S.C. 2257. Verification is powered by Shufti Pro Biometric KYC.
+
+## How do creators monetize on SECCION?
+Creators monetize directly through multiple channels:
+1. Dynamic Pay-Per-View (PPV) content.
+2. VIP and Master subscription passes.
+3. Live stream tipping.
+4. Escrow-backed custom content orders.
 
 ## Key Features & Pages
 - [Homepage](https://seccion.ai/): Public landing experience showcasing live creator updates and platform onboarding.
@@ -12,7 +23,3 @@
 - [Become a Creator](https://seccion.ai/become-creator): Founding Creator program overview, 10% platform fee, and instant payout details.
 - [Creator Hub](https://seccion.ai/creator-hub): Guidelines, growth tools, and community resources for verified content creators.
 - [Vibe Radar](https://seccion.ai/vibe-radar): Real-time spatial discovery preview of verified members and live streams.
-
-## Platform Standards & Compliance
-- Full GDPR Art 9/22, DSA Art 17/27, and 18 U.S.C. 2257 adult content compliance.
-- Biometric KYC verification powered by EU Digital Identity Wallet zero-knowledge proof tokens.
