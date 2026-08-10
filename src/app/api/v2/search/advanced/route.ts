@@ -110,6 +110,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Apply basic SQL filters
+    if (profileStatus && profileStatus !== 'All') {
+      dbQuery = dbQuery.eq('role', profileStatus.toLowerCase());
+    }
     if (sexualPreference && sexualPreference !== 'All') {
       dbQuery = dbQuery.eq('sexual_preference', sexualPreference);
     }

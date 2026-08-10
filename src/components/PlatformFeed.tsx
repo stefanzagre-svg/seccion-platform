@@ -1028,7 +1028,7 @@ export default function PlatformFeed() {
                       <input 
                         type="number" 
                         min="18"
-                        max="100"
+                        max="80"
                         placeholder="Min" 
                         value={minAge} 
                         onChange={(e) => setMinAge(e.target.value)}
@@ -1037,7 +1037,7 @@ export default function PlatformFeed() {
                       <input 
                         type="number" 
                         min="18"
-                        max="100"
+                        max="80"
                         placeholder="Max" 
                         value={maxAge} 
                         onChange={(e) => setMaxAge(e.target.value)}
@@ -1053,7 +1053,7 @@ export default function PlatformFeed() {
                       <input 
                         type="number" 
                         min="100"
-                        max="250"
+                        max="230"
                         placeholder="Min" 
                         value={minHeight} 
                         onChange={(e) => setMinHeight(e.target.value)}
@@ -1062,7 +1062,7 @@ export default function PlatformFeed() {
                       <input 
                         type="number" 
                         min="100"
-                        max="250"
+                        max="230"
                         placeholder="Max" 
                         value={maxHeight} 
                         onChange={(e) => setMaxHeight(e.target.value)}
@@ -1084,6 +1084,20 @@ export default function PlatformFeed() {
                       <option value="Bisexual">Bisexual</option>
                       <option value="Lesbian">Lesbian</option>
                       <option value="Gay">Gay</option>
+                    </select>
+                  </div>
+
+                  {/* Profile Status */}
+                  <div className="space-y-1.5">
+                    <label className="text-[9px] uppercase tracking-widest font-black text-white/40">Profile Status</label>
+                    <select 
+                      value={profileStatus} 
+                      onChange={(e) => setProfileStatus(e.target.value)}
+                      className="w-full px-3 py-2.5 bg-black border border-white/10 rounded-xl text-white text-xs focus:border-primary focus:outline-none"
+                    >
+                      <option value="All">All Profiles</option>
+                      <option value="member">Member</option>
+                      <option value="creator">Creator</option>
                     </select>
                   </div>
 

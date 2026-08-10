@@ -61,6 +61,7 @@ export default function PWAInstallPrompt() {
       setTimeout(() => {
         try {
           window.close();
+          window.location.href = "about:blank";
         } catch (e) {}
       }, 1500);
     };
@@ -90,6 +91,7 @@ export default function PWAInstallPrompt() {
       setTimeout(() => {
         try {
           window.close();
+          window.location.href = "about:blank";
         } catch (e) {}
       }, 1500);
     }

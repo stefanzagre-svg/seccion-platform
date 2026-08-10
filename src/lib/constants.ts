@@ -427,6 +427,16 @@ export const CREATOR_SPECIALIZATIONS: CreatorSpecialization[] = [
     isAdult: false,
   },
   {
+    id: 'health',
+    title: 'Health & Psychology Coaching',
+    badge: 'Mental Wellness 🧠',
+    icon: '🧠',
+    color: 'from-blue-400/20 to-indigo-500/20 border-blue-400/40 text-blue-300',
+    description: 'Mental health guidance, somatic therapy, anxiety management & deep psychological insights.',
+    sampleTags: ['#MentalHealth', '#PsychologyTips', '#AnxietyRelief', '#SomaticHealing', '#Mindfulness'],
+    isAdult: false,
+  },
+  {
     id: 'fitness',
     title: 'Fitness & Vitality Coaching',
     badge: 'Fitness Coach 🏋️',
