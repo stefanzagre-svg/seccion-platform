@@ -108,7 +108,7 @@ export default function Home() {
       <div className="flex-1 relative z-10 flex flex-col items-center justify-center p-4">
         <LandingPageHook
           onAccept={() => router.push("/early-access")}
-          onBecomeCreator={() => router.push("/become-creator")}
+          onBecomeCreator={() => router.push("/onboarding")}
         />
       </div>
     </div>

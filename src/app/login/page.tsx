@@ -344,7 +344,7 @@ export default function LoginPage() {
             <div className="border-t border-white/5 pt-4 text-center space-y-2">
               <p className="text-[10px] text-[#b9cac9]">
                 Are you a creator wanting 90% revenue & 1-Year Free AI Assistant?{" "}
-                <Link href="/become-creator#apply" className="text-[#00fbfb] hover:underline font-bold font-mono uppercase tracking-wide">
+                <Link href="/onboarding" className="text-[#00fbfb] hover:underline font-bold font-mono uppercase tracking-wide">
                   Apply Now
                 </Link>
               </p>

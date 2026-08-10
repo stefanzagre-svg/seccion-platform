@@ -66,7 +66,12 @@ async function runCreator18FlowTest() {
     },
     core_passion: "Art",
     bio: 'Exclusive content creator pushing boundaries.',
-    connection_points: 0
+    connection_points: 0,
+    member_purposes: ["Coaching", "Expertize"],
+    specialization: "Social & Communication",
+    relationship_goals: ["Networking"],
+    relationship_types: ["Platonic"],
+    is_adult_content: true
   };
 
   const { error: upsertError } = await supabase
