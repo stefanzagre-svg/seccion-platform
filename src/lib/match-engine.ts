@@ -888,8 +888,8 @@ export function getChemistryNarrative(archA?: ArchetypeId, archB?: ArchetypeId):
   if (!archA || !archB) return 'Archetype data not yet available for this connection.';
 
   const chemistry = ARCHETYPE_CHEMISTRY[archA]?.[archB] ?? 0.5;
-  const nameA = ARCHETYPE_PROFILES[archA].name;
-  const nameB = ARCHETYPE_PROFILES[archB].name;
+  const nameA = ARCHETYPE_PROFILES[archA]?.name ?? archA;
+  const nameB = ARCHETYPE_PROFILES[archB]?.name ?? archB;
 
   if (chemistry >= 0.85) {
     return `${nameA} and ${nameB} share extraordinary chemistry — a rare complementary bond where each amplifies the other's strengths.`;

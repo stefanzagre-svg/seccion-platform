@@ -3,8 +3,9 @@
 async function runTest() {
   console.log('🧪 Starting AI Prediction Panel E2E Pipeline Test (BE-TST-001)');
   
+  // Using hf2_seeker real test UUID (member profile with test data)
   const payload = {
-    user_id: 'val-001',
+    user_id: '46ea5ed3-b78b-4398-8132-9934c15590da',
     context_data: {
       current_feed_view: 'all',
       last_5_interactions: ['liked_ele-002', 'viewed_sof-003'],
