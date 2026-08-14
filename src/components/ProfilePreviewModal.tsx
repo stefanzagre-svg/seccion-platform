@@ -5,6 +5,11 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X, ShieldCheck, Sparkles, Heart, Globe, Eye, Lock, Users, Briefcase, GraduationCap, Moon, BookOpen, Video, Image as ImageIcon } from "lucide-react";
 import { ARCHETYPES } from "@/components/ArchetypeSelector";
 import { useTranslation } from "@/context/LanguageContext";
+import { 
+  normalizeProfileMedia, 
+  normalizeSpokenLanguages, 
+  formatHiddenBadgeLabel 
+} from "@/lib/profile-utils";
 
 interface ProfilePreviewModalProps {
   isOpen: boolean;
@@ -47,9 +52,7 @@ export default function ProfilePreviewModal({
 
   const archetypeObj = ARCHETYPES.find((a) => a.id === profile.archetype);
   const displayAge = profile.privacy_settings?.display_age || "18+";
-  const languages = profile.spoken_languages && profile.spoken_languages.length > 0
-    ? profile.spoken_languages
-    : ["English"];
+  const languages = normalizeSpokenLanguages(profile.spoken_languages);
 
   const hiddenValues = profile.privacy_settings?.hidden_values || {};
   const getHiddenCount = (fieldKey: string) => {
@@ -57,8 +60,8 @@ export default function ProfilePreviewModal({
   };
 
   const renderHiddenBadge = (count: number) => {
-    if (count === 0) return null;
-    const label = count === 1 ? "Hidden" : `Hidden +${count}`;
+    const label = formatHiddenBadgeLabel(count);
+    if (!label) return null;
     return (
       <div className="flex items-center gap-1.5 text-[10px] font-bold text-amber-400 bg-amber-400/10 border border-amber-400/20 px-2.5 py-1 rounded-xl shrink-0">
         <Lock className="w-3 h-3" /> {label}
@@ -66,10 +69,7 @@ export default function ProfilePreviewModal({
     );
   };
 
-  // Determine media to show. Prioritize album_media array (which includes video metadata)
-  const mediaItems = profile.album_media && profile.album_media.length > 0 
-    ? profile.album_media 
-    : (profile.album_photos || []).map((url) => ({ media_type: "image", media_url: url }));
+  const mediaItems = normalizeProfileMedia(profile.album_media, profile.album_photos);
 
   return (
     <AnimatePresence>

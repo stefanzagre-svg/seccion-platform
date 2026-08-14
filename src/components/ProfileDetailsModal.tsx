@@ -8,6 +8,13 @@ import { useTranslation } from "@/context/LanguageContext";
 import { scoreToLevel, RELATIONSHIP_LEVELS } from '@/lib/relationship-engine';
 import { calculateMatchProbability } from '@/lib/match-engine';
 import { getRelationshipState } from '@/lib/relationship-db';
+import { 
+  normalizeProfileMedia, 
+  normalizeSpokenLanguages, 
+  getHiddenFieldCount, 
+  isFieldItemHidden, 
+  formatHiddenBadgeLabel 
+} from '@/lib/profile-utils';
 import Link from 'next/link';
 import ReportModal from '@/components/modals/ReportModal';
 
@@ -217,35 +224,15 @@ export default function ProfileDetailsModal({ profileId, onClose, currentUserId 
         sexualPreferences: [profile.sexual_preference].filter(Boolean),
         familyGoals: profile.lifestyle_habits?.family_goals || 'Open to children'
       })
-    : 75;
-
   const levelObj = relationship ? scoreToLevel(relationship.gauge_score) : scoreToLevel(0);
   const viewerScore = relationship?.gauge_score ?? 0;
-  
-  const hiddenValues = profile.privacy_settings?.hidden_values || {};
-  const getHiddenCount = (fieldKey: string) => {
-    if (!hiddenValues[fieldKey]) return 0;
-    let count = 0;
-    for (const val in hiddenValues[fieldKey]) {
-      const requiredLevelKey = hiddenValues[fieldKey][val];
-      const requiredLevel = RELATIONSHIP_LEVELS.find(l => l.key === requiredLevelKey);
-      if (requiredLevel && viewerScore < requiredLevel.minScore) {
-        count++;
-      }
-    }
-    return count;
-  };
-  
-  const isItemHidden = (fieldKey: string, itemValue: string) => {
-    if (!hiddenValues[fieldKey]?.[itemValue]) return false;
-    const requiredLevelKey = hiddenValues[fieldKey][itemValue];
-    const requiredLevel = RELATIONSHIP_LEVELS.find(l => l.key === requiredLevelKey);
-    return requiredLevel && viewerScore < requiredLevel.minScore;
-  };
+  const hiddenValues = profile.privacy_settings?.hidden_values;
+  const getHiddenCount = (fieldKey: string) => getHiddenFieldCount(fieldKey, hiddenValues, viewerScore);
+  const isItemHidden = (fieldKey: string, itemValue: string) => isFieldItemHidden(fieldKey, itemValue, hiddenValues, viewerScore);
 
   const renderHiddenBadge = (count: number) => {
-    if (count === 0) return null;
-    const label = count === 1 ? "Hidden" : `Hidden +${count}`;
+    const label = formatHiddenBadgeLabel(count);
+    if (!label) return null;
     return (
       <div className="flex items-center gap-1.5 text-[10px] font-bold text-amber-400 bg-amber-400/10 border border-amber-400/20 px-2.5 py-1 rounded-xl">
         <Lock className="w-3 h-3" /> {label}
@@ -254,13 +241,8 @@ export default function ProfileDetailsModal({ profileId, onClose, currentUserId 
   };
   
   const displayAge = profile.privacy_settings?.display_age || "18+";
-  const languages = profile.spoken_languages && profile.spoken_languages.length > 0
-    ? profile.spoken_languages
-    : ["English"];
-
-  const mediaItems = profile.album_media && profile.album_media.length > 0 
-    ? profile.album_media 
-    : (profile.album_photos || []).map((url: string) => ({ media_type: "image", media_url: url }));
+  const languages = normalizeSpokenLanguages(profile.spoken_languages);
+  const mediaItems = normalizeProfileMedia(profile.album_media, profile.album_photos);
 
   return (
     <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4">

@@ -58,6 +58,14 @@ export interface PurchaseCreditsResponse {
   message: string;
 }
 
+export interface DynamicPricingResponse {
+  creatorId: string;
+  basePrice: number;
+  contentVolume: number;
+  multiplier: number;
+  dynamicPrice: number;
+}
+
 // ── 4. AI & Assistant Endpoints ─────────────────────────────────────────────
 
 export interface AssistantChatResponse {
