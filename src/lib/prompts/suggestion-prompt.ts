@@ -1,4 +1,4 @@
-import { PredictionPayload, SuggestionRequest } from '@/lib/ai-suggestion-service';
+import { SuggestionRequest } from '@/lib/ai-suggestion-service';
 import { UserProfile } from '@/lib/match-engine';
 
 export const SYSTEM_INSTRUCTION = `You are a Hyper-Intuitive Social Catalyst AI operating within a high-end connection platform. 

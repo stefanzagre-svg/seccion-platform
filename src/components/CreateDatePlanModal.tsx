@@ -266,9 +266,9 @@ export default function CreateDatePlanModal({
                   <label className="text-[9px] uppercase tracking-widest font-black text-white/40">Plan Scope</label>
                   <div className="flex gap-2">
                     {[
-                      { value: 'In-Person', icon: MapPin, color: 'text-red-400' },
-                      { value: 'Digital Screen', icon: Video, color: 'text-blue-400' },
-                      { value: 'Hybrid', icon: Globe, color: 'text-emerald-400' }
+                      { value: 'In-Person' as const, icon: MapPin, color: 'text-red-400' },
+                      { value: 'Digital Screen' as const, icon: Video, color: 'text-blue-400' },
+                      { value: 'Hybrid' as const, icon: Globe, color: 'text-emerald-400' }
                     ].map(scope => {
                       const Icon = scope.icon;
                       const active = planScope === scope.value;
@@ -276,7 +276,7 @@ export default function CreateDatePlanModal({
                         <button
                           key={scope.value}
                           type="button"
-                          onClick={() => setPlanScope(scope.value as any)}
+                          onClick={() => setPlanScope(scope.value)}
                           className={`flex-1 py-3 border rounded-xl flex flex-col items-center gap-1.5 transition ${
                             active
                               ? 'bg-primary/10 border-primary text-primary shadow-[0_0_15px_rgba(102,252,241,0.1)]'

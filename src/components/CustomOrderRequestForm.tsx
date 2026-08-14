@@ -482,7 +482,7 @@ export default function CustomOrderRequestForm({
                       <label className="text-[9px] uppercase tracking-widest font-black text-white/40">Performer Type</label>
                       <select
                         value={coPerformerType}
-                        onChange={(e) => setCoPerformerType(e.target.value as any)}
+                        onChange={(e) => setCoPerformerType(e.target.value as 'registered' | 'external')}
                         className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-primary transition"
                       >
                         <option value="registered">Registered Platform User</option>

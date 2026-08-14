@@ -1,6 +1,6 @@
 import { createAdminClient } from './supabase/admin-client';
 import { supabase } from './supabase';
-import { applyInteractionEvent, scoreToLevel, POINT_VALUES } from './relationship-engine';
+import { applyInteractionEvent, scoreToLevel, POINT_VALUES, type InteractionEventType } from './relationship-engine';
 
 export interface DatePlan {
   plan_id: string;
@@ -43,7 +43,7 @@ export function getPrivilegedClient() {
 export async function updateRelationshipScorePrivileged(
   userId: string,
   targetId: string,
-  eventType: any
+  eventType: InteractionEventType
 ): Promise<number> {
   const client = getPrivilegedClient();
   
@@ -73,8 +73,8 @@ export async function updateRelationshipScorePrivileged(
 
   if (updateError) throw updateError;
 
-  // 3. Award Connection Points to the active user (actor)
-  const pointsAwarded = POINT_VALUES[eventType as keyof typeof POINT_VALUES] || 0;
+  // 3. Award Connection Points to the actor
+  const pointsAwarded = POINT_VALUES[eventType] || 0;
   if (pointsAwarded > 0) {
     const { data: profile } = await client
       .from('profiles')
@@ -103,6 +103,7 @@ export async function updateRelationshipScorePrivileged(
         .eq('id', userId);
     }
   }
+
   return newScore;
 }
 
@@ -158,6 +159,31 @@ export async function checkUserQuota(
     };
   } catch (err) {
     console.error('Error checking user Date Plan quota:', err);
+    return { allowed: false, count: 0 };
+  }
+}
+
+/**
+ * Checks if a user has exceeded their active Date Plan creation quota.
+ * Prevents users from spamming active plans (max 3 active plans per user).
+ */
+export async function checkUserPlanQuota(userId: string): Promise<{ allowed: boolean; count: number }> {
+  try {
+    const { count, error } = await supabase
+      .from('session_intent_plans')
+      .select('plan_id', { count: 'exact', head: true })
+      .eq('poster_user_uuid', userId)
+      .in('plan_status', ['New', 'Active', 'FinalCall']);
+
+    if (error) throw error;
+
+    const currentCount = count || 0;
+    return {
+      allowed: currentCount < 3,
+      count: currentCount
+    };
+  } catch (err) {
+    console.error('Error checking user Date Plan quota:', err);
     // Safe default to prevent abuse if DB query fails
     return { allowed: false, count: 0 };
   }
@@ -168,7 +194,7 @@ export async function checkUserQuota(
  */
 export async function createDatePlan(payload: DatePlanInsertPayload): Promise<DatePlan> {
   // Format PostGIS geography point if provided
-  const dbPayload: any = {
+  const dbPayload: Record<string, unknown> = {
     poster_user_uuid: payload.poster_user_uuid,
     intent_type: payload.intent_type,
     plan_scope: payload.plan_scope,

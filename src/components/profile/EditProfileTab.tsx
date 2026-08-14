@@ -372,7 +372,7 @@ export default function EditProfileTab({
                 <div className="grid grid-cols-2 gap-4">
                   {HABIT_CATEGORIES.map((category) => {
                     const currentValue = currentLifestyle[category] || "Not specified";
-                    const choices = (HABIT_CHOICES as any)[category] || [];
+                    const choices = HABIT_CHOICES[category as keyof typeof HABIT_CHOICES] || [];
                     const currentIndex = choices.indexOf(currentValue);
                     const nextIndex = currentIndex === -1 || currentIndex === choices.length - 1 ? 0 : currentIndex + 1;
                     const nextValue = choices[nextIndex];

@@ -226,7 +226,7 @@ export default function SessionQuest({ onSignUp, onClose }: SessionQuestProps) {
           {/* Language Selector */}
           <select
             value={lang}
-            onChange={(e) => setLang(e.target.value as any)}
+            onChange={(e) => setLang(e.target.value as 'en' | 'es' | 'fr')}
             className="bg-white/5 border border-white/10 rounded-lg text-xs py-1.5 px-2 focus:outline-none focus:border-primary font-bold"
           >
             <option value="en" className="bg-[#050505]">EN</option>

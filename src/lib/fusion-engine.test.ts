@@ -7,7 +7,6 @@ import {
   rankCandidates,
   ARCHETYPE_CHEMISTRY,
   type UserProfile,
-  type MatchResult,
 } from './match-engine';
 
 // ─── Test Helpers ────────────────────────────────────────────────────────────
@@ -386,7 +385,7 @@ describe('Match Engine v2', () => {
     });
 
     it('handles null profiles with blocked result', () => {
-      const result = calculateMatch(null as any, null as any);
+      const result = calculateMatch(null as unknown as UserProfile, null as unknown as UserProfile);
       expect(result.totalScore).toBe(0);
       expect(result.hardBlockerHit).toBe('missing_profile');
     });

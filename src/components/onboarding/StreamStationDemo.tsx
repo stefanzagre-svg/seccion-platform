@@ -157,10 +157,10 @@ export default function StreamStationDemo({ onComplete }: StreamStationDemoProps
             </div>
             
             <div className="flex gap-2">
-              {[1, 2, 3, 4].map((level) => (
+              {([1, 2, 3, 4] as const).map((level) => (
                 <button
                   key={level}
-                  onClick={() => setChemLevel(level as any)}
+                  onClick={() => setChemLevel(level)}
                   className={`flex-1 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-wider border transition-all ${
                     chemLevel === level
                       ? "bg-primary border-primary text-black"

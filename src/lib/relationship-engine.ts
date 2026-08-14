@@ -456,6 +456,23 @@ export const TENSION_DISPLAY: Record<GaugeTension, { label: string; emoji: strin
  */
 export const MIN_MATCHES_FOR_AUTO_CHAT = 30;
 
+export interface CreatorChatProfile {
+  ai_agent_active?: boolean;
+  chat_auto_enabled?: boolean;
+}
+
+export interface SuggestionMoveDbRow {
+  id: string;
+  label: string;
+  emoji?: string | null;
+  kyc_required?: boolean;
+  kycRequired?: boolean;
+  relationship_level?: RelationshipLevelKey;
+  relationshipLevel?: RelationshipLevelKey;
+  purpose_category?: ('dating' | 'lifestyle' | 'intimate' | 'all')[];
+  purposeCategory?: ('dating' | 'lifestyle' | 'intimate' | 'all')[];
+}
+
 /**
  * Validates if the AI Assistant can auto-chat with a user based on:
  *  1. Creator has enabled the AI master switch (ai_agent_active)
@@ -468,10 +485,10 @@ export const MIN_MATCHES_FOR_AUTO_CHAT = 30;
  * @param totalMatchCount  - total number of non-stranger connections the creator has
  */
 export const isAutoChatAllowed = (
-  creatorProfile: any,
+  creatorProfile: CreatorChatProfile,
   relationshipState: { myScore: number; theirScore: number; sharedScore: number },
   totalMatchCount: number = 0
-): { allowed: boolean; reason?: string } => {
+): { allowed: boolean; reason?: string; notEligible?: boolean } => {
   if (!creatorProfile.ai_agent_active) {
     return { allowed: false, reason: 'AI Assistant is currently disabled.' };
   }
@@ -482,7 +499,7 @@ export const isAutoChatAllowed = (
     return {
       allowed: false,
       reason: `Auto-Chat requires a minimum of ${MIN_MATCHES_FOR_AUTO_CHAT} matches. You currently have ${totalMatchCount}.`,
-      ...(({ notEligible: true }) as any),
+      notEligible: true,
     };
   }
   const currentLevel = scoreToLevel(relationshipState.sharedScore);
@@ -508,7 +525,7 @@ export function isFaceBlurRequired(sharedScore: number, isEnabledByOwner?: boole
 /**
  * Synchronously populates the in-memory RELATIONSHIP_LEVELS suggestionMoves list.
  */
-export function populateRelationshipLevels(moves: any[]) {
+export function populateRelationshipLevels(moves: SuggestionMoveDbRow[]) {
   // Clear existing suggestion moves in RELATIONSHIP_LEVELS
   for (const level of RELATIONSHIP_LEVELS) {
     level.suggestionMoves = [];
@@ -533,9 +550,13 @@ export function populateRelationshipLevels(moves: any[]) {
 /**
  * Fetches suggestion moves from the database and updates RELATIONSHIP_LEVELS in-memory.
  */
-export async function syncSuggestionMoves(supabase: any) {
+export async function syncSuggestionMoves(supabaseClient: {
+  from: (table: string) => {
+    select: (columns: string) => Promise<{ data: SuggestionMoveDbRow[] | null; error: unknown }>;
+  };
+}) {
   try {
-    const { data: dbMoves, error } = await supabase
+    const { data: dbMoves, error } = await supabaseClient
       .from('suggestion_moves')
       .select('id, label, emoji, kyc_required, relationship_level, purpose_category');
     
@@ -547,5 +568,6 @@ export async function syncSuggestionMoves(supabase: any) {
     console.error('Error syncing suggestion moves with DB:', err);
   }
 }
+
 
 

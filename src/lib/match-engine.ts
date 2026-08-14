@@ -568,8 +568,6 @@ function scoreNarrativeResonance(userA: UserProfile, userB: UserProfile): number
   const vulnB = evB.Vulnerability_Score ?? 0.5;
   const defA = evA.Defensive_Score ?? 0.5;
   const defB = evB.Defensive_Score ?? 0.5;
-  const idealA = evA.Idealization_Bias ?? 0.5;
-  const idealB = evB.Idealization_Bias ?? 0.5;
 
   // 1. Vulnerability: Similarity and high scores are rewarded
   const vulnScore = (1.0 - Math.abs(vulnA - vulnB)) * 60 + ((vulnA + vulnB) / 2) * 40;
@@ -780,11 +778,23 @@ export function calculateMatchProbability(userA: UserProfile, userB: UserProfile
   return calculateMatch(userA, userB).totalScore;
 }
 
+export interface LocationProfile {
+  id?: string;
+  username?: string;
+  currentLocation?: string;
+  current_location?: string;
+  location?: string;
+  origins?: string;
+}
+
 /**
  * Calculates a mock distance string between two users based on their location details.
  * Useful for displaying "Distance" instead of plain text "City Location".
  */
-export function calculateMockDistance(userA: any, userB: any): string {
+export function calculateMockDistance(
+  userA: LocationProfile | null | undefined,
+  userB: LocationProfile | null | undefined
+): string {
   if (!userA || !userB) return 'Nearby';
 
   // Determine current active location

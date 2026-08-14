@@ -82,8 +82,14 @@ export const OnboardingLogger = {
   },
 };
 
+declare global {
+  interface Window {
+    __ob_log?: typeof OnboardingLogger;
+  }
+}
+
 if (typeof window !== "undefined" && ENABLED) {
-  (window as any).__ob_log = OnboardingLogger;
+  window.__ob_log = OnboardingLogger;
   console.info(
     "SECCION Onboarding Logger active.\n" +
     "  window.__ob_log.printReport()  - view step log\n" +

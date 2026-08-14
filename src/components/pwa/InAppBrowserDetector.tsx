@@ -20,7 +20,7 @@ export default function InAppBrowserDetector() {
   useEffect(() => {
     if (typeof window === "undefined") return;
 
-    const ua = navigator.userAgent || navigator.vendor || (window as any).opera || "";
+    const ua = navigator.userAgent || navigator.vendor || "";
     const isIOS = /iPhone|iPad|iPod/i.test(ua);
     const isAndroid = /Android/i.test(ua);
 

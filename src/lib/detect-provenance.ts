@@ -4,7 +4,7 @@
 // Actual API integration requires HIVE_API_KEY environment variable.
 // ────────────────────────────────────────────────────────────────────────────────
 
-import type { ProvenanceLevel, AutoDetectionResult } from './content-provenance';
+import type { AutoDetectionResult } from './content-provenance';
 import { suggestProvenanceFromDetection } from './content-provenance';
 
 // ─── Hive Moderation API Integration ────────────────────────────────────────────
@@ -33,7 +33,7 @@ interface HiveApiResponse {
  */
 export async function detectContentProvenance(
   mediaUrl: string,
-  mediaType: 'image' | 'video' | 'audio',
+  _mediaType: 'image' | 'video' | 'audio',
 ): Promise<AutoDetectionResult | null> {
   const hiveApiKey = process.env.HIVE_API_KEY;
 

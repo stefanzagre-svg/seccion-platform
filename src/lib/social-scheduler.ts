@@ -42,7 +42,7 @@ export async function uploadMediaToSupabase(localFilePath: string): Promise<stri
 
   console.log(`Uploading ${fileName} to Supabase...`);
   
-  const { data, error } = await getSupabaseAdmin()
+  const { error } = await getSupabaseAdmin()
     .storage
     .from('social-assets')
     .upload(fileName, fileBuffer, {

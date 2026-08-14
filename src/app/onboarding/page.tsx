@@ -402,7 +402,7 @@ export default function OnboardingFlow() {
         }
 
         // Fetch existing profile with resilient fallback guard
-        const profile: any = await getResilientProfile(session.user.id, 4000);
+        const profile: any = await getResilientProfile(authUser.id, 4000);
           
         if (profile) {
           const hasPhoto = !!profile.avatar_url;
@@ -427,7 +427,7 @@ export default function OnboardingFlow() {
               if (typeof window !== "undefined" && !sessionStorage.getItem("_onboarding_creator_archive_choice")) {
                 sessionStorage.setItem("_onboarding_creator_archive_choice", "creator");
               }
-              OnboardingLogger.log('init', 'step_enter', 'creator detected on return, routing to creator-checklist or purpose', session.user.id);
+              OnboardingLogger.log('init', 'step_enter', 'creator detected on return, routing to creator-checklist or purpose', authUser.id);
               // Need to check if they finished member onboarding
               if (hasPhoto && hasBio && hasPreferences) {
                  setStep("creator-checklist");
@@ -439,13 +439,13 @@ export default function OnboardingFlow() {
                  setStep("profile-checklist");
               }
             } else if (!hasPurposes) {
-              OnboardingLogger.log('init', 'step_enter', 'no purposes, routing to purpose', session.user.id);
+              OnboardingLogger.log('init', 'step_enter', 'no purposes, routing to purpose', authUser.id);
               setStep("purpose");
             } else if (!hasAge) {
-              OnboardingLogger.log('init', 'step_enter', 'no age, routing to intent', session.user.id);
+              OnboardingLogger.log('init', 'step_enter', 'no age, routing to intent', authUser.id);
               setStep("intent");
             } else {
-              OnboardingLogger.log('init', 'step_enter', 'resuming profile-checklist', session.user.id);
+              OnboardingLogger.log('init', 'step_enter', 'resuming profile-checklist', authUser.id);
               setStep("profile-checklist");
             }
           }

@@ -14,8 +14,8 @@
  *   2. `remote` – calls POST /api/v2/suggestions/predict, which can delegate to Gemini
  */
 
-import { calculateMatch, calculateMatchProbability, getChemistryNarrative, UserProfile, type MatchResult } from './match-engine';
-import { getDualGaugeState, RELATIONSHIP_LEVELS } from './relationship-engine';
+import { calculateMatch, getChemistryNarrative, UserProfile, type MatchResult } from './match-engine';
+import { getDualGaugeState } from './relationship-engine';
 import { getQuestState, getUserProfile } from './quest-service';
 
 // ─── Schema ──────────────────────────────────────────────────────────────────
@@ -206,8 +206,6 @@ function computeSignals(
 
   // Opportunity gap = how close they are to the next relationship level
   const currentLevel = gaugeState.level;
-  const currentLevelIdx = RELATIONSHIP_LEVELS.findIndex(l => l.key === currentLevel.key);
-  const nextLevel = RELATIONSHIP_LEVELS[Math.min(currentLevelIdx + 1, RELATIONSHIP_LEVELS.length - 1)];
   const levelRange = currentLevel.maxScore - currentLevel.minScore || 1;
   const progressInLevel = gaugeState.sharedScore - currentLevel.minScore;
   const opportunityGap = Math.round(((levelRange - progressInLevel) / levelRange) * 100);
@@ -268,13 +266,11 @@ const CATEGORY_TEASERS: Record<SuggestionCategory, (b: SignalBundle) => string> 
 
 const CATEGORY_DETAIL: Record<SuggestionCategory, (b: SignalBundle) => string> = {
   high_compatibility: (b) => {
-    const shared = b.candidate.shared_interests?.join(', ') || 'multiple domains';
     const desires = b.candidate.complementary_desires?.join(' and ') || 'deeper connection';
     const bd = b.matchResult.breakdown;
     return `Recommended due to a ${b.matchProbability}% multi-signal compatibility score — Archetype Chemistry: ${bd.archetypeChemistry}%, Lifestyle Sync: ${bd.lifestyleSync}%, Hobby Overlap: ${bd.hobbyOverlap}%, Mood Resonance: ${bd.moodResonance}%. ${b.archetypeNarrative} Complementary desire analysis identifies a mutual pull toward ${desires}. This pairing has a high predicted conversion rate to the '${b.candidate.profile.relationshipGoal}' goal you share.`;
   },
   momentum_opportunity: (b) => {
-    const shared = b.candidate.shared_interests?.join(' and ') || 'key areas';
     const bd = b.matchResult.breakdown;
     return `${b.candidate.username} is in their peak engagement window — momentum at ${b.candidate.momentum}/100 with Relationship Level only ${b.opportunityGap}% from the next tier. Signal breakdown: Archetype ${bd.archetypeChemistry}%, Lifestyle ${bd.lifestyleSync}%, Temporal ${bd.temporalSignal}%. ${b.archetypeNarrative} Acting now with a Suggestion Move yields the highest XP multiplier.`;
   },
@@ -283,13 +279,10 @@ const CATEGORY_DETAIL: Record<SuggestionCategory, (b: SignalBundle) => string> =
     return `The dual-gauge model shows ${b.candidate.username}'s score toward you is ${b.theirGauge}/100 while your score toward them is estimated lower. ${b.archetypeNarrative} Their core desire for ${desires} aligns with what you can offer. Engage now to balance the dynamic and unlock the next level.`;
   },
   rising_star: (b) => {
-    const shared = b.candidate.shared_interests?.join(', ') || 'multiple interests';
     const bd = b.matchResult.breakdown;
     return `${b.candidate.username}'s trajectory shows a ${b.candidate.momentum}/100 momentum surge. Signal analysis: Archetype Chemistry ${bd.archetypeChemistry}%, Mood Resonance ${bd.moodResonance}%, Lifestyle Sync ${bd.lifestyleSync}%. ${b.archetypeNarrative} Early connections with rising users historically show 2.3x higher long-term engagement rates.`;
   },
   data_gap_bridge: (b) => {
-    const shared = b.candidate.shared_interests?.join(' and ') || 'emerging interests';
-    const desires = b.candidate.complementary_desires?.join(' and ') || 'growth areas';
     const bd = b.matchResult.breakdown;
     return `The system identifies ${b.candidate.username} as a data-gap bridge — filling missing nodes in your social graph. Signal breakdown: Archetype ${bd.archetypeChemistry}%, Lifestyle ${bd.lifestyleSync}%, Geo ${bd.geoProximity}%. ${b.archetypeNarrative} The opportunity gap is ${b.opportunityGap}% — there is room to grow significantly together.`;
   },

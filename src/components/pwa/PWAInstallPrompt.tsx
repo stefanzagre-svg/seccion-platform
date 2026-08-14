@@ -3,8 +3,17 @@
 import React, { useState, useEffect } from "react";
 import { Download, Share, PlusSquare, X, Sparkles, CheckCircle2 } from "lucide-react";
 
+interface BeforeInstallPromptEvent extends Event {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{ outcome: 'accepted' | 'dismissed'; platform: string }>;
+}
+
+interface NavigatorStandalone extends Navigator {
+  standalone?: boolean;
+}
+
 export default function PWAInstallPrompt() {
-  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [isIOS, setIsIOS] = useState(false);
   const [isFirefox, setIsFirefox] = useState(false);
   const [isStandalone, setIsStandalone] = useState(false);
@@ -17,7 +26,7 @@ export default function PWAInstallPrompt() {
     // Check if already in standalone app mode
     const standaloneMode =
       window.matchMedia("(display-mode: standalone)").matches ||
-      (window.navigator as any).standalone === true;
+      (window.navigator as NavigatorStandalone).standalone === true;
 
     setIsStandalone(standaloneMode);
     if (standaloneMode) return;
@@ -32,7 +41,7 @@ export default function PWAInstallPrompt() {
     }
 
     const ua = navigator.userAgent;
-    const isIOSDevice = /iPhone|iPad|iPod/i.test(ua) && !(window as any).MSStream;
+    const isIOSDevice = /iPhone|iPad|iPod/i.test(ua);
     const isFirefoxDevice = /Firefox|FxiOS/i.test(ua);
     setIsIOS(isIOSDevice);
     setIsFirefox(isFirefoxDevice);

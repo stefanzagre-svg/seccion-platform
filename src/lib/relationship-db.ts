@@ -1,6 +1,7 @@
 import { supabase } from './supabase';
-import { applyInteractionEvent, scoreToLevel, resolveSharedScore, POINT_VALUES } from './relationship-engine';
+import { applyInteractionEvent, scoreToLevel, POINT_VALUES, type InteractionEventType } from './relationship-engine';
 import { awardXp } from './xp-service';
+import type { FaceCoordinates } from '@/components/BlurredFaceImage';
 
 export interface Profile {
   id: string;
@@ -24,14 +25,14 @@ export interface Profile {
   bio_prompt_category_2?: string;
   bio_prompt_question_2?: string;
   bio_prompt_answer_2?: string;
-  bio_analysis?: any;
+  bio_analysis?: Record<string, unknown> | null;
   face_blur_active?: boolean;
-  avatar_face_coordinates?: any;
+  avatar_face_coordinates?: FaceCoordinates | null;
   native_town?: string;
   residence?: string;
   current_location?: string;
   origins?: string;
-  privacy_settings?: Record<string, any>;
+  privacy_settings?: Record<string, unknown>;
   is_kyc_verified?: boolean;
   active_purposes?: string[];
   income_bracket?: string;
@@ -224,7 +225,7 @@ export async function fetchMatches(userId: string): Promise<MatchInfo[]> {
 
     if (error) throw error;
 
-    return (relationships || []).map((r: any) => ({
+    return (relationships || []).map((r: { id: string; target_profile: Profile; current_level: string; gauge_score: number; is_matched: boolean }) => ({
       relationship_id: r.id,
       target_profile: r.target_profile,
       current_level: r.current_level,
@@ -322,7 +323,7 @@ export async function getRelationshipState(userId: string, targetId: string) {
 export async function updateRelationshipScore(
   userId: string,
   targetId: string,
-  eventType: any
+  eventType: InteractionEventType
 ): Promise<number> {
   try {
     // 1. Get current score
@@ -352,7 +353,7 @@ export async function updateRelationshipScore(
     if (updateError) throw updateError;
 
     // 3. Award Connection Points to the active user (actor)
-    const pointsAwarded = POINT_VALUES[eventType as keyof typeof POINT_VALUES] || 0;
+    const pointsAwarded = POINT_VALUES[eventType] || 0;
     if (pointsAwarded > 0) {
       const { data: profile } = await supabase
         .from('profiles')
@@ -424,7 +425,7 @@ export async function sendMessage(
 ) {
   try {
     // 1. Insert message
-    const insertObj: any = {
+    const insertObj: Record<string, unknown> = {
       sender_id: senderId,
       receiver_id: receiverId,
       text
@@ -462,7 +463,18 @@ export async function sendMessage(
 /**
  * Update the current user's profile with chosen Archetype pre-configurations.
  */
-export async function updateProfileArchetype(userId: string, data: any) {
+export async function updateProfileArchetype(
+  userId: string,
+  data: {
+    archetype: string;
+    hobbies?: string[];
+    lifestyle_habits?: Record<string, string>;
+    core_passion?: string;
+    relationship_goals?: string[];
+    sexual_preferences?: string[];
+    spoken_languages?: string[];
+  }
+) {
   try {
     if (!userId) return;
 
@@ -568,7 +580,7 @@ export interface ProfileMedia {
   required_level: string;
   created_at?: string;
   face_blur_enabled?: boolean;
-  face_coordinates?: any;
+  face_coordinates?: FaceCoordinates | null;
   video_start_time?: number | null;
   video_end_time?: number | null;
 }
@@ -666,10 +678,20 @@ export async function checkPublicPhotoRequirement(userId: string): Promise<boole
   }
 }
 
+export interface MemberAlbum {
+  id: string;
+  member_id: string;
+  title: string;
+  description?: string | null;
+  visibility: 'public' | 'close_friends' | 'subscribers' | 'private';
+  created_at: string;
+  cover_url?: string | null;
+}
+
 /**
  * Fetch member albums
  */
-export async function fetchMemberAlbums(userId: string): Promise<any[]> {
+export async function fetchMemberAlbums(userId: string): Promise<MemberAlbum[]> {
   try {
     const { data, error } = await supabase
       .from('member_albums')

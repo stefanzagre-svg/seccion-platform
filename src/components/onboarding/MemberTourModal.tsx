@@ -23,7 +23,8 @@ import {
   Trophy,
   Camera,
   Activity,
-  Bot
+  Bot,
+  Plus
 } from "lucide-react";
 
 // Helper Info Bubble Tooltip
@@ -201,12 +202,12 @@ export default function MemberTourModal({ isOpen, onClose, onStartQuest }: Membe
                     <div className="space-y-3">
                       <label className="block text-[8px] font-mono text-white/40 uppercase font-bold text-left">Select Vibe Archetype</label>
                       <div className="grid grid-cols-3 gap-2">
-                        {Object.keys(archetypes).map((key) => {
+                        {(Object.keys(archetypes) as (keyof typeof archetypes)[]).map((key) => {
                           const isSelected = selectedArchetype === key;
                           return (
                             <button
                               key={key}
-                              onClick={() => setSelectedArchetype(key as any)}
+                              onClick={() => setSelectedArchetype(key)}
                               className={`p-2 rounded-xl border text-[8px] font-bold uppercase transition text-center cursor-pointer ${
                                 isSelected 
                                   ? 'border-[#00fbfb] text-[#00fbfb] bg-[#00fbfb]/5' 
@@ -232,9 +233,10 @@ export default function MemberTourModal({ isOpen, onClose, onStartQuest }: Membe
                     <div className="space-y-2">
                       <label className="block text-[8px] font-mono text-white/40 uppercase font-bold text-left">Content Album preview</label>
                       <div className="grid grid-cols-3 gap-2">
-                        <div className="aspect-square rounded-xl bg-white/5 border border-white/10 flex items-center justify-center">
-                          <PlusIcon className="w-4 h-4 text-white/20" />
-                        </div>
+                        <button className="flex-1 py-2 rounded-xl border border-dashed border-white/20 flex items-center justify-center gap-1.5 text-[8px] font-bold text-white/40 hover:text-white/60 hover:border-white/40 transition cursor-pointer">
+                          <Plus className="w-4 h-4 text-white/20" />
+                          <span>Add Bio Audio Clip (15s)</span>
+                        </button>
                         <div className="aspect-square rounded-xl overflow-hidden border border-white/10">
                           <img src="https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=150&q=80" className="w-full h-full object-cover" />
                         </div>
@@ -1053,21 +1055,5 @@ export default function MemberTourModal({ isOpen, onClose, onStartQuest }: Membe
       </div>
 
     </div>
-  );
-}
-
-// Inline Icon Stubs
-function PlusIcon(props: React.SVGProps<SVGSVGElement>) {
-  return (
-    <svg 
-      fill="none" 
-      stroke="currentColor" 
-      strokeWidth="2" 
-      viewBox="0 0 24 24" 
-      xmlns="http://www.w3.org/2000/svg" 
-      {...props}
-    >
-      <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-    </svg>
   );
 }

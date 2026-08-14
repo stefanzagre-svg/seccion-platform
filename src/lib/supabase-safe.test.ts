@@ -18,9 +18,9 @@ describe('Supabase Safe Module Resilience', () => {
   });
 
   it('returns fallback data with isTimeout: true when query times out', async () => {
-    const mockHangingQuery = new Promise((resolve) => setTimeout(resolve, 5000));
+    const mockHangingQuery = new Promise<{ data: null; error: null }>((resolve) => setTimeout(resolve, 5000));
     const fallback = { id: 'timeout-fallback' };
-    const result = await safeSupabaseQuery(mockHangingQuery as any, fallback, 100);
+    const result = await safeSupabaseQuery(mockHangingQuery, fallback, 100);
     expect(result.data).toEqual(fallback);
     expect(result.isTimeout).toBe(true);
   });
