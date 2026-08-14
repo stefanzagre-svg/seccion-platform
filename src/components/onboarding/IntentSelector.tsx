@@ -230,12 +230,15 @@ export default function IntentSelector({ activePurposes, onContinue }: { activeP
               
               <div className="grid grid-cols-2 gap-3 w-full mb-6 max-h-[260px] overflow-y-auto pr-1 custom-scrollbar">
                 {INTENTS.filter(i => {
-                  const hasLifestyle = activePurposes.includes('lifestyle') || activePurposes.includes('creator');
+                  const isCreator = activePurposes.includes('creator');
+                  if (isCreator) return true; // Creators have full access to ALL vibe categories
+
+                  const hasLifestyle = activePurposes.includes('lifestyle');
                   const hasDating = activePurposes.includes('dating') || activePurposes.includes('explicit');
                   
-                  if (hasLifestyle && !hasDating) return i.type === 'growth';
+                  if (hasLifestyle && !hasDating) return i.type === 'growth' || i.type === 'online';
                   if (hasDating && !hasLifestyle) return i.type === 'online' || i.type === 'irl';
-                  return true; // Dual
+                  return true; // All
                 }).map((intent) => {
                   const isSelected = selectedIntents.includes(intent.id);
                   return (

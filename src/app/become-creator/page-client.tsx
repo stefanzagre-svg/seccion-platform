@@ -242,7 +242,7 @@ export default function BecomeCreatorPage({ initialProfile, userEmail }: { initi
 
             <div className="flex flex-wrap items-center gap-3 pt-2">
               <Link 
-                href="/onboarding" 
+                href="/onboarding?role=creator" 
                 className="group px-5 py-3 rounded-full bg-[#00fbfb] text-black font-mono text-[11px] font-black uppercase tracking-wider inline-flex items-center justify-between gap-3 hover:shadow-[0_0_30px_rgba(0,251,251,0.6)] active:scale-[0.98] transition-all duration-300 min-h-[44px] cursor-pointer"
               >
                 <span>{locale === "es" ? "Reclama tu Año Gratis" : "Claim Your Free Year"}</span>
@@ -822,7 +822,7 @@ export default function BecomeCreatorPage({ initialProfile, userEmail }: { initi
         onClose={() => setIsTourOpen(false)} 
         onClaimOffer={() => {
           setIsTourOpen(false);
-          window.location.href = '/onboarding';
+          window.location.href = '/onboarding?role=creator';
         }}
       />
     </div>

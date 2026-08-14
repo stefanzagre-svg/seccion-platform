@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
+import { getResilientSession } from '@/lib/supabase-safe';
 import { Mail, RefreshCw, LogOut } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -26,20 +27,14 @@ export default function EmailVerificationGuard({ children }: { children: React.R
 
     async function checkAuth() {
       try {
-        const { data, error } = await supabase.auth.getSession();
+        const data = await getResilientSession();
         
-        if (error) {
-          console.error('EmailVerificationGuard: Session error:', error);
-          if (mounted) setNeedsVerification(false);
-          return;
-        }
-
-        const session = data?.session;
-        if (session?.user) {
-          if (!session.user.email_confirmed_at) {
+        const user = data?.user;
+        if (user) {
+          if (!user.email_confirmed_at) {
             if (mounted) {
               setNeedsVerification(true);
-              setUserEmail(session.user.email || null);
+              setUserEmail(user.email || null);
             }
           } else {
             if (mounted) setNeedsVerification(false);

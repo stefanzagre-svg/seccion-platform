@@ -120,6 +120,7 @@ import ContributeModal from "@/components/ContributeModal";
 import MultiSelectModal from "@/components/MultiSelectModal";
 import BlurredFaceImage from "@/components/BlurredFaceImage";
 import ReportModal from "@/components/modals/ReportModal";
+import RequirementGateModal from "@/components/modals/RequirementGateModal";
 import { useTranslation } from "@/context/LanguageContext";
 
 const LIFESTYLE_ICONS: Record<string, any> = {
@@ -194,8 +195,8 @@ const MOCK_USER = {
 
 const MOCK_CANDIDATES = [
   {
-    id: "elena",
-    name: "Elena",
+    id: "placeholder-creator-a",
+    name: "Creator A",
     avatar:
       "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=800&q=80",
     gender: "Female",
@@ -210,6 +211,7 @@ const MOCK_CANDIDATES = [
     moods: ["flirty_playful", "exclusive_vip"] as MoodId[],
     corePassion: "fitness" as PassionId,
     age: 26,
+    basePrice: 15,
     isKycVerified: true,
     lastActiveAt: new Date().toISOString(),
     engagementScore: 95,
@@ -229,8 +231,8 @@ const MOCK_CANDIDATES = [
     },
   },
   {
-    id: "sofia",
-    name: "Sofia",
+    id: "placeholder-creator-b",
+    name: "Creator B",
     avatar:
       "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=800&q=80",
     gender: "Female",
@@ -245,6 +247,7 @@ const MOCK_CANDIDATES = [
     moods: ["deep_intimate", "creative_showcase"] as MoodId[],
     corePassion: "art" as PassionId,
     age: 27,
+    basePrice: 12,
     isKycVerified: true,
     lastActiveAt: new Date().toISOString(),
     engagementScore: 88,
@@ -264,8 +267,8 @@ const MOCK_CANDIDATES = [
     },
   },
   {
-    id: "valentina",
-    name: "Valentina",
+    id: "placeholder-creator-c",
+    name: "Creator C",
     avatar:
       "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=800&q=80",
     gender: "Female",
@@ -280,6 +283,7 @@ const MOCK_CANDIDATES = [
     moods: ["flirty_playful", "party_dance"] as MoodId[],
     corePassion: "music" as PassionId,
     age: 24,
+    basePrice: 10,
     isKycVerified: false,
     lastActiveAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
     engagementScore: 60,
@@ -388,17 +392,27 @@ export default function MemberProfile() {
   const [mediaItems, setMediaItems] = useState<ProfileMedia[]>([]);
   const [isLoadingMedia, setIsLoadingMedia] = useState(false);
   const [mediaUrlInput, setMediaUrlInput] = useState("");
+  
+  // Settings Gate Modal State
+  const [gateModalState, setGateModalState] = useState<{
+    isOpen: boolean;
+    purposeId: string;
+    purposeLabel: string;
+    missingRequirements: { id: string; label: string; met: boolean }[];
+    requiresAdultConsent: boolean;
+  }>({
+    isOpen: false,
+    purposeId: '',
+    purposeLabel: '',
+    missingRequirements: [],
+    requiresAdultConsent: false,
+  });
   const [mediaTypeInput, setMediaTypeInput] = useState<"image" | "video">("image");
   const [mediaIsHiddenInput, setMediaIsHiddenInput] = useState(false);
   const [mediaRequiredLevelInput, setMediaRequiredLevelInput] = useState("public");
   const [isUploadingMedia, setIsUploadingMedia] = useState(false);
 
-  const MOCK_MEDIA_ITEMS: ProfileMedia[] = [
-    { id: 'mock-media-1', user_id: 'mock-user-id', media_url: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=600&q=80', media_type: 'image', is_hidden: false, required_level: 'public' },
-    { id: 'mock-media-2', user_id: 'mock-user-id', media_url: 'https://images.unsplash.com/photo-1511556532299-8f662fc26c06?w=600&q=80', media_type: 'image', is_hidden: false, required_level: 'public' },
-    { id: 'mock-media-3', user_id: 'mock-user-id', media_url: 'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=600&q=80', media_type: 'image', is_hidden: true, required_level: 'friendly' },
-    { id: 'mock-media-4', user_id: 'mock-user-id', media_url: 'https://images.unsplash.com/photo-1501854140801-50d01698950b?w=600&q=80', media_type: 'image', is_hidden: true, required_level: 'vip' }
-  ];
+  const MOCK_MEDIA_ITEMS: ProfileMedia[] = [];
 
   const loadUserMedia = async (userId: string) => {
     setIsLoadingMedia(true);
@@ -418,23 +432,13 @@ export default function MemberProfile() {
       alert("Please enter a media URL.");
       return;
     }
+    if (!currentUser) {
+      console.error('You must be logged in to manage media.');
+      return;
+    }
     setIsUploadingMedia(true);
-    const userId = currentUser?.id || "mock-user-id";
+    const userId = currentUser.id;
     try {
-      if (!currentUser) {
-        const newItem: ProfileMedia = {
-          id: `mock-media-${Date.now()}`,
-          user_id: userId,
-          media_url: mediaUrlInput,
-          media_type: mediaTypeInput,
-          is_hidden: mediaIsHiddenInput,
-          required_level: mediaIsHiddenInput ? mediaRequiredLevelInput : "public"
-        };
-        setMediaItems(prev => [...prev, newItem]);
-        setMediaUrlInput("");
-        alert("Media uploaded successfully! (Demo Mode)");
-        return;
-      }
 
       const uploaded = await uploadProfileMedia(
         userId,
@@ -461,10 +465,9 @@ export default function MemberProfile() {
 
   const handleDeleteMedia = async (mediaId: string) => {
     if (!confirm("Are you sure you want to delete this media item?")) return;
-    
+
     if (!currentUser) {
-      setMediaItems(prev => prev.filter(m => m.id !== mediaId));
-      alert("Media deleted successfully! (Demo Mode)");
+      console.error('You must be logged in to manage media.');
       return;
     }
 
@@ -535,50 +538,14 @@ export default function MemberProfile() {
   const [calendarEvents, setCalendarEvents] = useState<any[]>([]);
   const [isLoadingCalendar, setIsLoadingCalendar] = useState(false);
   const [selectedCandidateId, setSelectedCandidateId] =
-    useState<string>("elena");
+    useState<string>("");
   const [matchedCreators, setMatchedCreators] = useState<
     Record<string, boolean>
-  >({
-    elena: false,
-    sofia: false,
-    valentina: false,
-    marco: false,
-  });
+  >({});
 
   // Master Subscription Roster Management States
   const [currentUser, setCurrentUser] = useState<any>(null);
-  const [roster, setRoster] = useState<any[]>([
-    {
-      id: "elena",
-      name: "Elena",
-      avatar:
-        "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=200&q=80",
-      niche: "Fitness",
-      basePrice: 15,
-      accelerator: 0.95,
-      isCancelled: false,
-    },
-    {
-      id: "sofia",
-      name: "Sofia",
-      avatar:
-        "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&q=80",
-      niche: "Tech",
-      basePrice: 12,
-      accelerator: 0.88,
-      isCancelled: false,
-    },
-    {
-      id: "valentina",
-      name: "Valentina",
-      avatar:
-        "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=200&q=80",
-      niche: "Music",
-      basePrice: 10,
-      accelerator: 0.6,
-      isCancelled: false,
-    },
-  ]);
+  const [roster, setRoster] = useState<any[]>([]);
   const [cancellingRosterId, setCancellingRosterId] = useState<string | null>(
     null,
   );
@@ -622,73 +589,10 @@ export default function MemberProfile() {
 
   // Load matches
   const loadMatches = async (userId: string) => {
-    // Guard for mock user sessions
-    if (!userId || userId === "mock-user-id" || !userId.match(/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/)) {
-      const fallbackMatches = [
-        {
-          relationship_id: "mock-rel-elena",
-          target_profile: {
-            id: "elena",
-            username: "Elena",
-            display_name: "Elena",
-            avatar_url:
-              "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=200&q=80",
-            role: "creator",
-            bio: "Fitness & lifestyle enthusiast",
-            hobbies: ["Fitness", "Music", "Traveling"],
-            lifestyle_habits: [],
-            astro_sign: "Leo",
-            relationship_goals: ["Good Vibe Instant Crush"],
-          },
-          current_level: "friendly",
-          gauge_score: 22,
-          is_matched: true,
-        },
-        {
-          relationship_id: "mock-rel-sofia",
-          target_profile: {
-            id: "sofia",
-            username: "Sofia",
-            display_name: "Sofia",
-            avatar_url:
-              "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&q=80",
-            role: "creator",
-            bio: "Tech & gaming enthusiast",
-            hobbies: ["Tech", "Gaming", "Art"],
-            lifestyle_habits: [],
-            astro_sign: "Gemini",
-            relationship_goals: ["Open to possibilities"],
-          },
-          current_level: "close",
-          gauge_score: 35,
-          is_matched: true,
-        },
-        {
-          relationship_id: "mock-rel-valentina",
-          target_profile: {
-            id: "valentina",
-            username: "Valentina",
-            display_name: "Valentina",
-            avatar_url:
-              "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=200&q=80",
-            role: "creator",
-            bio: "Music & fashion enthusiast",
-            hobbies: ["Music", "Yoga", "Fashion"],
-            lifestyle_habits: [],
-            astro_sign: "Libra",
-            relationship_goals: ["Casual"],
-          },
-          current_level: "soulmate",
-          gauge_score: 95,
-          is_matched: true,
-        },
-      ];
-      setLiveMatches(fallbackMatches);
-      await selectMatch(
-        userId,
-        fallbackMatches[0].target_profile.id,
-        fallbackMatches,
-      );
+    if (!userId || !userId.match(/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/)) {
+      setLiveMatches([]);
+      setSelectedMatchId('');
+      setSelectedMatchState(null);
       return;
     }
     try {
@@ -711,7 +615,8 @@ export default function MemberProfile() {
   };
 
   const loadCalendarEvents = async () => {
-    const userId = currentUser?.id || "mock-user-id";
+    const userId = currentUser?.id;
+    if (!userId) return;
     setIsLoadingCalendar(true);
     try {
       const res = await fetch(`/api/integrations/calendar?userId=${userId}`);
@@ -733,36 +638,8 @@ export default function MemberProfile() {
   }, [activeTab, currentUser]);
 
   const loadCreatorGoals = async (creatorId: string) => {
-    // Intercept short mock IDs or non-UUID strings to prevent Supabase 400 errors
-    if (!creatorId || creatorId === "elena" || creatorId === "sofia" || creatorId === "valentina" || !creatorId.match(/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/)) {
-      setIsLoadingGoals(true);
-      if (creatorId === "elena") {
-        setCreatorGoals([
-          {
-            id: "mock-goal-elena",
-            creator_id: "elena",
-            title: "Upgrade Live Stream Camera Setup",
-            description: "Help me fund a new Sony A7S III camera for ultra-high-definition 4K broadcasts!",
-            target_amount: 1200.0,
-            current_amount: 850.0,
-            is_completed: false,
-          },
-        ]);
-      } else if (creatorId === "sofia") {
-        setCreatorGoals([
-          {
-            id: "mock-goal-sofia",
-            creator_id: "sofia",
-            title: "Photo Book: Neon Nights",
-            description: "Pre-order my exclusive digital/physical art book capturing the cyberpunk Tokyo vibe.",
-            target_amount: 2500.0,
-            current_amount: 1850.0,
-            is_completed: false,
-          },
-        ]);
-      } else {
-        setCreatorGoals([]);
-      }
+    if (!creatorId || !creatorId.match(/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/)) {
+      setCreatorGoals([]);
       setIsLoadingGoals(false);
       return;
     }
@@ -778,49 +655,7 @@ export default function MemberProfile() {
       if (!error && data && data.length > 0) {
         setCreatorGoals(data);
       } else {
-        // Fallbacks for Guest Demo Mode to showcase premium UI
-        if (creatorId === "elena") {
-          setCreatorGoals([
-            {
-              id: "mock-goal-elena",
-              creator_id: "elena",
-              title: "Upgrade Live Stream Camera Setup",
-              description:
-                "Help me fund a new Sony A7S III camera for ultra-high-definition 4K broadcasts!",
-              target_amount: 1200.0,
-              current_amount: 850.0,
-              is_completed: false,
-            },
-          ]);
-        } else if (creatorId === "sofia") {
-          setCreatorGoals([
-            {
-              id: "mock-goal-sofia",
-              creator_id: "sofia",
-              title: "New Coding & Gaming Rig",
-              description:
-                "Funding a high-spec AMD Ryzen 9 workstation for faster content compiling and high-frame-rate streaming.",
-              target_amount: 2500.0,
-              current_amount: 1420.0,
-              is_completed: false,
-            },
-          ]);
-        } else if (creatorId === "valentina") {
-          setCreatorGoals([
-            {
-              id: "mock-goal-valentina",
-              creator_id: "valentina",
-              title: "Acoustic Studio Panels & Soundproofing",
-              description:
-                "Soundproofing my new recording booth to deliver crystal clear podcast audio and ASMR broadcasts.",
-              target_amount: 600.0,
-              current_amount: 450.0,
-              is_completed: false,
-            },
-          ]);
-        } else {
-          setCreatorGoals([]);
-        }
+        setCreatorGoals([]);
       }
     } catch (err) {
       console.error("Error loading creator goals:", err);
@@ -838,70 +673,39 @@ export default function MemberProfile() {
     setSelectedMatchId(targetId);
     loadCreatorGoals(targetId);
     try {
-      if (
-        targetId === "elena" ||
-        targetId === "sofia" ||
-        targetId === "valentina"
-      ) {
-        const found = matchesList.find((m) => m.target_profile.id === targetId);
-        const myScore = found?.gauge_score || 50;
-        const theirScore =
-          targetId === "elena" ? 70 : targetId === "sofia" ? 45 : 98;
-        const dualState = getDualGaugeState(myScore, theirScore);
-        setSelectedMatchState(dualState);
-      } else {
-        const stateObj = await getRelationshipState(userId, targetId);
-        const dualState = getDualGaugeState(
-          stateObj.myScore,
-          stateObj.theirScore,
-        );
-        setSelectedMatchState(dualState);
-      }
+      const stateObj = await getRelationshipState(userId, targetId);
+      const dualState = getDualGaugeState(
+        stateObj.myScore,
+        stateObj.theirScore,
+      );
+      setSelectedMatchState(dualState);
     } catch (err) {
       console.error("Error selecting match:", err);
     }
   };
 
   const handleSelectMove = async (moveId: string, label: string) => {
-    const userId = currentUser?.id || "mock-user-id";
+    const userId = currentUser?.id;
+    if (!userId) return;
     try {
-      if (
-        selectedMatchId === "elena" ||
-        selectedMatchId === "sofia" ||
-        selectedMatchId === "valentina"
-      ) {
-        setLiveMatches((prev) =>
-          prev.map((m) => {
-            if (m.target_profile.id === selectedMatchId) {
-              const nextScore = Math.min(100, m.gauge_score + 20);
-              return { ...m, gauge_score: nextScore };
-            }
-            return m;
-          }),
-        );
-        setTimeout(() => {
-          selectMatch(userId, selectedMatchId);
-        }, 100);
-      } else {
-        await sendSuggestionMove(userId, selectedMatchId, moveId, label);
-        const newScore = await updateRelationshipScore(
-          userId,
-          selectedMatchId,
-          "suggestion_move_accepted",
-        );
+      await sendSuggestionMove(userId, selectedMatchId, moveId, label);
+      const newScore = await updateRelationshipScore(
+        userId,
+        selectedMatchId,
+        "suggestion_move_accepted",
+      );
 
-        setLiveMatches((prev) =>
-          prev.map((m) => {
-            if (m.target_profile.id === selectedMatchId) {
-              const levelKey = scoreToLevel(newScore).key;
-              return { ...m, gauge_score: newScore, current_level: levelKey };
-            }
-            return m;
-          }),
-        );
+      setLiveMatches((prev) =>
+        prev.map((m) => {
+          if (m.target_profile.id === selectedMatchId) {
+            const levelKey = scoreToLevel(newScore).key;
+            return { ...m, gauge_score: newScore, current_level: levelKey };
+          }
+          return m;
+        }),
+      );
 
-        await selectMatch(userId, selectedMatchId);
-      }
+      await selectMatch(userId, selectedMatchId);
     } catch (err) {
       console.error("Failed to send suggestion move:", err);
     }
@@ -986,23 +790,9 @@ export default function MemberProfile() {
         // Load media album
         await loadUserMedia(session.user.id);
       } else {
-        // Fallback for non-authenticated view
-        await loadMatches("mock-user-id");
-        setCurrentUserProfile({
-          id: "mock-user-id",
-          username: "Alex_N",
-          display_name: "Alex_N",
-          avatar_url:
-            "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800&q=80",
-          role: "member",
-          relationshipGoal: "Good Vibe Instant Crush",
-          relationship_goals: ["Good Vibe Instant Crush"],
-          relationship_types: ["Monogamous"],
-          hobbies: ["Fitness", "Tech", "Traveler"],
-          lifestyle_habits: MOCK_USER.habits,
-          is_kyc_verified: true,
-        });
-        setMediaItems(MOCK_MEDIA_ITEMS);
+        // No authenticated session — show empty state
+        setLiveMatches([]);
+        setMediaItems([]);
       }
     };
     loadSessionAndRoster();
@@ -1016,8 +806,7 @@ export default function MemberProfile() {
 
   const handleSaveBio = async () => {
     if (!currentUser) {
-      setCurrentUserProfile((prev: any) => ({ ...prev, bio: tempBio }));
-      alert("Biography updated successfully! (Demo Mode)");
+      console.error('You must be logged in to update your biography.');
       return;
     }
     setIsSavingBio(true);
@@ -1047,58 +836,8 @@ export default function MemberProfile() {
     setPromptError(null);
     try {
       if (!currentUser) {
-        setTimeout(() => {
-          if (editingPromptIndex === 1) {
-            setCurrentUserProfile((prev: any) => ({
-              ...prev,
-              bio_prompt_category: tempCategory,
-              bio_prompt_question: tempQuestion,
-              bio_prompt_answer: tempAnswer,
-              bio_analysis: {
-                Emotional_Vector: {
-                  Vulnerability_Score: 0.85,
-                  Defensive_Score: 0.15,
-                  Idealization_Bias: 0.30
-                },
-                Interaction_Style: {
-                  Directness: "High",
-                  Witty: "Moderate",
-                  Introspective: "Very High"
-                },
-                Behavioral_Pattern: {
-                  Investment_Driver: ["Emotional Connection", "Validation"],
-                  Red_Flags: []
-                }
-              }
-            }));
-          } else {
-            setCurrentUserProfile((prev: any) => ({
-              ...prev,
-              bio_prompt_category_2: tempCategory,
-              bio_prompt_question_2: tempQuestion,
-              bio_prompt_answer_2: tempAnswer,
-              bio_analysis_2: {
-                Emotional_Vector: {
-                  Vulnerability_Score: 0.70,
-                  Defensive_Score: 0.30,
-                  Idealization_Bias: 0.45
-                },
-                Interaction_Style: {
-                  Directness: "Moderate",
-                  Witty: "High",
-                  Introspective: "High"
-                },
-                Behavioral_Pattern: {
-                  Investment_Driver: ["Novelty Seeking", "Playfulness"],
-                  Red_Flags: []
-                }
-              }
-            }));
-          }
-          setIsSavingPrompt(false);
-          setIsPromptModalOpen(false);
-          alert(`Relational prompt ${editingPromptIndex} and insights updated! (Demo Mode)`);
-        }, 1500);
+        console.error('You must be logged in to update relational prompts.');
+        setIsSavingPrompt(false);
         return;
       }
       const response = await fetch("/api/v2/profile/analyze-prompt", {
@@ -1184,7 +923,7 @@ export default function MemberProfile() {
     if (swapTargetIndex === null) return;
 
     const oldCreator = roster[swapTargetIndex];
-    const basePrice = cand.id === "elena" ? 15 : cand.id === "sofia" ? 12 : 10;
+    const basePrice = cand.basePrice ?? 10;
     const newCreatorObj = {
       id: cand.id,
       name: cand.name,
@@ -1581,7 +1320,7 @@ export default function MemberProfile() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           creatorId,
-          subscriberId: currentUser?.id || "mock-user-id",
+          subscriberId: currentUser?.id || "",
         }),
       });
 
@@ -1667,7 +1406,7 @@ export default function MemberProfile() {
           currentUserProfile.engagement_score ||
           currentUserProfile.engagementScore ||
           undefined,
-        id: currentUser?.id || currentUserProfile.id || "mock-user-id",
+        id: currentUser?.id || currentUserProfile.id || "",
         username:
           currentUserProfile.username ||
           currentUserProfile.display_name ||
@@ -1692,7 +1431,7 @@ export default function MemberProfile() {
         ...MOCK_USER,
         favoriteLanguages: MOCK_USER.favoriteLanguages || [],
         additionalLanguages: MOCK_USER.additionalLanguages || [],
-        id: currentUser?.id || "mock-user-id",
+        id: currentUser?.id || "",
         username: currentUserProfile?.username || "Alex_N",
         career: currentUserProfile?.lifestyle_habits?.career || "",
         avatar: currentUserProfile?.avatar_url || MOCK_USER.avatar,
@@ -1811,6 +1550,35 @@ export default function MemberProfile() {
           </div>
         </div>
       )}
+
+      <RequirementGateModal
+        isOpen={gateModalState.isOpen}
+        onClose={() => setGateModalState(prev => ({ ...prev, isOpen: false }))}
+        purposeId={gateModalState.purposeId}
+        purposeLabel={gateModalState.purposeLabel}
+        missingRequirements={gateModalState.missingRequirements}
+        requiresAdultConsent={gateModalState.requiresAdultConsent}
+        onNavigateToEditProfile={() => {
+          setActiveTab("edit");
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }}
+        onConfirmAdultConsent={async () => {
+          if (!currentUser) return;
+          const currentPurposes = [...(currentUserProfile?.member_purposes || []), gateModalState.purposeId];
+          await supabase.from('profiles').update({ 
+            member_purposes: currentPurposes,
+            is_adult_content: true
+          }).eq('id', currentUser.id);
+          
+          setCurrentUserProfile((prev: any) => ({ 
+            ...prev, 
+            member_purposes: currentPurposes,
+            is_adult_content: true
+          }));
+          
+          setGateModalState(prev => ({ ...prev, isOpen: false }));
+        }}
+      />
 
       <ReportModal 
         isOpen={!!reportingContent} 
@@ -1998,28 +1766,7 @@ export default function MemberProfile() {
                           className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-2.5 text-xs font-semibold focus:border-primary focus:outline-none transition"
                         />
                       </div>
-                      
-                      {/* Presets */}
-                      <div>
-                        <label className="text-[8px] font-black uppercase tracking-wider text-white/30 block mb-1.5">Preset Demos (Click to populate)</label>
-                        <div className="flex flex-wrap gap-2">
-                          {[
-                            { name: "Scenic Beach", url: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800&q=80" },
-                            { name: "City Skyline", url: "https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?w=800&q=80" },
-                            { name: "Cozy Coffee", url: "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=800&q=80" },
-                            { name: "Mountain Hike", url: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=800&q=80" }
-                          ].map(preset => (
-                            <button
-                              key={preset.name}
-                              type="button"
-                              onClick={() => setMediaUrlInput(preset.url)}
-                              className="px-2.5 py-1 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-[8px] font-black uppercase tracking-wider transition text-white/60 hover:text-white"
-                            >
-                              {preset.name}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
+
 
                       <div className="grid grid-cols-2 gap-4">
                         <div>
@@ -2696,7 +2443,7 @@ export default function MemberProfile() {
                               key={match.target_profile.id}
                               onClick={() =>
                                 selectMatch(
-                                  currentUser?.id || "mock-user-id",
+                                  currentUser?.id || "",
                                   match.target_profile.id,
                                 )
                               }
@@ -2873,7 +2620,7 @@ export default function MemberProfile() {
                       isOpen={isContribModalOpen}
                       onClose={() => setIsContribModalOpen(false)}
                       goal={selectedGoalForContrib}
-                      contributorId={currentUser?.id || "mock-user-id"}
+                      contributorId={currentUser?.id || ""}
                       onSuccess={() => {
                         if (selectedMatchId) {
                           loadCreatorGoals(selectedMatchId);
@@ -2928,6 +2675,44 @@ export default function MemberProfile() {
                                 return;
                               }
                             } else {
+                              // Dynamic Required Fields Check
+                              const missingRequirements: { id: string; label: string; met: boolean }[] = [];
+                              let requiresAdultConsent = false;
+
+                              if (purpose.id === 'dating') {
+                                const albumPhotosCount = mediaItems.length;
+                                if (albumPhotosCount < 2) {
+                                  missingRequirements.push({
+                                    id: 'dating_photos',
+                                    label: `Upload 2 public album photos (${albumPhotosCount}/2)`,
+                                    met: false
+                                  });
+                                }
+                              }
+
+                              if (purpose.id === 'explicit') {
+                                const age = currentUserProfile?.privacy_settings?.display_age || 0;
+                                if (age < 18) {
+                                  missingRequirements.push({
+                                    id: 'explicit_age',
+                                    label: `Must be 18+ (Current age: ${age || 'Unknown'})`,
+                                    met: false
+                                  });
+                                }
+                                requiresAdultConsent = true;
+                              }
+
+                              if (missingRequirements.length > 0 || (requiresAdultConsent && !currentUserProfile?.is_adult_content)) {
+                                setGateModalState({
+                                  isOpen: true,
+                                  purposeId: purpose.id,
+                                  purposeLabel: purpose.label,
+                                  missingRequirements,
+                                  requiresAdultConsent,
+                                });
+                                return; // Block save
+                              }
+
                               currentPurposes = [...currentPurposes, purpose.id];
                             }
                             
@@ -2971,21 +2756,21 @@ export default function MemberProfile() {
                   {[
                     {
                       action: "Bought a Drink",
-                      target: "Valentina",
+                      target: "Creator #1",
                       time: "2 days ago",
                       pts: 10,
                       type: "social",
                     },
                     {
                       action: "Premium Subscription",
-                      target: "Elena",
+                      target: "Creator #2",
                       time: "5 days ago",
                       pts: 100,
                       type: "vip",
                     },
                     {
                       action: "Sent a Gift",
-                      target: "Elena",
+                      target: "Creator #2",
                       time: "1 week ago",
                       pts: 50,
                       type: "gift",
@@ -3368,7 +3153,7 @@ export default function MemberProfile() {
                             sharedScore={
                               liveMatches.find((m) => m.target_profile.id === cand.id)?.gauge_score ?? 0
                             }
-                            isEnabledByOwner={['elena', 'sofia', 'valentina'].includes(cand.id)}
+                            isEnabledByOwner={false}
                             faceCoordinates={{ x: 0.5, y: 0.35, r: 0.18 }}
                             className="w-full h-full"
                           />
@@ -3389,11 +3174,7 @@ export default function MemberProfile() {
                           </span>
                           <span className="text-xs font-black text-white">
                             $
-                            {cand.id === "elena"
-                              ? "15.00"
-                              : cand.id === "sofia"
-                                ? "12.00"
-                                : "10.00"}
+                            {(cand.basePrice ?? 10).toFixed(2)}
                           </span>
                         </div>
                         <button

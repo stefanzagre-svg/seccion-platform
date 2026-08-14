@@ -2,7 +2,9 @@ import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
 // Routes that don't require authentication
-const PUBLIC_ROUTES = ['/admin', '/onboarding', '/onboarding/step-2', '/auth/callback', '/api', '/how-we-do', '/become-creator', '/vibe-radar', '/login', '/now-streaming', '/privacy', '/rules', '/creator-hub', '/hit-us-up', '/early-access'];
+const PUBLIC_ROUTES = ['/admin', '/onboarding', '/onboarding/step-2', '/auth/callback', '/api', '/how-we-do', '/become-creator', '/vibe-radar', '/login', '/now-streaming', '/privacy', '/rules', '/hit-us-up', '/early-access'];
+// Routes that require authentication (explicitly excluded from PUBLIC_ROUTES)
+const PROTECTED_ROUTES = ['/stream-demo'];
 // Routes that authenticated users should be redirected away from
 const AUTH_ROUTES = ['/onboarding', '/onboarding/step-2'];
 
@@ -46,7 +48,13 @@ export async function middleware(request: NextRequest) {
 
   // Redirect unauthenticated users away from protected routes
   const isPublic = PUBLIC_ROUTES.some(route => pathname.startsWith(route));
+  const isExplicitlyProtected = PROTECTED_ROUTES.some(route => pathname.startsWith(route));
   if (!user) {
+    if (isExplicitlyProtected) {
+      const url = request.nextUrl.clone();
+      url.pathname = '/login';
+      return NextResponse.redirect(url);
+    }
     if (!isPublic && pathname !== '/') {
       const url = request.nextUrl.clone();
       url.pathname = '/onboarding';

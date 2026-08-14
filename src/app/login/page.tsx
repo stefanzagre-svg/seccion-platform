@@ -48,7 +48,7 @@ export default function LoginPage() {
         type: 'email',
       });
       if (error) throw error;
-      window.location.href = '/onboarding';
+      router.push('/onboarding?fresh=true');
     } catch (err: any) {
       console.error("OTP Verification Error:", err);
       setErrorMsg(err.message || "Invalid or expired code. Check your email for the 6-digit passcode.");

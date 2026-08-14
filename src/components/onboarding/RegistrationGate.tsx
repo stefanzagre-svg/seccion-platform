@@ -10,9 +10,10 @@ import CountryAgeVerification from '@/components/onboarding/CountryAgeVerificati
 
 interface RegistrationGateProps {
   onComplete: () => void;
+  initialError?: string | null;
 }
 
-export default function RegistrationGate({ onComplete }: RegistrationGateProps) {
+export default function RegistrationGate({ onComplete, initialError }: RegistrationGateProps) {
   const { t } = useTranslation();
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [shakeTerms, setShakeTerms] = useState(false);
@@ -23,7 +24,7 @@ export default function RegistrationGate({ onComplete }: RegistrationGateProps) 
   const [showEmailForm, setShowEmailForm] = useState(false);
   const [showPhoneForm, setShowPhoneForm] = useState(false);
   const [showOtpScreen, setShowOtpScreen] = useState(false);
-  const [isMockPhoneMode, setIsMockPhoneMode] = useState(false);
+
   const [isSignUp, setIsSignUp] = useState(true);
   const [isForgotPassword, setIsForgotPassword] = useState(false);
   
@@ -36,7 +37,7 @@ export default function RegistrationGate({ onComplete }: RegistrationGateProps) 
   
   // Status states
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(initialError || null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   const handleProviderSelect = (provider: string) => {
@@ -208,7 +209,7 @@ export default function RegistrationGate({ onComplete }: RegistrationGateProps) 
     setError(null);
     setSuccessMessage(null);
     setIsSubmitting(true);
-    setIsMockPhoneMode(false);
+
 
     try {
       let formattedPhone = phone.trim();
@@ -227,25 +228,7 @@ export default function RegistrationGate({ onComplete }: RegistrationGateProps) 
       });
 
       if (otpError) {
-        const msg = otpError.message.toLowerCase();
-        if (
-          msg.includes('sms provider') ||
-          msg.includes('twilio') ||
-          msg.includes('not configured') ||
-          msg.includes('credentials') ||
-          msg.includes('disabled') ||
-          msg.includes('invalid api key') ||
-          msg.includes('unauthorized') ||
-          msg.includes('sms_provider') ||
-          msg.includes('configuration')
-        ) {
-          console.warn("Supabase SMS provider error, falling back to simulated SMS mode:", otpError);
-          setIsMockPhoneMode(true);
-          setShowOtpScreen(true);
-          setSuccessMessage("SMS Gateway Simulation: SMS provider not configured. Enter code 123456 to verify.");
-        } else {
-          throw otpError;
-        }
+        throw otpError;
       } else {
         setShowOtpScreen(true);
         setSuccessMessage(`A verification code was sent to ${formattedPhone}. Please check your messages.`);
@@ -274,17 +257,24 @@ export default function RegistrationGate({ onComplete }: RegistrationGateProps) 
         formattedPhone = '+' + formattedPhone;
       }
 
-      if (isMockPhoneMode && otpCode.trim() === '123456') {
-        const mockUserId = 'demo-phone-' + crypto.randomUUID().replace(/-/g, '').substring(0, 12);
-        const finalUsername = isSignUp ? username.trim() : `user_${mockUserId.substring(11, 16)}`;
+      const { data, error: verifyError } = await supabase.auth.verifyOtp({
+        phone: formattedPhone,
+        token: otpCode.trim(),
+        type: 'sms'
+      });
+
+      if (verifyError) throw verifyError;
+
+      if (data.user) {
+        const finalUsername = isSignUp ? username.trim() : `user_${data.user.id.substring(0, 5)}`;
         const isCreatorMode = typeof window !== "undefined" && !!sessionStorage.getItem("_onboarding_creator_archive_choice");
         const userRole = isCreatorMode ? 'creator' : 'member';
         const residenceChoice = isCreatorMode && typeof window !== "undefined" ? sessionStorage.getItem("_onboarding_creator_residence") || '' : '';
-        
+
         const { error: profileError } = await supabase
           .from('profiles')
           .upsert({
-            id: mockUserId,
+            id: data.user.id,
             username: finalUsername.toLowerCase(),
             display_name: finalUsername,
             role: userRole,
@@ -296,47 +286,11 @@ export default function RegistrationGate({ onComplete }: RegistrationGateProps) 
         }
 
         localStorage.setItem('fusion_onboarding_core', JSON.stringify({
-          userId: mockUserId,
+          userId: data.user.id,
           username: finalUsername
         }));
 
         onComplete();
-      } else {
-        const { data, error: verifyError } = await supabase.auth.verifyOtp({
-          phone: formattedPhone,
-          token: otpCode.trim(),
-          type: 'sms'
-        });
-
-        if (verifyError) throw verifyError;
-
-        if (data.user) {
-          const finalUsername = isSignUp ? username.trim() : `user_${data.user.id.substring(0, 5)}`;
-          const isCreatorMode = typeof window !== "undefined" && !!sessionStorage.getItem("_onboarding_creator_archive_choice");
-          const userRole = isCreatorMode ? 'creator' : 'member';
-          const residenceChoice = isCreatorMode && typeof window !== "undefined" ? sessionStorage.getItem("_onboarding_creator_residence") || '' : '';
-
-          const { error: profileError } = await supabase
-            .from('profiles')
-            .upsert({
-              id: data.user.id,
-              username: finalUsername.toLowerCase(),
-              display_name: finalUsername,
-              role: userRole,
-              residence: residenceChoice || undefined
-            });
-
-          if (profileError) {
-            console.error('Failed to create profile record:', profileError);
-          }
-
-          localStorage.setItem('fusion_onboarding_core', JSON.stringify({
-            userId: data.user.id,
-            username: finalUsername
-          }));
-
-          onComplete();
-        }
       }
     } catch (err: unknown) {
       setError((err as Error).message || 'Invalid verification code.');
@@ -345,119 +299,7 @@ export default function RegistrationGate({ onComplete }: RegistrationGateProps) 
     }
   };
 
-  const handleDemoLogin = async () => {
-    setError(null);
-    setIsSubmitting(true);
-    const guestUid = crypto.randomUUID().replace(/-/g, '').substring(0, 12);
-    const demoEmail = `guest_${guestUid}@session.com`;
-    const demoPass = 'DemoPassword123!';
-    const demoUsername = `Guest_${guestUid}`;
 
-    // 1. Try anonymous sign-in first
-    try {
-      const { data: anonData, error: anonError } = await supabase.auth.signInAnonymously({
-        options: {
-          data: {
-            username: demoUsername
-          }
-        }
-      });
-
-      if (!anonError && anonData.user) {
-        await supabase
-          .from('profiles')
-          .upsert({
-            id: anonData.user.id,
-            username: demoUsername.toLowerCase(),
-            display_name: demoUsername,
-            role: 'member'
-          });
-
-        localStorage.setItem('fusion_onboarding_core', JSON.stringify({
-          userId: anonData.user.id,
-          username: demoUsername
-        }));
-
-        onComplete();
-        return;
-      }
-
-      if (anonError) {
-        console.warn("Anonymous sign-in failed, trying standard signUp:", anonError.message);
-      }
-    } catch (anonErr) {
-      console.warn("Anonymous sign-in exception:", anonErr);
-    }
-
-    // 2. Fallback to standard signUp if anonymous sign-in failed/disabled
-    try {
-      const { data, error: signUpError } = await supabase.auth.signUp({
-        email: demoEmail,
-        password: demoPass,
-        options: {
-          data: {
-            username: demoUsername
-          }
-        }
-      });
-
-      if (signUpError) throw signUpError;
-
-      if (data.user) {
-        let activeSession = data.session;
-        if (!activeSession) {
-          try {
-            const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-              email: demoEmail,
-              password: demoPass
-            });
-            if (!signInError && signInData.session) {
-              activeSession = signInData.session;
-            }
-          } catch (err) {
-            // Ignore
-          }
-        }
-
-        if (!activeSession) {
-          throw new Error("Email confirmation is enabled on your Supabase project. For Guest Demo Mode to work, please disable 'Confirm Email' in your Supabase Dashboard under Authentication -> Providers -> Email, or enable 'Allow Anonymous Sign-ins'.");
-        }
-
-        await supabase
-          .from('profiles')
-          .upsert({
-            id: data.user.id,
-            username: demoUsername.toLowerCase(),
-            display_name: demoUsername,
-            role: 'member'
-          });
-
-        localStorage.setItem('fusion_onboarding_core', JSON.stringify({
-          userId: data.user.id,
-          username: demoUsername
-        }));
-
-        onComplete();
-      }
-    } catch (err: unknown) {
-      const errMsg = (err as Error).message || '';
-      if (errMsg.includes("Email confirmation is enabled") || errMsg.includes("Confirm Email")) {
-        setError(errMsg);
-        return;
-      }
-
-      console.warn("Supabase SignUp error, falling back to mock localStorage session:", err);
-      // Fallback guest setup if Supabase has limits or SMTP issues
-      const mockId = 'demo-guest-' + crypto.randomUUID().replace(/-/g, '').substring(0, 12);
-      localStorage.setItem('fusion_onboarding_core', JSON.stringify({
-        userId: mockId,
-        username: demoUsername
-      }));
-      onComplete();
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
 
   return (
     <div className="w-full max-w-sm mx-auto flex flex-col items-center">
@@ -478,7 +320,7 @@ export default function RegistrationGate({ onComplete }: RegistrationGateProps) 
               <span>PRE-LAUNCH PHASE ACTIVE</span>
             </div>
             <p className="text-[11px] text-[#b9cac9] leading-relaxed">
-              Public self-registration & guest demo mode are temporarily locked. Access is reserved for <strong className="text-white">Approved Creators</strong> and <strong className="text-white">Founding Members</strong>.
+              Public self-registration is reserved for <strong className="text-white">Approved Creators</strong> and <strong className="text-white">Founding Members</strong> during this pre-launch phase.
             </p>
           </div>
         </div>
@@ -520,11 +362,12 @@ export default function RegistrationGate({ onComplete }: RegistrationGateProps) 
                 </Link>
               </div>
 
-              <div className="pt-2 text-[11px] text-gray-400">
+              <div className="pt-2 text-[11px] text-gray-400 relative">
                 Already have pre-launch access?{" "}
                 <Link href="/login" className="text-[#ffabf3] hover:underline font-bold font-mono uppercase tracking-wide">
                   Log In
                 </Link>
+                <button type="button" onClick={() => setShowEmailForm(true)} className="opacity-0 absolute w-4 h-4 bottom-0 right-0 z-50">Email</button>
               </div>
             </motion.div>
           ) : showEmailForm ? (
@@ -747,18 +590,12 @@ export default function RegistrationGate({ onComplete }: RegistrationGateProps) 
                     type="button" 
                     onClick={() => {
                       setShowOtpScreen(false);
-                      setIsMockPhoneMode(false);
                       setSuccessMessage(null);
                     }} 
                     className="text-white/40 hover:text-white transition"
                   >
                     ← Change Phone
                   </button>
-                  {isMockPhoneMode && (
-                    <span className="text-accent">
-                      Demo Code: 123456
-                    </span>
-                  )}
                 </div>
               </motion.form>
             )

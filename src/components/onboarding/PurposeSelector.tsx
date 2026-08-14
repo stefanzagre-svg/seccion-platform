@@ -39,7 +39,7 @@ export default function PurposeSelector({ onContinue }: PurposeSelectorProps) {
   };
   
   const hasMemberPurpose = selected.some(p => p !== 'creator');
-  const canProceed = selected.length > 0 && (!selected.includes('creator') || hasMemberPurpose);
+  const canProceed = selected.length > 0;
 
   return (
     <motion.div
@@ -110,9 +110,9 @@ export default function PurposeSelector({ onContinue }: PurposeSelectorProps) {
               )}
               
               {purpose.id === 'creator' && isSelected && !hasMemberPurpose && (
-                <div className="mt-4 flex items-start space-x-2 text-xs text-amber-400 bg-amber-950/30 p-2 rounded-lg border border-amber-500/20">
-                  <Info className="h-4 w-4 shrink-0 mt-0.5" />
-                  <span>You'll set up your member profile first, then unlock your Creator Studio. Please select a member purpose above as well.</span>
+                <div className="mt-4 flex items-start space-x-2 text-xs text-cyan-300 bg-cyan-950/40 p-2.5 rounded-lg border border-cyan-500/30">
+                  <Info className="h-4 w-4 shrink-0 mt-0.5 text-cyan-400" />
+                  <span>You are signing up as a Creator! You will set up your creator profile and unlock the Creator Studio.</span>
                 </div>
               )}
             </motion.div>

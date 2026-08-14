@@ -41,9 +41,9 @@ export default function CreatorQuest({ onSignUp, onSwitchToMember, onClose }: Cr
   };
 
   const CREATOR_ARCHETYPES = [
-    { id: "STREAMER", emoji: "🎙️", name: translate("creatorQuest.main.archetype_streamer", "Live Broadcaster"), desc: translate("creatorQuest.main.archetype_streamer_desc", "Monetizes high-interaction streams and community goals.") },
-    { id: "PORTFOLIO", emoji: "📸", name: translate("creatorQuest.main.archetype_portfolio", "Exclusive Artist"), desc: translate("creatorQuest.main.archetype_portfolio_desc", "Builds premium tiers, custom requests, and ephemeral catalogs.") },
-    { id: "HYBRID", emoji: "⚡", name: translate("creatorQuest.main.archetype_hybrid", "Hybrid Creator"), desc: translate("creatorQuest.main.archetype_hybrid_desc", "Mixes free DMs, AI auto-upsells, and private consultations.") }
+    { id: "STREAMER", emoji: "🎙️", name: translate("creatorQuest.main.archetype_streamer", "Live Co-Op Legend"), desc: translate("creatorQuest.main.archetype_streamer_desc", "Owns the spotlight. Hypes up live crowds, crushes community Quests, and turns streams into a shared vibe.") },
+    { id: "PORTFOLIO", emoji: "📸", name: translate("creatorQuest.main.archetype_portfolio", "The Vault Curator"), desc: translate("creatorQuest.main.archetype_portfolio_desc", "Drops exclusive masterpieces. Curates secret galleries and unlocks VIP access to your highest aesthetic.") },
+    { id: "HYBRID", emoji: "⚡", name: translate("creatorQuest.main.archetype_hybrid", "Main Character"), desc: translate("creatorQuest.main.archetype_hybrid_desc", "Controls the narrative. Hooks them with casual lore, then unlocks private 1-on-1 synergy sessions.") }
   ];
   const [step, setStep] = useState<
     "lobby" | "mode-select" | "identity-setup" | "revenue-engine" | "profile-setup" | "stream-station" | "monetization-suite" | "secret"

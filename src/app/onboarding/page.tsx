@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
+import { OnboardingLogger } from "@/lib/onboarding-logger";
 import LandingPageHook from "@/components/onboarding/LandingPageHook";
 import RegistrationGate from "@/components/onboarding/RegistrationGate";
 import IntentSelector from "@/components/onboarding/IntentSelector";
@@ -52,31 +53,11 @@ type OnboardingStep =
   | "purpose"
   | "intent"
   | "profile-checklist"
+  | "creator-checklist"
   | "creator-quest"
   | "welcome";
 
-const MOCK_AVATARS = [
-  {
-    id: "elena",
-    name: "Elena",
-    url: "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=400&q=80",
-  },
-  {
-    id: "sofia",
-    name: "Sofia",
-    url: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&q=80",
-  },
-  {
-    id: "valentina",
-    name: "Valentina",
-    url: "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=400&q=80",
-  },
-  {
-    id: "marcus",
-    name: "Marcus",
-    url: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&q=80",
-  },
-];
+// MOCK_AVATARS removed — stock Unsplash faces were misleading real users as platform members.
 // Removed INSIGHT_PROMPTS in favor of PURPOSE_PROMPTS from constants.ts
 
 export default function OnboardingFlow() {
@@ -91,12 +72,19 @@ export default function OnboardingFlow() {
   const [isCreatorMode, setIsCreatorMode] = useState<boolean>(false);
 
   const handleRegistrationComplete = async () => {
-    const isCreator = tutorialRole === "creator" || (typeof window !== "undefined" && !!sessionStorage.getItem("_onboarding_creator_archive_choice"));
+    const isCreator =
+      tutorialRole === "creator" ||
+      isCreatorMode ||
+      (typeof window !== "undefined" && (
+        !!sessionStorage.getItem("_onboarding_creator_archive_choice") ||
+        localStorage.getItem("is_creator_signup") === "true"
+      ));
     const storedArchetype = tutorialArchetype || (typeof window !== "undefined"
       ? (isCreator ? sessionStorage.getItem("_onboarding_creator_archive_choice") : sessionStorage.getItem("_onboarding_archetype_choice"))
       : null);
     const { data: { session } } = await supabase.auth.getSession();
     const currentUserId = session?.user?.id;
+    OnboardingLogger.log('registration', 'complete', `isCreator=${isCreator}`, currentUserId);
 
     if (currentUserId) {
       try {
@@ -133,7 +121,9 @@ export default function OnboardingFlow() {
           if (relationshipGoal) updatePayload.relationship_goals = [relationshipGoal];
           if (relationshipType) updatePayload.relationship_types = [relationshipType];
         }
-
+        // The creator_profiles data will be saved in creator-checklist step now,
+        // because we want them to finish the member onboarding first.
+        // We only save basic member data here.
         await supabase
           .from("profiles")
           .update(updatePayload)
@@ -149,12 +139,11 @@ export default function OnboardingFlow() {
       }
     }
     
-    // For creators, skip purpose/intent and go straight to profile-checklist (photo + bio)
-    if (isCreator) {
-      setStep("profile-checklist");
-    } else {
-      setStep("purpose");
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("is_creator_signup");
     }
+    OnboardingLogger.log('registration', 'step_enter', 'routing to purpose (member flow for all)', currentUserId);
+    setStep("purpose");
   };
 
   // Active item in detail checklist panel
@@ -185,6 +174,12 @@ export default function OnboardingFlow() {
   const [albumPhotos, setAlbumPhotos] = useState<string[]>([]);
   const [showPreviewModal, setShowPreviewModal] = useState(false);
 
+  // Creator Extension states
+  const [videoPresentationUrl, setVideoPresentationUrl] = useState("");
+  const [creatorBio, setCreatorBio] = useState("");
+  const [isSavingCreator, setIsSavingCreator] = useState(false);
+
+
   // File Upload states & handler
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
@@ -210,10 +205,20 @@ export default function OnboardingFlow() {
       setLivenessVerified(false);
       setLivenessStep(0);
 
+      // Resolve active user id dynamically if state was delay-loaded
+      let activeUserId = userId;
+      if (!activeUserId) {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user?.id) {
+          activeUserId = session.user.id;
+          setUserId(activeUserId);
+        }
+      }
+
       // 2. Upload compressed blob to Supabase Storage bucket 'avatars'
       const fileExt = "jpg";
-      const fileName = `${userId || 'guest'}_${Date.now()}.${fileExt}`;
-      const filePath = `avatars/${fileName}`;
+      const fileName = `${activeUserId || 'user'}_${Date.now()}.${fileExt}`;
+      const filePath = fileName; // Fix: bucket 'avatars' is already targeted in .from('avatars'), do NOT prefix with 'avatars/'
 
       const uploadPromise = supabase.storage
         .from('avatars')
@@ -237,6 +242,8 @@ export default function OnboardingFlow() {
           setAvatarUrl(publicUrl);
           saveOnboardingState({ avatarUrl: publicUrl, step: "profile-checklist", activeItem: "photo" });
         }
+      } else if (error) {
+        console.warn("Storage upload notice (falling back to client Data URL):", error);
       }
     } catch (err) {
       console.warn("Storage upload fallback to compressed Data URL:", err);
@@ -316,7 +323,7 @@ export default function OnboardingFlow() {
 
   // Checklist State
   const [checklist, setChecklist] = useState<ChecklistItem[]>([
-    { id: "photo", label: "Upload profile photo (Min. 2 for Matchmaking)", completed: false },
+    { id: "photo", label: "Upload photos (1 profile avatar + 2 public album photos)", completed: false },
     { id: "bio", label: "Answer 2 Relational Prompts", completed: false },
     {
       id: "preferences",
@@ -361,23 +368,35 @@ export default function OnboardingFlow() {
           try {
             const savedState = JSON.parse(savedStateStr);
             if (savedState.step) setStep(savedState.step);
-            if (savedState.activePurposes?.length) setActivePurposes(savedState.activePurposes);
-            if (savedState.intents?.length) setIntents(savedState.intents);
-            if (savedState.displayAge) setDisplayAge(savedState.displayAge);
-            if (savedState.avatarUrl) setAvatarUrl(savedState.avatarUrl);
-            if (savedState.albumPhotos?.length) setAlbumPhotos(savedState.albumPhotos);
             if (savedState.activeItem) setActiveItem(savedState.activeItem);
-          } catch (e) {
-            console.warn("Failed to parse saved onboarding state:", e);
+            if (savedState.avatarUrl) setAvatarUrl(savedState.avatarUrl);
+            if (savedState.activePurposes) setActivePurposes(savedState.activePurposes);
+          } catch (err) {
+            console.error("Failed to parse onboarding state", err);
           }
         }
       }
 
-      const session = await getResilientSession(4000);
-      if (session?.user) {
-        setUserId(session.user.id);
+      // Try fast local session first (no network request), fallback to robust network check
+      const { data: { session: fastSession } } = await supabase.auth.getSession();
+      let authUser = fastSession?.user;
+      
+      if (!authUser) {
+        const session = await getResilientSession(4000);
+        authUser = session?.user;
+      }
+
+      if (authUser) {
+        setUserId(authUser.id);
         
         if (isFresh) {
+          // Remove fresh and reset flags from the URL so they don't hijack future reloads
+          if (typeof window !== "undefined") {
+            const url = new URL(window.location.href);
+            url.searchParams.delete("fresh");
+            url.searchParams.delete("reset");
+            window.history.replaceState({}, "", url.toString());
+          }
           setStep("purpose");
           return;
         }
@@ -396,11 +415,37 @@ export default function OnboardingFlow() {
             const hasPurposes = Array.isArray(profile.member_purposes) && profile.member_purposes.length > 0;
             const hasAge = !!profile.privacy_settings?.display_age;
 
-            if (!hasPurposes) {
+            const pendingCreator =
+              typeof window !== "undefined" && (
+                localStorage.getItem("is_creator_signup") === "true" ||
+                !!sessionStorage.getItem("_onboarding_creator_archive_choice") ||
+                profile.role === "creator"
+              );
+
+            if (pendingCreator) {
+              setIsCreatorMode(true);
+              if (typeof window !== "undefined" && !sessionStorage.getItem("_onboarding_creator_archive_choice")) {
+                sessionStorage.setItem("_onboarding_creator_archive_choice", "creator");
+              }
+              OnboardingLogger.log('init', 'step_enter', 'creator detected on return, routing to creator-checklist or purpose', session.user.id);
+              // Need to check if they finished member onboarding
+              if (hasPhoto && hasBio && hasPreferences) {
+                 setStep("creator-checklist");
+              } else if (!hasPurposes) {
+                 setStep("purpose");
+              } else if (!hasAge) {
+                 setStep("intent");
+              } else {
+                 setStep("profile-checklist");
+              }
+            } else if (!hasPurposes) {
+              OnboardingLogger.log('init', 'step_enter', 'no purposes, routing to purpose', session.user.id);
               setStep("purpose");
             } else if (!hasAge) {
+              OnboardingLogger.log('init', 'step_enter', 'no age, routing to intent', session.user.id);
               setStep("intent");
             } else {
+              OnboardingLogger.log('init', 'step_enter', 'resuming profile-checklist', session.user.id);
               setStep("profile-checklist");
             }
           }
@@ -411,19 +456,37 @@ export default function OnboardingFlow() {
           }
 
           // Provision missing profile with safety wrapper
+          const isCreatorSignup =
+            typeof window !== "undefined" && (
+              localStorage.getItem("is_creator_signup") === "true" ||
+              !!sessionStorage.getItem("_onboarding_creator_archive_choice")
+            );
+
           await safeSupabaseQuery(
             supabase
               .from('profiles')
               .upsert({
-                id: session.user.id,
-                username: (session.user.user_metadata?.username || session.user.email?.split('@')[0] || 'user_' + Math.floor(Math.random() * 10000)).toLowerCase(),
-                display_name: session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || 'User',
-                role: 'member'
+                id: authUser.id,
+                username: (authUser.user_metadata?.username || authUser.email?.split('@')[0] || 'user_' + Math.floor(Math.random() * 10000)).toLowerCase(),
+                display_name: authUser.user_metadata?.full_name || authUser.email?.split('@')[0] || 'User',
+                role: isCreatorSignup ? 'creator' : 'member'
               }),
             null,
             4000
           );
-          setStep("purpose");
+
+          if (isCreatorSignup) {
+            setIsCreatorMode(true);
+            if (!sessionStorage.getItem("_onboarding_creator_archive_choice")) {
+              sessionStorage.setItem("_onboarding_creator_archive_choice", "creator");
+            }
+            localStorage.removeItem("is_creator_signup");
+            OnboardingLogger.log('init', 'step_enter', 'new creator profile provisioned, routing to profile-checklist', authUser.id);
+            setStep("profile-checklist");
+          } else {
+            OnboardingLogger.log('init', 'step_enter', 'new member profile provisioned, routing to purpose', authUser.id);
+            setStep("purpose");
+          }
         }
       } else {
         const error = params.get("error");
@@ -432,6 +495,8 @@ export default function OnboardingFlow() {
           setStep("registration");
         } else if (params.get("bypass") === "true" || isFresh) {
           setStep("purpose");
+        } else {
+          setStep("registration"); // Prevents getting stuck on value-proposition if auth fails
         }
       }
     }
@@ -449,6 +514,22 @@ export default function OnboardingFlow() {
       } else if (tutorial === "member") {
         setTutorialRole("member");
         setStep("registration");
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('role') === 'creator') {
+        setIsCreatorMode(true);
+        // Mirror the sessionStorage flag for handleRegistrationComplete compatibility
+        // handleRegistrationComplete reads this key to determine isCreator locally
+        if (!sessionStorage.getItem('_onboarding_creator_archive_choice')) {
+          sessionStorage.setItem('_onboarding_creator_archive_choice', 'creator');
+        }
+        // Redirect to creator-quest to allow archetype and intent selection before registration
+        setStep((prev) => prev === 'registration' ? 'creator-quest' : prev);
       }
     }
   }, []);
@@ -542,10 +623,18 @@ export default function OnboardingFlow() {
   }, [step]);
 
   const handleSaveDetails = async (type: "photo" | "bio" | "preferences") => {
-    if (!userId) {
-      setFormError(
-        "Authentication session not found. Please reload onboarding.",
-      );
+    let activeUserId = userId;
+    if (!activeUserId) {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user?.id) {
+        activeUserId = session.user.id;
+        setUserId(activeUserId);
+      }
+    }
+
+    if (!activeUserId) {
+      setFormError("Authentication session expired. Redirecting to sign in...");
+      setTimeout(() => setStep("registration"), 1500);
       return;
     }
     setFormError(null);
@@ -612,7 +701,7 @@ export default function OnboardingFlow() {
         const updatePromise = supabase
           .from("profiles")
           .update(updatePayload)
-          .eq("id", userId);
+          .eq("id", activeUserId);
           
         const timeoutPromise = new Promise<{data: any, error: any}>((_, reject) => 
           setTimeout(() => reject(new Error("Database update timeout exceeded")), 15000)
@@ -642,11 +731,20 @@ export default function OnboardingFlow() {
       );
 
       const nextIncomplete = updatedChecklist.find((item) => !item.completed);
+
       if (nextIncomplete) {
+        OnboardingLogger.log('profile-checklist', 'cta_click', `saved ${type}, next=${nextIncomplete.id}`, userId);
         setActiveItem(nextIncomplete.id as any);
       } else {
         // All completed!
-        setTimeout(() => setStep("welcome"), 1000);
+        const isCreatorSignup = typeof window !== "undefined" && !!sessionStorage.getItem("_onboarding_creator_archive_choice");
+        if (isCreatorSignup) {
+           OnboardingLogger.log('profile-checklist', 'complete', 'member done, transitioning to creator-checklist', userId);
+           setTimeout(() => setStep("creator-checklist"), 1000);
+        } else {
+           OnboardingLogger.log('profile-checklist', 'complete', 'all items done, transitioning to welcome', userId);
+           setTimeout(() => setStep("welcome"), 1000);
+        }
       }
     } catch (err: any) {
       setFormError(err.message || "Failed to save details.");
@@ -709,6 +807,7 @@ export default function OnboardingFlow() {
             <RegistrationGate
               key="registration"
               onComplete={handleRegistrationComplete}
+              initialError={formError}
             />
           )}
 
@@ -923,10 +1022,10 @@ export default function OnboardingFlow() {
                             <Info className="w-4 h-4 shrink-0 mt-0.5 text-[#00fbfb]" />
                             <div className="space-y-0.5">
                               <span className="font-extrabold text-[#00fbfb] uppercase text-[10px] tracking-wider block">
-                                Community Requirement: 2 Photos Minimum
+                                Photo Requirement: 1 Profile Avatar + 2 Public Album Photos
                               </span>
                               <span className="text-white/80 text-[11px] leading-relaxed block">
-                                A minimum of <strong>2 public photos</strong> (1 primary avatar + 1 album photo) is required to unlock the Matchmaking deck. Set your primary photo below and add your 2nd photo anytime in your profile album.
+                                Upload <strong>1 profile avatar</strong> (your main cover, visible everywhere) and <strong>2 public album photos</strong> to unlock the full Matchmaking Feed.
                               </span>
                             </div>
                           </div>
@@ -993,37 +1092,7 @@ export default function OnboardingFlow() {
                             </div>
                           )}
 
-                          {/* Preset Avatar Selection */}
-                          <div className="space-y-2 text-left">
-                            <span className="text-[9px] font-mono uppercase tracking-widest text-white/40 block">Or Select Preset Avatar</span>
-                            <div className="grid grid-cols-4 gap-3">
-                              {MOCK_AVATARS.map((av) => (
-                                <button
-                                  key={av.id}
-                                  type="button"
-                                  onClick={() => {
-                                    setAvatarUrl(av.url);
-                                    setLivenessVerified(false);
-                                    setLivenessStep(0);
-                                  }}
-                                  className={`relative aspect-square rounded-2xl overflow-hidden border-2 transition-all ${
-                                    avatarUrl === av.url
-                                      ? "border-primary scale-105 shadow-[0_0_15px_rgba(102,252,241,0.5)]"
-                                      : "border-white/10 hover:border-white/30"
-                                  }`}
-                                >
-                                  <img src={av.url} alt={av.name} className="w-full h-full object-cover" />
-                                  {avatarUrl === av.url && (
-                                    <div className="absolute inset-0 bg-primary/20 flex items-center justify-center">
-                                      <div className="bg-primary p-1 rounded-full text-black">
-                                        <Check className="w-3.5 h-3.5 stroke-[3]" />
-                                      </div>
-                                    </div>
-                                  )}
-                                </button>
-                              ))}
-                            </div>
-                          </div>
+                          {/* Preset Avatar Selection removed — use your own photo above */}
 
                           {/* Section B: Public Photo Album */}
                           <div className="pt-4 border-t border-white/10 space-y-4 text-left">
@@ -1035,7 +1104,7 @@ export default function OnboardingFlow() {
                                 </span>
                               </div>
                               <p className="text-white/80 text-xs leading-relaxed">
-                                Your Public Album showcases your authentic lifestyle, passions, and world. <strong>Photos added here are visible to all SECCION members and unlock your full Matchmaking Feed (min. 2 total photos required: 1 main avatar + 1 album photo).</strong>
+                                Your Public Album showcases your authentic lifestyle, passions, and world. <strong>Add 2 public album photos — these are visible to all SECCION members and are required (along with your profile avatar) to unlock the full Matchmaking Feed.</strong>
                               </p>
                             </div>
 
@@ -1383,6 +1452,99 @@ export default function OnboardingFlow() {
                     )}
                   </AnimatePresence>
                 </div>
+              </div>
+            </motion.div>
+          )}
+
+          {step === "creator-checklist" && (
+            <motion.div
+              key="creator-checklist"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              className="w-full max-w-4xl mx-auto flex flex-col md:flex-row bg-black/80 border border-primary/20 rounded-3xl backdrop-blur-xl relative overflow-hidden shadow-[0_0_50px_rgba(102,252,241,0.1)] min-h-[75vh]"
+            >
+              <div className="flex-1 p-6 md:p-8 flex flex-col justify-center items-center text-center space-y-6 relative z-10">
+                <div className="p-4 bg-primary/10 rounded-full border border-primary/20 animate-pulse">
+                  <Video className="w-8 h-8 text-primary" />
+                </div>
+                <div>
+                  <h2 className="text-3xl font-black uppercase Outfit tracking-tight">Creator Extension</h2>
+                  <p className="text-xs text-white/50 mt-2 font-medium max-w-md mx-auto">
+                    Your member profile is ready. Now let's finalize your Studio presence. Upload your Portfolio Reel and write your professional Creator Bio.
+                  </p>
+                </div>
+
+                <div className="w-full max-w-md space-y-4 text-left mt-6">
+                  <div className="space-y-2">
+                     <label className="text-[10px] font-black uppercase tracking-widest text-primary">Portfolio Reel URL</label>
+                     <input
+                        type="text"
+                        placeholder="https://vimeo.com/..."
+                        value={videoPresentationUrl}
+                        onChange={(e) => setVideoPresentationUrl(e.target.value)}
+                        className="w-full px-4 py-3 bg-black/40 border border-white/10 rounded-xl text-xs text-white placeholder-white/20 focus:border-primary outline-none transition"
+                     />
+                  </div>
+                  
+                  <div className="space-y-2">
+                     <label className="text-[10px] font-black uppercase tracking-widest text-primary">Creator Bio</label>
+                     <textarea
+                        rows={4}
+                        placeholder="Describe your premium content, VIP tiers, and what subscribers get..."
+                        value={creatorBio}
+                        onChange={(e) => setCreatorBio(e.target.value)}
+                        className="w-full px-4 py-3 bg-black/40 border border-white/10 rounded-xl text-xs text-white placeholder-white/20 focus:border-primary outline-none transition resize-none"
+                     />
+                  </div>
+                </div>
+
+                <button
+                  onClick={async () => {
+                    setIsSavingCreator(true);
+                    try {
+                      // Save to creator_profiles
+                      const tierPrice = sessionStorage.getItem("_onboarding_creator_tier_price");
+                      const faceBlur = sessionStorage.getItem("_onboarding_creator_face_blur");
+                      const residence = sessionStorage.getItem("_onboarding_creator_residence");
+                      const vibe = sessionStorage.getItem("_onboarding_creator_vibe");
+                      const purposesStr = sessionStorage.getItem("_onboarding_creator_purposes");
+                      const specialization = sessionStorage.getItem("_onboarding_creator_specialization");
+                      const sexualPreference = sessionStorage.getItem("_onboarding_creator_sexual_preference");
+                      const relationshipGoal = sessionStorage.getItem("_onboarding_creator_relationship_goal");
+                      const relationshipType = sessionStorage.getItem("_onboarding_creator_relationship_type");
+                      const isAdult = sessionStorage.getItem("_onboarding_creator_is_adult");
+
+                      const payload = {
+                        id: userId,
+                        creator_archetype: vibe || null,
+                        specialization: specialization || null,
+                        creator_purposes: purposesStr ? JSON.parse(purposesStr) : [],
+                        video_presentation_url: videoPresentationUrl,
+                        creator_bio: creatorBio,
+                        tier_price: tierPrice ? parseFloat(tierPrice) : null,
+                        face_blur_active: faceBlur === "true",
+                        tax_residence: residence || null,
+                        sexual_preference: sexualPreference || null,
+                        relationship_goals: relationshipGoal ? [relationshipGoal] : [],
+                        relationship_types: relationshipType ? [relationshipType] : [],
+                        is_adult_content: isAdult === "true"
+                      };
+
+                      await supabase.from("creator_profiles").upsert(payload);
+                      setStep("welcome");
+                    } catch (e) {
+                      setFormError("Failed to save creator extension profile.");
+                    } finally {
+                      setIsSavingCreator(false);
+                    }
+                  }}
+                  disabled={isSavingCreator || !videoPresentationUrl || !creatorBio}
+                  className="w-full max-w-md bg-primary text-black font-black uppercase tracking-widest py-4 rounded-xl hover:shadow-[0_0_20px_rgba(102,252,241,0.4)] transition disabled:opacity-50 text-xs flex items-center justify-center gap-2"
+                >
+                  {isSavingCreator ? <Loader2 className="w-4 h-4 animate-spin" /> : "Publish Creator Profile"}
+                </button>
+                {formError && <p className="text-red-500 text-xs mt-2">{formError}</p>}
               </div>
             </motion.div>
           )}

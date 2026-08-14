@@ -400,12 +400,12 @@
       "speech_revenue": "Look at our Revenue Payout Math. Most platforms or agencies take up to 40% or more. SECCION keeps it flat: you retain 80% of all earnings.",
       "speech_stream": "Observe the Stream Station cockpit. Monitor simulated viewers and check out our Face Blur privacy and ephemeral media gates.",
       "speech_monetization": "Review the 7 built-in streams. Additionally, see how our built-in AI Replacement Agent automates fan interactions 24/7.",
-      "archetype_streamer": "Live Broadcaster",
-      "archetype_streamer_desc": "Monetizes high-interaction streams and community goals.",
-      "archetype_portfolio": "Exclusive Artist",
-      "archetype_portfolio_desc": "Builds premium tiers, custom requests, and ephemeral catalogs.",
-      "archetype_hybrid": "Hybrid Creator",
-      "archetype_hybrid_desc": "Mixes free DMs, AI auto-upsells, and private consultations."
+      "archetype_streamer": "Live Co-Op Legend",
+      "archetype_streamer_desc": "Owns the spotlight. Hypes up live crowds, crushes community Quests, and turns streams into a shared vibe.",
+      "archetype_portfolio": "The Vault Curator",
+      "archetype_portfolio_desc": "Drops exclusive masterpieces. Curates secret galleries and unlocks VIP access to your highest aesthetic.",
+      "archetype_hybrid": "Main Character",
+      "archetype_hybrid_desc": "Controls the narrative. Hooks them with casual lore, then unlocks private 1-on-1 synergy sessions."
     }
   },
   "demos": {

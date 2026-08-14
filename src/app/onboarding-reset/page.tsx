@@ -6,7 +6,6 @@ import { supabase } from '@/lib/supabase';
 export default function OnboardingReset() {
   useEffect(() => {
     const doReset = async () => {
-      console.log('Resetting local session...');
       
       // 1. Reset profile fields in Supabase database & Sign out
       try {

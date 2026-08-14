@@ -36,9 +36,9 @@ export default function CookieConsentBanner() {
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: 100, opacity: 0 }}
           transition={{ type: "spring", stiffness: 260, damping: 20 }}
-          className="fixed bottom-0 left-0 right-0 z-[100] p-4 pointer-events-none flex justify-center"
+          className="fixed bottom-4 right-4 z-[100] p-4 pointer-events-none flex justify-end max-w-md w-full"
         >
-          <div className="pointer-events-auto max-w-4xl w-full bg-black/90 border border-primary/20 p-6 rounded-[2rem] shadow-[0_-20px_50px_-15px_rgba(0,0,0,0.8)] backdrop-blur-xl flex flex-col md:flex-row items-center gap-6">
+          <div className="pointer-events-auto w-full bg-black/95 border border-primary/30 p-5 rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.9)] backdrop-blur-2xl flex flex-col gap-4">
             
             <div className="flex-1 space-y-2 text-center md:text-left">
               <h3 className="text-sm font-bold uppercase tracking-widest text-primary flex items-center justify-center md:justify-start gap-2">
