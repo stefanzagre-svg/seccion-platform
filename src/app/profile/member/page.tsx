@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 const framerMotion = motion;
 import ProfilePreviewModal from "@/components/ProfilePreviewModal";
 import EditProfileTab from "@/components/profile/EditProfileTab";
+import MemberMediaTab from "@/components/profile/member/MemberMediaTab";
 import {
   Calendar,
   Video,
@@ -1737,195 +1738,20 @@ export default function MemberProfile() {
             )}
 
             {activeTab === "media" && (
-              <div className="space-y-8 text-left">
-                <div>
-                  <h2 className="text-2xl font-bold uppercase tracking-tighter flex items-center gap-2 text-white">
-                    <Image className="text-primary w-6 h-6" /> My Media Album
-                  </h2>
-                  <p className="text-[10px] text-white/40 uppercase font-bold tracking-widest mt-1">
-                    Upload and manage your public photos/videos and hidden media gated by connection levels.
-                  </p>
-                </div>
-
-                {/* Upload Media Card */}
-                <div className="glass-card p-6 bg-white/2 border border-white/5 rounded-3xl space-y-6">
-                  <h3 className="text-xs font-black uppercase tracking-widest text-primary flex items-center gap-2">
-                    <Plus className="w-4 h-4" /> Upload New Media
-                  </h3>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {/* Left: inputs */}
-                    <div className="space-y-4">
-                      <div>
-                        <label className="text-[9px] font-black uppercase tracking-wider text-white/50 block mb-2">Media URL</label>
-                        <input
-                          type="text"
-                          value={mediaUrlInput}
-                          onChange={(e) => setMediaUrlInput(e.target.value)}
-                          placeholder="https://images.unsplash.com/photo-..."
-                          className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-2.5 text-xs font-semibold focus:border-primary focus:outline-none transition"
-                        />
-                      </div>
-
-
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <label className="text-[9px] font-black uppercase tracking-wider text-white/50 block mb-2">Media Type</label>
-                          <select
-                            value={mediaTypeInput}
-                            onChange={(e) => setMediaTypeInput(e.target.value as any)}
-                            className="w-full bg-black/50 border border-white/10 rounded-xl px-3 py-2.5 text-xs font-bold focus:border-primary focus:outline-none text-white/80"
-                          >
-                            <option value="image">Image / Photo</option>
-                            <option value="video">Video</option>
-                          </select>
-                        </div>
-                        <div>
-                          <label className="text-[9px] font-black uppercase tracking-wider text-white/50 block mb-2">Visibility</label>
-                          <div className="flex items-center gap-2 h-10">
-                            <input
-                              type="checkbox"
-                              id="isHiddenCheck"
-                              checked={mediaIsHiddenInput}
-                              onChange={(e) => setMediaIsHiddenInput(e.target.checked)}
-                              className="w-4 h-4 rounded border-white/10 bg-black/50 text-primary focus:ring-0"
-                            />
-                            <label htmlFor="isHiddenCheck" className="text-xs font-bold text-white/80 cursor-pointer">
-                              Hidden / Private
-                            </label>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Right: Gating when hidden */}
-                    <div className="flex flex-col justify-between p-4 bg-white/2 border border-white/5 rounded-2xl">
-                      <div>
-                        <h4 className="text-[10px] font-black uppercase tracking-wider text-white/60 mb-2">Gating Restrictions</h4>
-                        <p className="text-[9px] text-white/40 leading-relaxed mb-4">
-                          If hidden, other members must reach this connection stage to unlock and view the item.
-                        </p>
-                        
-                        {mediaIsHiddenInput ? (
-                          <div className="space-y-3">
-                            <label className="text-[9px] font-black uppercase tracking-wider text-primary block">Required Level</label>
-                            <select
-                              value={mediaRequiredLevelInput}
-                              onChange={(e) => setMediaRequiredLevelInput(e.target.value)}
-                              className="w-full bg-black/50 border border-white/20 rounded-xl px-3 py-2.5 text-xs font-bold focus:border-primary focus:outline-none text-white/80"
-                            >
-                              <option value="subscriber">Subscribers Only (Creators)</option>
-                              {RELATIONSHIP_LEVELS.filter(l => l.minScore > 0).map(level => (
-                                <option key={level.key} value={level.key}>
-                                  {level.label}
-                                </option>
-                              ))}
-                            </select>
-                          </div>
-                        ) : (
-                          <div className="py-6 flex flex-col items-center justify-center opacity-40">
-                            <Eye className="w-8 h-8 text-white/40 mb-1" />
-                            <span className="text-[9px] font-black uppercase tracking-widest text-white/40">Publicly Visible</span>
-                          </div>
-                        )}
-                      </div>
-
-                      <button
-                        onClick={handleUploadMedia}
-                        disabled={isUploadingMedia}
-                        className="w-full mt-4 py-3 bg-primary text-black font-black uppercase tracking-widest text-[9px] rounded-xl hover:shadow-[0_0_15px_rgba(102,252,241,0.4)] transition disabled:opacity-50 flex items-center justify-center gap-1.5"
-                      >
-                        {isUploadingMedia ? (
-                          <>
-                            <Loader2 className="w-3.5 h-3.5 animate-spin" /> Uploading...
-                          </>
-                        ) : (
-                          "Add to Album"
-                        )}
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Gallery Grid */}
-                <div className="space-y-6">
-                  {/* Public Grid */}
-                  <div className="space-y-3">
-                    <h3 className="text-xs font-black uppercase tracking-widest text-white flex items-center gap-2 border-b border-white/5 pb-2">
-                      <Eye className="w-4 h-4 text-emerald-400" /> Public Album ({mediaItems.filter(m => !m.is_hidden).length})
-                    </h3>
-                    
-                    {mediaItems.filter(m => !m.is_hidden).length > 0 ? (
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        {mediaItems.filter(m => !m.is_hidden).map(media => (
-                          <div key={media.id} className="relative aspect-square rounded-2xl overflow-hidden border border-white/5 group bg-white/2">
-                            {media.media_type === "video" ? (
-                              <div className="w-full h-full relative flex items-center justify-center">
-                                <Video className="w-8 h-8 text-white/30 absolute z-10" />
-                                <video src={media.video_start_time != null && media.video_end_time != null ? `${media.media_url}#t=${media.video_start_time},${media.video_end_time}` : media.media_url} className="w-full h-full object-cover opacity-60" muted />
-                              </div>
-                            ) : (
-                              <img src={media.media_url} alt="Gallery" className="w-full h-full object-cover group-hover:scale-105 transition duration-500" />
-                            )}
-                            <button
-                              onClick={() => handleDeleteMedia(media.id)}
-                              className="absolute top-2 right-2 p-1.5 bg-black/60 hover:bg-red-500/80 rounded-xl border border-white/10 text-white/70 hover:text-white transition opacity-0 group-hover:opacity-100"
-                              title="Delete media"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="text-xs text-white/40 py-4">No public media uploaded yet.</p>
-                    )}
-                  </div>
-
-                  {/* Hidden Grid */}
-                  <div className="space-y-3 pt-4">
-                    <h3 className="text-xs font-black uppercase tracking-widest text-white flex items-center gap-2 border-b border-white/5 pb-2">
-                      <Lock className="w-4 h-4 text-[#dc143c]" /> Hidden Album ({mediaItems.filter(m => m.is_hidden).length})
-                    </h3>
-                    
-                    {mediaItems.filter(m => m.is_hidden).length > 0 ? (
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        {mediaItems.filter(m => m.is_hidden).map(media => (
-                          <div key={media.id} className="relative aspect-square rounded-2xl overflow-hidden border border-[#dc143c]/15 group bg-white/2">
-                            {media.media_type === "video" ? (
-                              <div className="w-full h-full relative flex items-center justify-center">
-                                <Video className="w-8 h-8 text-white/30 absolute z-10" />
-                                <video src={media.video_start_time != null && media.video_end_time != null ? `${media.media_url}#t=${media.video_start_time},${media.video_end_time}` : media.media_url} className="w-full h-full object-cover opacity-60" muted />
-                              </div>
-                            ) : (
-                              <img src={media.media_url} alt="Gallery" className="w-full h-full object-cover group-hover:scale-105 transition duration-500" />
-                            )}
-                            
-                            {/* Required level indicator */}
-                            <div className="absolute bottom-2 left-2 right-2 px-2 py-1 bg-black/75 border border-white/10 rounded-lg text-[7px] font-black uppercase tracking-widest text-white/70 flex items-center gap-1">
-                              <Lock className="w-2.5 h-2.5 text-primary shrink-0" />
-                              <span className="truncate">
-                                Reveals at: {media.required_level === 'subscriber' ? 'Subscribers' : RELATIONSHIP_LEVELS.find(l => l.key === media.required_level)?.label || 'Locked'}
-                              </span>
-                            </div>
-
-                            <button
-                              onClick={() => handleDeleteMedia(media.id)}
-                              className="absolute top-2 right-2 p-1.5 bg-black/60 hover:bg-red-500/80 rounded-xl border border-white/10 text-white/70 hover:text-white transition opacity-0 group-hover:opacity-100"
-                              title="Delete media"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="text-xs text-white/40 py-4">No hidden media uploaded yet.</p>
-                    )}
-                  </div>
-                </div>
-              </div>
+              <MemberMediaTab
+                mediaItems={mediaItems}
+                mediaUrlInput={mediaUrlInput}
+                setMediaUrlInput={setMediaUrlInput}
+                mediaTypeInput={mediaTypeInput}
+                setMediaTypeInput={setMediaTypeInput}
+                mediaIsHiddenInput={mediaIsHiddenInput}
+                setMediaIsHiddenInput={setMediaIsHiddenInput}
+                handleAddMedia={handleAddMedia}
+                handleDeleteMedia={handleDeleteMedia}
+              />
             )}
+
+
 
             {activeTab === "insights" && (() => {
               const renderPromptPrivacyToggle = (field: 'bio_prompt_answer' | 'bio_prompt_answer_2', currentVal: string) => {
