@@ -19,6 +19,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/lib/supabase";
 import { getResilientSession, getResilientProfile, safeSupabaseQuery } from "@/lib/supabase-safe";
 import { compressImageFile } from "@/lib/image-compressor";
+import { useAvatarUpload } from "@/hooks/useAvatarUpload";
 import {
   SEXUAL_ORIENTATIONS,
   RELATIONSHIP_GOALS,
@@ -180,76 +181,22 @@ export default function OnboardingFlow() {
   const [isSavingCreator, setIsSavingCreator] = useState(false);
 
 
-  // File Upload states & handler
+  // File Upload states & hook
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+  const { isUploading: isUploadingPhoto, uploadAvatar } = useAvatarUpload({
+    onSuccess: (finalUrl, dataUrl) => {
+      setAvatarUrl(finalUrl);
+      saveOnboardingState({ avatarUrl: finalUrl, step: "profile-checklist", activeItem: "photo" });
+      setLivenessVerified(false);
+      setLivenessStep(0);
+    },
+    onError: (msg) => setFormError(msg)
+  });
 
   const handleLocalFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
-    if (!file.type.startsWith("image/")) {
-      setFormError("Please select a valid image file (JPG, PNG, WebP, etc.).");
-      return;
-    }
-
-    setIsUploadingPhoto(true);
-    setFormError(null);
-
-    try {
-      // 1. Compress image client-side to prevent memory choke & network timeout
-      const { blob, dataUrl } = await compressImageFile(file, 1200, 0.82);
-
-      setAvatarUrl(dataUrl);
-      saveOnboardingState({ avatarUrl: dataUrl, step: "profile-checklist", activeItem: "photo" });
-      setLivenessVerified(false);
-      setLivenessStep(0);
-
-      // Resolve active user id dynamically if state was delay-loaded
-      let activeUserId = userId;
-      if (!activeUserId) {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session?.user?.id) {
-          activeUserId = session.user.id;
-          setUserId(activeUserId);
-        }
-      }
-
-      // 2. Upload compressed blob to Supabase Storage bucket 'avatars'
-      const fileExt = "jpg";
-      const fileName = `${activeUserId || 'user'}_${Date.now()}.${fileExt}`;
-      const filePath = fileName; // Fix: bucket 'avatars' is already targeted in .from('avatars'), do NOT prefix with 'avatars/'
-
-      const uploadPromise = supabase.storage
-        .from('avatars')
-        .upload(filePath, blob, {
-          cacheControl: '3600',
-          upsert: true,
-          contentType: 'image/jpeg'
-        });
-        
-      const timeoutPromise = new Promise<{data: any, error: any}>((_, reject) => 
-        setTimeout(() => reject(new Error("Upload timeout exceeded")), 15000)
-      );
-
-      const { data, error } = await Promise.race([uploadPromise, timeoutPromise]);
-      
-      if (!error && data) {
-        const { data: { publicUrl } } = supabase.storage
-          .from('avatars')
-          .getPublicUrl(filePath);
-        if (publicUrl) {
-          setAvatarUrl(publicUrl);
-          saveOnboardingState({ avatarUrl: publicUrl, step: "profile-checklist", activeItem: "photo" });
-        }
-      } else if (error) {
-        console.warn("Storage upload notice (falling back to client Data URL):", error);
-      }
-    } catch (err) {
-      console.warn("Storage upload fallback to compressed Data URL:", err);
-    } finally {
-      setIsUploadingPhoto(false);
-    }
+    await uploadAvatar(file, userId);
   };
 
   // Biometric Liveness Check states

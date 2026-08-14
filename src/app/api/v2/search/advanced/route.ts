@@ -227,44 +227,39 @@ export async function POST(request: NextRequest) {
         };
       });
 
-    // 7. Apply Post-processing advanced filters in-memory
-    
-    // Filter by Match Score range
-    if (minMatchScore) {
-      results = results.filter(r => r.matchScore >= minMatchScore);
-    }
+    // 7. Apply Post-processing advanced filters in-memory via composable filter predicates
+    const filterByMatchScore = (r: typeof results[0]) => 
+      !minMatchScore || r.matchScore >= minMatchScore;
 
-    // Filter by Location Type
-    if (locationType && locationType !== 'All') {
-      if (locationType === 'Current') {
-        // Must have matching current location
-        results = results.filter(r => r.current_location === searcherProfile.current_location);
-      } else if (locationType === 'Origins') {
-        // Both from the same native town / origins
-        results = results.filter(r => r.origins === searcherProfile.origins);
-      }
-    }
+    const filterByLocationType = (r: typeof results[0]) => {
+      if (!locationType || locationType === 'All') return true;
+      if (locationType === 'Current') return r.current_location === searcherProfile.current_location;
+      if (locationType === 'Origins') return r.origins === searcherProfile.origins;
+      return true;
+    };
 
-    // Filter by Relationship Level / Tier
-    if (relationshipLevel && relationshipLevel !== 'All') {
-      results = results.filter(r => r.currentLevel.toLowerCase() === relationshipLevel.toLowerCase());
-    }
+    const filterByRelationshipLevel = (r: typeof results[0]) => 
+      !relationshipLevel || relationshipLevel === 'All' || r.currentLevel.toLowerCase() === relationshipLevel.toLowerCase();
 
-    // Filter by Relationship Goals/Types explicitly (excluding masked users)
-    if (relationshipGoal && relationshipGoal !== 'All') {
-      results = results.filter(r => 
-        !r.privacyFlags.goalsHidden && 
-        r.relationship_goals && 
-        r.relationship_goals.some((g: string) => g.toLowerCase().includes(relationshipGoal.toLowerCase()))
-      );
-    }
-    if (relationshipType && relationshipType !== 'All') {
-      results = results.filter(r => 
-        !r.privacyFlags.typesHidden && 
-        r.relationship_types && 
-        r.relationship_types.some((t: string) => t.toLowerCase().includes(relationshipType.toLowerCase()))
-      );
-    }
+    const filterByRelationshipGoal = (r: typeof results[0]) => {
+      if (!relationshipGoal || relationshipGoal === 'All') return true;
+      return !r.privacyFlags.goalsHidden && 
+        r.relationship_goals?.some((g: string) => g.toLowerCase().includes(relationshipGoal.toLowerCase()));
+    };
+
+    const filterByRelationshipType = (r: typeof results[0]) => {
+      if (!relationshipType || relationshipType === 'All') return true;
+      return !r.privacyFlags.typesHidden && 
+        r.relationship_types?.some((t: string) => t.toLowerCase().includes(relationshipType.toLowerCase()));
+    };
+
+    results = results.filter(r => 
+      filterByMatchScore(r) &&
+      filterByLocationType(r) &&
+      filterByRelationshipLevel(r) &&
+      filterByRelationshipGoal(r) &&
+      filterByRelationshipType(r)
+    );
 
     return NextResponse.json({
       success: true,

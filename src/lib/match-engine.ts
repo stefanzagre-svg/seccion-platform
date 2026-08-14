@@ -111,7 +111,7 @@ export interface RankedCandidate {
   result: MatchResult;
 }
 
-// ─── Signal Weights ──────────────────────────────────────────────────────────
+// ─── Signal Weights & Scoring Parameters ──────────────────────────────────────
 
 export const SIGNAL_WEIGHTS = {
   archetypeChemistry: 0.15,
@@ -121,6 +121,20 @@ export const SIGNAL_WEIGHTS = {
   temporalSignal:     0.15,
   geoProximity:       0.10,
   narrativeResonance: 0.15,
+} as const;
+
+export const TEMPORAL_WEIGHTS = {
+  recencyWeight: 0.6,
+  engagementWeight: 0.4,
+  defaultEngagementScore: 50,
+} as const;
+
+export const GEO_PROXIMITY_SCORES = {
+  currentLocationMatch: 100,
+  residenceMatch: 85,
+  nativeTownMatch: 70,
+  longDistanceSupported: 70,
+  geographicMismatchPenalty: 35,
 } as const;
 
 // ─── Archetype Chemistry Matrix (6×6) ────────────────────────────────────────
@@ -497,10 +511,10 @@ function scoreTemporalSignal(userA: UserProfile, userB: UserProfile): number {
   }
 
   // Engagement quality (0–100, from platform analytics)
-  const engagementScore = userB.engagementScore ?? 50;
+  const engagementScore = userB.engagementScore ?? TEMPORAL_WEIGHTS.defaultEngagementScore;
 
-  // Weighted: 60% recency, 40% engagement quality
-  return Math.round(recencyScore * 0.6 + engagementScore * 0.4);
+  // Weighted recency and engagement quality
+  return Math.round(recencyScore * TEMPORAL_WEIGHTS.recencyWeight + engagementScore * TEMPORAL_WEIGHTS.engagementWeight);
 }
 
 /**
@@ -521,32 +535,34 @@ function scoreGeoProximity(userA: UserProfile, userB: UserProfile): number {
 
   // 1. Current Location Match (Highest priority for physical meetup)
   if (currentA && currentB && currentA === currentB) {
-    return 100;
+    return GEO_PROXIMITY_SCORES.currentLocationMatch;
   }
 
   // 2. Residence Match (Lives in same place)
   if (residenceA && residenceB && residenceA === residenceB) {
-    return 85;
+    return GEO_PROXIMITY_SCORES.residenceMatch;
   }
 
   // 3. Shared Native Town (Chemistry/Shared Origins bonus)
   if (nativeA && nativeB && nativeA === nativeB) {
-    return 70;
+    return GEO_PROXIMITY_SCORES.nativeTownMatch;
   }
 
   // 4. Legacy Match (If new fields are missing, fall back to origins/location check)
   if ((!currentA || !currentB) && (!residenceA || !residenceB) && legacyA && legacyB && legacyA === legacyB) {
-    return 100;
+    return GEO_PROXIMITY_SCORES.currentLocationMatch;
   }
 
   // Different location — check if either supports long-distance
   const typeA = (userA.relationshipType || '').toLowerCase();
   const typeB = (userB.relationshipType || '').toLowerCase();
 
-  if (typeA.includes('distant') || typeB.includes('distant')) return 70;
+  if (typeA.includes('distant') || typeB.includes('distant')) {
+    return GEO_PROXIMITY_SCORES.longDistanceSupported;
+  }
 
   // Mild penalty for geographic mismatch
-  return 35;
+  return GEO_PROXIMITY_SCORES.geographicMismatchPenalty;
 }
 
 /**
