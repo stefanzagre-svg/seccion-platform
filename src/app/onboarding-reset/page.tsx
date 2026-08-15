@@ -11,21 +11,8 @@ export default function OnboardingReset() {
       try {
         const { data: { session } } = await supabase.auth.getSession();
         if (session?.user?.id) {
-          await supabase.from('profiles').update({
-            member_purposes: null,
-            core_passion: null,
-            privacy_settings: null,
-            avatar_url: null,
-            bio: null,
-            bio_prompt_answer: null,
-            bio_prompt_answer_2: null,
-            bio_prompt_question: null,
-            bio_prompt_question_2: null,
-            sexual_preference: null,
-            relationship_goals: null,
-            relationship_types: null,
-            archetype: null,
-          }).eq('id', session.user.id);
+          // Delete test profile row from database so fresh onboarding triggers cleanly
+          await supabase.from('profiles').delete().eq('id', session.user.id);
         }
         await supabase.auth.signOut();
       } catch (err) {

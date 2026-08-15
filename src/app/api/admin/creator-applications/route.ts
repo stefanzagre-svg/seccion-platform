@@ -89,3 +89,30 @@ export async function PATCH(request: Request) {
     return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 });
   }
 }
+
+export async function DELETE(request: Request) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const email = searchParams.get('email');
+    const id = searchParams.get('id');
+
+    if (!email && !id) {
+      return NextResponse.json({ error: 'Email or ID required' }, { status: 400 });
+    }
+
+    let query = supabaseAdmin.from('creator_applications').delete();
+    if (id) {
+      query = query.eq('id', id);
+    } else if (email) {
+      query = query.eq('email', email.toLowerCase().trim());
+    }
+
+    const { error } = await query;
+    if (error) throw error;
+
+    return NextResponse.json({ success: true, message: 'Application deleted successfully' });
+  } catch (error: any) {
+    console.error('Error in DELETE /api/admin/creator-applications:', error);
+    return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 });
+  }
+}
