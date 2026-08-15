@@ -543,26 +543,46 @@ export default function CreatorQuest({ onSignUp, onSwitchToMember, onClose }: Cr
                   />
                 </div>
 
-                {/* Privacy toggle */}
-                <div className="flex justify-between items-center glass-card p-4 rounded-xl border border-white/10 bg-white/2">
-                  <div className="space-y-0.5">
-                    <span className="text-[10px] font-black uppercase text-white tracking-wider block">
-                      {t.profile_blur_label}
+                {/* Stealth Mode / Face Blur Privacy Gate */}
+                <div className="glass-card p-4 rounded-xl border border-white/10 bg-white/2 space-y-3">
+                  <div className="flex justify-between items-start">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs">🛡️</span>
+                        <span className="text-[10px] font-black uppercase text-white tracking-wider">
+                          {lang === 'es' ? 'Modo Sigilo: Difuminado Gradual de Privacidad' : 'Stealth Mode: Gradual Privacy Face Blur'}
+                        </span>
+                      </div>
+                      <p className="text-[9px] text-white/50 leading-relaxed max-w-md">
+                        {lang === 'es'
+                          ? 'Tu rostro permanece con un desenfoque elegante y estético en los feeds públicos y para perfiles sin match. Se revela de forma gradual y nítida solo cuando un fan alcanza el Nivel 3 de Química (interacciones mutuas genuinas) o se suscribe como VIP.'
+                          : 'Your face stays softly and aesthetically blurred in public feeds and for unmatched visitors. It smoothly and gradually unblurs only when a member reaches Level 3 Chemistry (genuine mutual connection) or becomes your VIP backer.'}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setFaceBlurActive(!faceBlurActive)}
+                      className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-wider border transition cursor-pointer shrink-0 ${
+                        faceBlurActive
+                          ? "bg-primary border-primary text-black shadow-[0_0_10px_rgba(0,251,251,0.3)]"
+                          : "bg-white/5 border-white/10 text-white/40 hover:text-white"
+                      }`}
+                    >
+                      {faceBlurActive ? (lang === 'es' ? 'Activado' : 'Active') : (lang === 'es' ? 'Desactivado' : 'Inactive')}
+                    </button>
+                  </div>
+
+                  {/* Level 3 Chemistry Milestone Breakdown Badge */}
+                  <div className="p-2.5 rounded-lg bg-black/40 border border-white/5 flex items-center justify-between text-[8px] font-mono text-white/40">
+                    <span className="flex items-center gap-1.5">
+                      <span className="text-primary font-bold">🔒 Level 1–2:</span>
+                      {lang === 'es' ? 'Visitantes / Sin match (Rostro difuminado)' : 'Unmatched / Exploring (Aesthetic Face Blur)'}
                     </span>
-                    <span className="text-[9px] text-white/40 font-medium block">
-                      Blurs your face stream for users below Chemistry Level 3 automatically.
+                    <span className="flex items-center gap-1.5">
+                      <span className="text-[#00fbfb] font-bold">✨ Level 3+:</span>
+                      {lang === 'es' ? 'Sinergia mutua / VIP (Rostro 100% visible)' : 'Mutual Chemistry / VIP Backer (100% Crystal Clear)'}
                     </span>
                   </div>
-                  <button
-                    onClick={() => setFaceBlurActive(!faceBlurActive)}
-                    className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-wider border transition ${
-                      faceBlurActive
-                        ? "bg-primary border-primary text-black"
-                        : "bg-white/5 border-white/10 text-white/40"
-                    }`}
-                  >
-                    {faceBlurActive ? "Active" : "Inactive"}
-                  </button>
                 </div>
 
                 {/* Residence Input */}
