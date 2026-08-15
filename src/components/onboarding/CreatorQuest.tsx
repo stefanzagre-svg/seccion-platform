@@ -8,6 +8,7 @@ import StreamStationDemo from "./StreamStationDemo";
 import MonetizationSuiteDemo from "./MonetizationSuiteDemo";
 
 import { useTranslation } from "@/context/LanguageContext";
+import { RELATIONSHIP_GOALS, RELATIONSHIP_TYPES, SEXUAL_PREFERENCES } from "@/lib/constants";
 
 interface CreatorQuestProps {
   onSignUp: (data: { archetype: string; role: string; creator_purposes: string[]; specialization: string; sexual_preference: string; relationship_goal: string; relationship_type: string; is_adult_content: boolean }) => void;
@@ -393,10 +394,9 @@ export default function CreatorQuest({ onSignUp, onSwitchToMember, onClose }: Cr
                       <label className="text-[9px] font-black uppercase text-white/40 tracking-wider">Sexual Preference Matrix</label>
                       <select value={sexualPreference} onChange={(e) => setSexualPreference(e.target.value)} className="w-full px-4 py-3 bg-black/40 border border-white/10 rounded-xl text-xs text-white focus:border-primary outline-none">
                         <option value="">Select Preference...</option>
-                        <option value="Straight">Straight</option>
-                        <option value="Gay">Gay</option>
-                        <option value="Lesbian">Lesbian</option>
-                        <option value="Bisexual">Bisexual</option>
+                        {SEXUAL_PREFERENCES.map(sp => (
+                          <option key={sp} value={sp}>{sp}</option>
+                        ))}
                       </select>
                     </div>
                   )}
@@ -405,10 +405,9 @@ export default function CreatorQuest({ onSignUp, onSwitchToMember, onClose }: Cr
                     <label className="text-[9px] font-black uppercase text-white/40 tracking-wider">Relationship Goal Vector</label>
                     <select value={relationshipGoal} onChange={(e) => setRelationshipGoal(e.target.value)} className="w-full px-4 py-3 bg-black/40 border border-white/10 rounded-xl text-xs text-white focus:border-primary outline-none">
                       <option value="">Select Goal...</option>
-                      <option value="Casual">Casual Dynamics</option>
-                      <option value="Short term fun">Short-term Fun</option>
-                      <option value="Long term partner">Long-term Connection</option>
-                      <option value="Marriage">Marriage Oriented</option>
+                      {RELATIONSHIP_GOALS.map(rg => (
+                        <option key={rg} value={rg}>{rg}</option>
+                      ))}
                     </select>
                   </div>
 
@@ -416,10 +415,9 @@ export default function CreatorQuest({ onSignUp, onSwitchToMember, onClose }: Cr
                     <label className="text-[9px] font-black uppercase text-white/40 tracking-wider">Relationship Type Archetype</label>
                     <select value={relationshipType} onChange={(e) => setRelationshipType(e.target.value)} className="w-full px-4 py-3 bg-black/40 border border-white/10 rounded-xl text-xs text-white focus:border-primary outline-none">
                       <option value="">Select Type...</option>
-                      <option value="Monogamous">Monogamous</option>
-                      <option value="Non-monogamous">Non-monogamous</option>
-                      <option value="Open Relationship">Open Relationship</option>
-                      <option value="Polyamorous">Polyamorous</option>
+                      {RELATIONSHIP_TYPES.map(rt => (
+                        <option key={rt} value={rt}>{rt}</option>
+                      ))}
                     </select>
                   </div>
                 </motion.div>
