@@ -731,39 +731,53 @@ export default function BecomeCreatorPage({ initialProfile, userEmail }: { initi
                   <Check className="w-8 h-8 stroke-[3]" />
                 </div>
 
-                <div className="space-y-2">
-                  <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-[#00fbfb]">
-                    {locale === "es" ? "SOLICITUD RECIBIDA" : "APPLICATION SUBMITTED"}
-                  </span>
-                  <h3 className="font-display text-2xl sm:text-3xl font-black text-white">
-                    {locale === "es" ? "¡Bienvenido/a a la Campaña!" : "Welcome to the Campaign!"}
+                <div className="space-y-3">
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#00fbfb]/10 border border-[#00fbfb]/30 text-[#00fbfb]">
+                    <Sparkles className="w-3.5 h-3.5 animate-pulse" />
+                    <span className="text-[9px] font-mono font-bold uppercase tracking-[0.2em]">
+                      {locale === "es" ? "ACCESO EN REVISIÓN VIP" : "VIP ACCESS IN REVIEW"}
+                    </span>
+                  </div>
+                  <h3 className="font-display text-2xl sm:text-4xl font-black text-white tracking-tight">
+                    {locale === "es" ? "¡Estás en la lista!" : "You're on the Inside!"}
                   </h3>
-                  <p className="text-xs sm:text-sm text-[#b9cac9] max-w-md mx-auto leading-relaxed">
+                  <p className="text-xs sm:text-base text-[#b9cac9] max-w-lg mx-auto leading-relaxed font-medium">
                     {locale === "es"
-                      ? "Hemos recibido tu solicitud de creador con éxito. Nuestro equipo fundador revisará tus perfiles y te enviará tu Código VIP para activar tu Asistente IA por Telegram o correo."
-                      : "We received your creator application successfully. Our founding review team will review your profile links and send your custom VIP Passcode via Telegram/Email within 24 hours."}
+                      ? "Revisaremos tus redes para activar tu cuenta. En cuanto esté lista, te avisaremos por WhatsApp, Telegram o correo para que entres directo con tu email y estrenes tu Asistente IA."
+                      : "We're reviewing your links right now. As soon as you're approved, we'll ping you on WhatsApp, Telegram, or email so you can sign in directly with this email and unlock your AI Manager."}
                   </p>
                 </div>
 
-                <div className="p-4 bg-white/5 border border-white/10 rounded-2xl max-w-md mx-auto text-left text-xs font-mono space-y-1.5 text-[#b9cac9]">
+                <div className="p-5 bg-white/[0.04] border border-white/10 rounded-2xl max-w-md mx-auto text-left text-xs font-mono space-y-2 text-[#b9cac9] backdrop-blur-md">
                   <div className="flex justify-between">
-                    <span className="text-white/50">{locale === "es" ? "Creador/a:" : "Creator:"}</span>
+                    <span className="text-white/40">{locale === "es" ? "Creador/a:" : "Creator:"}</span>
                     <span className="text-white font-bold">{formData.fullName}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-white/50">{locale === "es" ? "Correo:" : "Email:"}</span>
-                    <span className="text-[#00fbfb]">{formData.email}</span>
+                    <span className="text-white/40">{locale === "es" ? "Email Autorizado:" : "Whitelisted Email:"}</span>
+                    <span className="text-[#00fbfb] font-bold">{formData.email}</span>
                   </div>
                   {formData.city && (
                     <div className="flex justify-between">
-                      <span className="text-white/50">{locale === "es" ? "Ciudad Pre-Launch:" : "Pre-Launch City:"}</span>
-                      <span className="text-[#ffabf3]">{formData.city}</span>
+                      <span className="text-white/40">{locale === "es" ? "Ciudad Hub:" : "Hub City:"}</span>
+                      <span className="text-[#ffabf3] font-bold">{formData.city}</span>
                     </div>
                   )}
-                  <div className="flex justify-between">
-                    <span className="text-white/50">{locale === "es" ? "Pack IA 1 Año:" : "Year 1 AI Pack:"}</span>
-                    <span className="text-[#39FF14] font-bold">{locale === "es" ? "RECLAMADO (0 €)" : "CLAIMED (0 €)"}</span>
+                  <div className="flex justify-between pt-1 border-t border-white/5">
+                    <span className="text-white/40">{locale === "es" ? "Pack IA 1er Año:" : "Year 1 AI Pack:"}</span>
+                    <span className="text-[#39FF14] font-bold">{locale === "es" ? "RECLAMADO (0 € / 90% NET)" : "CLAIMED (0 € / 90% NET)"}</span>
                   </div>
+                </div>
+
+                {/* Direct CTA to Login once approved */}
+                <div className="pt-2 max-w-md mx-auto space-y-3">
+                  <Link
+                    href={`/login?email=${encodeURIComponent(formData.email)}`}
+                    className="w-full py-3.5 px-6 rounded-xl bg-white/10 hover:bg-[#00fbfb] text-white hover:text-black font-mono text-xs font-black uppercase tracking-wider transition-all duration-300 flex items-center justify-center gap-2 border border-white/10 hover:border-[#00fbfb] shadow-lg"
+                  >
+                    <span>{locale === "es" ? "Ir al Login de Creadores" : "Go to Creator Login"}</span>
+                    <ArrowUpRight className="w-4 h-4" />
+                  </Link>
                 </div>
 
                 <div className="pt-2">
