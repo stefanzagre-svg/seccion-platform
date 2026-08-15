@@ -691,6 +691,8 @@ export default function CreatorStudio() {
   const [taxIdNumber, setTaxIdNumber] = useState<string>('');
   const [vatGstNumber, setVatGstNumber] = useState<string>('');
   const [paxumEmail, setPaxumEmail] = useState<string>('');
+  const [cryptoWalletAddress, setCryptoWalletAddress] = useState<string>('');
+  const [cryptoNetwork, setCryptoNetwork] = useState<'USDT_TRC20' | 'USDT_POLYGON' | 'USDC_POLYGON' | 'BTC'>('USDT_TRC20');
   const [creatorResidence, setCreatorResidence] = useState<string>('');
   const taxFormat = getTaxFormatForResidence(creatorResidence);
 
@@ -859,6 +861,8 @@ export default function CreatorStudio() {
             setTaxIdNumber(privacy.tax_id_number || '');
             setVatGstNumber(privacy.vat_gst_number || '');
             setPaxumEmail(privacy.paxum_email || '');
+            setCryptoWalletAddress(privacy.crypto_wallet_address || '');
+            setCryptoNetwork(privacy.crypto_network || 'USDT_TRC20');
             setCreatorResidence(profileData.residence || '');
             
             // Load Calendar Status
@@ -1039,6 +1043,8 @@ export default function CreatorStudio() {
         tax_id_number: taxIdNumber,
         vat_gst_number: vatGstNumber,
         paxum_email: paxumEmail,
+        crypto_wallet_address: cryptoWalletAddress,
+        crypto_network: cryptoNetwork,
         custom_request_permission: customRequestPermission,
         face_blur_default: faceBlurDefault,
       };
@@ -3283,6 +3289,47 @@ export default function CreatorStudio() {
                           />
                           <p className="text-[8px] text-white/40 uppercase tracking-widest leading-none mt-1">
                             Used by the platform for manual earnings payouts.
+                          </p>
+                        </div>
+
+                        {/* Crypto Payout Wallet (NOWPayments Rails) */}
+                        <div className="space-y-3 pt-3 border-t border-white/5">
+                          <div className="flex justify-between items-center">
+                            <label className="text-[9px] uppercase tracking-widest font-black text-[#00fbfb]">
+                              Crypto Payout Wallet (Instant / 0% Chargeback)
+                            </label>
+                            <span className="text-[7px] font-mono font-bold bg-[#00fbfb]/10 text-[#00fbfb] border border-[#00fbfb]/30 px-2 py-0.5 rounded-full uppercase">
+                              NOWPayments
+                            </span>
+                          </div>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                            <div>
+                              <label className="text-[8px] text-white/40 uppercase font-black tracking-widest block mb-1">Network</label>
+                              <select
+                                value={cryptoNetwork}
+                                onChange={(e) => setCryptoNetwork(e.target.value as any)}
+                                className="w-full px-3 py-2.5 bg-black/60 border border-white/10 rounded-xl text-xs font-mono text-white focus:border-[#00fbfb] focus:outline-none"
+                              >
+                                <option value="USDT_TRC20">USDT (TRC20 - Tron)</option>
+                                <option value="USDT_POLYGON">USDT (Polygon)</option>
+                                <option value="USDC_POLYGON">USDC (Polygon)</option>
+                                <option value="BTC">Bitcoin (BTC)</option>
+                              </select>
+                            </div>
+                            <div className="sm:col-span-2">
+                              <label className="text-[8px] text-white/40 uppercase font-black tracking-widest block mb-1">Wallet Address</label>
+                              <input 
+                                type="text" 
+                                placeholder="e.g. Txyz... or 0xabc... or bc1q..." 
+                                value={cryptoWalletAddress}
+                                onChange={(e) => setCryptoWalletAddress(e.target.value)}
+                                className="w-full px-4 py-2.5 bg-black/60 border border-white/10 rounded-xl text-xs text-[#00fbfb] placeholder-white/20 focus:border-[#00fbfb] focus:outline-none transition font-mono"
+                              />
+                            </div>
+                          </div>
+                          <p className="text-[8px] text-white/40 uppercase tracking-widest leading-relaxed">
+                            Earnings from crypto purchases are credited directly in USD/EUR and payable to your wallet with 0% chargeback risk.
                           </p>
                         </div>
                       </div>
