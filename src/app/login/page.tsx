@@ -69,7 +69,7 @@ export default function LoginPage() {
 
     try {
       const options = mode === 'link' ? {
-        emailRedirectTo: `${window.location.origin}/auth/callback?next=/onboarding`,
+        emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent('/onboarding?role=creator')}`,
       } : undefined;
 
       const { error } = await supabase.auth.signInWithOtp({

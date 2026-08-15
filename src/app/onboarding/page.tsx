@@ -402,12 +402,32 @@ export default function OnboardingFlow() {
             return;
           }
 
+          // Check if this user's email was approved in creator_applications table
+          let isApprovedCreatorApplication = false;
+          if (authUser.email) {
+            try {
+              const { data: appData } = await supabase
+                .from('creator_applications')
+                .select('status')
+                .eq('email', authUser.email.toLowerCase().trim())
+                .eq('status', 'approved')
+                .maybeSingle();
+              if (appData) {
+                isApprovedCreatorApplication = true;
+              }
+            } catch (err) {
+              console.warn('[Onboarding] Notice checking creator application status:', err);
+            }
+          }
+
           // Provision missing profile with safety wrapper
           const isCreatorSignup =
-            typeof window !== "undefined" && (
+            isApprovedCreatorApplication ||
+            (typeof window !== "undefined" && (
+              params.get("role") === "creator" ||
               localStorage.getItem("is_creator_signup") === "true" ||
               !!sessionStorage.getItem("_onboarding_creator_archive_choice")
-            );
+            ));
 
           await safeSupabaseQuery(
             supabase
@@ -424,11 +444,11 @@ export default function OnboardingFlow() {
 
           if (isCreatorSignup) {
             setIsCreatorMode(true);
-            if (!sessionStorage.getItem("_onboarding_creator_archive_choice")) {
+            if (typeof window !== "undefined") {
               sessionStorage.setItem("_onboarding_creator_archive_choice", "creator");
+              localStorage.removeItem("is_creator_signup");
             }
-            localStorage.removeItem("is_creator_signup");
-            OnboardingLogger.log('init', 'step_enter', 'new creator profile provisioned, routing to profile-checklist', authUser.id);
+            OnboardingLogger.log('init', 'step_enter', 'approved creator profile provisioned, routing to profile-checklist', authUser.id);
             setStep("profile-checklist");
           } else {
             OnboardingLogger.log('init', 'step_enter', 'new member profile provisioned, routing to purpose', authUser.id);
