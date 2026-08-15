@@ -8,6 +8,7 @@ import { createClient } from "@/lib/supabase/client";
 import { Loader2, Key, Mail, Lock, ArrowLeft, AlertCircle, ShieldAlert, Sparkles, Crown } from "lucide-react";
 import PrelaunchModal from "@/components/PrelaunchModal";
 import AgeGateSplash from "@/components/onboarding/AgeGateSplash";
+import { useTranslation } from "@/context/LanguageContext";
 
 // Double bezel card wrapper
 function DoubleBezelCard({ children, className = "" }: { children: React.ReactNode; className?: string }) {
@@ -23,6 +24,7 @@ function DoubleBezelCard({ children, className = "" }: { children: React.ReactNo
 
 export default function LoginPage() {
   const router = useRouter();
+  const { locale } = useTranslation();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [useMagicLink, setUseMagicLink] = useState(false);
@@ -143,20 +145,20 @@ export default function LoginPage() {
         {/* Back Link */}
         <Link href="/" className="inline-flex items-center gap-2 text-xs font-mono font-bold text-white/40 hover:text-[#00fbfb] transition mb-6 group">
           <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-          <span>Back to Home</span>
+          <span>{locale === 'es' ? 'Volver al Inicio' : 'Back to Home'}</span>
         </Link>
 
         {/* Pre-Launch Locked Banner */}
         <div className="mb-4 p-3.5 bg-[#00fbfb]/10 border border-[#00fbfb]/30 rounded-2xl flex items-center justify-between text-xs">
           <div className="flex items-center gap-2 text-[#00fbfb] font-mono font-bold text-[11px] uppercase">
             <ShieldAlert className="w-4 h-4 shrink-0" />
-            <span>Pre-Launch Access Only</span>
+            <span>{locale === 'es' ? 'Solo Acceso de Pre-Lanzamiento' : 'Pre-Launch Access Only'}</span>
           </div>
           <button
             onClick={() => setIsPrelaunchModalOpen(true)}
             className="text-[10px] font-mono font-bold text-[#ffabf3] underline hover:text-white transition cursor-pointer"
           >
-            Learn Why
+            {locale === 'es' ? 'Saber Más' : 'Learn Why'}
           </button>
         </div>
 
@@ -169,12 +171,16 @@ export default function LoginPage() {
                 className="h-8 mx-auto object-contain drop-shadow-[0_0_20px_rgba(0,251,251,0.4)]"
               />
               <p className="text-[10px] font-mono font-bold text-[#ffabf3] uppercase tracking-widest">
-                Approved Creator & Admin Access
+                {locale === 'es' ? 'Acceso de Creador Aprobado' : 'Approved Creator Access'}
               </p>
             </div>
 
             <div className="p-3 bg-white/5 border border-white/10 rounded-xl text-[11px] text-[#b9cac9] leading-relaxed text-center">
-              Public demo accounts are temporarily locked during the pre-launch phase. Logins are restricted to <strong className="text-white">approved creators</strong> & <strong className="text-white">founding team members</strong>.
+              {locale === 'es' ? (
+                <>Las cuentas demo públicas están temporalmente bloqueadas durante la fase de pre-lanzamiento. El acceso está restringido a <strong className="text-white">creadores aprobados</strong>.</>
+              ) : (
+                <>Public demo accounts are temporarily locked during the pre-launch phase. Logins are restricted to <strong className="text-white">approved creators</strong>.</>
+              )}
             </div>
 
             {errorMsg && (
@@ -189,15 +195,17 @@ export default function LoginPage() {
                 {sentMode === 'code' ? (
                   <>
                     <div className="p-4 bg-[#00fbfb]/5 border border-[#00fbfb]/20 text-[#00fbfb] text-xs rounded-xl space-y-1.5 text-center">
-                      <h4 className="font-bold uppercase tracking-wider text-white">Magic Passcode Sent!</h4>
+                      <h4 className="font-bold uppercase tracking-wider text-white">
+                        {locale === 'es' ? '¡Código de Acceso Enviado!' : 'Magic Passcode Sent!'}
+                      </h4>
                       <p className="text-[10px] text-[#b9cac9] leading-relaxed">
-                        We sent a passcode to <strong className="text-white">{email}</strong>.
+                        {locale === 'es' ? 'Enviamos un código a ' : 'We sent a passcode to '}<strong className="text-white">{email}</strong>.
                       </p>
                     </div>
 
                     <form onSubmit={handleVerifyOtp} className="space-y-3 p-4 bg-white/5 border border-white/10 rounded-2xl">
                       <label className="block text-[10px] font-mono text-[#00fbfb] uppercase font-bold tracking-wider text-center">
-                        Enter Passcode:
+                        {locale === 'es' ? 'Ingresa el Código:' : 'Enter Passcode:'}
                       </label>
                       <input
                         type="text"
@@ -212,15 +220,23 @@ export default function LoginPage() {
                         disabled={verifyingOtp || otpCode.length < 6}
                         className="w-full py-3 bg-[#00fbfb] text-black font-mono text-xs font-black uppercase tracking-wider rounded-xl hover:shadow-[0_0_15px_rgba(0,251,251,0.5)] transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-40"
                       >
-                        {verifyingOtp ? <Loader2 className="w-4 h-4 animate-spin" /> : "Verify Code & Enter App →"}
+                        {verifyingOtp ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          locale === 'es' ? 'Verificar Código e Ingresar →' : 'Verify Code & Enter App →'
+                        )}
                       </button>
                     </form>
                   </>
                 ) : (
                   <div className="p-4 bg-emerald-500/5 border border-emerald-500/20 text-emerald-400 text-xs rounded-xl space-y-2 text-center">
-                    <h4 className="font-bold uppercase tracking-wider">Magic Link Sent!</h4>
+                    <h4 className="font-bold uppercase tracking-wider">
+                      {locale === 'es' ? '¡Enlace Mágico Enviado!' : 'Magic Link Sent!'}
+                    </h4>
                     <p className="text-[10px] text-[#b9cac9] leading-relaxed">
-                      We sent a secure magic link to <strong className="text-white">{email}</strong>. Open your email on this browser and click the link to sign in instantly.
+                      {locale === 'es' 
+                        ? <>Enviamos un enlace de acceso a <strong className="text-white">{email}</strong>. Abre tu correo y haz clic para ingresar.</>
+                        : <>We sent a secure magic link to <strong className="text-white">{email}</strong>. Open your email on this browser and click the link to sign in instantly.</>}
                     </p>
                   </div>
                 )}
@@ -234,7 +250,7 @@ export default function LoginPage() {
                     }}
                     className="text-[10px] font-mono text-white/40 hover:text-white underline uppercase cursor-pointer"
                   >
-                    ← Try another email or method
+                    {locale === 'es' ? '← Intentar con otro correo o método' : '← Try another email or method'}
                   </button>
                 </div>
               </div>
@@ -243,16 +259,18 @@ export default function LoginPage() {
                 
                 {/* Email Input */}
                 <div className="space-y-1.5">
-                  <label className="block text-[8px] font-mono text-white/40 uppercase font-bold tracking-wider">Email Address</label>
+                  <label className="block text-[8px] font-mono text-white/40 uppercase font-bold tracking-wider">
+                    {locale === 'es' ? 'Correo Electrónico' : 'Email Address'}
+                  </label>
                   <div className="relative">
                     <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
                     <input 
                       type="email" 
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      placeholder="approved.creator@example.com"
+                      placeholder="creador.aprobado@ejemplo.com"
                       required
-                      className="w-full bg-black/40 border border-white/10 focus:border-[#00fbfb]/50 rounded-xl py-2.5 pl-10 pr-4 text-xs outline-none transition"
+                      className="w-full bg-black/40 border border-white/10 focus:border-[#00fbfb]/50 rounded-xl py-2.5 pl-10 pr-4 text-xs outline-none transition text-white"
                     />
                   </div>
                 </div>
@@ -261,7 +279,9 @@ export default function LoginPage() {
                 {!useMagicLink && (
                   <div className="space-y-1.5 animate-fade-in">
                     <div className="flex justify-between items-center">
-                      <label className="block text-[8px] font-mono text-white/40 uppercase font-bold tracking-wider">Password</label>
+                      <label className="block text-[8px] font-mono text-white/40 uppercase font-bold tracking-wider">
+                        {locale === 'es' ? 'Contraseña' : 'Password'}
+                      </label>
                     </div>
                     <div className="relative">
                       <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
@@ -271,7 +291,7 @@ export default function LoginPage() {
                         onChange={(e) => setPassword(e.target.value)}
                         placeholder="••••••••"
                         required={!useMagicLink}
-                        className="w-full bg-black/40 border border-white/10 focus:border-[#00fbfb]/50 rounded-xl py-2.5 pl-10 pr-4 text-xs outline-none transition"
+                        className="w-full bg-black/40 border border-white/10 focus:border-[#00fbfb]/50 rounded-xl py-2.5 pl-10 pr-4 text-xs outline-none transition text-white"
                       />
                     </div>
                   </div>
@@ -287,7 +307,9 @@ export default function LoginPage() {
                     }}
                     className="text-[9px] font-mono font-bold text-[#ffabf3] hover:underline uppercase tracking-wide cursor-pointer"
                   >
-                    {useMagicLink ? "Sign in with password" : "Passwordless sign in instead"}
+                    {useMagicLink 
+                      ? (locale === 'es' ? "Ingresar con contraseña" : "Sign in with password")
+                      : (locale === 'es' ? "Ingresar sin contraseña (Magic Link)" : "Passwordless sign in instead")}
                   </button>
                 </div>
 
@@ -305,7 +327,7 @@ export default function LoginPage() {
                       ) : (
                         <>
                           <Key className="w-4 h-4" />
-                          <span>📱 I have the App (Send Magic Code)</span>
+                          <span>{locale === 'es' ? '📱 Tengo la App (Enviar Código)' : '📱 I have the App (Send Magic Code)'}</span>
                         </>
                       )}
                     </button>
@@ -318,7 +340,7 @@ export default function LoginPage() {
                       {loading && sentMode === 'link' ? (
                         <Loader2 className="w-4 h-4 animate-spin" />
                       ) : (
-                        <span>🌐 I don't have the App (Send Magic Link)</span>
+                        <span>{locale === 'es' ? '🌐 No tengo la App (Enviar Magic Link)' : '🌐 I don\'t have the App (Send Magic Link)'}</span>
                       )}
                     </button>
                   </div>
@@ -333,7 +355,7 @@ export default function LoginPage() {
                     ) : (
                       <>
                         <Key className="w-4 h-4" />
-                        <span>Sign In to Creator / Admin</span>
+                        <span>{locale === 'es' ? 'Ingresar como Creador Aprobado' : 'Sign In as Approved Creator'}</span>
                       </>
                     )}
                   </button>
@@ -343,15 +365,17 @@ export default function LoginPage() {
 
             <div className="border-t border-white/5 pt-4 text-center space-y-2">
               <p className="text-[10px] text-[#b9cac9]">
-                Are you a creator wanting 90% revenue & 1-Year Free AI Assistant?{" "}
-                <Link href="/onboarding" className="text-[#00fbfb] hover:underline font-bold font-mono uppercase tracking-wide">
-                  Apply Now
+                {locale === 'es' 
+                  ? '¿Eres un creador que aún no ha aplicado por el 90% de ingresos y 1 Año de Asistente IA Gratis? ' 
+                  : 'Are you a creator that has not applied for 90% revenue & 1-Year Free AI Assistant? '}
+                <Link href="/become-creator#apply" className="text-[#00fbfb] hover:underline font-bold font-mono uppercase tracking-wide">
+                  {locale === 'es' ? 'APLICA AHORA' : 'Apply Now'}
                 </Link>
               </p>
               <p className="text-[10px] text-[#b9cac9]">
-                Want early member rewards?{" "}
+                {locale === 'es' ? '¿Quieres recompensas de primer miembro? ' : 'Want early member rewards? '}
                 <Link href="/early-access" className="text-[#ffabf3] hover:underline font-bold font-mono uppercase tracking-wide">
-                  Join Early Access List
+                  {locale === 'es' ? 'UNIRSE A LA LISTA DE ACCESO ANTICIPADO' : 'Join Early Access List'}
                 </Link>
               </p>
             </div>

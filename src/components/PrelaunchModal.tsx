@@ -161,7 +161,7 @@ export default function PrelaunchModal({ isOpen, onClose }: PrelaunchModalProps)
 
                 <div className="pt-2">
                   <Link
-                    href="/onboarding"
+                    href="/become-creator#apply"
                     onClick={onClose}
                     className="w-full py-3 px-3 bg-[#00fbfb] text-black font-mono text-[10px] sm:text-xs font-black uppercase tracking-wide rounded-xl hover:shadow-[0_0_20px_rgba(0,251,251,0.6)] transition flex items-center justify-center gap-2 text-center leading-snug cursor-pointer"
                   >

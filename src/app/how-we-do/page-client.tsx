@@ -326,7 +326,7 @@ export default function HowWeDoPage() {
             <div className="relative w-20 h-20 rounded-full bg-black/40 border border-white/10 flex items-center justify-center shadow-[0_0_30px_rgba(0,251,251,0.2),0_0_50px_rgba(255,171,243,0.15)] group hover:scale-105 transition-all duration-500">
               <div className="absolute inset-0 rounded-full border border-[#00fbfb]/30 animate-pulse pointer-events-none" />
               <img 
-                src="/assets/logo/seccion-icon-3d.png" 
+                src="/assets/logo/logo-mark.png" 
                 alt="SECCION Icon" 
                 className="w-12 h-14 object-contain drop-shadow-[0_0_15px_rgba(0,251,251,0.6)]" 
               />

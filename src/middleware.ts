@@ -2,7 +2,7 @@ import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
 // Routes that don't require authentication
-const PUBLIC_ROUTES = ['/admin', '/onboarding', '/onboarding/step-2', '/auth/callback', '/api', '/how-we-do', '/become-creator', '/vibe-radar', '/login', '/now-streaming', '/privacy', '/rules', '/hit-us-up', '/early-access'];
+const PUBLIC_ROUTES = ['/admin', '/onboarding', '/onboarding/step-2', '/auth/callback', '/api', '/how-we-do', '/become-creator', '/creator-hub', '/vibe-radar', '/login', '/now-streaming', '/privacy', '/rules', '/hit-us-up', '/early-access'];
 // Routes that require authentication (explicitly excluded from PUBLIC_ROUTES)
 const PROTECTED_ROUTES = ['/stream-demo'];
 // Routes that authenticated users should be redirected away from

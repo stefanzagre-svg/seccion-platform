@@ -90,7 +90,7 @@ export default function PrelaunchBanner() {
           {/* Action Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
             <Link
-              href="/onboarding"
+              href="/become-creator#apply"
               onClick={handleDismiss}
               className="p-3.5 rounded-2xl bg-[#00fbfb]/10 border border-[#00fbfb]/40 hover:bg-[#00fbfb]/20 hover:border-[#00fbfb] text-white flex items-center gap-3 transition group cursor-pointer"
             >

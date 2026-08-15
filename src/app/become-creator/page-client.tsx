@@ -241,15 +241,15 @@ export default function BecomeCreatorPage({ initialProfile, userEmail }: { initi
             </p>
 
             <div className="flex flex-wrap items-center gap-3 pt-2">
-              <Link 
-                href="/onboarding?role=creator" 
+              <a 
+                href="#apply" 
                 className="group px-5 py-3 rounded-full bg-[#00fbfb] text-black font-mono text-[11px] font-black uppercase tracking-wider inline-flex items-center justify-between gap-3 hover:shadow-[0_0_30px_rgba(0,251,251,0.6)] active:scale-[0.98] transition-all duration-300 min-h-[44px] cursor-pointer"
               >
                 <span>{locale === "es" ? "Reclama tu Año Gratis" : "Claim Your Free Year"}</span>
                 <span className="w-6 h-6 rounded-full bg-black/10 flex items-center justify-center shrink-0 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform duration-300">
                   <ArrowUpRight className="w-3.5 h-3.5" />
                 </span>
-              </Link>
+              </a>
               <button 
                 type="button"
                 onClick={() => setIsTourOpen(true)}
@@ -691,6 +691,291 @@ export default function BecomeCreatorPage({ initialProfile, userEmail }: { initi
 
       </section>
 
+      {/* Creator Registration & Application Section */}
+      <section id="apply" className="relative z-10 py-20 sm:py-28 px-4 sm:px-6 md:px-12 lg:px-20 max-w-[1440px] mx-auto w-full border-t border-white/5 bg-gradient-to-b from-black/40 via-[#0A0A14] to-black/60">
+        <div className="max-w-[860px] mx-auto space-y-10 text-center">
+          
+          <div className="space-y-4">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-[#00fbfb]/30 bg-[#00fbfb]/5 backdrop-blur-md">
+              <Sparkles className="w-3.5 h-3.5 text-[#00fbfb] animate-pulse" />
+              <span className="text-[10px] font-mono font-bold text-[#00fbfb] uppercase tracking-[0.2em]">
+                {locale === "es" ? "Puerta de Registro de Creadores" : "Creator Registration Gate"}
+              </span>
+            </div>
+            
+            <h2 className="font-display text-3xl sm:text-4xl md:text-5xl font-black text-white tracking-tight">
+              {locale === "es" ? "Solicita tu Acceso Exclusivo de Creador" : "Apply for Creator Early Access"}
+            </h2>
+            
+            <p className="max-w-[620px] mx-auto text-xs sm:text-sm text-[#b9cac9] leading-relaxed">
+              {locale === "es" 
+                ? "Únete a la primera oleada de creadores independientes. Recibe tu Asistente IA 1er Año Gratis, conserva el 90% de tus ingresos y toma el control de tu comunidad." 
+                : "Join the first wave of independent creators. Receive your Year 1 Free AI Assistant, keep 90% of your earnings, and take full control of your community."}
+            </p>
+          </div>
+
+          <DoubleBezelCard className="text-left">
+            {formStep === "success" ? (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="py-12 px-4 sm:px-8 text-center space-y-6"
+              >
+                <div className="w-16 h-16 rounded-full bg-[#00fbfb]/10 border border-[#00fbfb]/40 flex items-center justify-center mx-auto text-[#00fbfb] shadow-[0_0_30px_rgba(0,251,251,0.3)]">
+                  <Check className="w-8 h-8 stroke-[3]" />
+                </div>
+
+                <div className="space-y-2">
+                  <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-[#00fbfb]">
+                    {locale === "es" ? "SOLICITUD RECIBIDA" : "APPLICATION SUBMITTED"}
+                  </span>
+                  <h3 className="font-display text-2xl sm:text-3xl font-black text-white">
+                    {locale === "es" ? "¡Bienvenido/a a la Campaña!" : "Welcome to the Campaign!"}
+                  </h3>
+                  <p className="text-xs sm:text-sm text-[#b9cac9] max-w-md mx-auto leading-relaxed">
+                    {locale === "es"
+                      ? "Hemos recibido tu solicitud de creador con éxito. Nuestro equipo fundador revisará tus perfiles y te enviará tu Código VIP para activar tu Asistente IA por Telegram o correo."
+                      : "We received your creator application successfully. Our founding review team will review your profile links and send your custom VIP Passcode via Telegram/Email within 24 hours."}
+                  </p>
+                </div>
+
+                <div className="p-4 bg-white/5 border border-white/10 rounded-2xl max-w-md mx-auto text-left text-xs font-mono space-y-1.5 text-[#b9cac9]">
+                  <div className="flex justify-between">
+                    <span className="text-white/50">{locale === "es" ? "Creador/a:" : "Creator:"}</span>
+                    <span className="text-white font-bold">{formData.fullName}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-white/50">{locale === "es" ? "Correo:" : "Email:"}</span>
+                    <span className="text-[#00fbfb]">{formData.email}</span>
+                  </div>
+                  {formData.city && (
+                    <div className="flex justify-between">
+                      <span className="text-white/50">{locale === "es" ? "Ciudad Pre-Launch:" : "Pre-Launch City:"}</span>
+                      <span className="text-[#ffabf3]">{formData.city}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between">
+                    <span className="text-white/50">{locale === "es" ? "Pack IA 1 Año:" : "Year 1 AI Pack:"}</span>
+                    <span className="text-[#39FF14] font-bold">{locale === "es" ? "RECLAMADO (0 €)" : "CLAIMED (0 €)"}</span>
+                  </div>
+                </div>
+
+                <div className="pt-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setFormStep("input");
+                      setFormData({
+                        fullName: "",
+                        email: "",
+                        phone: "",
+                        telegram: "",
+                        city: "",
+                        link1: "",
+                        link2: "",
+                        link3: "",
+                        claimOffer: true,
+                      });
+                      if (typeof window !== "undefined") {
+                        localStorage.removeItem("seccion_creator_applied");
+                        localStorage.removeItem("seccion_creator_data");
+                      }
+                    }}
+                    className="text-xs text-white/50 hover:text-white underline font-mono"
+                  >
+                    {locale === "es" ? "Enviar otra solicitud" : "Submit another application"}
+                  </button>
+                </div>
+              </motion.div>
+            ) : (
+              <form onSubmit={handleFormSubmit} className="space-y-6">
+                
+                {errors.submit && (
+                  <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs font-medium flex items-center gap-2">
+                    <AlertTriangle className="w-4 h-4 shrink-0" />
+                    <span>{errors.submit}</span>
+                  </div>
+                )}
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {/* Full Name */}
+                  <div className="space-y-1.5">
+                    <label className="block text-[11px] font-mono font-bold uppercase tracking-wider text-[#b9cac9]">
+                      {locale === "es" ? "Nombre de Creador / Nombre Completo *" : "Creator / Full Name *"}
+                    </label>
+                    <input
+                      type="text"
+                      name="fullName"
+                      value={formData.fullName}
+                      onChange={handleInputChange}
+                      placeholder="e.g. Elena Vibe / @elenavibe"
+                      className={`w-full px-4 py-3 rounded-xl bg-black/50 border ${errors.fullName ? "border-rose-500" : "border-white/10 focus:border-[#00fbfb]"} text-white text-xs placeholder-white/20 focus:outline-none transition font-sans`}
+                    />
+                    {errors.fullName && (
+                      <p className="text-[10px] text-rose-400 font-mono">{errors.fullName}</p>
+                    )}
+                  </div>
+
+                  {/* Email */}
+                  <div className="space-y-1.5">
+                    <label className="block text-[11px] font-mono font-bold uppercase tracking-wider text-[#b9cac9]">
+                      {locale === "es" ? "Correo Electrónico *" : "Email Address *"}
+                    </label>
+                    <input
+                      type="email"
+                      name="email"
+                      value={formData.email}
+                      onChange={handleInputChange}
+                      placeholder="creator@example.com"
+                      className={`w-full px-4 py-3 rounded-xl bg-black/50 border ${errors.email ? "border-rose-500" : "border-white/10 focus:border-[#00fbfb]"} text-white text-xs placeholder-white/20 focus:outline-none transition font-sans`}
+                    />
+                    {errors.email && (
+                      <p className="text-[10px] text-rose-400 font-mono">{errors.email}</p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {/* WhatsApp Phone */}
+                  <div className="space-y-1.5">
+                    <label className="block text-[11px] font-mono font-bold uppercase tracking-wider text-[#b9cac9]">
+                      {locale === "es" ? "WhatsApp / Teléfono *" : "WhatsApp / Phone *"}
+                    </label>
+                    <input
+                      type="tel"
+                      name="phone"
+                      value={formData.phone}
+                      onChange={handleInputChange}
+                      placeholder="+34 600 000 000 / +57 300 000 0000"
+                      className="w-full px-4 py-3 rounded-xl bg-black/50 border border-white/10 focus:border-[#00fbfb] text-white text-xs placeholder-white/20 focus:outline-none transition font-sans"
+                    />
+                  </div>
+
+                  {/* Telegram Handle */}
+                  <div className="space-y-1.5">
+                    <label className="block text-[11px] font-mono font-bold uppercase tracking-wider text-[#b9cac9]">
+                      {locale === "es" ? "Usuario de Telegram (@tag) *" : "Telegram Handle (@tag) *"}
+                    </label>
+                    <input
+                      type="text"
+                      name="telegram"
+                      value={formData.telegram}
+                      onChange={handleInputChange}
+                      placeholder="@yourcreatorhandle"
+                      className="w-full px-4 py-3 rounded-xl bg-black/50 border border-white/10 focus:border-[#00fbfb] text-white text-xs placeholder-white/20 focus:outline-none transition font-mono"
+                    />
+                  </div>
+                </div>
+
+                {/* Pre-launch City Selection */}
+                <div className="space-y-1.5">
+                  <label className="block text-[11px] font-mono font-bold uppercase tracking-wider text-[#b9cac9]">
+                    {locale === "es" ? "Ciudad Principal / Ubicación Pre-Launch" : "Primary Pre-Launch City / Location"}
+                  </label>
+                  <select
+                    name="city"
+                    value={formData.city}
+                    onChange={handleInputChange}
+                    className="w-full px-4 py-3 rounded-xl bg-black/50 border border-white/10 focus:border-[#00fbfb] text-white text-xs focus:outline-none transition"
+                  >
+                    <option value="" className="bg-[#0F0F1A] text-white/50">
+                      {locale === "es" ? "-- Selecciona tu ciudad principal --" : "-- Select your primary city --"}
+                    </option>
+                    {CITIES.map((c) => (
+                      <option key={c.value} value={c.value} className="bg-[#0F0F1A] text-white">
+                        {locale === "es" ? c.labelEs : c.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Social & Creator Links */}
+                <div className="space-y-3 pt-2">
+                  <label className="block text-[11px] font-mono font-bold uppercase tracking-wider text-[#b9cac9]">
+                    {locale === "es" ? "Enlaces a Redes / Perfiles de Creador *" : "Social / Creator Profile Links *"}
+                  </label>
+                  
+                  <div className="space-y-2">
+                    <input
+                      type="url"
+                      name="link1"
+                      value={formData.link1}
+                      onChange={handleInputChange}
+                      placeholder="https://instagram.com/... or https://tiktok.com/@... (Primary *)"
+                      className={`w-full px-4 py-3 rounded-xl bg-black/50 border ${errors.link1 ? "border-rose-500" : "border-white/10 focus:border-[#00fbfb]"} text-white text-xs placeholder-white/20 focus:outline-none transition font-sans`}
+                    />
+                    {errors.link1 && (
+                      <p className="text-[10px] text-rose-400 font-mono">{errors.link1}</p>
+                    )}
+
+                    <input
+                      type="url"
+                      name="link2"
+                      value={formData.link2}
+                      onChange={handleInputChange}
+                      placeholder="https://onlyfans.com/... / https://fansly.com/... (Optional)"
+                      className="w-full px-4 py-3 rounded-xl bg-black/50 border border-white/10 focus:border-[#00fbfb] text-white text-xs placeholder-white/20 focus:outline-none transition font-sans"
+                    />
+
+                    <input
+                      type="url"
+                      name="link3"
+                      value={formData.link3}
+                      onChange={handleInputChange}
+                      placeholder="https://twitch.tv/... / https://youtube.com/... (Optional)"
+                      className="w-full px-4 py-3 rounded-xl bg-black/50 border border-white/10 focus:border-[#00fbfb] text-white text-xs placeholder-white/20 focus:outline-none transition font-sans"
+                    />
+                  </div>
+                </div>
+
+                {/* Claim 1-Year Pack Checkbox */}
+                <div className="p-4 bg-[#00fbfb]/5 border border-[#00fbfb]/20 rounded-2xl flex items-start gap-3">
+                  <input
+                    type="checkbox"
+                    id="claimOffer"
+                    name="claimOffer"
+                    checked={formData.claimOffer}
+                    onChange={handleInputChange}
+                    className="mt-1 w-4 h-4 rounded border-white/20 accent-[#00fbfb] cursor-pointer shrink-0"
+                  />
+                  <label htmlFor="claimOffer" className="text-xs text-[#b9cac9] leading-relaxed cursor-pointer select-none">
+                    <strong className="text-white">
+                      {locale === "es" ? "Reclamar Pack Asistente IA 1er Año Gratis" : "Claim 1-Year Free AI Assistant Pack"}
+                    </strong>{" "}
+                    ({locale === "es" ? "Ahorro de 4.000 €/mes en costes de agencia, 90% retención neta en pre-launch." : "Save €4,000/mo in agency fees, 90% net revenue split during pre-launch."})
+                  </label>
+                </div>
+
+                {/* Submit Action */}
+                <button
+                  type="submit"
+                  disabled={formStep === "submitting"}
+                  className="w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-[#00fbfb] to-[#00d2d2] text-black font-mono font-black text-xs uppercase tracking-widest hover:shadow-[0_0_30px_rgba(0,251,251,0.6)] active:scale-[0.98] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer shadow-[0_0_20px_rgba(0,251,251,0.3)]"
+                >
+                  {formStep === "submitting" ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin text-black" />
+                      <span>{locale === "es" ? "ENVIANDO SOLICITUD..." : "SUBMITTING APPLICATION..."}</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>{locale === "es" ? "ENVIAR SOLICITUD DE CREADOR" : "SUBMIT CREATOR APPLICATION"}</span>
+                      <ArrowUpRight className="w-4 h-4" />
+                    </>
+                  )}
+                </button>
+
+                <p className="text-[10px] text-white/40 font-mono text-center">
+                  {locale === "es" 
+                    ? "Tus datos personales permanecen 100% cifrados y privados según nuestra estricta Política de Privacidad." 
+                    : "Your contact information is strictly encrypted and protected under our GDPR Privacy Policy."}
+                </p>
+              </form>
+            )}
+          </DoubleBezelCard>
+        </div>
+      </section>
+
       {/* FAQ Section */}
       <section className="relative z-10 py-24 px-4 sm:px-6 md:px-12 lg:px-20 max-w-[800px] mx-auto w-full border-t border-white/5 bg-black/20">
         <div className="space-y-12">
@@ -822,7 +1107,12 @@ export default function BecomeCreatorPage({ initialProfile, userEmail }: { initi
         onClose={() => setIsTourOpen(false)} 
         onClaimOffer={() => {
           setIsTourOpen(false);
-          window.location.href = '/onboarding?role=creator';
+          const applyElem = document.getElementById("apply");
+          if (applyElem) {
+            applyElem.scrollIntoView({ behavior: "smooth" });
+          } else {
+            window.location.href = '#apply';
+          }
         }}
       />
     </div>

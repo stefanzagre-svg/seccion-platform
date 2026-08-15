@@ -1415,7 +1415,7 @@ export default function MemberProfile() {
         avatar:
           currentUserProfile.avatar_url ||
           currentUserProfile.avatar ||
-          "/assets/logo/seccion-icon-3d.png",
+          "/assets/logo/logo-mark.png",
         height: currentUserProfile.height || "",
         bioPromptCategory: currentUserProfile.bio_prompt_category || "",
         bioPromptQuestion: currentUserProfile.bio_prompt_question || "",

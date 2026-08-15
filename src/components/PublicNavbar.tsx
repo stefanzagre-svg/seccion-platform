@@ -23,7 +23,7 @@ export default function PublicNavbar({ activeTab, onSignUp }: PublicNavbarProps)
   const navLinks = [
     { name: t("nav.radar", "Vibe Radar"), href: "/vibe-radar" },
     { name: t("nav.streaming", "Now Streaming"), href: "/now-streaming" },
-    { name: t("nav.becomeCreator", "Become Creator"), href: "/onboarding" },
+    { name: t("nav.becomeCreator", "Become Creator"), href: "/become-creator" },
     { name: t("nav.howWeDo", "How We Do"), href: "/how-we-do" },
   ];
 

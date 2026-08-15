@@ -104,6 +104,9 @@ export async function generateMetadata(): Promise<Metadata> {
 
   return {
     metadataBase: new URL("https://seccion.ai"),
+    alternates: {
+      canonical: "https://seccion.ai",
+    },
     title: {
       default: dict.metadata.defaultTitle,
       template: "%s | SECCION",

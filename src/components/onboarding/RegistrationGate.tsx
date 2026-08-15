@@ -14,7 +14,7 @@ interface RegistrationGateProps {
 }
 
 export default function RegistrationGate({ onComplete, initialError }: RegistrationGateProps) {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [shakeTerms, setShakeTerms] = useState(false);
   const [acceptedPrivacy, setAcceptedPrivacy] = useState(false);
@@ -317,10 +317,14 @@ export default function RegistrationGate({ onComplete, initialError }: Registrat
           {/* Pre-Launch Lock Notice */}
           <div className="mb-4 p-4 bg-[#00fbfb]/10 border border-[#00fbfb]/30 rounded-2xl text-center space-y-2">
             <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#00fbfb]/20 text-[#00fbfb] font-mono text-[9px] font-bold uppercase tracking-wider">
-              <span>PRE-LAUNCH PHASE ACTIVE</span>
+              <span>{locale === 'es' ? 'FASE DE PRE-LANZAMIENTO ACTIVA' : 'PRE-LAUNCH PHASE ACTIVE'}</span>
             </div>
             <p className="text-[11px] text-[#b9cac9] leading-relaxed">
-              Public self-registration is reserved for <strong className="text-white">Approved Creators</strong> and <strong className="text-white">Founding Members</strong> during this pre-launch phase.
+              {locale === 'es' ? (
+                <>El auto-registro público está reservado para <strong className="text-white">Creadores Aprobados</strong> y <strong className="text-white">Miembros Fundadores</strong> durante esta fase de pre-lanzamiento.</>
+              ) : (
+                <>Public self-registration is reserved for <strong className="text-white">Approved Creators</strong> and <strong className="text-white">Founding Members</strong> during this pre-launch phase.</>
+              )}
             </p>
           </div>
         </div>
@@ -349,23 +353,27 @@ export default function RegistrationGate({ onComplete, initialError }: Registrat
             >
               <div className="p-4 bg-white/5 border border-white/10 rounded-2xl text-xs text-[#b9cac9] leading-relaxed space-y-4">
                 <p>
-                  Classic self-registration and guest demo access are temporarily disabled during this pre-launch phase.
+                  {locale === 'es'
+                    ? 'El auto-registro clásico y el acceso demo están deshabilitados temporalmente durante la fase de pre-lanzamiento.'
+                    : 'Classic self-registration and guest demo access are temporarily disabled during this pre-launch phase.'}
                 </p>
                 <p className="font-semibold text-white">
-                  Want to be a founding member?
+                  {locale === 'es' ? '¿Quieres ser miembro fundador?' : 'Want to be a founding member?'}
                 </p>
                 <Link 
                   href="/early-access"
                   className="w-full py-3 bg-[#00fbfb] text-black font-mono text-xs font-black uppercase tracking-wider rounded-xl hover:shadow-[0_0_15px_rgba(0,251,251,0.5)] transition flex items-center justify-center gap-2 cursor-pointer font-bold"
                 >
-                  Join Early Access List
+                  {locale === 'es' ? 'Unirse a la Lista de Acceso Anticipado' : 'Join Early Access List'}
                 </Link>
               </div>
 
-              <div className="pt-2 text-[11px] text-gray-400 relative">
-                Already have pre-launch access?{" "}
-                <Link href="/login" className="text-[#ffabf3] hover:underline font-bold font-mono uppercase tracking-wide">
-                  Log In
+              <div className="pt-2">
+                <Link 
+                  href="/login" 
+                  className="w-full py-3 bg-[#ffabf3] text-black font-mono text-xs font-black uppercase tracking-wider rounded-xl hover:shadow-[0_0_15px_rgba(255,171,243,0.5)] transition flex items-center justify-center gap-2 cursor-pointer font-bold"
+                >
+                  {locale === 'es' ? 'Creador Aprobado' : 'Approved Creator'}
                 </Link>
                 <button type="button" onClick={() => setShowEmailForm(true)} className="opacity-0 absolute w-4 h-4 bottom-0 right-0 z-50">Email</button>
               </div>

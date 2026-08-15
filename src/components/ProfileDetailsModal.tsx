@@ -224,6 +224,7 @@ export default function ProfileDetailsModal({ profileId, onClose, currentUserId 
         sexualPreferences: [profile.sexual_preference].filter(Boolean),
         familyGoals: profile.lifestyle_habits?.family_goals || 'Open to children'
       })
+    : null;
   const levelObj = relationship ? scoreToLevel(relationship.gauge_score) : scoreToLevel(0);
   const viewerScore = relationship?.gauge_score ?? 0;
   const hiddenValues = profile.privacy_settings?.hidden_values;
