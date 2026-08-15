@@ -18,9 +18,13 @@ interface CreatorApplication {
   id: string;
   full_name: string;
   email: string;
+  phone?: string;
   city: string;
   telegram: string;
-  social_links: any;
+  link1?: string;
+  link2?: string;
+  link3?: string;
+  social_links?: any;
   status: 'pending' | 'waitlist' | 'approved' | 'rejected';
   created_at: string;
   reviewer_notes: string;
@@ -147,43 +151,68 @@ export default function CreatorApplicationsQueue() {
       cell: ({ row }) => <span className="text-white/80">{row.city || '-'}</span>
     },
     {
-      header: 'Telegram',
+      header: 'Direct Contact',
       accessorKey: 'telegram',
-      cell: ({ row }) => <span className="text-white/80">{row.telegram || '-'}</span>
+      cell: ({ row }) => (
+        <div className="flex flex-col gap-1 text-[11px]">
+          {row.phone ? (
+            <span className="text-[#00fbfb] font-mono flex items-center gap-1 font-bold">
+              📱 {row.phone}
+            </span>
+          ) : (
+            <span className="text-white/30 text-[9px] font-mono">No phone</span>
+          )}
+          {row.telegram ? (
+            <span className="text-[#ffabf3] font-mono flex items-center gap-1">
+              ✈️ {row.telegram.startsWith('@') ? row.telegram : `@${row.telegram}`}
+            </span>
+          ) : (
+            <span className="text-white/30 text-[9px] font-mono">No telegram</span>
+          )}
+        </div>
+      )
     },
     {
       header: 'Social Links',
-      accessorKey: 'social_links',
+      accessorKey: 'link1',
       cell: ({ row }) => {
         let links: string[] = [];
-        if (Array.isArray(row.social_links)) {
-          links = row.social_links;
-        } else if (typeof row.social_links === 'string') {
-          try {
-            const parsed = JSON.parse(row.social_links);
-            if (Array.isArray(parsed)) links = parsed;
-            else links = [row.social_links];
-          } catch {
-            // Not valid JSON, maybe comma separated or just a single string
-            links = row.social_links.split(',').map(s => s.trim()).filter(Boolean);
+        
+        // Aggregate link1, link2, link3 if present
+        if (row.link1) links.push(row.link1);
+        if (row.link2) links.push(row.link2);
+        if (row.link3) links.push(row.link3);
+
+        // Also check legacy social_links array/string if link1 was empty
+        if (links.length === 0 && row.social_links) {
+          if (Array.isArray(row.social_links)) {
+            links = row.social_links;
+          } else if (typeof row.social_links === 'string') {
+            try {
+              const parsed = JSON.parse(row.social_links);
+              if (Array.isArray(parsed)) links = parsed;
+              else links = [row.social_links];
+            } catch {
+              links = row.social_links.split(',').map((s: string) => s.trim()).filter(Boolean);
+            }
           }
         }
 
         if (links.length === 0) return <span className="text-white/40">-</span>;
 
         return (
-          <div className="flex flex-col gap-1.5">
+          <div className="flex flex-col gap-1.5 min-w-[140px]">
             {links.map((link, i) => (
               <a 
                 key={i} 
                 href={link.startsWith('http') ? link : `https://${link}`} 
                 target="_blank" 
                 rel="noreferrer" 
-                className="text-[#00fbfb] hover:text-white hover:underline text-[10px] flex items-center gap-1 max-w-[150px] truncate"
+                className="text-[#00fbfb] hover:text-white hover:underline text-[10px] font-mono flex items-center gap-1 max-w-[180px] truncate bg-white/5 px-2 py-0.5 rounded border border-white/5 hover:border-[#00fbfb]/30 transition"
                 title={link}
               >
-                <ExternalLink className="w-3 h-3 shrink-0" />
-                <span className="truncate">{link.replace(/^https?:\/\//, '')}</span>
+                <ExternalLink className="w-2.5 h-2.5 shrink-0" />
+                <span className="truncate">{link.replace(/^https?:\/\/(www\.)?/, '')}</span>
               </a>
             ))}
           </div>
