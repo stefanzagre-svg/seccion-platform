@@ -132,6 +132,12 @@ export default function BecomeCreatorPage({ initialProfile, userEmail }: { initi
     if (!formData.email) newErrors.email = locale === "es" ? "El correo electrónico es requerido" : "Email is required";
     else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = locale === "es" ? "Formato de correo electrónico inválido" : "Invalid email format";
     
+    if (!formData.phone?.trim() && !formData.telegram?.trim()) {
+      newErrors.contact = locale === "es" 
+        ? "Se requiere al menos un método de contacto directo (WhatsApp o Telegram)" 
+        : "At least one direct contact method (WhatsApp or Telegram) is required";
+    }
+
     if (!formData.link1) newErrors.link1 = locale === "es" ? "Al menos un enlace a perfil social o de creador es requerido" : "At least one social/creator profile link is required";
     
     setErrors(newErrors);
@@ -838,34 +844,50 @@ export default function BecomeCreatorPage({ initialProfile, userEmail }: { initi
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {/* WhatsApp Phone */}
                   <div className="space-y-1.5">
-                    <label className="block text-[11px] font-mono font-bold uppercase tracking-wider text-[#b9cac9]">
-                      {locale === "es" ? "WhatsApp / Teléfono *" : "WhatsApp / Phone *"}
-                    </label>
+                    <div className="flex justify-between items-center">
+                      <label className="block text-[11px] font-mono font-bold uppercase tracking-wider text-[#b9cac9]">
+                        {locale === "es" ? "WhatsApp / Teléfono" : "WhatsApp / Phone"}
+                      </label>
+                      <span className="text-[9px] text-[#00fbfb]/70 font-mono">
+                        {locale === "es" ? "(Requerido WhatsApp o Telegram)" : "(WhatsApp or Telegram required)"}
+                      </span>
+                    </div>
                     <input
                       type="tel"
                       name="phone"
                       value={formData.phone}
                       onChange={handleInputChange}
                       placeholder="+34 600 000 000 / +57 300 000 0000"
-                      className="w-full px-4 py-3 rounded-xl bg-black/50 border border-white/10 focus:border-[#00fbfb] text-white text-xs placeholder-white/20 focus:outline-none transition font-sans"
+                      className={`w-full px-4 py-3 rounded-xl bg-black/50 border ${errors.contact ? "border-amber-500/60" : "border-white/10 focus:border-[#00fbfb]"} text-white text-xs placeholder-white/20 focus:outline-none transition font-sans`}
                     />
                   </div>
 
                   {/* Telegram Handle */}
                   <div className="space-y-1.5">
-                    <label className="block text-[11px] font-mono font-bold uppercase tracking-wider text-[#b9cac9]">
-                      {locale === "es" ? "Usuario de Telegram (@tag) *" : "Telegram Handle (@tag) *"}
-                    </label>
+                    <div className="flex justify-between items-center">
+                      <label className="block text-[11px] font-mono font-bold uppercase tracking-wider text-[#b9cac9]">
+                        {locale === "es" ? "Usuario de Telegram (@tag)" : "Telegram Handle (@tag)"}
+                      </label>
+                      <span className="text-[9px] text-[#ffabf3]/70 font-mono">
+                        {locale === "es" ? "(Requerido WhatsApp o Telegram)" : "(WhatsApp or Telegram required)"}
+                      </span>
+                    </div>
                     <input
                       type="text"
                       name="telegram"
                       value={formData.telegram}
                       onChange={handleInputChange}
                       placeholder="@yourcreatorhandle"
-                      className="w-full px-4 py-3 rounded-xl bg-black/50 border border-white/10 focus:border-[#00fbfb] text-white text-xs placeholder-white/20 focus:outline-none transition font-mono"
+                      className={`w-full px-4 py-3 rounded-xl bg-black/50 border ${errors.contact ? "border-amber-500/60" : "border-white/10 focus:border-[#00fbfb]"} text-white text-xs placeholder-white/20 focus:outline-none transition font-mono`}
                     />
                   </div>
                 </div>
+
+                {errors.contact && (
+                  <p className="text-[11px] text-amber-400 font-mono bg-amber-500/10 border border-amber-500/20 p-2.5 rounded-xl">
+                    ⚠️ {errors.contact}
+                  </p>
+                )}
 
                 {/* Pre-launch City Selection */}
                 <div className="space-y-1.5">

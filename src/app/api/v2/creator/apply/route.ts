@@ -6,13 +6,16 @@ import { z } from "zod";
 const creatorApplySchema = z.object({
   fullName: z.string().min(2, "Full name must be at least 2 characters").max(100),
   email: z.string().email("Invalid email address format"),
-  phone: z.string().min(5, "Phone number too short").max(30),
-  telegram: z.string().min(2, "Telegram handle required").max(50),
+  phone: z.string().max(30).optional().or(z.literal("")),
+  telegram: z.string().max(50).optional().or(z.literal("")),
   link1: z.string().url("link1 must be a valid URL"),
   link2: z.string().url("link2 must be a valid URL").optional().or(z.literal("")),
   link3: z.string().url("link3 must be a valid URL").optional().or(z.literal("")),
   city: z.string().max(100).optional(),
   claimOffer: z.boolean().optional(),
+}).refine(data => (data.phone && data.phone.trim().length >= 5) || (data.telegram && data.telegram.trim().length >= 2), {
+  message: "At least one direct contact method (WhatsApp/Phone or Telegram) is required",
+  path: ["phone"]
 });
 
 const supabaseAdmin = createAdminClient();
