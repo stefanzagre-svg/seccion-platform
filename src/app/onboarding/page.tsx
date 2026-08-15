@@ -477,10 +477,8 @@ export default function OnboardingFlow() {
       const tutorial = params.get("tutorial");
       if (tutorial === "creator") {
         setTutorialRole("creator");
-        setStep("registration");
       } else if (tutorial === "member") {
         setTutorialRole("member");
-        setStep("registration");
       }
     }
   }, []);

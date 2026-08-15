@@ -8,9 +8,11 @@ export async function GET(request: NextRequest) {
   const code = searchParams.get('code');
   const token_hash = searchParams.get('token_hash');
   const type = searchParams.get('type') as EmailOtpType | null;
-  const next = searchParams.get('next') ?? '/onboarding';
+  const next = searchParams.get('next') ?? '/onboarding?role=creator';
 
   const cookieStore = await cookies();
+  const response = NextResponse.redirect(`${origin}${next}`);
+
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -20,13 +22,10 @@ export async function GET(request: NextRequest) {
           return cookieStore.getAll();
         },
         setAll(cookiesToSet) {
-          try {
-            cookiesToSet.forEach(({ name, value, options }) => {
-              cookieStore.set(name, value, options);
-            });
-          } catch {
-            // Ignored from Server Components
-          }
+          cookiesToSet.forEach(({ name, value, options }) => {
+            cookieStore.set(name, value, options);
+            response.cookies.set(name, value, options);
+          });
         },
       },
     }
@@ -36,7 +35,7 @@ export async function GET(request: NextRequest) {
   if (code) {
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) {
-      return NextResponse.redirect(`${origin}${next}`);
+      return response;
     }
     console.warn('[Auth Callback] PKCE code exchange error:', error);
   }
@@ -45,7 +44,7 @@ export async function GET(request: NextRequest) {
   if (token_hash && type) {
     const { error } = await supabase.auth.verifyOtp({ token_hash, type });
     if (!error) {
-      return NextResponse.redirect(`${origin}${next}`);
+      return response;
     }
     console.warn('[Auth Callback] Token hash verification error:', error);
   }
@@ -53,7 +52,7 @@ export async function GET(request: NextRequest) {
   // 3. Check if user is already authenticated in session/cookies
   const { data: { session } } = await supabase.auth.getSession();
   if (session?.user) {
-    return NextResponse.redirect(`${origin}${next}`);
+    return response;
   }
 
   // Auth failed (magic link opened in different browser tab or expired)
