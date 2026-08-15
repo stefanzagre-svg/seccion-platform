@@ -84,6 +84,15 @@ export default function Home() {
     );
   }
 
+  if (user && !onboardingCompleted) {
+    router.replace('/onboarding');
+    return (
+      <div className="min-h-screen bg-[#050505] flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
   if (user && onboardingCompleted) {
     return <PlatformFeed />;
   }
