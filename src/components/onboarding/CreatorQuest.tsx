@@ -64,9 +64,9 @@ export default function CreatorQuest({ onSignUp, onSwitchToMember, onClose }: Cr
   const PURPOSES = ["Lifestyle", "Gaming", "Explicit 18+", "Coaching", "Education", "Expertise"];
   const SPECIALIZATIONS = ["Beauty", "Gaming", "Explicit", "Social & Communication", "Economy & Finance", "Dating & Marriage", "Cooking", "Fitness & Wellness", "Health & Psychology", "Art & Music"];
 
-  const isExplicit = creatorPurposes.includes("Explicit 18+");
-  const isDatingOrCoaching = specialization === "Dating & Marriage" || creatorPurposes.includes("Coaching");
-  const needsRelFields = isExplicit || isDatingOrCoaching;
+  const isExplicit = creatorPurposes.includes("Explicit 18+") || specialization === "Explicit";
+  const isDatingSpecialized = specialization === "Dating & Marriage";
+  const needsRelFields = isExplicit || isDatingSpecialized;
 
   // Audio Synthesis & Subtitle states
   const [speechSupported, setSpeechSupported] = useState(false);
