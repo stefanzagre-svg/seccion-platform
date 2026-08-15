@@ -107,6 +107,7 @@ export default function OnboardingFlow() {
           const vibe = sessionStorage.getItem("_onboarding_creator_vibe");
           const purposesStr = sessionStorage.getItem("_onboarding_creator_purposes");
           const specialization = sessionStorage.getItem("_onboarding_creator_specialization");
+          const sexualPreferencesStr = sessionStorage.getItem("_onboarding_creator_sexual_preferences");
           const sexualPreference = sessionStorage.getItem("_onboarding_creator_sexual_preference");
           const relationshipGoal = sessionStorage.getItem("_onboarding_creator_relationship_goal");
           const relationshipType = sessionStorage.getItem("_onboarding_creator_relationship_type");
@@ -118,7 +119,18 @@ export default function OnboardingFlow() {
           if (purposesStr) updatePayload.member_purposes = JSON.parse(purposesStr);
           if (specialization) updatePayload.specialization = specialization;
           
-          if (sexualPreference) updatePayload.sexual_preference = sexualPreference;
+          if (sexualPreferencesStr) {
+            try {
+              const parsedPrefs = JSON.parse(sexualPreferencesStr);
+              if (Array.isArray(parsedPrefs) && parsedPrefs.length > 0) {
+                updatePayload.sexual_preferences = parsedPrefs;
+                updatePayload.sexual_preference = parsedPrefs[0];
+              }
+            } catch (err) {}
+          } else if (sexualPreference) {
+            updatePayload.sexual_preference = sexualPreference;
+            updatePayload.sexual_preferences = [sexualPreference];
+          }
           if (relationshipGoal) updatePayload.relationship_goals = [relationshipGoal];
           if (relationshipType) updatePayload.relationship_types = [relationshipType];
         }

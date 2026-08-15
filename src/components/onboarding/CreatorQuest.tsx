@@ -11,7 +11,7 @@ import { useTranslation } from "@/context/LanguageContext";
 import { RELATIONSHIP_GOALS, RELATIONSHIP_TYPES, SEXUAL_PREFERENCES } from "@/lib/constants";
 
 interface CreatorQuestProps {
-  onSignUp: (data: { archetype: string; role: string; creator_purposes: string[]; specialization: string; sexual_preference: string; relationship_goal: string; relationship_type: string; is_adult_content: boolean }) => void;
+  onSignUp: (data: { archetype: string; role: string; creator_purposes: string[]; specialization: string; sexual_preferences: string[]; relationship_goal: string; relationship_type: string; is_adult_content: boolean }) => void;
   onSwitchToMember: () => void;
   onClose: () => void;
 }
@@ -58,7 +58,7 @@ export default function CreatorQuest({ onSignUp, onSwitchToMember, onClose }: Cr
   // Identity Setup States
   const [creatorPurposes, setCreatorPurposes] = useState<string[]>([]);
   const [specialization, setSpecialization] = useState("");
-  const [sexualPreference, setSexualPreference] = useState("");
+  const [sexualPreferences, setSexualPreferences] = useState<string[]>([]);
   const [relationshipGoal, setRelationshipGoal] = useState("");
   const [relationshipType, setRelationshipType] = useState("");
 
@@ -178,7 +178,7 @@ export default function CreatorQuest({ onSignUp, onSwitchToMember, onClose }: Cr
       residence: residence.trim(),
       creator_purposes: creatorPurposes,
       specialization: specialization,
-      sexual_preference: sexualPreference,
+      sexual_preferences: sexualPreferences,
       relationship_goal: relationshipGoal,
       relationship_type: relationshipType,
       is_adult_content: isExplicit
@@ -189,6 +189,9 @@ export default function CreatorQuest({ onSignUp, onSwitchToMember, onClose }: Cr
     sessionStorage.setItem("_onboarding_creator_residence", residence.trim());
     sessionStorage.setItem("_onboarding_creator_purposes", JSON.stringify(creatorPurposes));
     sessionStorage.setItem("_onboarding_creator_spec", specialization);
+    sessionStorage.setItem("_onboarding_creator_sexual_preferences", JSON.stringify(sexualPreferences));
+    sessionStorage.setItem("_onboarding_creator_relationship_goal", relationshipGoal);
+    sessionStorage.setItem("_onboarding_creator_relationship_type", relationshipType);
     sessionStorage.setItem("_onboarding_creator_is_adult", isExplicit ? "true" : "false");
     return data;
   };
@@ -390,14 +393,35 @@ export default function CreatorQuest({ onSignUp, onSwitchToMember, onClose }: Cr
                   <p className="text-[10px] text-white/50 leading-relaxed mb-4">Because your intent includes specialized or mature themes, we require your audience mapping preferences. Age and strict location will be securely locked via Shufti KYC in the next step.</p>
                   
                   {isExplicit && (
-                    <div className="space-y-1.5">
-                      <label className="text-[9px] font-black uppercase text-white/40 tracking-wider">Sexual Preference Matrix</label>
-                      <select value={sexualPreference} onChange={(e) => setSexualPreference(e.target.value)} className="w-full px-4 py-3 bg-black/40 border border-white/10 rounded-xl text-xs text-white focus:border-primary outline-none">
-                        <option value="">Select Preference...</option>
-                        {SEXUAL_PREFERENCES.map(sp => (
-                          <option key={sp} value={sp}>{sp}</option>
-                        ))}
-                      </select>
+                    <div className="space-y-2">
+                      <label className="text-[9px] font-black uppercase text-white/40 tracking-wider">
+                        Sexual Preference Matrix (Select Multiple)
+                      </label>
+                      <div className="flex flex-wrap gap-1.5">
+                        {SEXUAL_PREFERENCES.map(sp => {
+                          const isSelected = sexualPreferences.includes(sp);
+                          return (
+                            <button
+                              key={sp}
+                              type="button"
+                              onClick={() => {
+                                if (isSelected) {
+                                  setSexualPreferences(sexualPreferences.filter(x => x !== sp));
+                                } else {
+                                  setSexualPreferences([...sexualPreferences, sp]);
+                                }
+                              }}
+                              className={`px-2.5 py-1.5 rounded-lg border text-[10px] font-bold transition cursor-pointer ${
+                                isSelected
+                                  ? 'bg-[#00fbfb] border-[#00fbfb] text-black shadow-[0_0_10px_rgba(0,251,251,0.3)]'
+                                  : 'bg-black/40 border-white/15 text-white/70 hover:border-white/40 hover:text-white'
+                              }`}
+                            >
+                              {sp}
+                            </button>
+                          );
+                        })}
+                      </div>
                     </div>
                   )}
 
@@ -429,7 +453,7 @@ export default function CreatorQuest({ onSignUp, onSwitchToMember, onClose }: Cr
                     alert("Please select at least one Intent Aura and your Content Synergy to proceed.");
                     return;
                   }
-                  if (needsRelFields && (!relationshipGoal || !relationshipType || (isExplicit && !sexualPreference))) {
+                  if (needsRelFields && (!relationshipGoal || !relationshipType || (isExplicit && sexualPreferences.length === 0))) {
                     alert("Please complete all Advanced Audience Targeting fields required for your intent.");
                     return;
                   }
