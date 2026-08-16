@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles, Volume2, VolumeX, Shield, Play } from "lucide-react";
+import { Sparkles, Volume2, VolumeX, Shield, Play, Loader2 } from "lucide-react";
 import RevenueEngineDemo from "./RevenueEngineDemo";
 import StreamStationDemo from "./StreamStationDemo";
 import MonetizationSuiteDemo from "./MonetizationSuiteDemo";
@@ -11,7 +11,7 @@ import { useTranslation } from "@/context/LanguageContext";
 import { RELATIONSHIP_GOALS, RELATIONSHIP_TYPES, SEXUAL_PREFERENCES } from "@/lib/constants";
 
 interface CreatorQuestProps {
-  onSignUp: (data: { archetype: string; role: string; creator_purposes: string[]; specialization: string; sexual_preferences: string[]; relationship_goals: string[]; relationship_types: string[]; is_adult_content: boolean }) => void;
+  onSignUp: (data: { archetype: string; role: string; creator_purposes: string[]; specialization: string; sexual_preferences: string[]; relationship_goals: string[]; relationship_types: string[]; is_adult_content: boolean }) => void | Promise<void>;
   onSwitchToMember: () => void;
   onClose: () => void;
 }
@@ -54,6 +54,7 @@ export default function CreatorQuest({ onSignUp, onSwitchToMember, onClose }: Cr
   const [tierPrice, setTierPrice] = useState(9.99);
   const [residence, setResidence] = useState("");
   const [residenceError, setResidenceError] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Identity Setup States (Multi-select arrays up to 5 options)
   const [creatorPurposes, setCreatorPurposes] = useState<string[]>([]);
@@ -734,45 +735,63 @@ export default function CreatorQuest({ onSignUp, onSwitchToMember, onClose }: Cr
 
               <div className="flex flex-col gap-3 max-w-xs mx-auto mt-8">
                 <button
-                  onClick={() => {
-                    const primarySexPref = sexualPreferences.length > 0 ? sexualPreferences[0] : "";
-                    const primaryGoal = relationshipGoals.length > 0 ? relationshipGoals[0] : "";
-                    const primaryType = relationshipTypes.length > 0 ? relationshipTypes[0] : "";
-                    if (typeof window !== "undefined") {
-                      sessionStorage.setItem("_onboarding_creator_vibe", selectedVibe);
-                      sessionStorage.setItem("_onboarding_creator_tier_price", tierPrice.toString());
-                      sessionStorage.setItem("_onboarding_creator_face_blur", faceBlurActive.toString());
-                      sessionStorage.setItem("_onboarding_creator_residence", residence);
-                      sessionStorage.setItem("_onboarding_creator_purposes", JSON.stringify(creatorPurposes));
-                      sessionStorage.setItem("_onboarding_creator_specialization", specialization);
-                      sessionStorage.setItem("_onboarding_creator_sexual_preferences", JSON.stringify(sexualPreferences));
-                      sessionStorage.setItem("_onboarding_creator_sexual_preference", primarySexPref);
-                      sessionStorage.setItem("_onboarding_creator_relationship_goals", JSON.stringify(relationshipGoals));
-                      sessionStorage.setItem("_onboarding_creator_relationship_goal", primaryGoal);
-                      sessionStorage.setItem("_onboarding_creator_relationship_types", JSON.stringify(relationshipTypes));
-                      sessionStorage.setItem("_onboarding_creator_relationship_type", primaryType);
+                  disabled={isSubmitting}
+                  onClick={async () => {
+                    if (isSubmitting) return;
+                    setIsSubmitting(true);
+                    stopVoice();
+                    try {
+                      const primarySexPref = sexualPreferences.length > 0 ? sexualPreferences[0] : "";
+                      const primaryGoal = relationshipGoals.length > 0 ? relationshipGoals[0] : "";
+                      const primaryType = relationshipTypes.length > 0 ? relationshipTypes[0] : "";
+                      if (typeof window !== "undefined") {
+                        sessionStorage.setItem("_onboarding_creator_vibe", selectedVibe);
+                        sessionStorage.setItem("_onboarding_creator_tier_price", tierPrice.toString());
+                        sessionStorage.setItem("_onboarding_creator_face_blur", faceBlurActive.toString());
+                        sessionStorage.setItem("_onboarding_creator_residence", residence);
+                        sessionStorage.setItem("_onboarding_creator_purposes", JSON.stringify(creatorPurposes));
+                        sessionStorage.setItem("_onboarding_creator_spec", specialization);
+                        sessionStorage.setItem("_onboarding_creator_specialization", specialization);
+                        sessionStorage.setItem("_onboarding_creator_sexual_preferences", JSON.stringify(sexualPreferences));
+                        sessionStorage.setItem("_onboarding_creator_sexual_preference", primarySexPref);
+                        sessionStorage.setItem("_onboarding_creator_relationship_goals", JSON.stringify(relationshipGoals));
+                        sessionStorage.setItem("_onboarding_creator_relationship_goal", primaryGoal);
+                        sessionStorage.setItem("_onboarding_creator_relationship_types", JSON.stringify(relationshipTypes));
+                        sessionStorage.setItem("_onboarding_creator_relationship_type", primaryType);
+                        sessionStorage.setItem("_onboarding_creator_archive_choice", selectedVibe);
+                      }
+                      await onSignUp({
+                        archetype: selectedVibe,
+                        role: "creator",
+                        creator_purposes: creatorPurposes,
+                        specialization: specialization,
+                        sexual_preferences: sexualPreferences,
+                        relationship_goals: relationshipGoals,
+                        relationship_types: relationshipTypes,
+                        is_adult_content: isExplicit
+                      });
+                    } catch (err) {
+                      console.error("[CreatorQuest] Error on claim studio:", err);
+                      setIsSubmitting(false);
                     }
-                    onSignUp({
-                      archetype: selectedVibe,
-                      role: "creator",
-                      creator_purposes: creatorPurposes,
-                      specialization: specialization,
-                      sexual_preferences: sexualPreferences,
-                      relationship_goals: relationshipGoals,
-                      relationship_types: relationshipTypes,
-                      is_adult_content: isExplicit
-                    });
                   }}
-                  className="w-full bg-primary text-black font-black uppercase tracking-widest py-4 rounded-xl hover:shadow-[0_0_20px_rgba(102,252,241,0.4)] transition text-xs flex items-center justify-center gap-2"
+                  className="w-full bg-primary text-black font-black uppercase tracking-widest py-4 rounded-xl hover:shadow-[0_0_20px_rgba(102,252,241,0.4)] transition text-xs flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
                 >
-                  {t.secret_cta}
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin text-black" />
+                      <span>Claiming Studio...</span>
+                    </>
+                  ) : (
+                    t.secret_cta
+                  )}
                 </button>
                 <button
                   onClick={() => {
                     stopVoice();
                     window.location.href = "/";
                   }}
-                  className="w-full py-4 bg-white/5 border border-white/10 hover:bg-white/10 rounded-xl text-xs font-black uppercase tracking-widest text-white transition"
+                  className="w-full py-4 bg-white/5 border border-white/10 hover:bg-white/10 rounded-xl text-xs font-black uppercase tracking-widest text-white transition cursor-pointer"
                 >
                   {t.secret_cta_home}
                 </button>

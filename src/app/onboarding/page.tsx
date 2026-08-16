@@ -800,13 +800,20 @@ export default function OnboardingFlow() {
               <CreatorQuest
                 key="creator-quest"
                 onSignUp={async () => {
-                  setTutorialRole("creator");
-                  setIsCreatorMode(true);
-                  const { data: { session } } = await supabase.auth.getSession();
-                  if (session?.user) {
-                    // User is already authenticated (e.g. via magic link / OTP) — proceed directly into profile setup!
-                    await handleRegistrationComplete();
-                  } else {
+                  try {
+                    setTutorialRole("creator");
+                    setIsCreatorMode(true);
+                    
+                    const { data: { session } } = await supabase.auth.getSession();
+                    if (session?.user) {
+                      // User is already authenticated (e.g. via magic link / OTP) — proceed directly into profile setup!
+                      await handleRegistrationComplete();
+                      setStep("profile-checklist");
+                    } else {
+                      setStep("registration");
+                    }
+                  } catch (err) {
+                    console.error("[Onboarding] Error transitioning from CreatorQuest:", err);
                     setStep("registration");
                   }
                 }}
