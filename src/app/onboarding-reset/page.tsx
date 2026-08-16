@@ -40,7 +40,13 @@ export default function OnboardingReset() {
 
       // 4. Hard redirect to onboarding landing page with fresh flag
       setTimeout(() => {
-        window.location.href = '/onboarding?fresh=true';
+        const params = new URLSearchParams(window.location.search);
+        const role = params.get('role');
+        if (role === 'creator') {
+          window.location.href = '/onboarding?role=creator&fresh=true';
+        } else {
+          window.location.href = '/onboarding?fresh=true';
+        }
       }, 400);
     };
 
