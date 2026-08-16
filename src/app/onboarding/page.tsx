@@ -505,6 +505,9 @@ export default function OnboardingFlow() {
         if (error === "auth_callback_failed") {
           setFormError("Your magic link was opened in a different browser window or has expired. Please log in with your password or request a new 6-digit passcode.");
           setStep("registration");
+        } else if (params.get("role") === "creator" || params.get("tutorial") === "creator") {
+          setIsCreatorMode(true);
+          setStep("creator-quest");
         } else if (params.get("bypass") === "true" || isFresh) {
           setStep("purpose");
         } else {

@@ -34,43 +34,61 @@ export function useAvatarUpload(options?: UseAvatarUploadOptions) {
       const supabase = createClient();
       let activeUserId = fallbackUserId;
       if (!activeUserId) {
-        const { data: { session } } = await supabase.auth.getSession();
-        activeUserId = session?.user?.id || null;
+        try {
+          const { data: { session } } = await supabase.auth.getSession();
+          activeUserId = session?.user?.id || null;
+        } catch {
+          activeUserId = null;
+        }
       }
 
-      // 3. Upload to Supabase Storage 'avatars' bucket
-      const fileName = `${activeUserId || 'user'}_${Date.now()}.jpg`;
-      const uploadPromise = supabase.storage
-        .from('avatars')
-        .upload(fileName, blob, {
-          cacheControl: '3600',
-          upsert: true,
-          contentType: 'image/jpeg',
-        });
-
-      const timeoutPromise = new Promise<{ data: any; error: any }>((_, reject) =>
-        setTimeout(() => reject(new Error('Upload timeout exceeded')), 15000)
-      );
-
-      const { data, error: uploadError } = await Promise.race([uploadPromise, timeoutPromise]);
-
+      // 3. Upload to Supabase Storage 'avatars' bucket with 4000ms safety timeout
       let resolvedPublicUrl: string | null = null;
-      if (!uploadError && data) {
-        const { data: { publicUrl } } = supabase.storage
+      try {
+        const fileName = `${activeUserId || 'user'}_${Date.now()}.jpg`;
+        const uploadPromise = supabase.storage
           .from('avatars')
-          .getPublicUrl(fileName);
-        if (publicUrl) {
-          resolvedPublicUrl = publicUrl;
+          .upload(fileName, blob, {
+            cacheControl: '3600',
+            upsert: true,
+            contentType: 'image/jpeg',
+          });
+
+        const timeoutPromise = new Promise<{ data: any; error: any }>((resolve) =>
+          setTimeout(() => resolve({ data: null, error: new Error('Upload timeout fallback') }), 4000)
+        );
+
+        const { data, error: uploadError } = await Promise.race([uploadPromise, timeoutPromise]);
+
+        if (!uploadError && data) {
+          const { data: { publicUrl } } = supabase.storage
+            .from('avatars')
+            .getPublicUrl(fileName);
+          if (publicUrl) {
+            resolvedPublicUrl = publicUrl;
+          }
         }
-      } else if (uploadError) {
-        console.warn('Storage upload notice (falling back to client Data URL):', uploadError);
+      } catch (uploadErr) {
+        console.warn('[useAvatarUpload] Storage upload warning, using local dataUrl:', uploadErr);
       }
 
       const finalUrl = resolvedPublicUrl || dataUrl;
       options?.onSuccess?.(finalUrl, dataUrl);
       return { publicUrl: resolvedPublicUrl, dataUrl };
     } catch (err: any) {
-      console.warn('Storage upload fallback to compressed Data URL:', err);
+      console.warn('[useAvatarUpload] Error in uploadAvatar:', err);
+      // Fallback: Read file directly as DataURL if compression had an issue
+      try {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const fallbackDataUrl = e.target?.result as string;
+          if (fallbackDataUrl) {
+            setAvatarPreview(fallbackDataUrl);
+            options?.onSuccess?.(fallbackDataUrl, fallbackDataUrl);
+          }
+        };
+        reader.readAsDataURL(file);
+      } catch {}
       return null;
     } finally {
       setIsUploading(false);
