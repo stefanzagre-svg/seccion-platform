@@ -53,7 +53,6 @@ export default function CreatorQuest({ onSignUp, onSwitchToMember, onClose }: Cr
   const [faceBlurActive, setFaceBlurActive] = useState(true);
   const [tierPrice, setTierPrice] = useState(9.99);
   const [residence, setResidence] = useState("");
-  const [residenceError, setResidenceError] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Identity Setup States (Multi-select arrays up to 5 options)
@@ -65,6 +64,71 @@ export default function CreatorQuest({ onSignUp, onSwitchToMember, onClose }: Cr
 
   const PURPOSES = ["Lifestyle", "Gaming", "Explicit 18+", "Coaching", "Education", "Expertise"];
   const SPECIALIZATIONS = ["Beauty", "Gaming", "Explicit", "Social & Communication", "Economy & Finance", "Dating & Marriage", "Cooking", "Fitness & Wellness", "Health & Psychology", "Art & Music"];
+
+  // Spanish display mappings for localized UI while preserving DB compatibility
+  const PURPOSES_ES: Record<string, string> = {
+    "Lifestyle": "Estilo de Vida",
+    "Gaming": "Gaming",
+    "Explicit 18+": "Explícito 18+",
+    "Coaching": "Coaching & Mentoría",
+    "Education": "Educación",
+    "Expertise": "Experticia & Negocios"
+  };
+
+  const SPECIALIZATIONS_ES: Record<string, string> = {
+    "Beauty": "Belleza & Estética",
+    "Gaming": "Gaming & Esports",
+    "Explicit": "Explícito & Adultos",
+    "Social & Communication": "Social & Comunicación",
+    "Economy & Finance": "Economía & Finanzas",
+    "Dating & Marriage": "Citas & Pareja",
+    "Cooking": "Cocina & Gastronomía",
+    "Fitness & Wellness": "Fitness & Bienestar",
+    "Health & Psychology": "Salud & Psicología",
+    "Art & Music": "Arte & Música"
+  };
+
+  const SEXUAL_PREF_ES: Record<string, string> = {
+    "Straight": "Heterosexual",
+    "Gay": "Gay",
+    "Lesbian": "Lesbiana",
+    "Bisexual": "Bisexual",
+    "Pansexual": "Pansexual",
+    "Queer": "Queer",
+    "Questioning": "En Exploración",
+    "Asexual": "Asexual",
+    "Demisexual": "Demisexual",
+    "Aromantic": "Aromántico",
+    "Omnisexual": "Omnisexual"
+  };
+
+  const REL_GOALS_ES: Record<string, string> = {
+    "Long term partner": "Pareja a largo plazo",
+    "Long term not against Short term Crush": "Largo plazo abierto a crush casual",
+    "Good Vibe Instant Crush": "Buena vibra y crush instantáneo",
+    "Short term Vibe leads to long term": "Vibra corta que lleve a largo plazo",
+    "Not limit myself": "Sin límites ni etiquetas",
+    "Let's figure after a date.": "Descubrirlo tras una cita",
+    "Travel Companion": "Compañero/a de viajes",
+    "Make New Frends": "Hacer nuevas amistades",
+    "Flat Mate": "Compañero/a de piso",
+    "Social & Economical Support": "Apoyo social y económico",
+    "Sex Mate": "Compañero/a sexual"
+  };
+
+  const REL_TYPES_ES: Record<string, string> = {
+    "Monogamous": "Monógamo/a",
+    "Polyamorous": "Poliamoroso/a",
+    "Open Relationship": "Relación Abierta",
+    "Ethical Non-Monogamy": "No Monogamia Ética",
+    "Open to Explore": "Abierto/a a explorar",
+    "Libertinism Mindset": "Mentalidad Libertina",
+    "Swinging Open": "Swinging Abierto",
+    "Open to Distant Relation": "Abierto/a a relación a distancia",
+    "Digital Relationship": "Relación Digital",
+    "FWB": "Amigos con derechos (FWB)",
+    "Not sure yet": "Aún no lo tengo claro"
+  };
 
   const isExplicit = creatorPurposes.includes("Explicit 18+") || specialization === "Explicit";
   const isDatingSpecialized = specialization === "Dating & Marriage";
@@ -349,7 +413,9 @@ export default function CreatorQuest({ onSignUp, onSwitchToMember, onClose }: Cr
 
               {/* Creator Purposes */}
               <div className="space-y-3">
-                <label className="text-[10px] font-black uppercase text-white/50 tracking-wider">Creator Intent Auras (Select Multiple)</label>
+                <label className="text-[10px] font-black uppercase text-white/50 tracking-wider">
+                  {lang === 'es' ? 'Auras de Intención del Creador (Selecciona Múltiples)' : 'Creator Intent Auras (Select Multiple)'}
+                </label>
                 <div className="flex flex-wrap gap-2">
                   {PURPOSES.map(p => (
                     <button
@@ -361,9 +427,9 @@ export default function CreatorQuest({ onSignUp, onSwitchToMember, onClose }: Cr
                           setCreatorPurposes([...creatorPurposes, p]);
                         }
                       }}
-                      className={`px-3 py-1.5 rounded-lg border text-xs font-bold transition ${creatorPurposes.includes(p) ? 'bg-primary border-primary text-black' : 'bg-black/40 border-white/20 text-white hover:border-white/40'}`}
+                      className={`px-3 py-1.5 rounded-lg border text-xs font-bold transition cursor-pointer ${creatorPurposes.includes(p) ? 'bg-primary border-primary text-black' : 'bg-black/40 border-white/20 text-white hover:border-white/40'}`}
                     >
-                      {p}
+                      {lang === 'es' && PURPOSES_ES[p] ? PURPOSES_ES[p] : p}
                     </button>
                   ))}
                 </div>
@@ -371,15 +437,17 @@ export default function CreatorQuest({ onSignUp, onSwitchToMember, onClose }: Cr
 
               {/* Specialization */}
               <div className="space-y-3">
-                <label className="text-[10px] font-black uppercase text-white/50 tracking-wider">Primary Content Synergy</label>
+                <label className="text-[10px] font-black uppercase text-white/50 tracking-wider">
+                  {lang === 'es' ? 'Sinergia de Contenido Principal' : 'Primary Content Synergy'}
+                </label>
                 <select 
                   value={specialization}
                   onChange={(e) => setSpecialization(e.target.value)}
-                  className="w-full px-4 py-3 bg-black/40 border border-white/10 rounded-xl text-xs text-white focus:border-primary outline-none"
+                  className="w-full px-4 py-3 bg-black/40 border border-white/10 rounded-xl text-xs text-white focus:border-primary outline-none cursor-pointer"
                 >
-                  <option value="">Select your main domain...</option>
+                  <option value="">{lang === 'es' ? 'Selecciona tu dominio principal...' : 'Select your main domain...'}</option>
                   {SPECIALIZATIONS.map(s => (
-                    <option key={s} value={s}>{s}</option>
+                    <option key={s} value={s}>{lang === 'es' && SPECIALIZATIONS_ES[s] ? SPECIALIZATIONS_ES[s] : s}</option>
                   ))}
                 </select>
               </div>
@@ -389,14 +457,20 @@ export default function CreatorQuest({ onSignUp, onSwitchToMember, onClose }: Cr
                 <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} className="space-y-4 pt-4 border-t border-white/10">
                   <div className="flex items-center gap-2 mb-2">
                     <span className="text-sm">🔥</span>
-                    <h4 className="text-[11px] font-black uppercase tracking-widest text-primary">Advanced Audience Targeting</h4>
+                    <h4 className="text-[11px] font-black uppercase tracking-widest text-primary">
+                      {lang === 'es' ? 'Segmentación Avanzada de Audiencia' : 'Advanced Audience Targeting'}
+                    </h4>
                   </div>
-                  <p className="text-[10px] text-white/50 leading-relaxed mb-4">Because your intent includes specialized or mature themes, we require your audience mapping preferences. Age and strict location will be securely locked via Shufti KYC in the next step.</p>
+                  <p className="text-[10px] text-white/50 leading-relaxed mb-4">
+                    {lang === 'es'
+                      ? 'Dado que tu contenido incluye temáticas especializadas o para adultos, requerimos tus preferencias de mapeo de audiencia. La edad y ubicación estricta se verificarán de forma segura mediante Shufti KYC.'
+                      : 'Because your intent includes specialized or mature themes, we require your audience mapping preferences. Age and strict location will be securely locked via Shufti KYC in the next step.'}
+                  </p>
                   
                   {isExplicit && (
                     <div className="space-y-2">
                       <label className="text-[9px] font-black uppercase text-white/40 tracking-wider">
-                        Sexual Preference Matrix (Select Multiple)
+                        {lang === 'es' ? 'Matriz de Preferencia Sexual (Selecciona Múltiples)' : 'Sexual Preference Matrix (Select Multiple)'}
                       </label>
                       <div className="flex flex-wrap gap-1.5">
                         {SEXUAL_PREFERENCES.map(sp => {
@@ -418,7 +492,7 @@ export default function CreatorQuest({ onSignUp, onSwitchToMember, onClose }: Cr
                                   : 'bg-black/40 border-white/15 text-white/70 hover:border-white/40 hover:text-white'
                               }`}
                             >
-                              {sp}
+                              {lang === 'es' && SEXUAL_PREF_ES[sp] ? SEXUAL_PREF_ES[sp] : sp}
                             </button>
                           );
                         })}
@@ -430,10 +504,10 @@ export default function CreatorQuest({ onSignUp, onSwitchToMember, onClose }: Cr
                   <div className="space-y-2">
                     <div className="flex justify-between items-center">
                       <label className="text-[9px] font-black uppercase text-white/40 tracking-wider">
-                        Relationship Goals (Select up to 5)
+                        {lang === 'es' ? 'Metas de Relación (Selecciona hasta 5)' : 'Relationship Goals (Select up to 5)'}
                       </label>
                       <span className="text-[8px] font-mono text-[#00fbfb]">
-                        {relationshipGoals.length}/5 selected
+                        {relationshipGoals.length}/5 {lang === 'es' ? 'seleccionadas' : 'selected'}
                       </span>
                     </div>
                     <div className="flex flex-wrap gap-1.5">
@@ -457,7 +531,7 @@ export default function CreatorQuest({ onSignUp, onSwitchToMember, onClose }: Cr
                                 : 'bg-black/40 border-white/15 text-white/70 hover:border-white/40 hover:text-white'
                             }`}
                           >
-                            {rg}
+                            {lang === 'es' && REL_GOALS_ES[rg] ? REL_GOALS_ES[rg] : rg}
                           </button>
                         );
                       })}
@@ -468,10 +542,10 @@ export default function CreatorQuest({ onSignUp, onSwitchToMember, onClose }: Cr
                   <div className="space-y-2">
                     <div className="flex justify-between items-center">
                       <label className="text-[9px] font-black uppercase text-white/40 tracking-wider">
-                        Relationship Types (Select up to 5)
+                        {lang === 'es' ? 'Tipos de Relación (Selecciona hasta 5)' : 'Relationship Types (Select up to 5)'}
                       </label>
                       <span className="text-[8px] font-mono text-[#00fbfb]">
-                        {relationshipTypes.length}/5 selected
+                        {relationshipTypes.length}/5 {lang === 'es' ? 'seleccionados' : 'selected'}
                       </span>
                     </div>
                     <div className="flex flex-wrap gap-1.5">
@@ -495,7 +569,7 @@ export default function CreatorQuest({ onSignUp, onSwitchToMember, onClose }: Cr
                                 : 'bg-black/40 border-white/15 text-white/70 hover:border-white/40 hover:text-white'
                             }`}
                           >
-                            {rt}
+                            {lang === 'es' && REL_TYPES_ES[rt] ? REL_TYPES_ES[rt] : rt}
                           </button>
                         );
                       })}
@@ -507,18 +581,18 @@ export default function CreatorQuest({ onSignUp, onSwitchToMember, onClose }: Cr
               <button
                 onClick={() => {
                   if (creatorPurposes.length === 0 || !specialization) {
-                    alert("Please select at least one Intent Aura and your Content Synergy to proceed.");
+                    alert(lang === 'es' ? "Por favor selecciona al menos un Aura de Intención y tu Sinergia de Contenido." : "Please select at least one Intent Aura and your Content Synergy to proceed.");
                     return;
                   }
                   if (needsRelFields && (relationshipGoals.length === 0 || relationshipTypes.length === 0 || (isExplicit && sexualPreferences.length === 0))) {
-                    alert("Please select at least one Relationship Goal, Relationship Type, and Sexual Preference for your intent.");
+                    alert(lang === 'es' ? "Por favor completa todos los campos de Segmentación Avanzada requeridos para tu intención." : "Please complete all Advanced Audience Targeting fields required for your intent.");
                     return;
                   }
                   setStep("revenue-engine");
                 }}
-                className="w-full bg-primary text-black font-black uppercase tracking-widest py-4 rounded-xl hover:shadow-[0_0_20px_rgba(102,252,241,0.4)] transition text-xs flex items-center justify-center gap-2 mt-6"
+                className="w-full bg-primary text-black font-black uppercase tracking-widest py-4 rounded-xl hover:shadow-[0_0_20px_rgba(102,252,241,0.4)] transition text-xs flex items-center justify-center gap-2 mt-6 cursor-pointer"
               >
-                Engage Revenue Engine &rarr;
+                {lang === 'es' ? 'Activar Motor de Ingresos →' : 'Engage Revenue Engine →'}
               </button>
             </motion.div>
           )}
@@ -780,7 +854,7 @@ export default function CreatorQuest({ onSignUp, onSwitchToMember, onClose }: Cr
                   {isSubmitting ? (
                     <>
                       <Loader2 className="w-4 h-4 animate-spin text-black" />
-                      <span>Claiming Studio...</span>
+                      <span>{lang === 'es' ? 'Reclamando Estudio...' : 'Claiming Studio...'}</span>
                     </>
                   ) : (
                     t.secret_cta

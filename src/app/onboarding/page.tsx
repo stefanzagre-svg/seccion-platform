@@ -807,22 +807,22 @@ export default function OnboardingFlow() {
                     sessionStorage.setItem("_onboarding_creator_archive_choice", "creator");
                   }
                   
+                  // Immediately slide into profile checklist
+                  setStep("profile-checklist");
+                  
+                  // Background sync authenticated session details
                   try {
                     const { data: { session } } = await supabase.auth.getSession();
                     if (session?.user) {
-                      // Logged in: Advance to profile-checklist immediately
-                      setStep("profile-checklist");
-                      // Background profile update
                       handleRegistrationComplete().catch(err => {
                         console.warn("[Onboarding] Background registration complete notice:", err);
                       });
                     } else {
-                      // Not logged in: Show registration gate
+                      // If no session exists at all, then redirect to registration
                       setStep("registration");
                     }
                   } catch (err) {
-                    console.error("[Onboarding] Transition error:", err);
-                    setStep("registration");
+                    console.error("[Onboarding] Transition check error:", err);
                   }
                 }}
                 onSwitchToMember={() => {
