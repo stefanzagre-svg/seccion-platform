@@ -1293,9 +1293,14 @@ export default function OnboardingFlow() {
 
                         <div className="pt-6">
                           <button
-                            onClick={() => handleSaveDetails("photo")}
-                            disabled={isSaving || !avatarUrl}
-                            className="w-full bg-primary text-black font-black uppercase tracking-widest py-4 rounded-xl hover:shadow-[0_0_20px_rgba(102,252,241,0.4)] transition disabled:opacity-50 text-xs flex items-center justify-center gap-2 cursor-pointer shadow-[0_0_20px_rgba(102,252,241,0.2)]"
+                            type="button"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              handleSaveDetails("photo");
+                              setActiveItem("bio");
+                            }}
+                            className="w-full bg-primary text-black font-black uppercase tracking-widest py-4 rounded-xl hover:shadow-[0_0_20px_rgba(102,252,241,0.4)] transition text-xs flex items-center justify-center gap-2 cursor-pointer shadow-[0_0_20px_rgba(102,252,241,0.2)] active:scale-98"
                           >
                             {isSaving ? (
                               <Loader2 className="w-4 h-4 animate-spin text-black" />
@@ -1346,8 +1351,13 @@ export default function OnboardingFlow() {
                                   .filter(([p]) => activePurposes.length === 0 || activePurposes.includes(p as MemberPurposeId))
                                   .reduce((acc, [_, cats]) => ({ ...acc, ...cats }), {} as Record<string, any>);
                                 
-                                return Object.entries(availablePrompts).map(([key, data]) => {
-                                  const isActive = promptCategory === key;
+                                const entries = Object.entries(availablePrompts);
+                                if (!promptCategory && entries.length > 0) {
+                                  setTimeout(() => setPromptCategory(entries[0][0]), 0);
+                                }
+                                
+                                return entries.map(([key, data]) => {
+                                  const isActive = (promptCategory || entries[0]?.[0]) === key;
                                   return (
                                     <button
                                       key={key}
@@ -1356,7 +1366,7 @@ export default function OnboardingFlow() {
                                         setPromptCategory(key);
                                         setPromptQuestion("");
                                       }}
-                                      className={`px-2.5 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest border transition ${
+                                      className={`px-2.5 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest border transition cursor-pointer ${
                                         isActive
                                           ? "bg-primary border-primary text-black"
                                           : "bg-white/5 border-white/5 text-white/60 hover:bg-white/10"
