@@ -757,6 +757,16 @@ export default function OnboardingFlow() {
           setIsSaving(false);
           return;
         }
+
+        // promptStep === 2: Save both prompt 1 & prompt 2 to profiles
+        updatePayload = {
+          bio_prompt_category: completedPrompt1?.category || "lifestyle",
+          bio_prompt_question: completedPrompt1?.question || "",
+          bio_prompt_answer: completedPrompt1?.answer || "",
+          bio_prompt_category_2: effectiveCategory,
+          bio_prompt_question_2: effectiveQuestion,
+          bio_prompt_answer_2: effectiveAnswer,
+        };
       } else if (type === "preferences") {
         if (favoriteLanguages.length === 0) {
           throw new Error("Please select at least one Favorite Language.");
@@ -1495,7 +1505,6 @@ export default function OnboardingFlow() {
                             type="button"
                             onClick={(e) => {
                               e.preventDefault();
-                              console.log("[SECCION] Analyze & Save clicked", { promptStep, promptCategory, promptQuestion, promptAnswer });
                               const sourcePrompts = locale === "es" ? PURPOSE_PROMPTS_ES : PURPOSE_PROMPTS;
                               const availablePrompts = Object.entries(sourcePrompts)
                                 .filter(([p]) => activePurposes.length === 0 || activePurposes.includes(p as MemberPurposeId))
@@ -1523,24 +1532,6 @@ export default function OnboardingFlow() {
                               t("onboarding.main.analyzeSavePrompt", "Analyze & Save Prompt {step}").replace("{step}", promptStep.toString())
                             )}
                           </button>
-                          
-                          {/* If Creator and bio is done, proceed to welcome */}
-                          {(tutorialRole === "creator" || isCreatorMode) && (
-                             <button
-                               type="button"
-                               onClick={() => {
-                                 setChecklist((prev) =>
-                                   prev.map((item) =>
-                                     item.id === "bio" ? { ...item, completed: true } : item,
-                                   ),
-                                 );
-                                 setStep("welcome");
-                               }}
-                               className="w-full mt-3 bg-white/10 text-white font-black uppercase tracking-widest py-3 rounded-xl hover:bg-white/20 transition text-xs cursor-pointer"
-                             >
-                               {t("onboarding.main.continueDashboard", "Continue to Dashboard →")}
-                             </button>
-                          )}
                         </div>
                       </motion.div>
                     )}
