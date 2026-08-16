@@ -706,12 +706,12 @@ export default function OnboardingFlow() {
           throw new Error(t("onboarding.main.selectAvatarErr", "Please select or input an avatar photo."));
         updatePayload = { avatar_url: avatarUrl };
       } else if (type === "bio") {
-        const effectiveCategory = overrideData?.category || promptCategory || "chemistry";
-        const effectiveQuestion = overrideData?.question || promptQuestion;
+        const effectiveCategory = overrideData?.category || promptCategory || "lifestyle";
+        const effectiveQuestion = overrideData?.question || promptQuestion || "Cozy homebody or active explorer on weekends?";
         const effectiveAnswer = (overrideData?.answer !== undefined ? overrideData.answer : promptAnswer).trim();
 
-        if (!effectiveQuestion || !effectiveAnswer) {
-          throw new Error(t("onboarding.main.promptMissingErr", "Please select a prompt category, a question, and write an answer."));
+        if (!effectiveAnswer) {
+          throw new Error(t("onboarding.main.promptMissingErr", "Please write your answer."));
         }
         
         if (effectiveAnswer.length < 10) {
@@ -731,7 +731,7 @@ export default function OnboardingFlow() {
             })
           });
 
-          const timeoutPromise = new Promise((resolve) => setTimeout(resolve, 1200));
+          const timeoutPromise = new Promise((resolve) => setTimeout(resolve, 800));
           await Promise.race([fetchPromise, timeoutPromise]);
         } catch (fetchErr) {
           console.warn("Prompt analysis network error, continuing with local state:", fetchErr);
@@ -1509,8 +1509,9 @@ export default function OnboardingFlow() {
                                 .filter(([p]) => activePurposes.length === 0 || activePurposes.includes(p as MemberPurposeId))
                                 .reduce((acc, [_, cats]) => ({ ...acc, ...cats }), {} as Record<string, any>);
                               const entries = Object.entries(availablePrompts);
-                              const selectedCatKey = promptCategory || entries[0]?.[0] || "chemistry";
-                              const activeQuestion = promptQuestion || availablePrompts[selectedCatKey]?.prompts?.[0] || "";
+                              const selectedCatKey = promptCategory || entries[0]?.[0] || "lifestyle";
+                              const availableQuestions = availablePrompts[selectedCatKey]?.prompts || [];
+                              const activeQuestion = promptQuestion || availableQuestions[0] || "Cozy homebody or active explorer on weekends?";
                               
                               handleSaveDetails("bio", {
                                 category: selectedCatKey,
