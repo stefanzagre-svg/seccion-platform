@@ -70,6 +70,9 @@ export async function middleware(request: NextRequest) {
 
     // Purpose Eligibility Checker
     const checkPurposeEligibility = (profile: any) => {
+      // Creators have their own Creator Extension studio onboarding and don't need member lifestyle habit quizzes
+      if (profile?.role === 'creator') return true;
+
       // Basic check from old logic + new purpose array
       if (!profile?.archetype || !profile?.lifestyle_habits) return false;
       if (!profile?.active_purposes || profile.active_purposes.length === 0) return false;
@@ -110,7 +113,7 @@ export async function middleware(request: NextRequest) {
       // Cookie missing — do the DB check once and set the cookie for next time
       const { data: profile } = await supabase
         .from('profiles')
-        .select('archetype, lifestyle_habits, active_purposes, privacy_settings, sexual_preferences, relationship_goals, relationship_types, current_location, career, education_level, hobbies, income_bracket, nsfw_boundaries')
+        .select('role, archetype, lifestyle_habits, active_purposes, privacy_settings, sexual_preferences, relationship_goals, relationship_types, current_location, career, education_level, hobbies, income_bracket, nsfw_boundaries')
         .eq('id', user.id)
         .single();
 

@@ -719,7 +719,7 @@ export default function OnboardingFlow() {
         }
 
         try {
-          const res = await fetch("/api/v2/profile/analyze-prompt", {
+          const fetchPromise = fetch("/api/v2/profile/analyze-prompt", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -731,9 +731,8 @@ export default function OnboardingFlow() {
             })
           });
 
-          if (!res.ok) {
-            console.warn("Prompt analysis warning from server");
-          }
+          const timeoutPromise = new Promise((resolve) => setTimeout(resolve, 1200));
+          await Promise.race([fetchPromise, timeoutPromise]);
         } catch (fetchErr) {
           console.warn("Prompt analysis network error, continuing with local state:", fetchErr);
         }
@@ -743,8 +742,16 @@ export default function OnboardingFlow() {
             question: effectiveQuestion,
             answer: effectiveAnswer
           });
-          setPromptCategory("conflict");
-          setPromptQuestion("");
+          const sourcePrompts = locale === "es" ? PURPOSE_PROMPTS_ES : PURPOSE_PROMPTS;
+          const availablePrompts = Object.entries(sourcePrompts)
+            .filter(([p]) => activePurposes.length === 0 || activePurposes.includes(p as MemberPurposeId))
+            .reduce((acc, [_, cats]) => ({ ...acc, ...cats }), {} as Record<string, any>);
+          const entries = Object.entries(availablePrompts);
+          const nextCatKey = entries.find(([k]) => k !== effectiveCategory)?.[0] || entries[0]?.[0] || "conflict";
+          const nextQ = availablePrompts[nextCatKey]?.prompts?.[0] || "";
+
+          setPromptCategory(nextCatKey);
+          setPromptQuestion(nextQ);
           setPromptAnswer("");
           setPromptStep(2);
           setIsSaving(false);
