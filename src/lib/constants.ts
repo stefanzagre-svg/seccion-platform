@@ -667,3 +667,126 @@ export const PURPOSE_PROMPTS: Record<MemberPurposeId, Record<string, { categoryN
     }
   }
 };
+
+export const PURPOSE_PROMPTS_ES: Record<MemberPurposeId, Record<string, { categoryName: string; prompts: string[] }>> = {
+  dating: {
+    chemistry: {
+      categoryName: "Química & Conexión",
+      prompts: [
+        "¿Cómo sería tu primera cita soñada?",
+        "¿Cuál es tu mayor 'green flag' en una pareja?",
+        "¿Cómo le demuestras a alguien que te importa?"
+      ]
+    },
+    conflict: {
+      categoryName: "Vibra & Comunicación",
+      prompts: [
+        "Al estar estresado/a, ¿prefieres espacio o hablar las cosas?",
+        "¿Cuál es una manía o pet peeve curioso que tienes?",
+        "¿Resuelves desacuerdos de inmediato o prefieres enfriarte primero?"
+      ]
+    },
+    investment: {
+      categoryName: "Estilo de Vida & Espacio",
+      prompts: [
+        "¿Hogareño/a o explorador/a activo los fines de semana?",
+        "¿Qué detalle atento siempre agradeces?",
+        "¿Cómo pasarías un día libre perfecto?"
+      ]
+    },
+    archetype: {
+      categoryName: "Pasiones & Vibe",
+      prompts: [
+        "¿De qué pasatiempo podrías hablar durante horas?",
+        "¿Qué canción o película siempre te sube el ánimo?",
+        "¿Cuál es un placer diario simple que disfrutas mucho?"
+      ]
+    },
+    ethics: {
+      categoryName: "Crecimiento & Valores",
+      prompts: [
+        "¿Qué meta te emociona alcanzar ahora mismo?",
+        "¿Cuál es un límite personal no negociable en una relación?"
+      ]
+    }
+  },
+  lifestyle: {
+    ambition: {
+      categoryName: "Ambición & Propósito",
+      prompts: [
+        "¿Qué construirías si el dinero y el tiempo fueran ilimitados?",
+        "¿Cuál es un logro reciente del que te sientas muy orgulloso/a?",
+        "¿Qué te motiva a seguir adelante cuando las cosas se complican?"
+      ]
+    },
+    skills: {
+      categoryName: "Habilidades & Aprendizaje",
+      prompts: [
+        "¿Qué habilidad te apasiona dominar en este momento?",
+        "¿Quién es un mentor o referente que marcó tu camino?",
+        "¿Qué fue lo último que le enseñaste a alguien?"
+      ]
+    },
+    collaboration: {
+      categoryName: "Colaboración & Red",
+      prompts: [
+        "Describe a tu socio/a creativo o de negocios ideal.",
+        "¿Qué proyecto te encantaría co-crear con alguien?",
+        "¿Qué lección te dejó un fracaso que el éxito no pudo darte?"
+      ]
+    },
+    wellness: {
+      categoryName: "Bienestar & Balance",
+      prompts: [
+        "¿Cómo recargas energía tras una jornada intensa de trabajo?",
+        "¿Qué ritual diario te mantiene centrado/a?",
+        "¿Cómo defines el 'éxito' más allá del dinero?"
+      ]
+    },
+    creative: {
+      categoryName: "Visión Creativa",
+      prompts: [
+        "Si pudieras dominar un arte creativo de la noche a la mañana, ¿cuál sería?",
+        "¿Qué creador o contenido te inspira más actualmente?",
+        "¿De qué trataría tu taller o masterclass soñado?"
+      ]
+    }
+  },
+  explicit: {
+    desires: {
+      categoryName: "Deseos & Límites",
+      prompts: [
+        "¿Qué te hace sentir con mayor confianza y atractivo/a?",
+        "¿Cuál es tu mayor requisito no negociable en la intimidad?",
+        "Describe la energía y química que buscas en una conexión."
+      ]
+    },
+    chemistry: {
+      categoryName: "Química & Atracción",
+      prompts: [
+        "¿Qué es lo primero que llama tu atención de alguien?",
+        "¿Qué tipo de tensión disfrutas más: juguetona, misteriosa o directa?",
+        "¿Cuál es tu placer culposo que compartirías con la persona indicada?"
+      ]
+    },
+    fantasy: {
+      categoryName: "Fantasía & Expresión",
+      prompts: [
+        "Si pudieras diseñar la noche perfecta, ¿cómo sería el ambiente?",
+        "¿Qué es lo más audaz que has hecho para llamar la atención de alguien?",
+        "¿Cuál es tu definición de 'acceso exclusivo'?"
+      ]
+    }
+  },
+  creator: {
+    identity: {
+      categoryName: "Identidad de Creador",
+      prompts: [
+        "¿Qué hace que tu contenido sea único y diferente al resto?",
+        "¿Qué es lo que tu comunidad siempre busca en tus transmisiones?",
+        "Si pudieras colaborar con cualquier creador del mundo, ¿con quién y por qué?"
+      ]
+    }
+  }
+};
+

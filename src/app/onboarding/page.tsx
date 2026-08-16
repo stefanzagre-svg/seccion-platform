@@ -27,6 +27,7 @@ import {
   RELATIONSHIP_TYPES,
   LANGUAGES,
   PURPOSE_PROMPTS,
+  PURPOSE_PROMPTS_ES,
   type MemberPurposeId
 } from "@/lib/constants";
 import ProfilePreviewModal from "@/components/ProfilePreviewModal";
@@ -63,7 +64,7 @@ type OnboardingStep =
 // Removed INSIGHT_PROMPTS in favor of PURPOSE_PROMPTS from constants.ts
 
 export default function OnboardingFlow() {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const [step, setStep] = useState<OnboardingStep>("registration");
   const [tutorialArchetype, setTutorialArchetype] = useState<string | null>(null);
   const [tutorialRole, setTutorialRole] = useState<"member" | "creator" | null>(null);
@@ -624,6 +625,21 @@ export default function OnboardingFlow() {
               });
             }
             setPromptStep(p1Done && !p2Done ? 2 : 1);
+
+            if (profile.member_purposes && Array.isArray(profile.member_purposes) && profile.member_purposes.length > 0) {
+              setActivePurposes(profile.member_purposes);
+            } else if (typeof window !== "undefined") {
+              const storedPurposes = sessionStorage.getItem("_onboarding_creator_purposes");
+              if (storedPurposes) {
+                try {
+                  const parsed = JSON.parse(storedPurposes);
+                  if (Array.isArray(parsed) && parsed.length > 0) {
+                    const mappedPurposes = parsed.map((p: string) => p.toLowerCase().includes("explicit") ? "explicit" : p.toLowerCase().includes("gaming") || p.toLowerCase().includes("lifestyle") ? "lifestyle" : "dating");
+                    setActivePurposes(mappedPurposes);
+                  }
+                } catch {}
+              }
+            }
 
             if (profile.sexual_preferences?.length > 0)
               setSexPrefs(profile.sexual_preferences);
@@ -1347,24 +1363,33 @@ export default function OnboardingFlow() {
                             </label>
                             <div className="flex flex-wrap gap-1">
                               {(() => {
-                                const availablePrompts = Object.entries(PURPOSE_PROMPTS)
+                                const sourcePrompts = locale === "es" ? PURPOSE_PROMPTS_ES : PURPOSE_PROMPTS;
+                                const availablePrompts = Object.entries(sourcePrompts)
                                   .filter(([p]) => activePurposes.length === 0 || activePurposes.includes(p as MemberPurposeId))
                                   .reduce((acc, [_, cats]) => ({ ...acc, ...cats }), {} as Record<string, any>);
                                 
                                 const entries = Object.entries(availablePrompts);
+                                const selectedCatKey = promptCategory || entries[0]?.[0];
                                 if (!promptCategory && entries.length > 0) {
-                                  setTimeout(() => setPromptCategory(entries[0][0]), 0);
+                                  setTimeout(() => {
+                                    setPromptCategory(entries[0][0]);
+                                    if (entries[0][1]?.prompts?.[0]) {
+                                      setPromptQuestion(entries[0][1].prompts[0]);
+                                    }
+                                  }, 0);
                                 }
                                 
                                 return entries.map(([key, data]) => {
-                                  const isActive = (promptCategory || entries[0]?.[0]) === key;
+                                  const isActive = selectedCatKey === key;
                                   return (
                                     <button
                                       key={key}
                                       type="button"
                                       onClick={() => {
                                         setPromptCategory(key);
-                                        setPromptQuestion("");
+                                        if (data.prompts?.[0]) {
+                                          setPromptQuestion(data.prompts[0]);
+                                        }
                                       }}
                                       className={`px-2.5 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest border transition cursor-pointer ${
                                         isActive
@@ -1386,19 +1411,23 @@ export default function OnboardingFlow() {
                             </label>
                             <div className="flex flex-col gap-1.5 max-h-[140px] overflow-y-auto pr-1 custom-scrollbar">
                               {(() => {
-                                const availablePrompts = Object.entries(PURPOSE_PROMPTS)
+                                const sourcePrompts = locale === "es" ? PURPOSE_PROMPTS_ES : PURPOSE_PROMPTS;
+                                const availablePrompts = Object.entries(sourcePrompts)
                                   .filter(([p]) => activePurposes.length === 0 || activePurposes.includes(p as MemberPurposeId))
                                   .reduce((acc, [_, cats]) => ({ ...acc, ...cats }), {} as Record<string, any>);
                                 
-                                const prompts = availablePrompts[promptCategory]?.prompts || [];
+                                const entries = Object.entries(availablePrompts);
+                                const selectedCatKey = promptCategory || entries[0]?.[0];
+                                const prompts = availablePrompts[selectedCatKey]?.prompts || [];
+                                
                                 return prompts.map((q: string) => {
-                                  const isSelected = promptQuestion === q;
+                                  const isSelected = (promptQuestion || prompts[0]) === q;
                                   return (
                                     <button
                                       key={q}
                                       type="button"
                                       onClick={() => setPromptQuestion(q)}
-                                      className={`p-2.5 rounded-xl border text-left text-[10px] leading-relaxed transition ${
+                                      className={`p-2.5 rounded-xl border text-left text-[10px] leading-relaxed transition cursor-pointer ${
                                         isSelected
                                           ? "bg-white/10 border-primary text-white font-bold"
                                           : "bg-white/2 border-white/5 text-white/50 hover:bg-white/5 hover:border-white/10"
@@ -1413,40 +1442,64 @@ export default function OnboardingFlow() {
                           </div>
 
                           {/* Response Textarea */}
-                          {promptQuestion && (
-                            <div className="space-y-2 animate-fadeIn">
-                              <div className="p-3 bg-white/5 border border-white/10 rounded-xl">
-                                <span className="text-[8px] uppercase tracking-widest font-black text-primary block mb-1">Active Prompt</span>
-                                <p className="text-[10px] leading-relaxed text-white/80">"{promptQuestion}"</p>
+                          {(() => {
+                            const sourcePrompts = locale === "es" ? PURPOSE_PROMPTS_ES : PURPOSE_PROMPTS;
+                            const availablePrompts = Object.entries(sourcePrompts)
+                              .filter(([p]) => activePurposes.length === 0 || activePurposes.includes(p as MemberPurposeId))
+                              .reduce((acc, [_, cats]) => ({ ...acc, ...cats }), {} as Record<string, any>);
+                            const entries = Object.entries(availablePrompts);
+                            const selectedCatKey = promptCategory || entries[0]?.[0];
+                            const activeQuestion = promptQuestion || availablePrompts[selectedCatKey]?.prompts?.[0] || "";
+
+                            return (
+                              <div className="space-y-2 animate-fadeIn">
+                                {activeQuestion && (
+                                  <div className="p-3 bg-white/5 border border-white/10 rounded-xl">
+                                    <span className="text-[8px] uppercase tracking-widest font-black text-primary block mb-1">{t("onboarding.main.activePrompt", "Active Prompt")}</span>
+                                    <p className="text-[10px] leading-relaxed text-white/80">"{activeQuestion}"</p>
+                                  </div>
+                                )}
+                                
+                                <label className="text-[9px] uppercase tracking-widest font-black text-white/40 block">
+                                  {t("onboarding.main.writeResponse", "3. Write Your Narrative Response")}
+                                </label>
+                                <textarea
+                                  rows={3}
+                                  placeholder={locale === "es" ? "Escribe tu respuesta detallada aquí (mínimo 10 caracteres)..." : "Write a detailed, thoughtful story in response to the prompt..."}
+                                  value={promptAnswer}
+                                  onChange={(e) => setPromptAnswer(e.target.value)}
+                                  className="w-full px-4 py-3 bg-black/40 border border-white/10 rounded-xl text-xs text-white placeholder-white/20 focus:border-primary focus:outline-none transition resize-none"
+                                />
+                                <div className="flex justify-between items-center text-[9px] font-bold uppercase">
+                                  <span className={promptAnswer.length < 10 ? "text-[#dc143c]" : "text-green-500"}>
+                                    {promptAnswer.length < 10 ? t("onboarding.main.minCharsReq", "Min 10 characters required") : t("onboarding.main.lengthValidated", "Length Validated")}
+                                  </span>
+                                  <span className="text-white/30">
+                                    {promptAnswer.length} / 500
+                                  </span>
+                                </div>
                               </div>
-                              
-                              <label className="text-[9px] uppercase tracking-widest font-black text-white/40 block">
-                                {t("onboarding.main.writeResponse", "3. Write Your Narrative Response")}
-                              </label>
-                              <textarea
-                                rows={4}
-                                placeholder="Write a detailed, thoughtful story in response to the prompt. Use specific actions, emotions, and examples..."
-                                value={promptAnswer}
-                                onChange={(e) => setPromptAnswer(e.target.value)}
-                                className="w-full px-4 py-3 bg-black/40 border border-white/10 rounded-xl text-xs text-white placeholder-white/20 focus:border-primary focus:outline-none transition resize-none"
-                              />
-                              <div className="flex justify-between items-center text-[9px] font-bold uppercase">
-                                <span className={promptAnswer.length < 10 ? "text-[#dc143c]" : "text-green-500"}>
-                                  {promptAnswer.length < 10 ? t("onboarding.main.minCharsReq", "Min 10 characters required") : t("onboarding.main.lengthValidated", "Length Validated")}
-                                </span>
-                                <span className="text-white/30">
-                                  {promptAnswer.length} / 500
-                                </span>
-                              </div>
-                            </div>
-                          )}
+                            );
+                          })()}
                         </div>
 
                         <div className="pt-4">
                           <button
-                            onClick={() => handleSaveDetails("bio")}
-                            disabled={isSaving || !promptQuestion || promptAnswer.length < 10}
-                            className="w-full bg-primary text-black font-black uppercase tracking-widest py-4 rounded-xl hover:shadow-[0_0_20px_rgba(102,252,241,0.4)] transition disabled:opacity-50 text-xs flex items-center justify-center gap-2 cursor-pointer shadow-[0_0_20px_rgba(102,252,241,0.2)]"
+                            onClick={() => {
+                              const sourcePrompts = locale === "es" ? PURPOSE_PROMPTS_ES : PURPOSE_PROMPTS;
+                              const availablePrompts = Object.entries(sourcePrompts)
+                                .filter(([p]) => activePurposes.length === 0 || activePurposes.includes(p as MemberPurposeId))
+                                .reduce((acc, [_, cats]) => ({ ...acc, ...cats }), {} as Record<string, any>);
+                              const entries = Object.entries(availablePrompts);
+                              const selectedCatKey = promptCategory || entries[0]?.[0];
+                              const activeQuestion = promptQuestion || availablePrompts[selectedCatKey]?.prompts?.[0] || "";
+                              if (!promptQuestion && activeQuestion) {
+                                setPromptQuestion(activeQuestion);
+                              }
+                              handleSaveDetails("bio");
+                            }}
+                            disabled={isSaving || promptAnswer.trim().length < 10}
+                            className="w-full bg-primary text-black font-black uppercase tracking-widest py-4 rounded-xl hover:shadow-[0_0_20px_rgba(102,252,241,0.4)] transition disabled:opacity-50 text-xs flex items-center justify-center gap-2 cursor-pointer shadow-[0_0_20px_rgba(102,252,241,0.2)] active:scale-98"
                           >
                             {isSaving ? (
                               <>
