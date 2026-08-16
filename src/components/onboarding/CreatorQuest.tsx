@@ -679,6 +679,7 @@ export default function CreatorQuest({ onSignUp, onSwitchToMember, onClose }: Cr
               <div className="flex flex-col gap-3 max-w-xs mx-auto mt-8">
                 <button
                   onClick={() => {
+                    const primarySexPref = sexualPreferences.length > 0 ? sexualPreferences[0] : "";
                     if (typeof window !== "undefined") {
                       sessionStorage.setItem("_onboarding_creator_vibe", selectedVibe);
                       sessionStorage.setItem("_onboarding_creator_tier_price", tierPrice.toString());
@@ -686,7 +687,8 @@ export default function CreatorQuest({ onSignUp, onSwitchToMember, onClose }: Cr
                       sessionStorage.setItem("_onboarding_creator_residence", residence);
                       sessionStorage.setItem("_onboarding_creator_purposes", JSON.stringify(creatorPurposes));
                       sessionStorage.setItem("_onboarding_creator_specialization", specialization);
-                      sessionStorage.setItem("_onboarding_creator_sexual_preference", sexualPreference);
+                      sessionStorage.setItem("_onboarding_creator_sexual_preferences", JSON.stringify(sexualPreferences));
+                      sessionStorage.setItem("_onboarding_creator_sexual_preference", primarySexPref);
                       sessionStorage.setItem("_onboarding_creator_relationship_goal", relationshipGoal);
                       sessionStorage.setItem("_onboarding_creator_relationship_type", relationshipType);
                     }
@@ -695,7 +697,7 @@ export default function CreatorQuest({ onSignUp, onSwitchToMember, onClose }: Cr
                       role: "creator",
                       creator_purposes: creatorPurposes,
                       specialization: specialization,
-                      sexual_preference: sexualPreference,
+                      sexual_preferences: sexualPreferences,
                       relationship_goal: relationshipGoal,
                       relationship_type: relationshipType,
                       is_adult_content: isExplicit
