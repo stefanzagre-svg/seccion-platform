@@ -158,13 +158,16 @@ export default function OnboardingFlow() {
             updatePayload.relationship_types = [relationshipType];
           }
         }
-        // The creator_profiles data will be saved in creator-checklist step now,
-        // because we want them to finish the member onboarding first.
-        // We only save basic member data here.
-        await supabase
-          .from("profiles")
-          .update(updatePayload)
-          .eq("id", currentUserId);
+
+        // Safe profile update with timeout guard to prevent network hang
+        await safeSupabaseQuery(
+          supabase
+            .from("profiles")
+            .update(updatePayload)
+            .eq("id", currentUserId),
+          null,
+          3000
+        );
 
         setChecklist((prev) =>
           prev.map((item) =>
@@ -530,13 +533,11 @@ export default function OnboardingFlow() {
       const params = new URLSearchParams(window.location.search);
       if (params.get('role') === 'creator') {
         setIsCreatorMode(true);
-        // Mirror the sessionStorage flag for handleRegistrationComplete compatibility
-        // handleRegistrationComplete reads this key to determine isCreator locally
         if (!sessionStorage.getItem('_onboarding_creator_archive_choice')) {
           sessionStorage.setItem('_onboarding_creator_archive_choice', 'creator');
         }
-        // Redirect to creator-quest to allow archetype and intent selection before registration
-        setStep((prev) => prev === 'registration' ? 'creator-quest' : prev);
+        // Only divert to creator-quest on initial mount if on registration/value-prop
+        setStep((prev) => (prev === 'registration' || prev === 'value-proposition') ? 'creator-quest' : prev);
       }
     }
   }, []);
@@ -800,20 +801,27 @@ export default function OnboardingFlow() {
               <CreatorQuest
                 key="creator-quest"
                 onSignUp={async () => {
+                  setTutorialRole("creator");
+                  setIsCreatorMode(true);
+                  if (typeof window !== "undefined") {
+                    sessionStorage.setItem("_onboarding_creator_archive_choice", "creator");
+                  }
+                  
                   try {
-                    setTutorialRole("creator");
-                    setIsCreatorMode(true);
-                    
                     const { data: { session } } = await supabase.auth.getSession();
                     if (session?.user) {
-                      // User is already authenticated (e.g. via magic link / OTP) — proceed directly into profile setup!
-                      await handleRegistrationComplete();
+                      // Logged in: Advance to profile-checklist immediately
                       setStep("profile-checklist");
+                      // Background profile update
+                      handleRegistrationComplete().catch(err => {
+                        console.warn("[Onboarding] Background registration complete notice:", err);
+                      });
                     } else {
+                      // Not logged in: Show registration gate
                       setStep("registration");
                     }
                   } catch (err) {
-                    console.error("[Onboarding] Error transitioning from CreatorQuest:", err);
+                    console.error("[Onboarding] Transition error:", err);
                     setStep("registration");
                   }
                 }}
