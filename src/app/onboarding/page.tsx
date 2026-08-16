@@ -672,7 +672,10 @@ export default function OnboardingFlow() {
     }
   }, [step]);
 
-  const handleSaveDetails = async (type: "photo" | "bio" | "preferences") => {
+  const handleSaveDetails = async (
+    type: "photo" | "bio" | "preferences",
+    overrideData?: { category?: string; question?: string; answer?: string }
+  ) => {
     let activeUserId = userId;
     if (!activeUserId) {
       try {
@@ -703,10 +706,15 @@ export default function OnboardingFlow() {
           throw new Error(t("onboarding.main.selectAvatarErr", "Please select or input an avatar photo."));
         updatePayload = { avatar_url: avatarUrl };
       } else if (type === "bio") {
-        if (!promptCategory || !promptQuestion || !promptAnswer.trim())
+        const effectiveCategory = overrideData?.category || promptCategory || "chemistry";
+        const effectiveQuestion = overrideData?.question || promptQuestion;
+        const effectiveAnswer = (overrideData?.answer !== undefined ? overrideData.answer : promptAnswer).trim();
+
+        if (!effectiveQuestion || !effectiveAnswer) {
           throw new Error(t("onboarding.main.promptMissingErr", "Please select a prompt category, a question, and write an answer."));
+        }
         
-        if (promptAnswer.trim().length < 10) {
+        if (effectiveAnswer.length < 10) {
           throw new Error(t("onboarding.main.promptLengthErr", "Write a bit more so our AI can read your vibe properly (min 10 chars)."));
         }
 
@@ -715,9 +723,9 @@ export default function OnboardingFlow() {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-              promptCategory,
-              promptQuestion,
-              promptAnswer: promptAnswer.trim(),
+              promptCategory: effectiveCategory,
+              promptQuestion: effectiveQuestion,
+              promptAnswer: effectiveAnswer,
               promptIndex: promptStep,
               activePurposes
             })
@@ -732,8 +740,8 @@ export default function OnboardingFlow() {
 
         if (promptStep === 1) {
           setCompletedPrompt1({
-            question: promptQuestion,
-            answer: promptAnswer.trim()
+            question: effectiveQuestion,
+            answer: effectiveAnswer
           });
           setPromptCategory("conflict");
           setPromptQuestion("");
@@ -1485,18 +1493,23 @@ export default function OnboardingFlow() {
 
                         <div className="pt-4">
                           <button
-                            onClick={() => {
+                            type="button"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
                               const sourcePrompts = locale === "es" ? PURPOSE_PROMPTS_ES : PURPOSE_PROMPTS;
                               const availablePrompts = Object.entries(sourcePrompts)
                                 .filter(([p]) => activePurposes.length === 0 || activePurposes.includes(p as MemberPurposeId))
                                 .reduce((acc, [_, cats]) => ({ ...acc, ...cats }), {} as Record<string, any>);
                               const entries = Object.entries(availablePrompts);
-                              const selectedCatKey = promptCategory || entries[0]?.[0];
+                              const selectedCatKey = promptCategory || entries[0]?.[0] || "chemistry";
                               const activeQuestion = promptQuestion || availablePrompts[selectedCatKey]?.prompts?.[0] || "";
-                              if (!promptQuestion && activeQuestion) {
-                                setPromptQuestion(activeQuestion);
-                              }
-                              handleSaveDetails("bio");
+                              
+                              handleSaveDetails("bio", {
+                                category: selectedCatKey,
+                                question: activeQuestion,
+                                answer: promptAnswer
+                              });
                             }}
                             disabled={isSaving || promptAnswer.trim().length < 10}
                             className="w-full bg-primary text-black font-black uppercase tracking-widest py-4 rounded-xl hover:shadow-[0_0_20px_rgba(102,252,241,0.4)] transition disabled:opacity-50 text-xs flex items-center justify-center gap-2 cursor-pointer shadow-[0_0_20px_rgba(102,252,241,0.2)] active:scale-98"
