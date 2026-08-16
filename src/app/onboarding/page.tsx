@@ -241,7 +241,30 @@ export default function OnboardingFlow() {
   const handleLocalFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    await uploadAvatar(file, userId);
+
+    // Instant local preview via FileReader (Zero latency, impossible to freeze)
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const dataUrl = event.target?.result as string;
+      if (dataUrl) {
+        setAvatarUrl(dataUrl);
+        saveOnboardingState({ avatarUrl: dataUrl, step: "profile-checklist", activeItem: "photo" });
+        setLivenessVerified(false);
+        setLivenessStep(0);
+      }
+    };
+    reader.readAsDataURL(file);
+
+    // Background storage upload with safety
+    try {
+      await uploadAvatar(file, userId);
+    } catch (err) {
+      console.warn('[Onboarding] Background avatar storage upload notice:', err);
+    } finally {
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    }
   };
 
   // Biometric Liveness Check states
