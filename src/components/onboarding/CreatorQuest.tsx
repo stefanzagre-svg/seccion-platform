@@ -53,6 +53,7 @@ export default function CreatorQuest({ onSignUp, onSwitchToMember, onClose }: Cr
   const [faceBlurActive, setFaceBlurActive] = useState(true);
   const [tierPrice, setTierPrice] = useState(9.99);
   const [residence, setResidence] = useState("");
+  const [residenceError, setResidenceError] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Identity Setup States (Multi-select arrays up to 5 options)
@@ -279,12 +280,11 @@ export default function CreatorQuest({ onSignUp, onSwitchToMember, onClose }: Cr
           {/* Language Selector */}
           <select
             value={lang}
-            onChange={(e) => setLang(e.target.value as 'en' | 'es' | 'fr')}
-            className="bg-white/5 border border-white/15 rounded-lg px-2 py-1 text-[10px] font-black uppercase text-white tracking-wider outline-none hover:bg-white/10 transition"
+            onChange={(e) => setLang(e.target.value as 'en' | 'es')}
+            className="bg-white/5 border border-white/15 rounded-lg px-2 py-1 text-[10px] font-black uppercase text-white tracking-wider outline-none hover:bg-white/10 transition cursor-pointer"
           >
             <option value="en" className="bg-neutral-900 text-white">EN</option>
             <option value="es" className="bg-neutral-900 text-white">ES</option>
-            <option value="fr" className="bg-neutral-900 text-white">FR</option>
           </select>
 
           {/* Mute Button */}
