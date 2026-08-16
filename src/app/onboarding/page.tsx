@@ -813,22 +813,32 @@ export default function OnboardingFlow() {
         item.id === type ? { ...item, completed: true } : item,
       );
 
-      const nextIncomplete = updatedChecklist.find((item) => !item.completed && item.id !== type);
-
-      if (nextIncomplete) {
-        OnboardingLogger.log('profile-checklist', 'cta_click', `saved ${type}, next=${nextIncomplete.id}`, activeUserId || undefined);
-        setActiveItem(nextIncomplete.id as any);
-      } else if (type === "photo") {
+      if (type === "photo") {
         setActiveItem("bio");
-      } else {
-        // All completed!
-        const isCreatorSignup = typeof window !== "undefined" && !!sessionStorage.getItem("_onboarding_creator_archive_choice");
+      } else if (type === "bio") {
+        const isCreatorSignup = tutorialRole === "creator" || isCreatorMode || (typeof window !== "undefined" && (!!sessionStorage.getItem("_onboarding_creator_archive_choice") || localStorage.getItem("is_creator_signup") === "true"));
         if (isCreatorSignup) {
-           OnboardingLogger.log('profile-checklist', 'complete', 'member done, transitioning to creator-checklist', activeUserId || undefined);
-           setTimeout(() => setStep("creator-checklist"), 500);
+           OnboardingLogger.log('profile-checklist', 'complete', 'creator bio prompts done, transitioning to creator-checklist', activeUserId || undefined);
+           setStep("creator-checklist");
+        } else if (nextIncomplete) {
+           OnboardingLogger.log('profile-checklist', 'cta_click', `saved bio, next=${nextIncomplete.id}`, activeUserId || undefined);
+           setActiveItem(nextIncomplete.id as any);
         } else {
            OnboardingLogger.log('profile-checklist', 'complete', 'all items done, transitioning to welcome', activeUserId || undefined);
-           setTimeout(() => setStep("welcome"), 500);
+           setStep("welcome");
+        }
+      } else if (nextIncomplete) {
+        OnboardingLogger.log('profile-checklist', 'cta_click', `saved ${type}, next=${nextIncomplete.id}`, activeUserId || undefined);
+        setActiveItem(nextIncomplete.id as any);
+      } else {
+        // All completed!
+        const isCreatorSignup = tutorialRole === "creator" || isCreatorMode || (typeof window !== "undefined" && !!sessionStorage.getItem("_onboarding_creator_archive_choice"));
+        if (isCreatorSignup) {
+           OnboardingLogger.log('profile-checklist', 'complete', 'member done, transitioning to creator-checklist', activeUserId || undefined);
+           setStep("creator-checklist");
+        } else {
+           OnboardingLogger.log('profile-checklist', 'complete', 'all items done, transitioning to welcome', activeUserId || undefined);
+           setStep("welcome");
         }
       }
     } catch (err: any) {
@@ -1335,18 +1345,17 @@ export default function OnboardingFlow() {
                         <div className="pt-6">
                           <button
                             type="button"
-                            onClick={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
+                            onClick={() => {
                               handleSaveDetails("photo");
                               setActiveItem("bio");
                             }}
-                            className="w-full bg-primary text-black font-black uppercase tracking-widest py-4 rounded-xl hover:shadow-[0_0_20px_rgba(102,252,241,0.4)] transition text-xs flex items-center justify-center gap-2 cursor-pointer shadow-[0_0_20px_rgba(102,252,241,0.2)] active:scale-98"
+                            disabled={isSaving || !avatarUrl}
+                            className="w-full bg-primary text-black font-black uppercase tracking-widest py-4 rounded-xl hover:shadow-[0_0_20px_rgba(102,252,241,0.4)] transition disabled:opacity-50 text-xs flex items-center justify-center gap-2 cursor-pointer shadow-[0_0_20px_rgba(102,252,241,0.2)] active:scale-98"
                           >
                             {isSaving ? (
                               <Loader2 className="w-4 h-4 animate-spin text-black" />
                             ) : (
-                              t("onboarding.main.savePhotosContinue", "Save Photos & Continue →")
+                              t("onboarding.main.savePhotosContinue", "Save Photos & Continue")
                             )}
                           </button>
                         </div>

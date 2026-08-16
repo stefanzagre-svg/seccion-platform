@@ -12,11 +12,11 @@ from playwright.sync_api import sync_playwright
 
 def run_real_creator_flow():
     print("==========================================")
-    print("STARTING AUTONOMOUS REAL CREATOR FLOW TEST")
+    print("STARTING AUTONOMOUS REAL CREATOR FLOW TEST (LIVE HEADED BROWSER)")
     print("==========================================")
 
     with sync_playwright() as p:
-        browser = p.chromium.launch(headless=True)
+        browser = p.chromium.launch(headless=False, slow_mo=400)
         context = browser.new_context(viewport={"width": 1440, "height": 900})
         page = context.new_page()
 
@@ -156,21 +156,18 @@ def run_real_creator_flow():
             print("-> User selected avatar photo from file picker")
             time.sleep(1)
 
+        # Click Save Photos & Continue button
+        print("-> User clicks 'Guardar Fotos y Continuar' / 'Save Photos & Continue'")
         save_photo_btn = page.locator("button:has-text('Guardar Fotos y Continuar'), button:has-text('Save Photos & Continue')").first
         if save_photo_btn.count() > 0 and save_photo_btn.is_visible():
             save_photo_btn.click()
-            print("-> Clicked 'Guardar Fotos y Continuar'")
             time.sleep(1.5)
-        else:
-            bio_tab = page.locator("button:has-text('2. Bio'), span:has-text('Bio')").first
-            if bio_tab.count() > 0:
-                bio_tab.click()
-                time.sleep(1)
 
-        # Bio Tab (Prompts 1 & 2)
+        # 13. Check Bio Tab (Relational Prompts)
         print("\n--- STEP: RELATIONAL PROMPTS (BIO TAB) ---")
         time.sleep(1)
 
+        # Check if Prompt 1 is visible
         prompt1_btn = page.locator("button:has-text('ANALIZAR Y GUARDAR PROMPT 1'), button:has-text('Analyze & Save Prompt 1')").first
         if prompt1_btn.count() > 0 and prompt1_btn.is_visible():
             vibe_zone_btn = page.locator("button:has-text('HABILIDADES'), button:has-text('SKILLS'), button:has-text('LIFESTYLE')").first
@@ -183,9 +180,10 @@ def run_real_creator_flow():
                 first_q.click()
                 time.sleep(0.5)
 
-            textarea = page.locator("textarea")
+            textarea = page.locator("textarea").first
             if textarea.count() > 0 and textarea.is_visible():
-                textarea.fill("La paciencia y el auto-conocimiento son las habilidades mas valiosas que he desarrollado para conectar con mi audiencia.")
+                answer_text = "La paciencia y el auto-conocimiento son las habilidades mas valiosas que he desarrollado para conectar con mi audiencia."
+                textarea.fill(answer_text)
                 time.sleep(0.5)
 
             print("-> User clicks 'ANALIZAR Y GUARDAR PROMPT 1'...")
@@ -200,31 +198,33 @@ def run_real_creator_flow():
                 p2_q.click()
                 time.sleep(0.5)
 
-            textarea2 = page.locator("textarea")
+            textarea2 = page.locator("textarea").first
             if textarea2.count() > 0 and textarea2.is_visible():
-                textarea2.fill("Siempre busco mantener una comunicacion clara y transparente cuando surgen diferencias.")
+                ans2 = "Siempre busco mantener una comunicacion clara y transparente cuando surgen diferencias."
+                textarea2.fill(ans2)
                 time.sleep(0.5)
 
             print("-> User clicks 'ANALIZAR Y GUARDAR PROMPT 2'...")
             prompt2_btn.click()
             time.sleep(3)
 
-        # Creator Extension
+        # Check if Creator Extension is displayed
         print("\n--- STEP: CREATOR EXTENSION / DASHBOARD TRANSITION ---")
-        reel_input = page.locator("input[placeholder*='vimeo'], input[placeholder*='https://']")
-        bio_input = page.locator("textarea[placeholder*='premium']")
+        time.sleep(2)
+        reel_input = page.locator("input[placeholder*='vimeo'], input[placeholder*='https://']").first
+        bio_input = page.locator("textarea[placeholder*='premium'], textarea[placeholder*='Describe']").first
         if reel_input.count() > 0 and reel_input.is_visible():
             reel_input.fill("https://vimeo.com/76979871")
-            bio_input.fill("Creador profesional enfocado en transmisiones en vivo interactivas y contenido exclusivo.")
+            bio_input.fill("Creador profesional enfocado en transmisiones en vivo interactivas y contenido exclusivo de alta calidad.")
             time.sleep(0.5)
             print("-> Filled Creator Reel & Bio. Clicking 'Publish Creator Profile'...")
             page.locator("button:has-text('Publish Creator Profile'), button:has-text('Publicar Perfil')").first.click()
             time.sleep(3)
 
-        # Founders Welcome -> Dashboard
-        enter_link = page.locator("button:has-text('Enter Dashboard'), button:has-text('Enter SECCION')").first
+        # Welcome step check & Enter Dashboard
+        enter_link = page.locator("a[href='/dashboard'], button:has-text('Enter Dashboard'), button:has-text('Enter SECCION')").first
         if enter_link.count() > 0 and enter_link.is_visible():
-            print("-> Found 'Enter Dashboard' on Founders Welcome screen. Clicking...")
+            print("-> Found 'Enter Dashboard' on FoundersWelcome screen. Navigating to platform dashboard...")
             enter_link.click()
             time.sleep(3)
 
