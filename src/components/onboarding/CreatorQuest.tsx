@@ -11,7 +11,7 @@ import { useTranslation } from "@/context/LanguageContext";
 import { RELATIONSHIP_GOALS, RELATIONSHIP_TYPES, SEXUAL_PREFERENCES } from "@/lib/constants";
 
 interface CreatorQuestProps {
-  onSignUp: (data: { archetype: string; role: string; creator_purposes: string[]; specialization: string; sexual_preferences: string[]; relationship_goal: string; relationship_type: string; is_adult_content: boolean }) => void;
+  onSignUp: (data: { archetype: string; role: string; creator_purposes: string[]; specialization: string; sexual_preferences: string[]; relationship_goals: string[]; relationship_types: string[]; is_adult_content: boolean }) => void;
   onSwitchToMember: () => void;
   onClose: () => void;
 }
@@ -55,12 +55,12 @@ export default function CreatorQuest({ onSignUp, onSwitchToMember, onClose }: Cr
   const [residence, setResidence] = useState("");
   const [residenceError, setResidenceError] = useState(false);
 
-  // Identity Setup States
+  // Identity Setup States (Multi-select arrays up to 5 options)
   const [creatorPurposes, setCreatorPurposes] = useState<string[]>([]);
   const [specialization, setSpecialization] = useState("");
   const [sexualPreferences, setSexualPreferences] = useState<string[]>([]);
-  const [relationshipGoal, setRelationshipGoal] = useState("");
-  const [relationshipType, setRelationshipType] = useState("");
+  const [relationshipGoals, setRelationshipGoals] = useState<string[]>([]);
+  const [relationshipTypes, setRelationshipTypes] = useState<string[]>([]);
 
   const PURPOSES = ["Lifestyle", "Gaming", "Explicit 18+", "Coaching", "Education", "Expertise"];
   const SPECIALIZATIONS = ["Beauty", "Gaming", "Explicit", "Social & Communication", "Economy & Finance", "Dating & Marriage", "Cooking", "Fitness & Wellness", "Health & Psychology", "Art & Music"];
@@ -179,8 +179,8 @@ export default function CreatorQuest({ onSignUp, onSwitchToMember, onClose }: Cr
       creator_purposes: creatorPurposes,
       specialization: specialization,
       sexual_preferences: sexualPreferences,
-      relationship_goal: relationshipGoal,
-      relationship_type: relationshipType,
+      relationship_goals: relationshipGoals,
+      relationship_types: relationshipTypes,
       is_adult_content: isExplicit
     };
     sessionStorage.setItem("_onboarding_creator_archive_choice", selectedVibe);
@@ -190,8 +190,8 @@ export default function CreatorQuest({ onSignUp, onSwitchToMember, onClose }: Cr
     sessionStorage.setItem("_onboarding_creator_purposes", JSON.stringify(creatorPurposes));
     sessionStorage.setItem("_onboarding_creator_spec", specialization);
     sessionStorage.setItem("_onboarding_creator_sexual_preferences", JSON.stringify(sexualPreferences));
-    sessionStorage.setItem("_onboarding_creator_relationship_goal", relationshipGoal);
-    sessionStorage.setItem("_onboarding_creator_relationship_type", relationshipType);
+    sessionStorage.setItem("_onboarding_creator_relationship_goals", JSON.stringify(relationshipGoals));
+    sessionStorage.setItem("_onboarding_creator_relationship_types", JSON.stringify(relationshipTypes));
     sessionStorage.setItem("_onboarding_creator_is_adult", isExplicit ? "true" : "false");
     return data;
   };
@@ -425,24 +425,80 @@ export default function CreatorQuest({ onSignUp, onSwitchToMember, onClose }: Cr
                     </div>
                   )}
 
-                  <div className="space-y-1.5">
-                    <label className="text-[9px] font-black uppercase text-white/40 tracking-wider">Relationship Goal Vector</label>
-                    <select value={relationshipGoal} onChange={(e) => setRelationshipGoal(e.target.value)} className="w-full px-4 py-3 bg-black/40 border border-white/10 rounded-xl text-xs text-white focus:border-primary outline-none">
-                      <option value="">Select Goal...</option>
-                      {RELATIONSHIP_GOALS.map(rg => (
-                        <option key={rg} value={rg}>{rg}</option>
-                      ))}
-                    </select>
+                  {/* Relationship Goals (Multi-select up to 5) */}
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <label className="text-[9px] font-black uppercase text-white/40 tracking-wider">
+                        Relationship Goals (Select up to 5)
+                      </label>
+                      <span className="text-[8px] font-mono text-[#00fbfb]">
+                        {relationshipGoals.length}/5 selected
+                      </span>
+                    </div>
+                    <div className="flex flex-wrap gap-1.5">
+                      {RELATIONSHIP_GOALS.map(rg => {
+                        const isSelected = relationshipGoals.includes(rg);
+                        return (
+                          <button
+                            key={rg}
+                            type="button"
+                            onClick={() => {
+                              if (isSelected) {
+                                setRelationshipGoals(relationshipGoals.filter(x => x !== rg));
+                              } else {
+                                if (relationshipGoals.length >= 5) return;
+                                setRelationshipGoals([...relationshipGoals, rg]);
+                              }
+                            }}
+                            className={`px-2.5 py-1.5 rounded-lg border text-[10px] font-bold transition cursor-pointer ${
+                              isSelected
+                                ? 'bg-[#00fbfb] border-[#00fbfb] text-black shadow-[0_0_10px_rgba(0,251,251,0.3)]'
+                                : 'bg-black/40 border-white/15 text-white/70 hover:border-white/40 hover:text-white'
+                            }`}
+                          >
+                            {rg}
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
 
-                  <div className="space-y-1.5">
-                    <label className="text-[9px] font-black uppercase text-white/40 tracking-wider">Relationship Type Archetype</label>
-                    <select value={relationshipType} onChange={(e) => setRelationshipType(e.target.value)} className="w-full px-4 py-3 bg-black/40 border border-white/10 rounded-xl text-xs text-white focus:border-primary outline-none">
-                      <option value="">Select Type...</option>
-                      {RELATIONSHIP_TYPES.map(rt => (
-                        <option key={rt} value={rt}>{rt}</option>
-                      ))}
-                    </select>
+                  {/* Relationship Types (Multi-select up to 5) */}
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <label className="text-[9px] font-black uppercase text-white/40 tracking-wider">
+                        Relationship Types (Select up to 5)
+                      </label>
+                      <span className="text-[8px] font-mono text-[#00fbfb]">
+                        {relationshipTypes.length}/5 selected
+                      </span>
+                    </div>
+                    <div className="flex flex-wrap gap-1.5">
+                      {RELATIONSHIP_TYPES.map(rt => {
+                        const isSelected = relationshipTypes.includes(rt);
+                        return (
+                          <button
+                            key={rt}
+                            type="button"
+                            onClick={() => {
+                              if (isSelected) {
+                                setRelationshipTypes(relationshipTypes.filter(x => x !== rt));
+                              } else {
+                                if (relationshipTypes.length >= 5) return;
+                                setRelationshipTypes([...relationshipTypes, rt]);
+                              }
+                            }}
+                            className={`px-2.5 py-1.5 rounded-lg border text-[10px] font-bold transition cursor-pointer ${
+                              isSelected
+                                ? 'bg-[#00fbfb] border-[#00fbfb] text-black shadow-[0_0_10px_rgba(0,251,251,0.3)]'
+                                : 'bg-black/40 border-white/15 text-white/70 hover:border-white/40 hover:text-white'
+                            }`}
+                          >
+                            {rt}
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
                 </motion.div>
               )}
@@ -453,8 +509,8 @@ export default function CreatorQuest({ onSignUp, onSwitchToMember, onClose }: Cr
                     alert("Please select at least one Intent Aura and your Content Synergy to proceed.");
                     return;
                   }
-                  if (needsRelFields && (!relationshipGoal || !relationshipType || (isExplicit && sexualPreferences.length === 0))) {
-                    alert("Please complete all Advanced Audience Targeting fields required for your intent.");
+                  if (needsRelFields && (relationshipGoals.length === 0 || relationshipTypes.length === 0 || (isExplicit && sexualPreferences.length === 0))) {
+                    alert("Please select at least one Relationship Goal, Relationship Type, and Sexual Preference for your intent.");
                     return;
                   }
                   setStep("revenue-engine");
@@ -680,6 +736,8 @@ export default function CreatorQuest({ onSignUp, onSwitchToMember, onClose }: Cr
                 <button
                   onClick={() => {
                     const primarySexPref = sexualPreferences.length > 0 ? sexualPreferences[0] : "";
+                    const primaryGoal = relationshipGoals.length > 0 ? relationshipGoals[0] : "";
+                    const primaryType = relationshipTypes.length > 0 ? relationshipTypes[0] : "";
                     if (typeof window !== "undefined") {
                       sessionStorage.setItem("_onboarding_creator_vibe", selectedVibe);
                       sessionStorage.setItem("_onboarding_creator_tier_price", tierPrice.toString());
@@ -689,8 +747,10 @@ export default function CreatorQuest({ onSignUp, onSwitchToMember, onClose }: Cr
                       sessionStorage.setItem("_onboarding_creator_specialization", specialization);
                       sessionStorage.setItem("_onboarding_creator_sexual_preferences", JSON.stringify(sexualPreferences));
                       sessionStorage.setItem("_onboarding_creator_sexual_preference", primarySexPref);
-                      sessionStorage.setItem("_onboarding_creator_relationship_goal", relationshipGoal);
-                      sessionStorage.setItem("_onboarding_creator_relationship_type", relationshipType);
+                      sessionStorage.setItem("_onboarding_creator_relationship_goals", JSON.stringify(relationshipGoals));
+                      sessionStorage.setItem("_onboarding_creator_relationship_goal", primaryGoal);
+                      sessionStorage.setItem("_onboarding_creator_relationship_types", JSON.stringify(relationshipTypes));
+                      sessionStorage.setItem("_onboarding_creator_relationship_type", primaryType);
                     }
                     onSignUp({
                       archetype: selectedVibe,
@@ -698,8 +758,8 @@ export default function CreatorQuest({ onSignUp, onSwitchToMember, onClose }: Cr
                       creator_purposes: creatorPurposes,
                       specialization: specialization,
                       sexual_preferences: sexualPreferences,
-                      relationship_goal: relationshipGoal,
-                      relationship_type: relationshipType,
+                      relationship_goals: relationshipGoals,
+                      relationship_types: relationshipTypes,
                       is_adult_content: isExplicit
                     });
                   }}

@@ -987,22 +987,33 @@ export default function MemberTourModal({ isOpen, onClose, onStartQuest }: Membe
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
-                  className="space-y-3"
+                  className="space-y-4"
                 >
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#00fbfb]/10 border border-[#00fbfb]/30 text-[#00fbfb] text-[9px] font-mono font-bold uppercase tracking-wider">
+                    <Sparkles className="w-3.5 h-3.5" />
+                    <span>Pre-Launch Invitation Active</span>
+                  </div>
+
                   <h2 className="text-xl md:text-2xl font-black text-white uppercase tracking-tight">
-                    Leaderboard Spotlight & Perks
+                    Join Founding Member Early Access
                   </h2>
                   <p className="text-xs text-[#b9cac9] leading-relaxed font-medium">
-                    Active, high-ranked members climb the community leaderboard. The **Top Profile** section spotlights highly rated members to increase match visibility.
+                    During this pre-launch phase, open self-registration is reserved for approved creators and founding members.
                   </p>
                   <p className="text-xs text-[#b9cac9] leading-relaxed font-medium">
-                    Climbing the ranks unlocks priorities, special matching boosts, and direct unblur keys from our Sponsored Creators.
+                    Lock in your founding status now to receive priority matchmaking, free premium AI Wingman privileges, and first access when public matching goes live!
                   </p>
+
                   <div className="pt-2">
-                    <InfoBubble 
-                      title="Top Profiles" 
-                      content="Daily calculations reward conversational gravity and completed Date Plans, putting active members in the spotlight." 
-                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        window.location.href = "/early-access";
+                      }}
+                      className="w-full py-3.5 bg-[#00fbfb] text-black font-mono text-xs font-black uppercase tracking-wider rounded-xl hover:shadow-[0_0_20px_rgba(0,251,251,0.5)] transition flex items-center justify-center gap-2 cursor-pointer shadow-lg"
+                    >
+                      <span>Join Early Access List &rarr;</span>
+                    </button>
                   </div>
                 </motion.div>
               )}
@@ -1028,13 +1039,24 @@ export default function MemberTourModal({ isOpen, onClose, onStartQuest }: Membe
                 <ChevronLeft className="w-5 h-5" />
               </button>
               
-              <button
-                onClick={handleNext}
-                className="px-6 py-2.5 rounded-full bg-[#00fbfb] text-black font-mono text-[11px] font-black uppercase tracking-wider hover:shadow-[0_0_15px_rgba(0,251,251,0.5)] transition flex items-center gap-2 cursor-pointer"
-              >
-                <span>{activeStep === 10 ? "Join Onboarding Quest" : "Next Step"}</span>
-                <ChevronRight className="w-4 h-4" />
-              </button>
+              {activeStep < 10 ? (
+                <button
+                  onClick={handleNext}
+                  className="px-6 py-2.5 rounded-full bg-[#00fbfb] text-black font-mono text-[11px] font-black uppercase tracking-wider hover:shadow-[0_0_15px_rgba(0,251,251,0.5)] transition flex items-center gap-2 cursor-pointer"
+                >
+                  <span>Next Step</span>
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              ) : (
+                <button
+                  onClick={() => {
+                    window.location.href = "/early-access";
+                  }}
+                  className="px-6 py-2.5 rounded-full bg-[#00fbfb] text-black font-mono text-[11px] font-black uppercase tracking-wider hover:shadow-[0_0_15px_rgba(0,251,251,0.5)] transition flex items-center gap-2 cursor-pointer"
+                >
+                  <span>Join Early Access &rarr;</span>
+                </button>
+              )}
             </div>
             
             {/* Step Indicators */}

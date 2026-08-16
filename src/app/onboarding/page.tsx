@@ -14,6 +14,7 @@ import CompletionChecklist, {
 } from "@/components/onboarding/CompletionChecklist";
 import FoundersWelcome from "@/components/onboarding/FoundersWelcome";
 import CreatorQuest from "@/components/onboarding/CreatorQuest";
+import MemberTourModal from "@/components/onboarding/MemberTourModal";
 import { useTranslation } from "@/context/LanguageContext";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/lib/supabase";
@@ -71,6 +72,7 @@ export default function OnboardingFlow() {
   const [displayAge, setDisplayAge] = useState<number | null>(null);
   const [activePurposes, setActivePurposes] = useState<MemberPurposeId[]>([]);
   const [isCreatorMode, setIsCreatorMode] = useState<boolean>(false);
+  const [showMemberTour, setShowMemberTour] = useState<boolean>(false);
 
   const handleRegistrationComplete = async () => {
     const isCreator =
@@ -106,10 +108,12 @@ export default function OnboardingFlow() {
           const residence = sessionStorage.getItem("_onboarding_creator_residence");
           const vibe = sessionStorage.getItem("_onboarding_creator_vibe");
           const purposesStr = sessionStorage.getItem("_onboarding_creator_purposes");
-          const specialization = sessionStorage.getItem("_onboarding_creator_specialization");
+          const specialization = sessionStorage.getItem("_onboarding_creator_spec") || sessionStorage.getItem("_onboarding_creator_specialization");
           const sexualPreferencesStr = sessionStorage.getItem("_onboarding_creator_sexual_preferences");
           const sexualPreference = sessionStorage.getItem("_onboarding_creator_sexual_preference");
+          const relationshipGoalsStr = sessionStorage.getItem("_onboarding_creator_relationship_goals");
           const relationshipGoal = sessionStorage.getItem("_onboarding_creator_relationship_goal");
+          const relationshipTypesStr = sessionStorage.getItem("_onboarding_creator_relationship_types");
           const relationshipType = sessionStorage.getItem("_onboarding_creator_relationship_type");
 
           if (tierPrice) updatePayload.base_subscription_price = parseFloat(tierPrice);
@@ -131,8 +135,28 @@ export default function OnboardingFlow() {
             updatePayload.sexual_preference = sexualPreference;
             updatePayload.sexual_preferences = [sexualPreference];
           }
-          if (relationshipGoal) updatePayload.relationship_goals = [relationshipGoal];
-          if (relationshipType) updatePayload.relationship_types = [relationshipType];
+
+          if (relationshipGoalsStr) {
+            try {
+              const parsedGoals = JSON.parse(relationshipGoalsStr);
+              if (Array.isArray(parsedGoals) && parsedGoals.length > 0) {
+                updatePayload.relationship_goals = parsedGoals;
+              }
+            } catch (err) {}
+          } else if (relationshipGoal) {
+            updatePayload.relationship_goals = [relationshipGoal];
+          }
+
+          if (relationshipTypesStr) {
+            try {
+              const parsedTypes = JSON.parse(relationshipTypesStr);
+              if (Array.isArray(parsedTypes) && parsedTypes.length > 0) {
+                updatePayload.relationship_types = parsedTypes;
+              }
+            } catch (err) {}
+          } else if (relationshipType) {
+            updatePayload.relationship_types = [relationshipType];
+          }
         }
         // The creator_profiles data will be saved in creator-checklist step now,
         // because we want them to finish the member onboarding first.
@@ -772,25 +796,38 @@ export default function OnboardingFlow() {
           )}
 
           {step === "creator-quest" && (
-            <CreatorQuest
-              key="creator-quest"
-              onSignUp={async () => {
-                setTutorialRole("creator");
-                setIsCreatorMode(true);
-                const { data: { session } } = await supabase.auth.getSession();
-                if (session?.user) {
-                  // User is already authenticated (e.g. via magic link / OTP) — proceed directly into profile setup!
-                  await handleRegistrationComplete();
-                } else {
-                  setStep("registration");
-                }
-              }}
-              onSwitchToMember={() => {
-                setTutorialRole("member");
-                setStep("registration");
-              }}
-              onClose={() => setStep("value-proposition")}
-            />
+            <>
+              <CreatorQuest
+                key="creator-quest"
+                onSignUp={async () => {
+                  setTutorialRole("creator");
+                  setIsCreatorMode(true);
+                  const { data: { session } } = await supabase.auth.getSession();
+                  if (session?.user) {
+                    // User is already authenticated (e.g. via magic link / OTP) — proceed directly into profile setup!
+                    await handleRegistrationComplete();
+                  } else {
+                    setStep("registration");
+                  }
+                }}
+                onSwitchToMember={() => {
+                  setShowMemberTour(true);
+                }}
+                onClose={() => setStep("value-proposition")}
+              />
+
+              {showMemberTour && (
+                <MemberTourModal
+                  isOpen={showMemberTour}
+                  onClose={() => setShowMemberTour(false)}
+                  onStartQuest={() => {
+                    setShowMemberTour(false);
+                    setTutorialRole("member");
+                    setStep("registration");
+                  }}
+                />
+              )}
+            </>
           )}
 
           {step === "registration" && (
