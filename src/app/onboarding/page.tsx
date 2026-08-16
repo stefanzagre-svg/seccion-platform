@@ -1503,7 +1503,7 @@ export default function OnboardingFlow() {
                             type="button"
                             onClick={(e) => {
                               e.preventDefault();
-                              e.stopPropagation();
+                              console.log("[SECCION] Analyze & Save clicked", { promptStep, promptCategory, promptQuestion, promptAnswer });
                               const sourcePrompts = locale === "es" ? PURPOSE_PROMPTS_ES : PURPOSE_PROMPTS;
                               const availablePrompts = Object.entries(sourcePrompts)
                                 .filter(([p]) => activePurposes.length === 0 || activePurposes.includes(p as MemberPurposeId))
@@ -1520,7 +1520,7 @@ export default function OnboardingFlow() {
                               });
                             }}
                             disabled={isSaving || promptAnswer.trim().length < 10}
-                            className="w-full bg-primary text-black font-black uppercase tracking-widest py-4 rounded-xl hover:shadow-[0_0_20px_rgba(102,252,241,0.4)] transition disabled:opacity-50 text-xs flex items-center justify-center gap-2 cursor-pointer shadow-[0_0_20px_rgba(102,252,241,0.2)] active:scale-98"
+                            className="w-full bg-primary text-black font-black uppercase tracking-widest py-4 rounded-xl hover:shadow-[0_0_20px_rgba(102,252,241,0.4)] transition disabled:opacity-50 text-xs flex items-center justify-center gap-2 cursor-pointer shadow-[0_0_20px_rgba(102,252,241,0.2)] active:scale-98 relative z-20"
                           >
                             {isSaving ? (
                               <>
@@ -1533,9 +1533,17 @@ export default function OnboardingFlow() {
                           </button>
                           
                           {/* If Creator and bio is done, proceed to welcome */}
-                          {(tutorialRole === "creator" || isCreatorMode) && promptStep === 2 && completedPrompt1 && (
+                          {(tutorialRole === "creator" || isCreatorMode) && (
                              <button
-                               onClick={() => setStep("welcome")}
+                               type="button"
+                               onClick={() => {
+                                 setChecklist((prev) =>
+                                   prev.map((item) =>
+                                     item.id === "bio" ? { ...item, completed: true } : item,
+                                   ),
+                                 );
+                                 setStep("welcome");
+                               }}
                                className="w-full mt-3 bg-white/10 text-white font-black uppercase tracking-widest py-3 rounded-xl hover:bg-white/20 transition text-xs cursor-pointer"
                              >
                                {t("onboarding.main.continueDashboard", "Continue to Dashboard →")}
