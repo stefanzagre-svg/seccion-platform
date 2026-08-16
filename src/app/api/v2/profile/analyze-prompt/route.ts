@@ -12,12 +12,16 @@ interface AnalyzePromptRequest {
 
 export async function POST(req: NextRequest) {
   try {
-    const body = (await req.json()) as AnalyzePromptRequest;
-    const { promptCategory, promptQuestion, promptAnswer, promptIndex = 1, activePurposes = [] } = body;
+    const body = (await req.json()) as Partial<AnalyzePromptRequest>;
+    const promptCategory = body.promptCategory || 'lifestyle';
+    const promptQuestion = body.promptQuestion || 'Cozy homebody or active explorer on weekends?';
+    const promptAnswer = (body.promptAnswer || '').trim();
+    const promptIndex = body.promptIndex || 1;
+    const activePurposes = body.activePurposes || [];
 
-    if (!promptCategory || !promptQuestion || !promptAnswer) {
+    if (!promptAnswer) {
       return NextResponse.json(
-        { error: 'Missing required fields: promptCategory, promptQuestion, promptAnswer' },
+        { error: 'Missing prompt answer' },
         { status: 400 }
       );
     }

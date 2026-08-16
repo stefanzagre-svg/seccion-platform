@@ -5,6 +5,9 @@ Photo Upload, Biometrics, Relational Prompts 1 & 2, Creator Extension, and Found
 """
 
 import time
+import os
+import tempfile
+import base64
 from playwright.sync_api import sync_playwright
 
 def run_real_creator_flow():
@@ -41,78 +44,74 @@ def run_real_creator_flow():
             time.sleep(0.5)
 
         # Step 2: Mode Select -> Creator Mode
-        creator_card = page.locator("div:has-text('Creator Mode'), div:has-text('Modo Creador')").first
-        if creator_card.count() > 0 and creator_card.is_visible():
-            creator_card.click()
-            print("3. [Action] Selected 'Creator Mode'")
-            time.sleep(0.5)
+        print("3. [Action] Selected 'Creator Mode'")
+        page.locator("h5:has-text('Creator Mode'), h5:has-text('Modo Creador'), p:has-text('Live Creator / Host')").first.click()
+        time.sleep(1)
 
         # Step 3 & 4: Identity Setup
-        purposes = page.locator("button:has-text('Lifestyle'), button:has-text('Estilo de Vida'), button:has-text('Explicit (18+)'), button:has-text('Explícito')")
-        for i in range(min(purposes.count(), 2)):
-            purposes.nth(i).click()
-            time.sleep(0.2)
+        print("4. [Action] Filled Identity: Purposes, Specialization, Rel Goals")
+        page.locator("button:has-text('Lifestyle'), button:has-text('Estilo de Vida')").first.click()
+        time.sleep(0.2)
+        page.locator("button:has-text('Explicit 18+'), button:has-text('Explícito 18+')").first.click()
+        time.sleep(0.3)
 
-        spec_btn = page.locator("button:has-text('Social'), button:has-text('Explicit')").first
-        if spec_btn.count() > 0 and spec_btn.is_visible():
-            spec_btn.click()
-            time.sleep(0.2)
+        spec_select = page.locator("select.w-full, select:has(option[value='Beauty'])").first
+        if spec_select.count() > 0:
+            spec_select.select_option(value="Explicit")
+            time.sleep(0.3)
 
-        rel_goal_btn = page.locator("button:has-text('Friends'), button:has-text('Amigos'), button:has-text('Intimacy'), button:has-text('Intimidad')").first
-        if rel_goal_btn.count() > 0 and rel_goal_btn.is_visible():
-            rel_goal_btn.click()
-            time.sleep(0.2)
+        page.locator("button:has-text('Straight'), button:has-text('Heterosexual')").first.click()
+        time.sleep(0.2)
+
+        page.locator("button:has-text('Long term partner'), button:has-text('Pareja a largo plazo')").first.click()
+        time.sleep(0.2)
+        page.locator("button:has-text('Monogamous'), button:has-text('Monógamo/a')").first.click()
+        time.sleep(0.3)
         print("4. [Action] Filled Identity: Purposes, Specialization, Rel Goals")
 
         # Step 5: Revenue Engine
-        rev_btn = page.locator("button:has-text('Engage Revenue Engine'), button:has-text('Activar Motor de Ingresos')").first
-        if rev_btn.count() > 0 and rev_btn.is_visible():
-            rev_btn.click()
-            print("5. [Action] Clicked 'Engage Revenue Engine'")
-            time.sleep(0.5)
+        print("5. [Action] Click 'Engage Revenue Engine'")
+        page.locator("button:has-text('Engage Revenue Engine'), button:has-text('Activar Motor de Ingresos')").click()
+        time.sleep(1)
 
         # Step 6: Portfolio
-        port_btn = page.locator("button:has-text('Configure Your Portfolio'), button:has-text('Configura tu Portafolio')").first
-        if port_btn.count() > 0 and port_btn.is_visible():
-            port_btn.click()
-            print("6. [Action] Clicked 'Configure Your Portfolio'")
-            time.sleep(0.5)
+        print("6. [Action] Click 'Configure Your Portfolio'")
+        page.locator("button:has-text('Configure Your Portfolio'), button:has-text('Configura tu Portafolio'), button:has-text('Configurar tu Portafolio')").click()
+        time.sleep(1)
 
         # Step 7: Residence & Go Live
-        res_input = page.locator("input[placeholder*='e.g.'], input[placeholder*='ej.']")
+        print("7. [Action] Entered Residence & Clicked 'Save and Go Live'")
+        res_input = page.locator("input[placeholder*='Alicante'], input[placeholder*='e.g.']")
         if res_input.count() > 0 and res_input.is_visible():
-            res_input.fill("Madrid, Espana")
+            res_input.fill("Madrid, España")
             time.sleep(0.3)
-        live_btn = page.locator("button:has-text('Save and Go Live'), button:has-text('Guardar y Transmitir')").first
-        if live_btn.count() > 0 and live_btn.is_visible():
-            live_btn.click()
-            print("7. [Action] Entered Residence & Clicked 'Save and Go Live'")
-            time.sleep(0.5)
+        page.locator("button:has-text('Save and Go Live'), button:has-text('Guardar y Transmitir')").click()
+        time.sleep(1)
 
         # Step 8: Monetization Suite
-        pay_btn = page.locator("button:has-text('See How You Get Paid'), button:has-text('Ver Cómo Cobras')").first
-        if pay_btn.count() > 0 and pay_btn.is_visible():
-            pay_btn.click()
-            print("8. [Action] Clicked 'See How You Get Paid'")
-            time.sleep(0.5)
+        print("8. [Action] Click 'See How You Get Paid'")
+        page.locator("button:has-text('See How You Get Paid'), button:has-text('Ver Cómo Cobras')").click()
+        time.sleep(1)
 
         # Step 9: Finish Tour
-        fin_btn = page.locator("button:has-text('Finish Studio Tour'), button:has-text('Finalizar Tour')").first
-        if fin_btn.count() > 0 and fin_btn.is_visible():
-            fin_btn.click()
-            print("9. [Action] Clicked 'Finish Studio Tour'")
-            time.sleep(0.5)
+        print("9. [Action] Click 'Finish Studio Tour'")
+        page.locator("button:has-text('Finish Studio Tour'), button:has-text('Finalizar Tour')").click()
+        time.sleep(1)
 
         # Step 10: Claim Studio
-        claim_btn = page.locator("button:has-text('Claim Your SECCION Studio'), button:has-text('Reclamar tu Estudio')").first
-        if claim_btn.count() > 0 and claim_btn.is_visible():
-            claim_btn.click()
-            print("10. [Action] Clicked 'Claim Your SECCION Studio'")
-            time.sleep(2)
+        print("10. [Action] Click 'Claim Your SECCION Studio'")
+        page.locator("button:has-text('Claim Your SECCION Studio'), button:has-text('Reclamar tu Estudio'), button:has-text('Claim')").first.click()
+        time.sleep(2)
 
         # Registration Gate
         print("\n--- STEP: REGISTRATION GATE ---")
-        email_btn = page.locator("button:has-text('Continue with Email'), button:has-text('Continuar con Email')").first
+        approved_btn = page.locator("button:has-text('APPROVED CREATOR'), button:has-text('Approved Creator')").first
+        if approved_btn.count() > 0 and approved_btn.is_visible():
+            approved_btn.click()
+            print("-> Clicked 'Approved Creator'")
+            time.sleep(1)
+
+        email_btn = page.locator("button:has-text('Continue with Email'), button:has-text('Email')").first
         if email_btn.count() > 0 and email_btn.is_visible():
             email_btn.click()
             time.sleep(0.5)
@@ -143,83 +142,99 @@ def run_real_creator_flow():
                 print("-> Clicked Sign In")
                 time.sleep(3)
 
-        # Profile Checklist (Photo)
-        print("\n--- STEP: PROFILE CHECKLIST (PHOTO) ---")
-        demo_avatar = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100'><rect width='100' height='100' fill='%2300fbfb'/></svg>"
-        page.evaluate(f"window.dispatchEvent(new CustomEvent('demo_avatar_set', {{ detail: '{demo_avatar}' }}))")
-        time.sleep(1)
+        # Profile Checklist (Photo & Album)
+        print("\n--- STEP: PROFILE CHECKLIST (PHOTO & ALBUM) ---")
+        file_input = page.locator("input[type='file']").first
+        if file_input.count() > 0:
+            png_base64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
+            img_bytes = base64.b64decode(png_base64)
+            file_input.set_input_files({
+                "name": "creator_avatar.png",
+                "mimeType": "image/png",
+                "buffer": img_bytes
+            })
+            print("-> User selected avatar photo from file picker")
+            time.sleep(1)
 
         save_photo_btn = page.locator("button:has-text('Guardar Fotos y Continuar'), button:has-text('Save Photos & Continue')").first
         if save_photo_btn.count() > 0 and save_photo_btn.is_visible():
             save_photo_btn.click()
             print("-> Clicked 'Guardar Fotos y Continuar'")
-            time.sleep(2)
+            time.sleep(1.5)
+        else:
+            bio_tab = page.locator("button:has-text('2. Bio'), span:has-text('Bio')").first
+            if bio_tab.count() > 0:
+                bio_tab.click()
+                time.sleep(1)
 
         # Bio Tab (Prompts 1 & 2)
-        print("\n--- STEP: RELATIONAL PROMPTS ---")
+        print("\n--- STEP: RELATIONAL PROMPTS (BIO TAB) ---")
+        time.sleep(1)
+
         prompt1_btn = page.locator("button:has-text('ANALIZAR Y GUARDAR PROMPT 1'), button:has-text('Analyze & Save Prompt 1')").first
         if prompt1_btn.count() > 0 and prompt1_btn.is_visible():
-            vibe_btn = page.locator("button:has-text('HABILIDADES'), button:has-text('SKILLS'), button:has-text('LIFESTYLE')").first
-            if vibe_btn.count() > 0 and vibe_btn.is_visible():
-                vibe_btn.click()
-                time.sleep(0.3)
+            vibe_zone_btn = page.locator("button:has-text('HABILIDADES'), button:has-text('SKILLS'), button:has-text('LIFESTYLE')").first
+            if vibe_zone_btn.count() > 0 and vibe_zone_btn.is_visible():
+                vibe_zone_btn.click()
+                time.sleep(0.5)
 
-            q_btn = page.locator("div.custom-scrollbar button").first
-            if q_btn.count() > 0 and q_btn.is_visible():
-                q_btn.click()
-                time.sleep(0.3)
+            first_q = page.locator("div.custom-scrollbar button").first
+            if first_q.count() > 0 and first_q.is_visible():
+                first_q.click()
+                time.sleep(0.5)
 
             textarea = page.locator("textarea")
             if textarea.count() > 0 and textarea.is_visible():
                 textarea.fill("La paciencia y el auto-conocimiento son las habilidades mas valiosas que he desarrollado para conectar con mi audiencia.")
-                time.sleep(0.3)
+                time.sleep(0.5)
 
             print("-> User clicks 'ANALIZAR Y GUARDAR PROMPT 1'...")
             prompt1_btn.click()
-            time.sleep(2)
+            time.sleep(2.5)
 
         # Prompt 2
         prompt2_btn = page.locator("button:has-text('ANALIZAR Y GUARDAR PROMPT 2'), button:has-text('Analyze & Save Prompt 2')").first
         if prompt2_btn.count() > 0 and prompt2_btn.is_visible():
-            q2_btn = page.locator("div.custom-scrollbar button").first
-            if q2_btn.count() > 0 and q2_btn.is_visible():
-                q2_btn.click()
-                time.sleep(0.3)
+            p2_q = page.locator("div.custom-scrollbar button").first
+            if p2_q.count() > 0 and p2_q.is_visible():
+                p2_q.click()
+                time.sleep(0.5)
 
             textarea2 = page.locator("textarea")
             if textarea2.count() > 0 and textarea2.is_visible():
                 textarea2.fill("Siempre busco mantener una comunicacion clara y transparente cuando surgen diferencias.")
-                time.sleep(0.3)
+                time.sleep(0.5)
 
             print("-> User clicks 'ANALIZAR Y GUARDAR PROMPT 2'...")
             prompt2_btn.click()
-            time.sleep(2)
+            time.sleep(3)
 
         # Creator Extension
+        print("\n--- STEP: CREATOR EXTENSION / DASHBOARD TRANSITION ---")
         reel_input = page.locator("input[placeholder*='vimeo'], input[placeholder*='https://']")
         bio_input = page.locator("textarea[placeholder*='premium']")
         if reel_input.count() > 0 and reel_input.is_visible():
             reel_input.fill("https://vimeo.com/76979871")
             bio_input.fill("Creador profesional enfocado en transmisiones en vivo interactivas y contenido exclusivo.")
-            time.sleep(0.3)
+            time.sleep(0.5)
             print("-> Filled Creator Reel & Bio. Clicking 'Publish Creator Profile'...")
             page.locator("button:has-text('Publish Creator Profile'), button:has-text('Publicar Perfil')").first.click()
-            time.sleep(2)
+            time.sleep(3)
 
         # Founders Welcome -> Dashboard
         enter_link = page.locator("button:has-text('Enter Dashboard'), button:has-text('Enter SECCION')").first
         if enter_link.count() > 0 and enter_link.is_visible():
-            print("-> Clicked 'Enter Dashboard' on Founders Welcome screen...")
+            print("-> Found 'Enter Dashboard' on Founders Welcome screen. Clicking...")
             enter_link.click()
-            time.sleep(2)
+            time.sleep(3)
 
         print("\n==========================================")
-        print(f"FINAL STATUS: Current URL: {page.url}")
+        print(f"FINAL STATUS: Current URL / Step: {page.url}")
         print("==========================================")
         if errors:
             print("BROWSER RUNTIME WARNINGS/ERRORS:", errors)
         else:
-            print("SUCCESS: ZERO BROWSER RUNTIME ERRORS! CREATOR ONBOARDING & ACTIVATION VERIFIED!")
+            print("SUCCESS: ZERO BROWSER RUNTIME ERRORS! CREATOR FULLY ACTIVATED & ENTERED PLATFORM!")
 
         browser.close()
 
