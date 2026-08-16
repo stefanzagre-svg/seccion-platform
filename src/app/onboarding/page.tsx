@@ -155,8 +155,14 @@ export default function OnboardingFlow() {
     if (typeof window !== "undefined") {
       localStorage.removeItem("is_creator_signup");
     }
-    OnboardingLogger.log('registration', 'step_enter', 'routing to purpose (member flow for all)', currentUserId);
-    setStep("purpose");
+    
+    if (isCreator) {
+      OnboardingLogger.log('registration', 'step_enter', 'routing creator to profile-checklist', currentUserId);
+      setStep("profile-checklist");
+    } else {
+      OnboardingLogger.log('registration', 'step_enter', 'routing to purpose (member flow)', currentUserId);
+      setStep("purpose");
+    }
   };
 
   // Active item in detail checklist panel
@@ -768,9 +774,16 @@ export default function OnboardingFlow() {
           {step === "creator-quest" && (
             <CreatorQuest
               key="creator-quest"
-              onSignUp={() => {
+              onSignUp={async () => {
                 setTutorialRole("creator");
-                setStep("registration");
+                setIsCreatorMode(true);
+                const { data: { session } } = await supabase.auth.getSession();
+                if (session?.user) {
+                  // User is already authenticated (e.g. via magic link / OTP) — proceed directly into profile setup!
+                  await handleRegistrationComplete();
+                } else {
+                  setStep("registration");
+                }
               }}
               onSwitchToMember={() => {
                 setTutorialRole("member");
