@@ -42,11 +42,15 @@ export default function FoundersWelcome() {
             <p className="text-white text-3xl opacity-90" style={{ fontFamily: "'Caveat', 'Dancing Script', 'Brush Script MT', cursive" }}>— The Founders</p>
           </div>
 
-          <Link href="/dashboard">
-            <button className="w-full py-4 rounded-xl font-bold bg-[#00fbfb] text-black hover:bg-[#00fbfb]/80 transition-all transform hover:scale-[1.02] shadow-[0_0_20px_rgba(0,251,251,0.3)] flex items-center justify-center gap-2">
-              Enter Dashboard
-            </button>
-          </Link>
+          <button 
+            type="button"
+            onClick={() => {
+              window.location.href = '/dashboard';
+            }}
+            className="w-full py-4 rounded-xl font-bold bg-[#00fbfb] text-black hover:bg-[#00fbfb]/80 transition-all transform hover:scale-[1.02] shadow-[0_0_20px_rgba(0,251,251,0.3)] flex items-center justify-center gap-2 cursor-pointer relative z-30"
+          >
+            Enter Dashboard
+          </button>
         </motion.div>
       </div>
     </motion.div>

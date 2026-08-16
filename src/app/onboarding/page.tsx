@@ -1384,15 +1384,7 @@ export default function OnboardingFlow() {
                                   .reduce((acc, [_, cats]) => ({ ...acc, ...cats }), {} as Record<string, any>);
                                 
                                 const entries = Object.entries(availablePrompts);
-                                const selectedCatKey = promptCategory || entries[0]?.[0];
-                                if (!promptCategory && entries.length > 0) {
-                                  setTimeout(() => {
-                                    setPromptCategory(entries[0][0]);
-                                    if (entries[0][1]?.prompts?.[0]) {
-                                      setPromptQuestion(entries[0][1].prompts[0]);
-                                    }
-                                  }, 0);
-                                }
+                                const selectedCatKey = promptCategory || entries[0]?.[0] || "lifestyle";
                                 
                                 return entries.map(([key, data]) => {
                                   const isActive = selectedCatKey === key;
