@@ -1125,20 +1125,10 @@ export default function OnboardingFlow() {
                             <button
                               type="button"
                               onClick={() => fileInputRef.current?.click()}
-                              disabled={isUploadingPhoto}
                               className="w-full py-4 px-5 bg-gradient-to-r from-[#00fbfb]/20 via-[#a855f7]/15 to-[#ffabf3]/20 hover:from-[#00fbfb]/30 hover:to-[#ffabf3]/30 border border-[#00fbfb]/50 hover:border-[#00fbfb] rounded-2xl text-xs font-black text-white uppercase tracking-wider flex items-center justify-center gap-3 transition-all shadow-[0_0_25px_rgba(0,251,251,0.25)] hover:shadow-[0_0_35px_rgba(0,251,251,0.4)] group cursor-pointer active:scale-98"
                             >
-                              {isUploadingPhoto ? (
-                                <>
-                                  <Loader2 className="w-5 h-5 animate-spin text-[#00fbfb]" />
-                                  <span>{t("onboarding.main.uploadingFile", "Uploading Image File...")}</span>
-                                </>
-                              ) : (
-                                <>
-                                  <Upload className="w-5 h-5 text-[#00fbfb] group-hover:scale-110 transition-transform" />
-                                  <span>Upload Main Avatar Photo</span>
-                                </>
-                              )}
+                              <Upload className="w-5 h-5 text-[#00fbfb] group-hover:scale-110 transition-transform" />
+                              <span>{avatarUrl ? (t("onboarding.main.replaceAvatar", "Replace Main Avatar Photo")) : (t("onboarding.main.uploadAvatar", "Upload Main Avatar Photo"))}</span>
                             </button>
                           </div>
 
@@ -1294,13 +1284,13 @@ export default function OnboardingFlow() {
                         <div className="pt-6">
                           <button
                             onClick={() => handleSaveDetails("photo")}
-                            disabled={isSaving || !livenessVerified}
-                            className="w-full bg-primary text-black font-black uppercase tracking-widest py-4 rounded-xl hover:shadow-[0_0_20px_rgba(102,252,241,0.4)] transition disabled:opacity-50 text-xs flex items-center justify-center gap-2"
+                            disabled={isSaving || !avatarUrl}
+                            className="w-full bg-primary text-black font-black uppercase tracking-widest py-4 rounded-xl hover:shadow-[0_0_20px_rgba(102,252,241,0.4)] transition disabled:opacity-50 text-xs flex items-center justify-center gap-2 cursor-pointer shadow-[0_0_20px_rgba(102,252,241,0.2)]"
                           >
                             {isSaving ? (
                               <Loader2 className="w-4 h-4 animate-spin text-black" />
                             ) : (
-                              "Save Details"
+                              t("onboarding.main.savePhotosContinue", "Save Photos & Continue →")
                             )}
                           </button>
                         </div>
