@@ -368,14 +368,38 @@ export default function RegistrationGate({ onComplete, initialError }: Registrat
                 </Link>
               </div>
 
-              <div className="pt-2">
+              <div className="pt-2 space-y-3">
                 <Link 
                   href="/login" 
                   className="w-full py-3 bg-[#ffabf3] text-black font-mono text-xs font-black uppercase tracking-wider rounded-xl hover:shadow-[0_0_15px_rgba(255,171,243,0.5)] transition flex items-center justify-center gap-2 cursor-pointer font-bold"
                 >
-                  {locale === 'es' ? 'Creador Aprobado' : 'Approved Creator'}
+                  {locale === 'es' ? 'Ingresar como Creador Aprobado' : 'Sign In as Approved Creator'}
                 </Link>
                 <button type="button" onClick={() => setShowEmailForm(true)} className="opacity-0 absolute w-4 h-4 bottom-0 right-0 z-50">Email</button>
+
+                {/* Approved Creator Explanation Callout */}
+                <div className="p-3.5 bg-black/40 border border-[#ffabf3]/20 rounded-xl text-left space-y-2">
+                  <div className="flex items-center gap-1.5 text-[#ffabf3]">
+                    <Sparkles className="w-3.5 h-3.5 shrink-0" />
+                    <span className="font-mono text-[10px] font-black uppercase tracking-wider">
+                      {t("onboarding.prelaunchGates.whatIsApprovedTitle", "What is an Approved Creator?")}
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-[#b9cac9] leading-relaxed">
+                    {t("onboarding.prelaunchGates.whatIsApprovedDesc", "Creators who completed the pre-launch application and were verified by our team. If you are approved, click above and sign up with the exact email used in your application.")}
+                  </p>
+                  <div className="pt-1 border-t border-white/5 flex flex-col sm:flex-row sm:items-center justify-between gap-1 text-[10px]">
+                    <span className="text-white/40">
+                      {t("onboarding.prelaunchGates.notApprovedYet", "Haven't applied or waiting for approval?")}
+                    </span>
+                    <Link 
+                      href="/become-creator#apply" 
+                      className="text-[#00fbfb] hover:underline font-mono font-bold uppercase tracking-wider shrink-0"
+                    >
+                      {t("onboarding.prelaunchGates.applyHereLink", "Apply as Creator Here →")}
+                    </Link>
+                  </div>
+                </div>
               </div>
             </motion.div>
           ) : showEmailForm ? (

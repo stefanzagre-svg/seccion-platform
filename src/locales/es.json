@@ -1,8 +1,8 @@
 {
   "metadata": {
-    "defaultTitle": "SECCION | Sinergia Real y Co-Op de Vibes",
-    "description": "Donde la IA de Co-Op conecta tu sinergia real con creadores destacados y citas de alta química.",
-    "keywords": "SECCION, seccion.ai, emparejamiento por IA, sinergia de vibes, citas Co-Op, misiones de citas, XP de química, streaming en vivo, plataforma de creadores"
+    "defaultTitle": "SECCION.ai | La 1ra Plataforma Híbrida de Dating IA y Live Streaming para Creadores",
+    "description": "SECCION (seccion.ai) es la primera plataforma híbrida que fusiona matchmaking con IA y streaming en vivo para creadores. 90% de ingresos para creadores y sinergia de vibes real.",
+    "keywords": "SECCION, seccion.ai, seccion ai hybrid platform, plataforma híbrida, citas con IA, emparejamiento por IA, streaming en vivo, plataforma de creadores, sinergia de vibes"
   },
   "nav": {
     "home": "Inicio",
@@ -233,8 +233,8 @@
   },
   "seo": {
     "home": {
-      "title": "SECCION | Conexiones Auténticas y Creadores de Contenido",
-      "desc": "Primera plataforma híbrida que combina el emparejamiento de citas por IA con creadores de contenido de streaming en vivo."
+      "title": "SECCION.ai | La 1ra Plataforma Híbrida de Dating IA y Live Streaming para Creadores",
+      "desc": "SECCION.ai es la 1ra plataforma híbrida que fusiona matchmaking con IA y streaming en vivo para creadores. 90% de ingresos y química de vibes real."
     },
     "howWeDo": {
       "title": "Cómo Funciona | SECCION",
@@ -569,6 +569,34 @@
       "selectAvatarErr": "Por favor selecciona o sube una foto de avatar.",
       "promptMissingErr": "Por favor selecciona una categoría, pregunta y escribe una respuesta.",
       "promptLengthErr": "Escribe un poco más para que nuestra IA pueda leer tu vibra (mín. 10 caracteres)."
+    },
+    "creatorExt": {
+      "title": "Extensión Creador",
+      "subtitle": "Tu perfil de miembro está listo. Escribe tu Bio de Creador para publicar tu presencia en el Studio. El Reel de Portafolio es opcional pero ayuda a atraer suscriptores más rápido.",
+      "optional": "Opcional",
+      "required": "Obligatorio",
+      "portfolioLabel": "URL del Reel de Portafolio",
+      "portfolioPlaceholder": "https://vimeo.com/... · YouTube · OnlyFans · etc.",
+      "portfolioHint": "Enlaza tu contenido existente (Vimeo, YouTube, etc.) para mostrar tu estilo y atraer suscriptores en tu perfil.",
+      "bioLabel": "Bio de Creador",
+      "bioPlaceholder": "Describe tu contenido premium, niveles VIP y lo que reciben los suscriptores...",
+      "bioMinHint": "Escribe un poco más — mínimo 20 caracteres para que los suscriptores sepan lo que van a obtener.",
+      "publishBtn": "Publicar Perfil de Creador",
+      "saveError": "Error al guardar el perfil de extensión de creador."
+    },
+    "prelaunchGates": {
+      "creatorNoticeTitle": "¿Eres Creador de Contenido?",
+      "creatorNoticeDesc": "Aplica al Creator Studio de Pre-Lanzamiento para desbloquear 90% de reparto de ingresos directo, 1 Año de Asistente IA Gratis y visibilidad prioritaria.",
+      "creatorApplyBtn": "Aplicar como Creador →",
+      "whatIsApprovedTitle": "¿Qué es un Creador Aprobado?",
+      "whatIsApprovedDesc": "Creadores que completaron la solicitud de pre-lanzamiento y fueron verificados por nuestro equipo. Si fuiste aprobado, haz clic arriba y regístrate con el correo exacto de tu postulación.",
+      "notApprovedYet": "¿Aún no has aplicado o esperas tu aprobación?",
+      "applyHereLink": "Aplica como Creador Aquí →",
+      "loginApprovedExplanation": "El acceso de pre-lanzamiento es actualmente exclusivo para creadores aprobados y el equipo fundador. Una vez aprobada tu solicitud, ingresa tu correo registrado para acceder a tu Studio.",
+      "loginNotAppliedNotice": "¿Eres un creador que aún no ha aplicado por el 90% de ingresos y 1 Año de Asistente IA Gratis?",
+      "loginApplyNow": "APLICA AHORA",
+      "loginMemberNotice": "¿Buscas acceso anticipado como miembro?",
+      "loginJoinWaitlist": "UNIRSE A LA LISTA DE ACCESO"
     }
   }
 }

@@ -7,6 +7,7 @@ import { ShieldCheck, ShieldAlert, Sparkles, Filter } from 'lucide-react';
 import { useTranslation } from '@/context/LanguageContext';
 
 const SHORT_TITLES: Record<string, string> = {
+  ai_tech: "AI & Technology",
   beauty: "Beauty & Makeup",
   style: "Fashion & Style",
   culinary: "Cooking & Dining",
@@ -20,6 +21,7 @@ const SHORT_TITLES: Record<string, string> = {
 };
 
 const SHORT_TITLES_ES: Record<string, string> = {
+  ai_tech: "IA y Tecnología",
   beauty: "Belleza y Maquillaje",
   style: "Moda y Estilo",
   culinary: "Cocina y Cena",

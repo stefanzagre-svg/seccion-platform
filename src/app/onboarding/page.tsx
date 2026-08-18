@@ -207,7 +207,7 @@ export default function OnboardingFlow() {
   const [promptQuestion, setPromptQuestion] = useState("");
   const [promptAnswer, setPromptAnswer] = useState("");
   const [promptStep, setPromptStep] = useState<1 | 2>(1);
-  const [completedPrompt1, setCompletedPrompt1] = useState<{question: string; answer: string} | null>(null);
+  const [completedPrompt1, setCompletedPrompt1] = useState<{category: string; question: string; answer: string} | null>(null);
   const [sexPrefs, setSexPrefs] = useState<string[]>([SEXUAL_ORIENTATIONS[0].id]);
   const [relGoals, setRelGoals] = useState<string[]>([RELATIONSHIP_GOALS[0]]);
   const [relTypes, setRelTypes] = useState<string[]>([RELATIONSHIP_TYPES[0]]);
@@ -386,7 +386,10 @@ export default function OnboardingFlow() {
             if (savedState.step) setStep(savedState.step);
             if (savedState.activeItem) setActiveItem(savedState.activeItem);
             if (savedState.avatarUrl) setAvatarUrl(savedState.avatarUrl);
-            if (savedState.activePurposes) setActivePurposes(savedState.activePurposes);
+            // Restore persisted purposes — critical so prompt category filter works after page reload
+            if (Array.isArray(savedState.activePurposes) && savedState.activePurposes.length > 0) {
+              setActivePurposes(savedState.activePurposes);
+            }
           } catch (err) {
             console.error("Failed to parse onboarding state", err);
           }
@@ -605,40 +608,61 @@ export default function OnboardingFlow() {
             const p2Done = !!profile.bio_prompt_answer_2;
 
             if (p1Done && !p2Done) {
-              setPromptCategory("conflict");
-              setPromptQuestion("");
-              setPromptAnswer("");
-            } else if (p2Done) {
-              setPromptCategory((profile.bio_prompt_category_2 as any) || "conflict");
+              setPromptCategory((profile.bio_prompt_category_2 as any) || "skills");
               setPromptQuestion(profile.bio_prompt_question_2 || "");
               setPromptAnswer(profile.bio_prompt_answer_2 || "");
+              setPromptStep(2);
+            } else if (p2Done) {
+              setPromptCategory((profile.bio_prompt_category_2 as any) || "skills");
+              setPromptQuestion(profile.bio_prompt_question_2 || "");
+              setPromptAnswer(profile.bio_prompt_answer_2 || "");
+              setPromptStep(2);
             } else {
-              setPromptCategory((profile.bio_prompt_category as any) || "chemistry");
+              setPromptCategory((profile.bio_prompt_category as any) || "skills");
               setPromptQuestion(profile.bio_prompt_question || "");
               setPromptAnswer(profile.bio_prompt_answer || "");
+              setPromptStep(1);
             }
 
             if (p1Done) {
               setCompletedPrompt1({
+                category: profile.bio_prompt_category || "skills",
                 question: profile.bio_prompt_question || "",
                 answer: profile.bio_prompt_answer || ""
               });
             }
-            setPromptStep(p1Done && !p2Done ? 2 : 1);
 
             if (profile.member_purposes && Array.isArray(profile.member_purposes) && profile.member_purposes.length > 0) {
-              setActivePurposes(profile.member_purposes);
-            } else if (typeof window !== "undefined") {
-              const storedPurposes = sessionStorage.getItem("_onboarding_creator_purposes");
+              // ✅ Source of truth: use what's already saved in the profile DB row
+              setActivePurposes(profile.member_purposes as MemberPurposeId[]);
+              saveOnboardingState({ activePurposes: profile.member_purposes });
+            } else {
+              // Fallback chain: sessionStorage creator purposes → role default
+              let resolvedPurposes: MemberPurposeId[] = [];
+              const storedPurposes = typeof window !== "undefined"
+                ? sessionStorage.getItem("_onboarding_creator_purposes")
+                : null;
               if (storedPurposes) {
                 try {
                   const parsed = JSON.parse(storedPurposes);
                   if (Array.isArray(parsed) && parsed.length > 0) {
-                    const mappedPurposes = parsed.map((p: string) => p.toLowerCase().includes("explicit") ? "explicit" : p.toLowerCase().includes("gaming") || p.toLowerCase().includes("lifestyle") ? "lifestyle" : "dating");
-                    setActivePurposes(mappedPurposes);
+                    resolvedPurposes = Array.from(new Set(parsed.map((p: string) =>
+                      p.toLowerCase().includes("explicit") ? "explicit" as MemberPurposeId:
+                      p.toLowerCase().includes("creator") ? "creator" as MemberPurposeId:
+                      p.toLowerCase().includes("lifestyle") || p.toLowerCase().includes("mentorship") || p.toLowerCase().includes("gaming") ? "lifestyle" as MemberPurposeId:
+                      "dating" as MemberPurposeId
+                    )));
                   }
                 } catch {}
               }
+              if (resolvedPurposes.length === 0) {
+                // Default by role: creator gets creator+lifestyle, members get dating
+                resolvedPurposes = (profile.role === "creator" || isCreatorMode || tutorialRole === "creator")
+                  ? ["creator", "lifestyle"]
+                  : ["dating"];
+              }
+              setActivePurposes(resolvedPurposes);
+              saveOnboardingState({ activePurposes: resolvedPurposes });
             }
 
             if (profile.sexual_preferences?.length > 0)
@@ -676,175 +700,133 @@ export default function OnboardingFlow() {
     type: "photo" | "bio" | "preferences",
     overrideData?: { category?: string; question?: string; answer?: string }
   ) => {
-    let activeUserId = userId;
-    if (!activeUserId) {
+    // ─── Resolve userId in background (never blocks UI) ───
+    const resolveUserId = async (): Promise<string | null> => {
+      if (userId) return userId;
       try {
         const { data: { session } } = await supabase.auth.getSession();
-        if (session?.user?.id) {
-          activeUserId = session.user.id;
-          setUserId(activeUserId);
-        }
+        if (session?.user?.id) { setUserId(session.user.id); return session.user.id; }
       } catch {}
-    }
-
-    if (!activeUserId && typeof window !== "undefined") {
-      const storedCore = localStorage.getItem("fusion_onboarding_core");
-      if (storedCore) {
+      if (typeof window !== "undefined") {
         try {
-          activeUserId = JSON.parse(storedCore).userId;
+          const core = localStorage.getItem("fusion_onboarding_core");
+          if (core) return JSON.parse(core).userId || null;
         } catch {}
       }
+      return null;
+    };
+
+    // ─── BIO: fully synchronous fast-path — zero await before UI update ───
+    if (type === "bio") {
+      const effectiveCategory = overrideData?.category || promptCategory || "lifestyle";
+      const effectiveQuestion = overrideData?.question || promptQuestion || "Cozy homebody or active explorer on weekends?";
+      const effectiveAnswer = (overrideData?.answer !== undefined ? overrideData.answer : promptAnswer).trim();
+
+      if (!effectiveAnswer) { setFormError(t("onboarding.main.promptMissingErr", "Please write your answer.")); return; }
+      if (effectiveAnswer.length < 10) { setFormError(t("onboarding.main.promptLengthErr", "Write a bit more so our AI can read your vibe properly (min 10 chars).")); return; }
+      setFormError(null);
+
+      if (promptStep === 1) {
+        // ── Step 1: advance to step 2 instantly ──
+        console.log('[SECCION] bio step 1 → step 2 (instant)');
+        setCompletedPrompt1({ category: effectiveCategory, question: effectiveQuestion, answer: effectiveAnswer });
+        const sourcePrompts = locale === "es" ? PURPOSE_PROMPTS_ES : PURPOSE_PROMPTS;
+        const effectivePurposesInner = activePurposes.length > 0
+          ? activePurposes
+          : (isCreatorMode || tutorialRole === "creator" ? ["creator", "lifestyle"] as MemberPurposeId[] : ["dating"] as MemberPurposeId[]);
+        const allPrompts = Object.entries(sourcePrompts)
+          .filter(([p]) => effectivePurposesInner.includes(p as MemberPurposeId))
+          .reduce((acc, [_, cats]) => ({ ...acc, ...cats }), {} as Record<string, any>);
+        const allEntries = Object.entries(allPrompts);
+        const nextCatKey = allEntries.find(([k]) => k !== effectiveCategory)?.[0] || allEntries[0]?.[0] || "lifestyle";
+        const nextQ = allPrompts[nextCatKey]?.prompts?.[0] || "What is your biggest aspiration?";
+        setPromptCategory(nextCatKey);
+        setPromptQuestion(nextQ);
+        setPromptAnswer("");
+        setPromptStep(2);
+        console.log('[SECCION] bio step 1 done — now at step 2, nextCatKey:', nextCatKey);
+        // Background: fire-and-forget vectorization
+        fetch("/api/v2/profile/analyze-prompt", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ promptCategory: effectiveCategory, promptQuestion: effectiveQuestion, promptAnswer: effectiveAnswer, promptIndex: 1, activePurposes }) }).catch(() => {});
+        return;
+      }
+
+      // ── Step 2: advance UI immediately, then save to DB in background ──
+      console.log('[SECCION] bio step 2 → advancing UI (instant)');
+      const p1 = completedPrompt1;
+      const dbPayload = {
+        bio_prompt_category: p1?.category || "lifestyle",
+        bio_prompt_question: p1?.question || "",
+        bio_prompt_answer: p1?.answer || "",
+        bio_prompt_category_2: effectiveCategory,
+        bio_prompt_question_2: effectiveQuestion,
+        bio_prompt_answer_2: effectiveAnswer,
+        member_purposes: activePurposes.length > 0 ? activePurposes : (isCreatorMode ? ["creator", "lifestyle"] : ["dating"]),
+      };
+
+      // Advance UI NOW (synchronous — no await)
+      saveOnboardingState({ step: "profile-checklist", activeItem: "bio", avatarUrl });
+      setChecklist((prev) => prev.map((item) => item.id === "bio" ? { ...item, completed: true } : item));
+      const isCreatorSignupBio = tutorialRole === "creator" || isCreatorMode || (typeof window !== "undefined" && (!!sessionStorage.getItem("_onboarding_creator_archive_choice") || localStorage.getItem("is_creator_signup") === "true"));
+      console.log('[SECCION] bio step 2 done — transitioning, isCreator:', isCreatorSignupBio);
+      if (isCreatorSignupBio) {
+        setStep("creator-checklist");
+      } else {
+        const updatedChecklist = checklist.map((item) => item.id === "bio" ? { ...item, completed: true } : item);
+        const nextIncomplete = updatedChecklist.find((item) => !item.completed);
+        if (nextIncomplete) setActiveItem(nextIncomplete.id as any);
+        else setStep("welcome");
+      }
+
+      // Background DB write — fire-and-forget, never blocks UI
+      resolveUserId().then((uid) => {
+        if (!uid) { console.warn('[SECCION] bio step 2: no userId — DB write skipped (not authenticated)'); return; }
+        const writePromise = supabase.from("profiles").update(dbPayload).eq("id", uid);
+        const timeout = new Promise<void>((resolve) => setTimeout(resolve, 5000));
+        Promise.race([writePromise, timeout]).catch((err) => console.warn('[SECCION] bio step 2 DB write error:', err));
+        fetch("/api/v2/profile/analyze-prompt", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ promptCategory: effectiveCategory, promptQuestion: effectiveQuestion, promptAnswer: effectiveAnswer, promptIndex: 2, activePurposes }) }).catch(() => {});
+      });
+      return;
     }
 
-    setFormError(null);
-    setIsSaving(true);
+    // ─── PHOTO: validate → advance UI instantly → save DB in background ───
+    if (type === "photo") {
+      if (!avatarUrl) { setFormError(t("onboarding.main.selectAvatarErr", "Please select or input an avatar photo.")); return; }
+      setFormError(null);
+      console.log('[SECCION] photo save fast-path: advancing UI');
+      saveOnboardingState({ step: "profile-checklist", activeItem: "photo", avatarUrl });
+      setChecklist((prev) => prev.map((item) => item.id === "photo" ? { ...item, completed: true } : item));
+      setActiveItem("bio");
+      // Background DB write — never blocks UI
+      resolveUserId().then((uid) => {
+        if (!uid) { console.warn('[SECCION] photo: no userId — DB write skipped'); return; }
+        supabase.from("profiles").update({ avatar_url: avatarUrl }).eq("id", uid)
+          .then(({ error }) => { if (error) console.warn('[SECCION] photo DB write error:', error.message); });
+      });
+      return;
+    }
 
-    try {
-      let updatePayload: any = null;
-      if (type === "photo") {
-        if (!avatarUrl)
-          throw new Error(t("onboarding.main.selectAvatarErr", "Please select or input an avatar photo."));
-        updatePayload = { avatar_url: avatarUrl };
-      } else if (type === "bio") {
-        const effectiveCategory = overrideData?.category || promptCategory || "lifestyle";
-        const effectiveQuestion = overrideData?.question || promptQuestion || "Cozy homebody or active explorer on weekends?";
-        const effectiveAnswer = (overrideData?.answer !== undefined ? overrideData.answer : promptAnswer).trim();
-
-        if (!effectiveAnswer) {
-          throw new Error(t("onboarding.main.promptMissingErr", "Please write your answer."));
-        }
-        
-        if (effectiveAnswer.length < 10) {
-          throw new Error(t("onboarding.main.promptLengthErr", "Write a bit more so our AI can read your vibe properly (min 10 chars)."));
-        }
-
-        try {
-          const fetchPromise = fetch("/api/v2/profile/analyze-prompt", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              promptCategory: effectiveCategory,
-              promptQuestion: effectiveQuestion,
-              promptAnswer: effectiveAnswer,
-              promptIndex: promptStep,
-              activePurposes
-            })
-          });
-
-          const timeoutPromise = new Promise((resolve) => setTimeout(resolve, 800));
-          await Promise.race([fetchPromise, timeoutPromise]);
-        } catch (fetchErr) {
-          console.warn("Prompt analysis network error, continuing with local state:", fetchErr);
-        }
-
-        if (promptStep === 1) {
-          setCompletedPrompt1({
-            question: effectiveQuestion,
-            answer: effectiveAnswer
-          });
-          const sourcePrompts = locale === "es" ? PURPOSE_PROMPTS_ES : PURPOSE_PROMPTS;
-          const availablePrompts = Object.entries(sourcePrompts)
-            .filter(([p]) => activePurposes.length === 0 || activePurposes.includes(p as MemberPurposeId))
-            .reduce((acc, [_, cats]) => ({ ...acc, ...cats }), {} as Record<string, any>);
-          const entries = Object.entries(availablePrompts);
-          const nextCatKey = entries.find(([k]) => k !== effectiveCategory)?.[0] || entries[0]?.[0] || "conflict";
-          const nextQ = availablePrompts[nextCatKey]?.prompts?.[0] || "";
-
-          setPromptCategory(nextCatKey);
-          setPromptQuestion(nextQ);
-          setPromptAnswer("");
-          setPromptStep(2);
-          setIsSaving(false);
-          return;
-        }
-
-        // promptStep === 2: Save both prompt 1 & prompt 2 to profiles
-        updatePayload = {
-          bio_prompt_category: completedPrompt1?.category || "lifestyle",
-          bio_prompt_question: completedPrompt1?.question || "",
-          bio_prompt_answer: completedPrompt1?.answer || "",
-          bio_prompt_category_2: effectiveCategory,
-          bio_prompt_question_2: effectiveQuestion,
-          bio_prompt_answer_2: effectiveAnswer,
-        };
-      } else if (type === "preferences") {
-        if (favoriteLanguages.length === 0) {
-          throw new Error("Please select at least one Favorite Language.");
-        }
-        updatePayload = {
-          sexual_preferences: sexPrefs,
-          sexual_preference: sexPrefs[0] || "",
-          relationship_goals: relGoals,
-          relationship_types: relTypes,
-          favorite_languages: favoriteLanguages,
-        };
-      }
-
-      // Upsert/Update the profile row if payload and active user ID are defined
-      if (updatePayload && activeUserId) {
-        const updatePromise = supabase
-          .from("profiles")
-          .update(updatePayload)
-          .eq("id", activeUserId);
-          
-        const timeoutPromise = new Promise<{data: any, error: any}>((resolve) => 
-          setTimeout(() => resolve({ data: null, error: null }), 3000)
-        );
-        
-        try {
-          await Promise.race([updatePromise, timeoutPromise]);
-        } catch (dbErr) {
-          console.warn("Database network response took long; state preserved locally:", dbErr);
-        }
-      }
-
-      // Save onboarding state locally to guarantee user can advance
-      saveOnboardingState({ step: "profile-checklist", activeItem: type, avatarUrl });
-
-      // Mark item completed
-      setChecklist((prev) =>
-        prev.map((item) =>
-          item.id === type ? { ...item, completed: true } : item,
-        ),
-      );
-
-      // Auto-move to next incomplete tab or welcome
-      const updatedChecklist = checklist.map((item) =>
-        item.id === type ? { ...item, completed: true } : item,
-      );
-
-      if (type === "photo") {
-        setActiveItem("bio");
-      } else if (type === "bio") {
-        const isCreatorSignup = tutorialRole === "creator" || isCreatorMode || (typeof window !== "undefined" && (!!sessionStorage.getItem("_onboarding_creator_archive_choice") || localStorage.getItem("is_creator_signup") === "true"));
-        if (isCreatorSignup) {
-           OnboardingLogger.log('profile-checklist', 'complete', 'creator bio prompts done, transitioning to creator-checklist', activeUserId || undefined);
-           setStep("creator-checklist");
-        } else if (nextIncomplete) {
-           OnboardingLogger.log('profile-checklist', 'cta_click', `saved bio, next=${nextIncomplete.id}`, activeUserId || undefined);
-           setActiveItem(nextIncomplete.id as any);
-        } else {
-           OnboardingLogger.log('profile-checklist', 'complete', 'all items done, transitioning to welcome', activeUserId || undefined);
-           setStep("welcome");
-        }
-      } else if (nextIncomplete) {
-        OnboardingLogger.log('profile-checklist', 'cta_click', `saved ${type}, next=${nextIncomplete.id}`, activeUserId || undefined);
-        setActiveItem(nextIncomplete.id as any);
-      } else {
-        // All completed!
+    // ─── PREFERENCES: validate → advance UI → save DB in background ───
+    if (type === "preferences") {
+      if (favoriteLanguages.length === 0) { setFormError("Please select at least one Favorite Language."); return; }
+      setFormError(null);
+      const prefsPayload = { sexual_preferences: sexPrefs, sexual_preference: sexPrefs[0] || "", relationship_goals: relGoals, relationship_types: relTypes, favorite_languages: favoriteLanguages };
+      console.log('[SECCION] preferences save fast-path: advancing UI');
+      saveOnboardingState({ step: "profile-checklist", activeItem: "preferences", avatarUrl });
+      setChecklist((prev) => prev.map((item) => item.id === "preferences" ? { ...item, completed: true } : item));
+      const updatedChecklist = checklist.map((item) => item.id === "preferences" ? { ...item, completed: true } : item);
+      const nextIncomplete = updatedChecklist.find((item) => !item.completed);
+      if (nextIncomplete) setActiveItem(nextIncomplete.id as any);
+      else {
         const isCreatorSignup = tutorialRole === "creator" || isCreatorMode || (typeof window !== "undefined" && !!sessionStorage.getItem("_onboarding_creator_archive_choice"));
-        if (isCreatorSignup) {
-           OnboardingLogger.log('profile-checklist', 'complete', 'member done, transitioning to creator-checklist', activeUserId || undefined);
-           setStep("creator-checklist");
-        } else {
-           OnboardingLogger.log('profile-checklist', 'complete', 'all items done, transitioning to welcome', activeUserId || undefined);
-           setStep("welcome");
-        }
+        setStep(isCreatorSignup ? "creator-checklist" : "welcome");
       }
-    } catch (err: any) {
-      setFormError(err.message || "Failed to save details.");
-    } finally {
-      setIsSaving(false);
+      // Background DB write
+      resolveUserId().then((uid) => {
+        if (!uid) { console.warn('[SECCION] preferences: no userId — DB write skipped'); return; }
+        supabase.from("profiles").update(prefsPayload).eq("id", uid)
+          .then(({ error }) => { if (error) console.warn('[SECCION] preferences DB write error:', error.message); });
+      });
+      return;
     }
   };
 
@@ -1345,18 +1327,11 @@ export default function OnboardingFlow() {
                         <div className="pt-6">
                           <button
                             type="button"
-                            onClick={() => {
-                              handleSaveDetails("photo");
-                              setActiveItem("bio");
-                            }}
-                            disabled={isSaving || !avatarUrl}
+                            onClick={() => handleSaveDetails("photo")}
+                            disabled={!avatarUrl}
                             className="w-full bg-primary text-black font-black uppercase tracking-widest py-4 rounded-xl hover:shadow-[0_0_20px_rgba(102,252,241,0.4)] transition disabled:opacity-50 text-xs flex items-center justify-center gap-2 cursor-pointer shadow-[0_0_20px_rgba(102,252,241,0.2)] active:scale-98"
                           >
-                            {isSaving ? (
-                              <Loader2 className="w-4 h-4 animate-spin text-black" />
-                            ) : (
-                              t("onboarding.main.savePhotosContinue", "Save Photos & Continue")
-                            )}
+                            {t("onboarding.main.savePhotosContinue", "Save Photos & Continue")}
                           </button>
                         </div>
                       </motion.div>
@@ -1398,15 +1373,19 @@ export default function OnboardingFlow() {
                             <div className="flex flex-wrap gap-1">
                               {(() => {
                                 const sourcePrompts = locale === "es" ? PURPOSE_PROMPTS_ES : PURPOSE_PROMPTS;
+                                // ✅ STRICT filter: never falls back to showing ALL categories
+                                const effectivePurposes = activePurposes.length > 0
+                                  ? activePurposes
+                                  : (isCreatorMode || tutorialRole === "creator" ? ["creator", "lifestyle"] as MemberPurposeId[] : ["dating"] as MemberPurposeId[]);
                                 const availablePrompts = Object.entries(sourcePrompts)
-                                  .filter(([p]) => activePurposes.length === 0 || activePurposes.includes(p as MemberPurposeId))
+                                  .filter(([p]) => effectivePurposes.includes(p as MemberPurposeId))
                                   .reduce((acc, [_, cats]) => ({ ...acc, ...cats }), {} as Record<string, any>);
                                 
                                 const entries = Object.entries(availablePrompts);
-                                const selectedCatKey = promptCategory || entries[0]?.[0] || "lifestyle";
+                                const currentCatKey = promptCategory || entries[0]?.[0] || "skills";
                                 
                                 return entries.map(([key, data]) => {
-                                  const isActive = selectedCatKey === key;
+                                  const isActive = currentCatKey === key;
                                   return (
                                     <button
                                       key={key}
@@ -1419,7 +1398,7 @@ export default function OnboardingFlow() {
                                       }}
                                       className={`px-2.5 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest border transition cursor-pointer ${
                                         isActive
-                                          ? "bg-primary border-primary text-black"
+                                          ? "bg-primary border-primary text-black font-bold"
                                           : "bg-white/5 border-white/5 text-white/60 hover:bg-white/10"
                                       }`}
                                     >
@@ -1438,13 +1417,16 @@ export default function OnboardingFlow() {
                             <div className="flex flex-col gap-1.5 max-h-[140px] overflow-y-auto pr-1 custom-scrollbar">
                               {(() => {
                                 const sourcePrompts = locale === "es" ? PURPOSE_PROMPTS_ES : PURPOSE_PROMPTS;
+                                const effectivePurposes2 = activePurposes.length > 0
+                                  ? activePurposes
+                                  : (isCreatorMode || tutorialRole === "creator" ? ["creator", "lifestyle"] as MemberPurposeId[] : ["dating"] as MemberPurposeId[]);
                                 const availablePrompts = Object.entries(sourcePrompts)
-                                  .filter(([p]) => activePurposes.length === 0 || activePurposes.includes(p as MemberPurposeId))
+                                  .filter(([p]) => effectivePurposes2.includes(p as MemberPurposeId))
                                   .reduce((acc, [_, cats]) => ({ ...acc, ...cats }), {} as Record<string, any>);
                                 
                                 const entries = Object.entries(availablePrompts);
-                                const selectedCatKey = promptCategory || entries[0]?.[0];
-                                const prompts = availablePrompts[selectedCatKey]?.prompts || [];
+                                const currentCatKey = promptCategory || entries[0]?.[0] || "skills";
+                                const prompts = availablePrompts[currentCatKey]?.prompts || ["What skill are you currently obsessed with mastering?"];
                                 
                                 return prompts.map((q: string) => {
                                   const isSelected = (promptQuestion || prompts[0]) === q;
@@ -1455,7 +1437,7 @@ export default function OnboardingFlow() {
                                       onClick={() => setPromptQuestion(q)}
                                       className={`p-2.5 rounded-xl border text-left text-[10px] leading-relaxed transition cursor-pointer ${
                                         isSelected
-                                          ? "bg-white/10 border-primary text-white font-bold"
+                                          ? "bg-white/10 border-primary text-white font-bold shadow-[0_0_10px_rgba(102,252,241,0.15)]"
                                           : "bg-white/2 border-white/5 text-white/50 hover:bg-white/5 hover:border-white/10"
                                       }`}
                                     >
@@ -1470,12 +1452,15 @@ export default function OnboardingFlow() {
                           {/* Response Textarea */}
                           {(() => {
                             const sourcePrompts = locale === "es" ? PURPOSE_PROMPTS_ES : PURPOSE_PROMPTS;
+                            const effectivePurposes3 = activePurposes.length > 0
+                              ? activePurposes
+                              : (isCreatorMode || tutorialRole === "creator" ? ["creator", "lifestyle"] as MemberPurposeId[] : ["dating"] as MemberPurposeId[]);
                             const availablePrompts = Object.entries(sourcePrompts)
-                              .filter(([p]) => activePurposes.length === 0 || activePurposes.includes(p as MemberPurposeId))
+                              .filter(([p]) => effectivePurposes3.includes(p as MemberPurposeId))
                               .reduce((acc, [_, cats]) => ({ ...acc, ...cats }), {} as Record<string, any>);
                             const entries = Object.entries(availablePrompts);
-                            const selectedCatKey = promptCategory || entries[0]?.[0];
-                            const activeQuestion = promptQuestion || availablePrompts[selectedCatKey]?.prompts?.[0] || "";
+                            const currentCatKey = promptCategory || entries[0]?.[0] || "skills";
+                            const activeQuestion = promptQuestion || availablePrompts[currentCatKey]?.prompts?.[0] || "What skill are you currently obsessed with mastering?";
 
                             return (
                               <div className="space-y-2 animate-fadeIn">
@@ -1497,8 +1482,8 @@ export default function OnboardingFlow() {
                                   className="w-full px-4 py-3 bg-black/40 border border-white/10 rounded-xl text-xs text-white placeholder-white/20 focus:border-primary focus:outline-none transition resize-none"
                                 />
                                 <div className="flex justify-between items-center text-[9px] font-bold uppercase">
-                                  <span className={promptAnswer.length < 10 ? "text-[#dc143c]" : "text-green-500"}>
-                                    {promptAnswer.length < 10 ? t("onboarding.main.minCharsReq", "Min 10 characters required") : t("onboarding.main.lengthValidated", "Length Validated")}
+                                  <span className={promptAnswer.trim().length < 10 ? "text-[#dc143c]" : "text-green-500"}>
+                                    {promptAnswer.trim().length < 10 ? t("onboarding.main.minCharsReq", "Min 10 characters required") : t("onboarding.main.lengthValidated", "Length Validated")}
                                   </span>
                                   <span className="text-white/30">
                                     {promptAnswer.length} / 500
@@ -1514,14 +1499,18 @@ export default function OnboardingFlow() {
                             type="button"
                             onClick={(e) => {
                               e.preventDefault();
+                              console.log('[SECCION] CTA onClick fired', { promptAnswer: promptAnswer?.length, promptStep, isSaving, activePurposes });
                               const sourcePrompts = locale === "es" ? PURPOSE_PROMPTS_ES : PURPOSE_PROMPTS;
+                              const effectivePurposesBtn = activePurposes.length > 0
+                                ? activePurposes
+                                : (isCreatorMode || tutorialRole === "creator" ? ["creator", "lifestyle"] as MemberPurposeId[] : ["dating"] as MemberPurposeId[]);
                               const availablePrompts = Object.entries(sourcePrompts)
-                                .filter(([p]) => activePurposes.length === 0 || activePurposes.includes(p as MemberPurposeId))
+                                .filter(([p]) => effectivePurposesBtn.includes(p as MemberPurposeId))
                                 .reduce((acc, [_, cats]) => ({ ...acc, ...cats }), {} as Record<string, any>);
                               const entries = Object.entries(availablePrompts);
-                              const selectedCatKey = promptCategory || entries[0]?.[0] || "lifestyle";
+                              const selectedCatKey = promptCategory || entries[0]?.[0] || "skills";
                               const availableQuestions = availablePrompts[selectedCatKey]?.prompts || [];
-                              const activeQuestion = promptQuestion || availableQuestions[0] || "Cozy homebody or active explorer on weekends?";
+                              const activeQuestion = promptQuestion || availableQuestions[0] || "What skill are you currently obsessed with mastering?";
                               
                               handleSaveDetails("bio", {
                                 category: selectedCatKey,
@@ -1530,7 +1519,7 @@ export default function OnboardingFlow() {
                               });
                             }}
                             disabled={isSaving || promptAnswer.trim().length < 10}
-                            className="w-full bg-primary text-black font-black uppercase tracking-widest py-4 rounded-xl hover:shadow-[0_0_20px_rgba(102,252,241,0.4)] transition disabled:opacity-50 text-xs flex items-center justify-center gap-2 cursor-pointer shadow-[0_0_20px_rgba(102,252,241,0.2)] active:scale-98 relative z-20"
+                            className="w-full bg-primary text-black font-black uppercase tracking-widest py-4 rounded-xl hover:shadow-[0_0_20px_rgba(102,252,241,0.4)] transition disabled:opacity-50 text-xs flex items-center justify-center gap-2 cursor-pointer shadow-[0_0_20px_rgba(102,252,241,0.2)] active:scale-98 relative z-30"
                           >
                             {isSaving ? (
                               <>
@@ -1621,81 +1610,111 @@ export default function OnboardingFlow() {
                   <Video className="w-8 h-8 text-primary" />
                 </div>
                 <div>
-                  <h2 className="text-3xl font-black uppercase Outfit tracking-tight">Creator Extension</h2>
+                  <h2 className="text-3xl font-black uppercase Outfit tracking-tight">{t("onboarding.creatorExt.title", "Creator Extension")}</h2>
                   <p className="text-xs text-white/50 mt-2 font-medium max-w-md mx-auto">
-                    Your member profile is ready. Now let's finalize your Studio presence. Upload your Portfolio Reel and write your professional Creator Bio.
+                    {t("onboarding.creatorExt.subtitle", "Your member profile is ready. Write your Creator Bio to publish your Studio presence. A Portfolio Reel is optional but helps attract subscribers faster.")}
                   </p>
                 </div>
 
                 <div className="w-full max-w-md space-y-4 text-left mt-6">
                   <div className="space-y-2">
-                     <label className="text-[10px] font-black uppercase tracking-widest text-primary">Portfolio Reel URL</label>
+                     <div className="flex items-center gap-2">
+                       <label className="text-[10px] font-black uppercase tracking-widest text-primary">{t("onboarding.creatorExt.portfolioLabel", "Portfolio Reel URL")}</label>
+                       <span className="text-[9px] font-black uppercase tracking-widest text-white/30 bg-white/5 border border-white/10 px-1.5 py-0.5 rounded-full">{t("onboarding.creatorExt.optional", "Optional")}</span>
+                     </div>
                      <input
                         type="text"
-                        placeholder="https://vimeo.com/..."
+                        placeholder={t("onboarding.creatorExt.portfolioPlaceholder", "https://vimeo.com/... · YouTube · OnlyFans · etc.")}
                         value={videoPresentationUrl}
                         onChange={(e) => setVideoPresentationUrl(e.target.value)}
                         className="w-full px-4 py-3 bg-black/40 border border-white/10 rounded-xl text-xs text-white placeholder-white/20 focus:border-primary outline-none transition"
                      />
+                     <p className="text-[10px] text-white/30 leading-relaxed">{t("onboarding.creatorExt.portfolioHint", "Link to existing content (Vimeo, YouTube, etc.) to showcase your style and attract subscribers on your profile.")}</p>
                   </div>
                   
                   <div className="space-y-2">
-                     <label className="text-[10px] font-black uppercase tracking-widest text-primary">Creator Bio</label>
+                     <div className="flex items-center justify-between">
+                       <div className="flex items-center gap-2">
+                         <label className="text-[10px] font-black uppercase tracking-widest text-primary">{t("onboarding.creatorExt.bioLabel", "Creator Bio")}</label>
+                         <span className="text-[9px] font-black uppercase tracking-widest text-white/60 bg-primary/10 border border-primary/30 px-1.5 py-0.5 rounded-full">{t("onboarding.creatorExt.required", "Required")}</span>
+                       </div>
+                       <span className={`text-[10px] font-bold tabular-nums ${creatorBio.length < 20 ? "text-white/30" : "text-primary"}`}>{creatorBio.length} / 500</span>
+                     </div>
                      <textarea
                         rows={4}
-                        placeholder="Describe your premium content, VIP tiers, and what subscribers get..."
+                        placeholder={t("onboarding.creatorExt.bioPlaceholder", "Describe your premium content, VIP tiers, and what subscribers get...")}
                         value={creatorBio}
                         onChange={(e) => setCreatorBio(e.target.value)}
+                        maxLength={500}
                         className="w-full px-4 py-3 bg-black/40 border border-white/10 rounded-xl text-xs text-white placeholder-white/20 focus:border-primary outline-none transition resize-none"
                      />
+                     {creatorBio.length > 0 && creatorBio.length < 20 && (
+                       <p className="text-[10px] text-amber-400/80">{t("onboarding.creatorExt.bioMinHint", "Write a bit more — at least 20 characters so subscribers know what they're getting.")}</p>
+                     )}
                   </div>
                 </div>
 
                 <button
-                  onClick={async () => {
-                    setIsSavingCreator(true);
-                    try {
-                      // Save to creator_profiles
-                      const tierPrice = sessionStorage.getItem("_onboarding_creator_tier_price");
-                      const faceBlur = sessionStorage.getItem("_onboarding_creator_face_blur");
-                      const residence = sessionStorage.getItem("_onboarding_creator_residence");
-                      const vibe = sessionStorage.getItem("_onboarding_creator_vibe");
-                      const purposesStr = sessionStorage.getItem("_onboarding_creator_purposes");
-                      const specialization = sessionStorage.getItem("_onboarding_creator_specialization");
-                      const sexualPreference = sessionStorage.getItem("_onboarding_creator_sexual_preference");
-                      const relationshipGoal = sessionStorage.getItem("_onboarding_creator_relationship_goal");
-                      const relationshipType = sessionStorage.getItem("_onboarding_creator_relationship_type");
-                      const isAdult = sessionStorage.getItem("_onboarding_creator_is_adult");
+                   onClick={() => {
+                     // Validate synchronously
+                     if (creatorBio.trim().length < 20) {
+                       setFormError(t("onboarding.creatorExt.bioMinHint", "Write a bit more — at least 20 characters so subscribers know what they're getting."));
+                       return;
+                     }
+                     setFormError(null);
+                     console.log('[SECCION] Publish Creator Profile — advancing to welcome instantly');
 
-                      const payload = {
-                        id: userId,
-                        creator_archetype: vibe || null,
-                        specialization: specialization || null,
-                        creator_purposes: purposesStr ? JSON.parse(purposesStr) : [],
-                        video_presentation_url: videoPresentationUrl,
-                        creator_bio: creatorBio,
-                        tier_price: tierPrice ? parseFloat(tierPrice) : null,
-                        face_blur_active: faceBlur === "true",
-                        tax_residence: residence || null,
-                        sexual_preference: sexualPreference || null,
-                        relationship_goals: relationshipGoal ? [relationshipGoal] : [],
-                        relationship_types: relationshipType ? [relationshipType] : [],
-                        is_adult_content: isAdult === "true"
-                      };
+                     // Read sessionStorage values synchronously (no await)
+                     const tierPrice = sessionStorage.getItem("_onboarding_creator_tier_price");
+                     const faceBlur = sessionStorage.getItem("_onboarding_creator_face_blur");
+                     const residence = sessionStorage.getItem("_onboarding_creator_residence");
+                     const vibe = sessionStorage.getItem("_onboarding_creator_vibe");
+                     const purposesStr = sessionStorage.getItem("_onboarding_creator_purposes");
+                     const specialization = sessionStorage.getItem("_onboarding_creator_specialization");
+                     const sexualPreference = sessionStorage.getItem("_onboarding_creator_sexual_preference");
+                     const relationshipGoal = sessionStorage.getItem("_onboarding_creator_relationship_goal");
+                     const relationshipType = sessionStorage.getItem("_onboarding_creator_relationship_type");
+                     const isAdult = sessionStorage.getItem("_onboarding_creator_is_adult");
 
-                      await supabase.from("creator_profiles").upsert(payload);
-                      setStep("welcome");
-                    } catch (e) {
-                      setFormError("Failed to save creator extension profile.");
-                    } finally {
-                      setIsSavingCreator(false);
-                    }
-                  }}
-                  disabled={isSavingCreator || !videoPresentationUrl || !creatorBio}
-                  className="w-full max-w-md bg-primary text-black font-black uppercase tracking-widest py-4 rounded-xl hover:shadow-[0_0_20px_rgba(102,252,241,0.4)] transition disabled:opacity-50 text-xs flex items-center justify-center gap-2"
-                >
-                  {isSavingCreator ? <Loader2 className="w-4 h-4 animate-spin" /> : "Publish Creator Profile"}
-                </button>
+                     // Advance UI immediately — no await
+                     setStep("welcome");
+
+                     // Background DB write — fire-and-forget, never blocks UI
+                     const resolveAndSave = async () => {
+                       let uid = userId;
+                       if (!uid) {
+                         try {
+                           const { data: { session } } = await supabase.auth.getSession();
+                           uid = session?.user?.id || null;
+                         } catch {}
+                       }
+                       if (!uid) { console.warn('[SECCION] Publish: no userId — DB write skipped'); return; }
+                       const payload = {
+                         id: uid,
+                         creator_archetype: vibe || null,
+                         specialization: specialization || null,
+                         creator_purposes: purposesStr ? JSON.parse(purposesStr) : [],
+                         video_presentation_url: videoPresentationUrl || null,
+                         creator_bio: creatorBio,
+                         tier_price: tierPrice ? parseFloat(tierPrice) : null,
+                         face_blur_active: faceBlur === "true",
+                         tax_residence: residence || null,
+                         sexual_preference: sexualPreference || null,
+                         relationship_goals: relationshipGoal ? [relationshipGoal] : [],
+                         relationship_types: relationshipType ? [relationshipType] : [],
+                         is_adult_content: isAdult === "true"
+                       };
+                       const dbPromise = supabase.from("creator_profiles").upsert(payload);
+                       const timeout = new Promise<void>((resolve) => setTimeout(resolve, 5000));
+                       await Promise.race([dbPromise, timeout]);
+                     };
+                     resolveAndSave().catch((e) => console.warn('[SECCION] Publish DB write error:', e));
+                   }}
+                   disabled={creatorBio.trim().length < 20}
+                   className="w-full max-w-md bg-primary text-black font-black uppercase tracking-widest py-4 rounded-xl hover:shadow-[0_0_20px_rgba(102,252,241,0.4)] transition disabled:opacity-50 text-xs flex items-center justify-center gap-2"
+                 >
+                   {t("onboarding.creatorExt.publishBtn", "Publish Creator Profile")}
+                 </button>
                 {formError && <p className="text-red-500 text-xs mt-2">{formError}</p>}
               </div>
             </motion.div>

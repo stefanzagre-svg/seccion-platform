@@ -2,12 +2,13 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ShieldCheck, Lock, Wallet, Loader2, CheckCircle2, Plane, Palette, Music, Dumbbell, Briefcase, GraduationCap, Brain, Lightbulb, Rocket } from 'lucide-react';
+import { ShieldCheck, Lock, Wallet, Loader2, CheckCircle2, Plane, Palette, Music, Dumbbell, Briefcase, GraduationCap, Brain, Lightbulb, Rocket, Cpu } from 'lucide-react';
 import { useTranslation } from '@/context/LanguageContext';
 import { type MemberPurposeId } from '@/lib/constants';
 
 const INTENTS = [
   // Learning, Mentorship & Growth Vibes (Knowledge & Growth)
+  { id: 'ai_tech_coaching', label: 'AI & Software Courses', icon: '💻', description: 'AI courses, coding mentorship & custom task builds on order', type: 'growth' },
   { id: 'skill_learning', label: 'Skill & Mentorship', icon: '🎓', description: 'Masterclasses, 1-on-1 coaching & skill transfer', type: 'growth' },
   { id: 'career_finance', label: 'Career & Wealth', icon: '📈', description: 'Startup advice, career coaching & wealth building', type: 'growth' },
   { id: 'zen_alignment', label: 'Zen & Alignment', icon: '🧘‍♀️', description: 'Meditation, spiritual growth & high frequency', type: 'growth' },
@@ -30,6 +31,7 @@ const INTENTS = [
 ];
 
 const CORE_PASSIONS = [
+  { id: 'ai_tech', label: 'AI & Technology', icon: <Cpu className="w-8 h-8 text-[#00fbfb]" />, desc: 'AI courses, coding & custom task builds', color: 'border-[#00fbfb]/30 shadow-[#00fbfb]/20 bg-[#00fbfb]/10' },
   { id: 'education', label: 'Learning & Skills', icon: <GraduationCap className="w-8 h-8 text-[#00fbfb]" />, desc: 'Mastering new crafts & knowledge', color: 'border-[#00fbfb]/30 shadow-[#00fbfb]/20 bg-[#00fbfb]/10' },
   { id: 'career', label: 'Career & Business', icon: <Briefcase className="w-8 h-8 text-[#f59e0b]" />, desc: 'Building empires & mentoring', color: 'border-[#f59e0b]/30 shadow-[#f59e0b]/20 bg-[#f59e0b]/10' },
   { id: 'wellness', label: 'Wellness & Mindset', icon: <Brain className="w-8 h-8 text-[#10b981]" />, desc: 'Health, meditation & optimization', color: 'border-[#10b981]/30 shadow-[#10b981]/20 bg-[#10b981]/10' },

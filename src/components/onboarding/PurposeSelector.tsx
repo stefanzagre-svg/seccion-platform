@@ -35,6 +35,15 @@ export default function PurposeSelector({ onContinue }: PurposeSelectorProps) {
     
     const finalPurposes = memberPurposes.length > 0 ? memberPurposes : ['lifestyle' as MemberPurposeId];
     
+    // Persist to localStorage so prompt category filter works after page reload
+    if (typeof window !== 'undefined') {
+      try {
+        const savedStateStr = localStorage.getItem('_seccion_onboarding_state');
+        const saved = savedStateStr ? JSON.parse(savedStateStr) : {};
+        localStorage.setItem('_seccion_onboarding_state', JSON.stringify({ ...saved, activePurposes: finalPurposes }));
+      } catch {}
+    }
+    
     onContinue(finalPurposes, isCreator);
   };
   

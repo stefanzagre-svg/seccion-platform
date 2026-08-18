@@ -487,6 +487,16 @@ export const CREATOR_SPECIALIZATIONS: CreatorSpecialization[] = [
     isAdult: false,
   },
   {
+    id: 'ai_tech',
+    title: 'AI & Technology Architecture',
+    badge: 'AI & Tech Architect 💻',
+    icon: '💻',
+    color: 'from-cyan-500/20 to-blue-600/20 border-cyan-400/40 text-cyan-300',
+    description: 'AI masterclasses, prompt engineering courses, custom software tasks & algorithmic builds on order.',
+    sampleTags: ['#AIEngineering', '#CustomSoftware', '#PromptOps', '#TechCourses', '#Automation'],
+    isAdult: false,
+  },
+  {
     id: 'adult',
     title: 'Sensual & Explicit Creator (18+)',
     badge: '18+ Sensual Creator 🔞',
@@ -628,6 +638,14 @@ export const PURPOSE_PROMPTS: Record<MemberPurposeId, Record<string, { categoryN
         "What content or creator inspires you most right now?",
         "What would your dream workshop or masterclass be about?"
       ]
+    },
+    ai_tech: {
+      categoryName: "AI & Technology",
+      prompts: [
+        "What custom AI tools or software solutions can you build on order?",
+        "What is your philosophy on prompt engineering & generative workflows?",
+        "What tech stack or AI model do you love teaching the most?"
+      ]
     }
   },
   explicit: {
@@ -663,6 +681,14 @@ export const PURPOSE_PROMPTS: Record<MemberPurposeId, Record<string, { categoryN
         "What makes your content different from everyone else's?",
         "What is the one thing your audience always comes back for?",
         "If you could collaborate with any creator in the world, who and why?"
+      ]
+    },
+    ai_tech: {
+      categoryName: "AI & Software Mastery",
+      prompts: [
+        "What customized software or automated workflows do you build for your subscribers?",
+        "What live coding masterclasses or AI tool teardowns do you stream?",
+        "How do you use AI to supercharge your creative process and business?"
       ]
     }
   }
@@ -750,6 +776,14 @@ export const PURPOSE_PROMPTS_ES: Record<MemberPurposeId, Record<string, { catego
         "¿Qué creador o contenido te inspira más actualmente?",
         "¿De qué trataría tu taller o masterclass soñado?"
       ]
+    },
+    ai_tech: {
+      categoryName: "IA & Tecnología",
+      prompts: [
+        "¿Qué herramientas de IA o soluciones de software personalizadas puedes construir por encargo?",
+        "¿Cuál es tu enfoque al enseñar ingeniería de prompts y flujos de trabajo generativos?",
+        "¿Qué tecnología, lenguaje o modelo de IA disfrutas más enseñando?"
+      ]
     }
   },
   explicit: {
@@ -785,6 +819,14 @@ export const PURPOSE_PROMPTS_ES: Record<MemberPurposeId, Record<string, { catego
         "¿Qué hace que tu contenido sea único y diferente al resto?",
         "¿Qué es lo que tu comunidad siempre busca en tus transmisiones?",
         "Si pudieras colaborar con cualquier creador del mundo, ¿con quién y por qué?"
+      ]
+    },
+    ai_tech: {
+      categoryName: "Maestría en IA & Software",
+      prompts: [
+        "¿Qué software personalizado o flujos automatizados construyes para tus suscriptores?",
+        "¿Qué masterclasses de código en vivo o análisis de herramientas IA transmites?",
+        "¿Cómo utilizas la IA para potenciar tu proceso creativo y tu negocio?"
       ]
     }
   }

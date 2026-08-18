@@ -180,6 +180,21 @@ const getMockCreators = (locale: string) => [
     isAdult: false
   },
   {
+    id: "kai",
+    name: "Kai Thorne",
+    specialization: "ai_tech",
+    image: "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=150&q=80",
+    badge: locale === "es" ? "Arquitecto IA & Tech 💻" : "AI & Tech Architect 💻",
+    badgeColor: "bg-cyan-500/15 border border-cyan-400/40 text-cyan-300",
+    borderColor: "border-cyan-400",
+    sampleActivity: locale === "es" ? "Masterclass IA & Tareas de Software por Encargo" : "AI Masterclass & Custom Task Builds",
+    description: locale === "es" ? "Cursos avanzados de IA, ingeniería de prompts, consultoría y tareas de software a medida construidas por encargo." : "Advanced AI courses, prompt engineering, architecture consulting, and custom software tasks built on order.",
+    tags: ["#AIEngineering", "#CustomSoftware", "#PromptOps", "#Automation"],
+    actionLabel: locale === "es" ? "Solicitar Tarea de Software ($30)" : "Request Custom Tech Task ($30)",
+    buttonHoverColor: "hover:bg-cyan-500/20 hover:border-cyan-400/50",
+    isAdult: false
+  },
+  {
     id: "valeria",
     name: "Valeria Night",
     specialization: "adult",

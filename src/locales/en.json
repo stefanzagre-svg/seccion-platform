@@ -1,8 +1,8 @@
 {
   "metadata": {
-    "defaultTitle": "SECCION | Unlock Real Synergy & Vibe Co-Op",
-    "description": "Where AI Co-Op logic aligns your real-life synergy with top creators and high-chemistry matches.",
-    "keywords": "SECCION, seccion.ai, AI matchmaking, vibe synergy, Co-Op dating, date quests, chemistry XP, live streams, creator platform"
+    "defaultTitle": "SECCION.ai | 1st AI Dating & Creator Live Streaming Hybrid Platform",
+    "description": "SECCION (seccion.ai) is the first AI-driven dating matchmaking and live streaming creator hybrid platform. 90% creator revenue split, 8-level chemistry meter, and real-life vibe synergy.",
+    "keywords": "SECCION, seccion.ai, seccion ai hybrid platform, AI matchmaking, AI dating app, creator live streaming, vibe synergy, Co-Op dating, creator economy, chemistry meter"
   },
   "nav": {
     "home": "Home",
@@ -233,8 +233,8 @@
   },
   "seo": {
     "home": {
-      "title": "SECCION | Authentic Connections & Content Creators",
-      "desc": "1st Fusion Platform combining AI-driven dating matchmaking with live streaming content creators."
+      "title": "SECCION.ai | 1st AI Dating & Creator Live Streaming Hybrid Platform",
+      "desc": "SECCION.ai is the 1st hybrid platform combining AI-driven dating matchmaking with a live streaming creator economy. Keep 90% revenue, 8-level chemistry meter & real-life vibe synergy."
     },
     "howWeDo": {
       "title": "How We Do | SECCION",
@@ -321,6 +321,34 @@
       "relGoalTitle": "Relationship Goal",
       "relTypeTitle": "Relationship Type",
       "finalize": "Finalize Profile"
+    },
+    "creatorExt": {
+      "title": "Creator Extension",
+      "subtitle": "Your member profile is ready. Write your Creator Bio to publish your Studio presence. A Portfolio Reel is optional but helps attract subscribers faster.",
+      "optional": "Optional",
+      "required": "Required",
+      "portfolioLabel": "Portfolio Reel URL",
+      "portfolioPlaceholder": "https://vimeo.com/... · YouTube · OnlyFans · etc.",
+      "portfolioHint": "Link to existing content (Vimeo, YouTube, etc.) to showcase your style and attract subscribers on your profile.",
+      "bioLabel": "Creator Bio",
+      "bioPlaceholder": "Describe your premium content, VIP tiers, and what subscribers get...",
+      "bioMinHint": "Write a bit more — at least 20 characters so subscribers know what they're getting.",
+      "publishBtn": "Publish Creator Profile",
+      "saveError": "Failed to save creator extension profile."
+    },
+    "prelaunchGates": {
+      "creatorNoticeTitle": "Are you a Content Creator?",
+      "creatorNoticeDesc": "Apply for the Pre-Launch Creator Studio to unlock a 90% direct revenue split, 1-Year Free AI Assistant & priority discovery.",
+      "creatorApplyBtn": "Apply as Creator →",
+      "whatIsApprovedTitle": "What is an Approved Creator?",
+      "whatIsApprovedDesc": "Creators who completed the pre-launch application and were verified by our team. If you are approved, click above and sign up with the exact email used in your application.",
+      "notApprovedYet": "Haven't applied or waiting for approval?",
+      "applyHereLink": "Apply as Creator Here →",
+      "loginApprovedExplanation": "Pre-launch access is currently exclusive to approved creators and founding team. Once your creator application is approved, enter your registered email below to access your Studio.",
+      "loginNotAppliedNotice": "Are you a creator who hasn't applied for 90% revenue & 1-Year Free AI Assistant?",
+      "loginApplyNow": "APPLY NOW",
+      "loginMemberNotice": "Looking for early member access?",
+      "loginJoinWaitlist": "JOIN EARLY ACCESS LIST"
     }
   },
   "sessionQuest": {

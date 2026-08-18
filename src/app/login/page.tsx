@@ -24,7 +24,7 @@ function DoubleBezelCard({ children, className = "" }: { children: React.ReactNo
 
 export default function LoginPage() {
   const router = useRouter();
-  const { locale } = useTranslation();
+  const { t, locale } = useTranslation();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [useMagicLink, setUseMagicLink] = useState(false);
@@ -175,12 +175,24 @@ export default function LoginPage() {
               </p>
             </div>
 
-            <div className="p-3 bg-white/5 border border-white/10 rounded-xl text-[11px] text-[#b9cac9] leading-relaxed text-center">
-              {locale === 'es' ? (
-                <>Las cuentas demo públicas están temporalmente bloqueadas durante la fase de pre-lanzamiento. El acceso está restringido a <strong className="text-white">creadores aprobados</strong>.</>
-              ) : (
-                <>Public demo accounts are temporarily locked during the pre-launch phase. Logins are restricted to <strong className="text-white">approved creators</strong>.</>
-              )}
+            <div className="p-3.5 bg-white/5 border border-white/10 rounded-2xl text-[11px] text-[#b9cac9] leading-relaxed text-center space-y-2">
+              <p>
+                {t(
+                  "onboarding.prelaunchGates.loginApprovedExplanation",
+                  "Pre-launch access is currently exclusive to approved creators and founding team. Once your creator application is approved, enter your registered email below to access your Studio."
+                )}
+              </p>
+              <div className="pt-1.5 border-t border-white/5 flex items-center justify-center gap-1.5 text-[10px]">
+                <span className="text-white/40">
+                  {t("onboarding.prelaunchGates.notApprovedYet", "Haven't applied or waiting for approval?")}
+                </span>
+                <Link
+                  href="/become-creator#apply"
+                  className="text-[#00fbfb] hover:underline font-mono font-bold uppercase tracking-wider"
+                >
+                  {t("onboarding.prelaunchGates.loginApplyNow", "APPLY NOW")} →
+                </Link>
+              </div>
             </div>
 
             {errorMsg && (
@@ -365,17 +377,18 @@ export default function LoginPage() {
 
             <div className="border-t border-white/5 pt-4 text-center space-y-2">
               <p className="text-[10px] text-[#b9cac9]">
-                {locale === 'es' 
-                  ? '¿Eres un creador que aún no ha aplicado por el 90% de ingresos y 1 Año de Asistente IA Gratis? ' 
-                  : 'Are you a creator that has not applied for 90% revenue & 1-Year Free AI Assistant? '}
+                {t(
+                  "onboarding.prelaunchGates.loginNotAppliedNotice",
+                  "Are you a creator that has not applied for 90% revenue & 1-Year Free AI Assistant? "
+                )}{" "}
                 <Link href="/become-creator#apply" className="text-[#00fbfb] hover:underline font-bold font-mono uppercase tracking-wide">
-                  {locale === 'es' ? 'APLICA AHORA' : 'Apply Now'}
+                  {t("onboarding.prelaunchGates.loginApplyNow", "APPLY NOW")}
                 </Link>
               </p>
               <p className="text-[10px] text-[#b9cac9]">
-                {locale === 'es' ? '¿Quieres recompensas de primer miembro? ' : 'Want early member rewards? '}
+                {t("onboarding.prelaunchGates.loginMemberNotice", "Looking for early member access? ")}{" "}
                 <Link href="/early-access" className="text-[#ffabf3] hover:underline font-bold font-mono uppercase tracking-wide">
-                  {locale === 'es' ? 'UNIRSE A LA LISTA DE ACCESO ANTICIPADO' : 'Join Early Access List'}
+                  {t("onboarding.prelaunchGates.loginJoinWaitlist", "JOIN EARLY ACCESS LIST")}
                 </Link>
               </p>
             </div>

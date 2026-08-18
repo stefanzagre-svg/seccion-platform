@@ -63,12 +63,13 @@ export default function CreatorQuest({ onSignUp, onSwitchToMember, onClose }: Cr
   const [relationshipGoals, setRelationshipGoals] = useState<string[]>([]);
   const [relationshipTypes, setRelationshipTypes] = useState<string[]>([]);
 
-  const PURPOSES = ["Lifestyle", "Gaming", "Explicit 18+", "Coaching", "Education", "Expertise"];
-  const SPECIALIZATIONS = ["Beauty", "Gaming", "Explicit", "Social & Communication", "Economy & Finance", "Dating & Marriage", "Cooking", "Fitness & Wellness", "Health & Psychology", "Art & Music"];
+  const PURPOSES = ["Lifestyle", "AI & Technology", "Gaming", "Explicit 18+", "Coaching", "Education", "Expertise"];
+  const SPECIALIZATIONS = ["AI & Technology", "Beauty", "Gaming", "Explicit", "Social & Communication", "Economy & Finance", "Dating & Marriage", "Cooking", "Fitness & Wellness", "Health & Psychology", "Art & Music"];
 
   // Spanish display mappings for localized UI while preserving DB compatibility
   const PURPOSES_ES: Record<string, string> = {
     "Lifestyle": "Estilo de Vida",
+    "AI & Technology": "IA & Tecnología",
     "Gaming": "Gaming",
     "Explicit 18+": "Explícito 18+",
     "Coaching": "Coaching & Mentoría",
@@ -77,6 +78,7 @@ export default function CreatorQuest({ onSignUp, onSwitchToMember, onClose }: Cr
   };
 
   const SPECIALIZATIONS_ES: Record<string, string> = {
+    "AI & Technology": "IA & Tecnología",
     "Beauty": "Belleza & Estética",
     "Gaming": "Gaming & Esports",
     "Explicit": "Explícito & Adultos",

@@ -1,14 +1,17 @@
-'use client';
+"use client";
 
 import React, { useState } from 'react';
-import { Mail, MapPin, ChevronRight, Check, Sparkles } from 'lucide-react';
+import Link from 'next/link';
+import { Mail, MapPin, ChevronRight, Check, Sparkles, Crown } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useTranslation } from '@/context/LanguageContext';
 
 export interface WaitlistSignupProps {
   variant?: 'inline' | 'card';
 }
 
 export function WaitlistSignup({ variant = 'inline' }: WaitlistSignupProps) {
+  const { t } = useTranslation();
   const [email, setEmail] = useState('');
   const [city, setCity] = useState('');
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'duplicate' | 'error'>('idle');
@@ -165,6 +168,32 @@ export function WaitlistSignup({ variant = 'inline' }: WaitlistSignupProps) {
       {status === 'error' && (
         <p className="text-red-400 text-sm mt-4 text-center font-mono">Something went wrong. Please try again.</p>
       )}
+
+      {/* Creator Pre-Launch Banner */}
+      <div className="mt-8 pt-6 border-t border-white/10">
+        <div className="bg-gradient-to-r from-[#ffabf3]/10 to-transparent border border-[#ffabf3]/30 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex items-start gap-3.5 text-left">
+            <div className="w-10 h-10 rounded-full bg-[#ffabf3]/20 border border-[#ffabf3]/40 flex items-center justify-center shrink-0 mt-0.5">
+              <Crown className="w-5 h-5 text-[#ffabf3]" />
+            </div>
+            <div>
+              <h4 className="text-sm font-bold font-outfit uppercase tracking-wider text-white flex items-center gap-2">
+                <span>{t("onboarding.prelaunchGates.creatorNoticeTitle", "Are you a Content Creator?")}</span>
+                <span className="text-[9px] font-mono font-bold bg-[#ffabf3]/20 text-[#ffabf3] px-2 py-0.5 rounded-full uppercase">90% Split</span>
+              </h4>
+              <p className="text-xs text-[#b9cac9] mt-1 leading-relaxed">
+                {t("onboarding.prelaunchGates.creatorNoticeDesc", "Apply for the Pre-Launch Creator Studio to unlock a 90% direct revenue split, 1-Year Free AI Assistant & priority discovery.")}
+              </p>
+            </div>
+          </div>
+          <Link
+            href="/become-creator#apply"
+            className="w-full sm:w-auto shrink-0 px-5 py-3 bg-[#ffabf3] hover:bg-[#ffabf3]/90 text-black font-mono text-xs font-black uppercase tracking-wider rounded-xl transition hover:shadow-[0_0_20px_rgba(255,171,243,0.5)] text-center flex items-center justify-center gap-1.5"
+          >
+            <span>{t("onboarding.prelaunchGates.creatorApplyBtn", "Apply as Creator →")}</span>
+          </Link>
+        </div>
+      </div>
     </div>
   );
 }
