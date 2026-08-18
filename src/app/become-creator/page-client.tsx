@@ -228,13 +228,13 @@ export default function BecomeCreatorPage({ initialProfile, userEmail }: { initi
                   <>
                     Tu Espacio. <br/>
                     Tus Reglas. <br/>
-                    Quédate el <span className="text-[#00fbfb] drop-shadow-[0_0_35px_rgba(0,251,251,0.5)]">80%</span>.
+                    Quédate el <span className="text-[#00fbfb] drop-shadow-[0_0_35px_rgba(0,251,251,0.5)]">90%</span>.
                   </>
                 ) : (
                   <>
                     Your Space. <br/>
                     Your Rules. <br/>
-                    Keep <span className="text-[#00fbfb] drop-shadow-[0_0_35px_rgba(0,251,251,0.5)]">80%</span>.
+                    Keep <span className="text-[#00fbfb] drop-shadow-[0_0_35px_rgba(0,251,251,0.5)]">90%</span>.
                   </>
                 )}
               </h1>
@@ -242,8 +242,8 @@ export default function BecomeCreatorPage({ initialProfile, userEmail }: { initi
             
             <p className="max-w-full sm:max-w-[580px] text-xs sm:text-base text-[#b9cac9] leading-relaxed font-medium break-words text-left">
               {locale === "es" 
-                ? "Dirige tu negocio de creador de forma independiente. Recupera tus ingresos de las agencias con un asistente IA integrado. Los primeros 500 creadores obtienen su asistente IA gratis el 1er Año." 
-                : "Run your creator business independently. Reclaim your income from agencies with a built-in AI assistant. The first 500 creators receive their AI assistant free for Year 1."}
+                ? "Dirige tu negocio de creador de forma independiente y recupera tus ingresos de las agencias. Los primeros 500 creadores fundadores aseguran un 90% de retención neta y reciben su Asistente IA de Operaciones 100% gratis durante el 1er Año." 
+                : "Run your creator business independently and reclaim your income from agencies. The first 500 founding creators lock in a 90% net revenue split and receive their built-in AI Operations Assistant free for Year 1."}
             </p>
 
             <div className="flex flex-wrap items-center gap-3 pt-2">
@@ -251,7 +251,7 @@ export default function BecomeCreatorPage({ initialProfile, userEmail }: { initi
                 href="#apply" 
                 className="group px-5 py-3 rounded-full bg-[#00fbfb] text-black font-mono text-[11px] font-black uppercase tracking-wider inline-flex items-center justify-between gap-3 hover:shadow-[0_0_30px_rgba(0,251,251,0.6)] active:scale-[0.98] transition-all duration-300 min-h-[44px] cursor-pointer"
               >
-                <span>{locale === "es" ? "Reclama tu Año Gratis" : "Claim Your Free Year"}</span>
+                <span>{locale === "es" ? "Reclama tu 90% y Año Gratis" : "Claim 90% & Free Year"}</span>
                 <span className="w-6 h-6 rounded-full bg-black/10 flex items-center justify-center shrink-0 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform duration-300">
                   <ArrowUpRight className="w-3.5 h-3.5" />
                 </span>
@@ -328,9 +328,9 @@ export default function BecomeCreatorPage({ initialProfile, userEmail }: { initi
                 <div className="border-t border-white/5 pt-3 sm:pt-4 flex justify-between items-center">
                   <div className="text-left">
                     <span className="text-[8px] font-mono uppercase text-white/40 block">
-                      {locale === "es" ? "Retención Neta" : "Net Keeps"}
+                      {locale === "es" ? "Retención Neta Fundador" : "Founding Net Keeps"}
                     </span>
-                    <span className="text-xs sm:text-sm font-bold text-white"><MonoNumber value="80" suffix="%" /></span>
+                    <span className="text-xs sm:text-sm font-bold text-white"><MonoNumber value="90" suffix="%" /></span>
                   </div>
                   <div className="text-right">
                     <span className="text-[8px] font-mono uppercase text-white/40 block">
@@ -445,11 +445,12 @@ export default function BecomeCreatorPage({ initialProfile, userEmail }: { initi
                 </p>
               </div>
 
-              <p className="text-[10px] text-[#b9cac9]/50 font-medium leading-normal max-w-[500px] mx-auto">
+              <p className="text-[10px] text-[#b9cac9]/50 font-medium leading-normal max-w-[550px] mx-auto">
                 {locale === "es" 
-                  ? "Después de tu año gratis, usar el Asistente IA cuesta solo 69 €/mes, o puedes optar por gestionar tu espacio manualmente con nuestra tasa estándar de plataforma gratuita. Siempre conservas el 80% de tus ingresos por suscripciones y propinas. Después del Año 1, la tasa estándar de plataforma es del 20% (conservas el 80%). Sin comisiones ocultas." 
-                  : "After your free year, using the AI Assistant is just 69€/month, or you can choose to manage your space manually at our free standard platform rate. You always retain 80% of your subscription and tip revenues. After Year 1, the standard platform rate is 20% (you keep 80%). No hidden fees."}
+                  ? "Los primeros 500 creadores fundadores conservan el 90% de sus ingresos netos y reciben el Asistente IA 100% gratis durante todo el Año 1. Posteriormente, la tasa estándar de plataforma es del 20% (conservas el 80% de por vida) y el asistente IA cuesta 69 €/mes opcional. Sin intermediarios ni comisiones ocultas." 
+                  : "The first 500 founding creators keep 90% of net earnings and receive the built-in AI Operations Assistant 100% free for Year 1. Afterwards, the standard platform rate is just 20% (you keep 80% lifetime) with optional AI assistant at €69/month. Zero middlemen, zero hidden fees."}
               </p>
+
             </div>
           </DoubleBezelCard>
         </div>
@@ -715,9 +716,10 @@ export default function BecomeCreatorPage({ initialProfile, userEmail }: { initi
             
             <p className="max-w-[620px] mx-auto text-xs sm:text-sm text-[#b9cac9] leading-relaxed">
               {locale === "es" 
-                ? "Únete a la primera oleada de creadores independientes. Recibe tu Asistente IA 1er Año Gratis, conserva el 90% de tus ingresos y toma el control de tu comunidad." 
-                : "Join the first wave of independent creators. Receive your Year 1 Free AI Assistant, keep 90% of your earnings, and take full control of your community."}
+                ? "Asegura una de las 500 plazas de Creador Fundador: garantiza tu 90% de comisión neta y desbloquea tu Asistente IA de Operaciones 100% gratis durante todo el 1er Año." 
+                : "Lock in one of the 500 Founding Creator spots: secure your 90% net revenue split and unlock your built-in AI Operations Assistant 100% free for your entire 1st Year."}
             </p>
+
           </div>
 
           <DoubleBezelCard className="text-left">
@@ -1031,12 +1033,12 @@ export default function BecomeCreatorPage({ initialProfile, userEmail }: { initi
             <div className="p-5 bg-white/[0.02] border border-white/5 rounded-2xl text-left space-y-2.5">
               <h4 className="text-sm font-bold text-white flex items-center gap-2">
                 <HelpCircle className="w-4 h-4 text-[#00fbfb] shrink-0" />
-                {locale === "es" ? "¿Qué es la oferta del Pack IA 1 Año Gratis y cómo califico?" : "What is the Free Year Pack AI offer, and how do I qualify?"}
+                {locale === "es" ? "¿Qué es la oferta del Pack Creador Fundador (90% Comisión + 1 Año IA Gratis)?" : "What is the Founding Creator Pack (90% Revenue Split + 1-Year Free AI)?"}
               </h4>
               <p className="text-xs text-[#b9cac9] leading-relaxed pl-6">
                 {locale === "es"
-                  ? "La oferta del Pack IA de 1 Año brinda a nuestros creadores acceso total y gratuito a nuestro Asistente IA de Operaciones durante todo su primer año en SECCION. Esta oferta está disponible para creadores que se unan durante nuestra campaña de lanzamiento. Como revisamos cada solicitud personalmente, seleccionamos a los creadores que mejor se alinean con el vibe de nuestra comunidad. Después de tu primer año, usar el asistente IA cuesta solo 69 €/mes, o puedes optar por gestionar tu canal manualmente con nuestra tasa estándar gratuita."
-                  : "The Year-Pack AI offer gives our creators complete, free access to our AI Operations Assistant for their entire first year on SECCION. This offer is available for creators who join during our launch campaign. Because we personally review each application, we select the creators who best align with our community's vibe. After your first year, using the AI assistant is just €69/month, or you can choose to manage your channel manually at our free standard platform rate."}
+                  ? "Para los primeros 500 creadores de nuestra campaña de lanzamiento, ofrecemos el 90% de retención de ingresos netos y acceso total 100% gratuito a nuestro Asistente IA de Operaciones durante todo su primer año en SECCION. Tras el primer año, la tasa estándar de plataforma pasa al 20% (conservas el 80% de por vida) y el asistente IA cuesta solo 69 €/mes opcional."
+                  : "For the first 500 creators joining our launch campaign, we offer a 90% net revenue split and 100% free, complete access to our built-in AI Operations Assistant for their entire first year on SECCION. After Year 1, the standard platform rate transitions to 20% (you keep 80% lifetime) with optional AI assistant at just €69/month."}
               </p>
             </div>
 
@@ -1057,14 +1059,15 @@ export default function BecomeCreatorPage({ initialProfile, userEmail }: { initi
             <div className="p-5 bg-white/[0.02] border border-white/5 rounded-2xl text-left space-y-2.5">
               <h4 className="text-sm font-bold text-white flex items-center gap-2">
                 <HelpCircle className="w-4 h-4 text-[#00fbfb] shrink-0" />
-                {locale === "es" ? "¿Cómo funciona el reparto 80/20? ¿Hay comisiones ocultas?" : "How does the 80/20 split work? Are there hidden fees?"}
+                {locale === "es" ? "¿Cómo funciona el reparto de ingresos (90% Fundadores / 80% Estándar)?" : "How does the revenue split work (90% Founding / 80% Standard)?"}
               </h4>
               <p className="text-xs text-[#b9cac9] leading-relaxed pl-6">
                 {locale === "es"
-                  ? "Recibes el 80% de los Ingresos Netos en todas las suscripciones, propinas, streams y pedidos personalizados. Los Ingresos Netos son simplemente el Valor Bruto del Cliente menos las comisiones de procesamiento de pago de terceros (tarifas de tarjeta de crédito Segpay / CCBill). El 20% restante cubre las operaciones de la plataforma SECCION, garantizando un alto rendimiento para el creador sin comisiones ocultas de agencia."
-                  : "You receive 80% of Net Revenue across all subscriptions, tips, streams, and custom orders. Net Revenue is simply Gross Customer Value minus third-party payment processing fees (Segpay / CCBill credit card fees). The remaining 20% of Net Revenue covers SECCION platform operations, guaranteeing high creator payout yield while maintaining zero hidden agency markups."}
+                  ? "Los creadores fundadores reciben el 90% de los Ingresos Netos durante su período de campaña (y el 80% estándar posteriormente) en todas las suscripciones, propinas, streams y pedidos personalizados. Los Ingresos Netos son el Valor Bruto del Cliente menos las comisiones de procesamiento bancario de terceros (tarifas de tarjeta Segpay / CCBill). Cero comisiones de agencia o intermediarios abusivos."
+                  : "Founding creators receive 90% of Net Revenue during their campaign period (and 80% standard afterwards) across all subscriptions, tips, streams, and custom orders. Net Revenue is Gross Customer Value minus third-party payment processing fees (Segpay / CCBill credit card fees). Zero agency cuts or exploitative markups."}
               </p>
             </div>
+
 
             {/* FAQ 4 */}
             <div className="p-5 bg-white/[0.02] border border-white/5 rounded-2xl text-left space-y-2.5">
