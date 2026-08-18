@@ -58,8 +58,11 @@ PAYMENT PROCESSOR, COMPLIANCE & SAFETY STANDARDS (session-adult-creator-skill)
 - STRICT ZERO-EXPLICIT BY DEFAULT (SFW vs. NSFW Isolation):
   * The default platform feed is 100% clean, non-explicit lifestyle matchmaking. Members who do not want adult interactions will NEVER be exposed to explicit content.
   * Explicit content is strictly quarantined in an 18+ opt-in layer requiring member double-consent and 100% KYC-verified creators.
-- 18+ KYC / AML Verification & Age Gating:
+- 18+ KYC / AML Verification, ZKP (Zero-Knowledge Proofs) & Age Gating:
   * Mandatory government photo ID verification + 3D biometric facial liveness checks before any creator can publish monetized content or receive payouts.
+  * ZERO-KNOWLEDGE PROOF (ZKP) AGE VERIFICATION: For privacy-conscious members and EU users, SECCION supports decentralized eID verification via Privado ID (Polygon ID), zkPass TransGate, and EU Digital Identity Wallets (eIDAS 2.0).
+  * ZERO-PII GUARANTEE: zk-SNARK cryptographic proofs verify that Age >= 18 mathematically without storing, transmitting, or disclosing the user's date of birth, name, or national ID number.
+  * In-App ZKP Guide: The onboarding flow includes an interactive 3-tab ZKP Wallet Guide Modal explaining why ZKP protects privacy, how to choose a supported wallet, and step-by-step wallet connection.
   * Zero-tolerance for minors, unverified co-performers, or non-consensual media. Full compliance with 18 U.S.C. 2257 record-keeping standards.
 - Chargeback Prevention & Low-Risk Settlement:
   * Escrow Milestone Protection: Custom content purchases hold funds in escrow until buyer confirmation, eliminating "item not received" disputes.
