@@ -42,8 +42,9 @@ export default function PublicFooter() {
           className="h-8 md:h-10 drop-shadow-[0_0_25px_rgba(0,251,251,0.4)] object-contain" 
         />
         <p className="font-mono text-[11px] font-medium tracking-widest text-[#b9cac9] opacity-40 pt-2">
-          © 2026 SECCION AI CONCEPT S.L. · Alicante, Spain · {t("footer.rights", "ALL RIGHTS RESERVED.")}
+          © 2026 SECCION AI CONCEPT S.L. · {t("footer.rights", "ALL RIGHTS RESERVED.")}
         </p>
+
 
       </div>
     </footer>

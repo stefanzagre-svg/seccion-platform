@@ -62,7 +62,7 @@ export default function PrivacyPage() {
               <span>🛡️</span> {locale === "es" ? "RESPONSABLE DEL TRATAMIENTO (DATA CONTROLLER)" : "DATA CONTROLLER"}: <span className="text-[#00fbfb]">SECCION AI CONCEPT S.L.</span>
             </div>
             <div className="text-[10px] text-white/60">
-              📍 Calle Ingeniero Canales 4, Oficina 1B, 03013 Alicante, España (Spain) · DPO: <a href="mailto:dpo@seccion.ai" className="text-[#00fbfb] underline">dpo@seccion.ai</a>
+              Data Protection Officer (DPO): <a href="mailto:dpo@seccion.ai" className="text-[#00fbfb] underline">dpo@seccion.ai</a>
             </div>
           </div>
           <div className="p-3 bg-[#ffabf3]/5 border border-[#ffabf3]/20 rounded-xl text-left text-[10px] text-[#ffabf3]">

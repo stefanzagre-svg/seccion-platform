@@ -62,7 +62,7 @@ export default function CreatorHubPage() {
               <span>📜</span> {locale === "es" ? "ENTIDAD CONTRATANTE & CUSTODIA 2257" : "CONTRACTING ENTITY & 2257 CUSTODIAN"}: <span className="text-[#00fbfb]">SECCION AI CONCEPT S.L.</span>
             </div>
             <div className="text-[10px] text-white/60">
-              📍 Calle Ingeniero Canales 4, Oficina 1B, 03013 Alicante, España (Spain) · Creator Desk: <a href="mailto:creators@seccion.ai" className="text-[#00fbfb] underline">creators@seccion.ai</a>
+              Creator Desk & Compliance: <a href="mailto:creators@seccion.ai" className="text-[#00fbfb] underline">creators@seccion.ai</a>
             </div>
           </div>
         </div>
