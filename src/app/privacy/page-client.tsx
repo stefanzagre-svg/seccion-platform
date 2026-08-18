@@ -55,8 +55,16 @@ export default function PrivacyPage() {
             {locale === "es" ? "Política de Privacidad" : "Privacy Policy"}
           </h1>
           <p className="text-xs sm:text-sm text-[#b9cac9] max-w-xl">
-            {locale === "es" ? "Protegemos tus datos personales, rostro y preferencias con altos estándares de seguridad." : "We protect your personal data, face, and preferences with high security standards."}
+            {locale === "es" ? "Protegemos tus datos personales, rostro y preferencias con altos estándares de seguridad y RGPD." : "We protect your personal data, face, and preferences with high security and GDPR standards."}
           </p>
+          <div className="p-3 bg-white/[0.03] border border-white/10 rounded-xl text-left text-[11px] text-[#b9cac9] font-mono space-y-1">
+            <div className="text-white font-bold uppercase tracking-wider flex items-center gap-1.5">
+              <span>🛡️</span> {locale === "es" ? "RESPONSABLE DEL TRATAMIENTO (DATA CONTROLLER)" : "DATA CONTROLLER"}: <span className="text-[#00fbfb]">SECCION AI CONCEPT S.L.</span>
+            </div>
+            <div className="text-[10px] text-white/60">
+              📍 Calle Ingeniero Canales 4, Oficina 1B, 03013 Alicante, España (Spain) · DPO: <a href="mailto:dpo@seccion.ai" className="text-[#00fbfb] underline">dpo@seccion.ai</a>
+            </div>
+          </div>
           <div className="p-3 bg-[#ffabf3]/5 border border-[#ffabf3]/20 rounded-xl text-left text-[10px] text-[#ffabf3]">
             💡 **{locale === "es" ? "ESTÁNDARES LEGALES Y MONETIZACIÓN" : "LEGAL STANDARDS & MONETIZATION"}**: {locale === "es" ? "Términos, directrices legales y herramientas de monetización para creadores en SECCION." : "Terms, legal guidelines, and monetization tools for creators on SECCION."} <Link href="/creator-hub" className="underline font-bold">[{locale === "es" ? "Centro de Creadores" : "Creator Hub"}]</Link>
           </div>

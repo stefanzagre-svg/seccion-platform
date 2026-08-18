@@ -52,11 +52,19 @@ export default function CreatorHubPage() {
         {/* Title */}
         <div className="text-left space-y-3 mb-12">
           <h1 className="font-display text-4xl md:text-5xl font-black text-white tracking-tight uppercase leading-none font-['Outfit']">
-            {locale === "es" ? "Centro de Creadores" : "Creator Hub"}
+            {locale === "es" ? "Centro de Creadores y Contrato" : "Creator Hub & Contract Terms"}
           </h1>
           <p className="text-xs sm:text-sm text-[#b9cac9] max-w-xl">
-            {locale === "es" ? "Términos, directrices legales y herramientas de monetización para creadores en SECCION." : "Terms, legal guidelines, and monetization tools for creators on SECCION."}
+            {locale === "es" ? "Acuerdo de contratista independiente, directrices 2257, reparto 80/20 y herramientas de monetización." : "Independent contractor agreement, 2257 guidelines, 80/20 net split, and creator monetization tools."}
           </p>
+          <div className="p-3 bg-white/[0.03] border border-white/10 rounded-xl text-left text-[11px] text-[#b9cac9] font-mono space-y-1">
+            <div className="text-white font-bold uppercase tracking-wider flex items-center gap-1.5">
+              <span>📜</span> {locale === "es" ? "ENTIDAD CONTRATANTE & CUSTODIA 2257" : "CONTRACTING ENTITY & 2257 CUSTODIAN"}: <span className="text-[#00fbfb]">SECCION AI CONCEPT S.L.</span>
+            </div>
+            <div className="text-[10px] text-white/60">
+              📍 Calle Ingeniero Canales 4, Oficina 1B, 03013 Alicante, España (Spain) · Creator Desk: <a href="mailto:creators@seccion.ai" className="text-[#00fbfb] underline">creators@seccion.ai</a>
+            </div>
+          </div>
         </div>
 
         <DoubleBezelCard>

@@ -52,11 +52,19 @@ export default function RulesPage() {
         {/* Title */}
         <div className="text-left space-y-3 mb-12">
           <h1 className="font-display text-4xl md:text-5xl font-black text-white tracking-tight uppercase leading-none font-['Outfit']">
-            {locale === "es" ? "Reglas de la Comunidad" : "Community Rules"}
+            {locale === "es" ? "Términos de Servicio y Reglas" : "Terms of Service & Rules"}
           </h1>
           <p className="text-xs sm:text-sm text-[#b9cac9] max-w-xl">
-            {locale === "es" ? "Directrices para garantizar una comunidad segura, respetuosa y auténtica en SECCION." : "Guidelines ensuring a safe, respectful, and authentic community on SECCION."}
+            {locale === "es" ? "Condiciones de uso, directrices comunitarias y marco contractual legal de SECCION." : "Terms of service, community guidelines, and legal contractual framework of SECCION."}
           </p>
+          <div className="p-3 bg-white/[0.03] border border-white/10 rounded-xl text-left text-[11px] text-[#b9cac9] font-mono space-y-1">
+            <div className="text-white font-bold uppercase tracking-wider flex items-center gap-1.5">
+              <span>🏛️</span> {locale === "es" ? "ENTIDAD LEGAL TITULAR" : "OPERATING LEGAL ENTITY"}: <span className="text-[#00fbfb]">SECCION AI CONCEPT S.L.</span>
+            </div>
+            <div className="text-[10px] text-white/60">
+              📍 Calle Ingeniero Canales 4, Oficina 1B, 03013 Alicante, España (Spain) · Contact: <a href="mailto:legal@seccion.ai" className="text-[#00fbfb] underline">legal@seccion.ai</a>
+            </div>
+          </div>
           <div className="p-3 bg-[#ffabf3]/5 border border-[#ffabf3]/20 rounded-xl text-left text-[10px] text-[#ffabf3]">
             💡 **{locale === "es" ? "ESTÁNDARES LEGALES Y MONETIZACIÓN" : "LEGAL STANDARDS & MONETIZATION"}**: {locale === "es" ? "Términos, directrices legales y herramientas de monetización para creadores en SECCION." : "Terms, legal guidelines, and monetization tools for creators on SECCION."} <Link href="/creator-hub" className="underline font-bold">[{locale === "es" ? "Centro de Creadores" : "Creator Hub"}]</Link>
           </div>
