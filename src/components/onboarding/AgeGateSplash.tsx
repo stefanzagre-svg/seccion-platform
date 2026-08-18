@@ -2,11 +2,15 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ShieldAlert, Info, ArrowRight } from 'lucide-react';
+import { ShieldAlert, Info, ArrowRight, Cpu } from 'lucide-react';
+import { useTranslation } from '@/context/LanguageContext';
+import ZkpWalletGuideModal from '@/components/onboarding/ZkpWalletGuideModal';
 
 export default function AgeGateSplash() {
+  const { t, locale } = useTranslation();
   const [isVerified, setIsVerified] = useState(true);
   const [showZkpInfo, setShowZkpInfo] = useState(false);
+  const [isZkpModalOpen, setIsZkpModalOpen] = useState(false);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -70,9 +74,9 @@ export default function AgeGateSplash() {
             <div className="mt-8 pt-6 border-t border-white/10">
               <button 
                 onClick={() => setShowZkpInfo(!showZkpInfo)}
-                className="text-[10px] uppercase font-bold tracking-widest text-white/40 hover:text-white flex items-center justify-center gap-1.5 mx-auto transition"
+                className="text-[10px] uppercase font-bold tracking-widest text-white/40 hover:text-white flex items-center justify-center gap-1.5 mx-auto transition cursor-pointer"
               >
-                <Info className="w-3 h-3" /> How we verify age (Hybrid Protocol)
+                <Info className="w-3 h-3" /> {locale === 'es' ? 'Cómo verificamos tu edad (Protocolo Híbrido & ZKP)' : 'How we verify age (Hybrid Protocol & ZKP)'}
               </button>
               
               <AnimatePresence>
@@ -83,14 +87,21 @@ export default function AgeGateSplash() {
                     exit={{ height: 0, opacity: 0 }}
                     className="overflow-hidden"
                   >
-                    <div className="p-4 mt-4 bg-white/5 border border-white/10 rounded-xl text-left">
-                      <p className="text-xs text-white/60 leading-relaxed mb-3">
-                        <strong className="text-white">Future-Proof Privacy:</strong> We use a hybrid verification approach depending on your region. 
-                        We partner with Yoti for secure ID checks, and we are integrating Zero-Knowledge Proofs (ZKP) to verify your age without storing your personal data.
+                    <div className="p-4 mt-4 bg-white/5 border border-white/10 rounded-xl text-left space-y-3">
+                      <p className="text-xs text-white/70 leading-relaxed">
+                        <strong className="text-white">{locale === 'es' ? 'Privacidad Soberana & DSA:' : 'Sovereign Privacy & DSA:'}</strong>{' '}
+                        {locale === 'es' 
+                          ? 'SECCION utiliza un protocolo híbrido. Puedes auto-declarar tu fecha de nacimiento bajo las leyes locales, o utilizar una Billetera de Identidad ZKP para verificar tu edad de forma 100% matemática y privada sin compartir documentos.'
+                          : 'SECCION uses a hybrid verification approach. You can self-declare your DOB under local regulations, or use a ZKP Identity Wallet to verify age mathematically with zero data storage.'}
                       </p>
-                      <p className="text-[10px] text-white/40">
-                        This initial confirmation is legally binding. Full verification may be required during registration.
-                      </p>
+                      <button
+                        type="button"
+                        onClick={() => setIsZkpModalOpen(true)}
+                        className="w-full py-2 bg-[#00fbfb]/15 hover:bg-[#00fbfb]/25 border border-[#00fbfb]/40 text-[#00fbfb] font-mono text-[10px] font-bold uppercase tracking-wider rounded-lg transition flex items-center justify-center gap-1.5 cursor-pointer"
+                      >
+                        <Cpu className="w-3.5 h-3.5" />
+                        <span>{locale === 'es' ? 'Abrir Guía de Billeteras ZKP' : 'Open ZKP Wallet Guide'}</span>
+                      </button>
                     </div>
                   </motion.div>
                 )}
@@ -98,6 +109,8 @@ export default function AgeGateSplash() {
             </div>
           </div>
         </motion.div>
+
+        <ZkpWalletGuideModal isOpen={isZkpModalOpen} onClose={() => setIsZkpModalOpen(false)} />
       </div>
     </AnimatePresence>
   );

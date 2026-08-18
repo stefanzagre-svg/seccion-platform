@@ -1,0 +1,31 @@
+{
+  "url": "http://localhost:3000/onboarding-reset",
+  "timestamp": "2026-08-17T10:07:42.517Z",
+  "frictionEvents": [],
+  "cognitiveLoad": {
+    "timestamp": 1786961262460,
+    "url": "http://localhost:3000/onboarding-reset",
+    "metrics": {
+      "domNodeCount": 109,
+      "maxDomDepth": 6,
+      "clutterIndex": 108,
+      "hicksLawScore": {
+        "totalChoices": 1,
+        "estimatedDecisionTimeSeconds": 1,
+        "status": "low"
+      },
+      "formComplexity": {
+        "inputCount": 0,
+        "ungroupedInputCount": 0,
+        "missingLabelsCount": 0,
+        "complexityStatus": "low"
+      }
+    }
+  },
+  "summary": {
+    "totalFrictionPoints": 0,
+    "frictionSeverity": "low",
+    "cognitiveComplexity": "low",
+    "recommendations": []
+  }
+}

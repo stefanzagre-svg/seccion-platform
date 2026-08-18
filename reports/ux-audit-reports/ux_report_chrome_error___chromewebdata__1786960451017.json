@@ -1,0 +1,31 @@
+{
+  "url": "chrome-error://chromewebdata/",
+  "timestamp": "2026-08-17T09:54:11.016Z",
+  "frictionEvents": [],
+  "cognitiveLoad": {
+    "timestamp": 1786960451017,
+    "url": "chrome-error://chromewebdata/",
+    "metrics": {
+      "domNodeCount": 3,
+      "maxDomDepth": 1,
+      "clutterIndex": 3,
+      "hicksLawScore": {
+        "totalChoices": 0,
+        "estimatedDecisionTimeSeconds": 0,
+        "status": "low"
+      },
+      "formComplexity": {
+        "inputCount": 0,
+        "ungroupedInputCount": 0,
+        "missingLabelsCount": 0,
+        "complexityStatus": "low"
+      }
+    }
+  },
+  "summary": {
+    "totalFrictionPoints": 0,
+    "frictionSeverity": "low",
+    "cognitiveComplexity": "low",
+    "recommendations": []
+  }
+}

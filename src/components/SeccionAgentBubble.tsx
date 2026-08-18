@@ -23,6 +23,23 @@ export default function SeccionAgentBubble() {
   const [messages, setMessages] = useState<Message[]>([]);
 
   useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const searchParams = new URLSearchParams(window.location.search);
+      const isSegpayReviewer = searchParams.get('reviewer') === 'segpay';
+      if (isSegpayReviewer) {
+        setIsOpen(true);
+        setMessages([
+          {
+            id: 'segpay-welcome',
+            sender: 'agent',
+            text: "Hello Lauren & Segpay Underwriting Team! 👋 I'm Steve, SECCION's Onboarding & Compliance Specialist. Feel free to ask me anything regarding our platform mechanics, 18+ biometric KYC verification, 18 U.S.C. 2257 record-keeping, SFW vs. NSFW purchase gating, escrow protection, terms of service, or refund protocols.",
+            timestamp: new Date()
+          }
+        ]);
+        return;
+      }
+    }
+
     setMessages([
       {
         id: 'welcome',
@@ -32,6 +49,7 @@ export default function SeccionAgentBubble() {
       }
     ]);
   }, [locale, t]);
+
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [errorText, setErrorText] = useState<string | null>(null);

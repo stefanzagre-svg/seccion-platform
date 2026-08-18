@@ -2,13 +2,14 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Settings, Lock, PauseCircle, AlertCircle, ArrowLeft, Mic, Crown, Bell, Moon, Map, LifeBuoy, FileText, Shield, MessageSquare } from "lucide-react";
+import { Settings, Lock, PauseCircle, AlertCircle, ArrowLeft, Mic, Crown, Bell, Moon, Map, LifeBuoy, FileText, Shield, MessageSquare, ShieldCheck, Cpu, ExternalLink, QrCode, Sparkles } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { getResilientSession, getResilientProfile } from "@/lib/supabase-safe";
 import { useTranslation } from "@/context/LanguageContext";
+import ZkpWalletGuideModal from "@/components/onboarding/ZkpWalletGuideModal";
 
 export default function SettingsPage() {
-  const { t: translate } = useTranslation();
+  const { t: translate, locale } = useTranslation();
   const router = useRouter();
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [currentUserProfile, setCurrentUserProfile] = useState<any>(null);
@@ -16,6 +17,7 @@ export default function SettingsPage() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteConfirmation, setDeleteConfirmation] = useState("");
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
+  const [isZkpModalOpen, setIsZkpModalOpen] = useState(false);
 
   useEffect(() => {
     async function loadData() {
@@ -59,6 +61,8 @@ export default function SettingsPage() {
 
   return (
     <div className="min-h-screen bg-[#050505] text-white pt-24 pb-20 px-4 md:px-8 max-w-5xl mx-auto">
+      <ZkpWalletGuideModal isOpen={isZkpModalOpen} onClose={() => setIsZkpModalOpen(false)} />
+      
       <button 
         onClick={() => router.back()}
         className="flex items-center gap-2 text-white/50 hover:text-white transition mb-8 text-sm font-bold uppercase tracking-widest"
@@ -117,6 +121,45 @@ export default function SettingsPage() {
               >
                 {currentUserProfile?.face_blur_active ? translate("settings.blur_enabled", "Blur: Enabled") : translate("settings.blur_disabled", "Blur: Disabled")}
               </button>
+            </div>
+          </div>
+
+          {/* Age Verification & ZKP Identity Privacy Protocol */}
+          <div className="glass-card p-6 bg-gradient-to-br from-[#00fbfb]/10 via-[#0a0f18] to-[#ffabf3]/10 border border-[#00fbfb]/30 rounded-3xl space-y-4 md:col-span-2 text-left">
+            <div className="flex items-start justify-between flex-wrap gap-4">
+              <div className="space-y-1.5 flex-1 min-w-[260px]">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-lg bg-[#00fbfb]/15 border border-[#00fbfb]/40 flex items-center justify-center text-[#00fbfb]">
+                    <ShieldCheck className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-extrabold uppercase tracking-wider text-white flex items-center gap-2">
+                      <span>{locale === 'es' ? 'Verificación de Edad & Protocolo ZKP' : 'Age Verification & ZKP Privacy'}</span>
+                      <span className="text-[9px] font-mono bg-[#00fbfb]/20 text-[#00fbfb] px-2 py-0.5 rounded-full uppercase font-bold">
+                        DSA Compliant
+                      </span>
+                    </h3>
+                    <p className="text-[10px] text-[#00fbfb] font-mono">
+                      {locale === 'es' ? 'Pruebas de Conocimiento Cero & Privacidad Soberana' : 'Zero-Knowledge Proofs & Sovereign Privacy'}
+                    </p>
+                  </div>
+                </div>
+                <p className="text-xs text-white/70 leading-relaxed pt-1">
+                  {locale === 'es'
+                    ? 'SECCION cumple con la Ley de Servicios Digitales (DSA Art. 28) y las leyes internacionales. Puedes verificar tu mayoría de edad de forma 100% anónima conectando una billetera de identidad ZKP (Privado ID / Polygon ID / zkPass) sin subir tu documento de identidad ni compartir tu fecha de nacimiento.'
+                    : 'SECCION complies with the EU Digital Services Act (DSA Art. 28) and international mandates. You can verify your legal age 100% anonymously using a ZKP identity wallet (Privado ID / Polygon ID / zkPass) with zero personal data leakage.'}
+                </p>
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-2 shrink-0">
+                <button
+                  onClick={() => setIsZkpModalOpen(true)}
+                  className="px-4 py-2.5 rounded-xl bg-[#00fbfb] hover:bg-[#00fbfb]/90 text-black text-xs font-mono font-black uppercase tracking-wider transition shadow-[0_0_15px_rgba(0,251,251,0.3)] flex items-center justify-center gap-1.5 cursor-pointer"
+                >
+                  <Cpu className="w-4 h-4" />
+                  <span>{locale === 'es' ? 'Guía de Billeteras ZKP' : 'ZKP Wallet Guide'}</span>
+                </button>
+              </div>
             </div>
           </div>
 
