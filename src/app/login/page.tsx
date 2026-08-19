@@ -175,24 +175,59 @@ export default function LoginPage() {
               </p>
             </div>
 
+            {/* Explanatory Info Card */}
             <div className="p-3.5 bg-white/5 border border-white/10 rounded-2xl text-[11px] text-[#b9cac9] leading-relaxed text-center space-y-2">
               <p>
                 {t(
                   "onboarding.prelaunchGates.loginApprovedExplanation",
-                  "Pre-launch access is currently exclusive to approved creators and founding team. Once your creator application is approved, enter your registered email below to access your Studio."
+                  "Pre-launch access is reserved for approved creators and the founding team."
                 )}
               </p>
-              <div className="pt-1.5 border-t border-white/5 flex items-center justify-center gap-1.5 text-[10px]">
-                <span className="text-white/40">
-                  {t("onboarding.prelaunchGates.notApprovedYet", "Haven't applied or waiting for approval?")}
-                </span>
-                <Link
-                  href="/become-creator#apply"
-                  className="text-[#00fbfb] hover:underline font-mono font-bold uppercase tracking-wider"
-                >
-                  {t("onboarding.prelaunchGates.loginApplyNow", "APPLY NOW")} →
-                </Link>
+              <div className="pt-1.5 border-t border-white/5 flex flex-col items-center justify-center gap-1 text-[10px]">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-white/40">
+                    {t("onboarding.prelaunchGates.notApprovedYet", "Haven't applied or waiting for approval?")}
+                  </span>
+                  <Link
+                    href="/become-creator#apply"
+                    className="text-[#00fbfb] hover:underline font-mono font-bold uppercase tracking-wider"
+                  >
+                    {t("onboarding.prelaunchGates.loginApplyNow", "APPLY NOW")} →
+                  </Link>
+                </div>
               </div>
+            </div>
+
+            {/* Mode Switcher Tabs */}
+            <div className="grid grid-cols-2 p-1 bg-black/60 border border-white/10 rounded-xl text-xs font-mono font-bold">
+              <button
+                type="button"
+                onClick={() => {
+                  setUseMagicLink(false);
+                  setErrorMsg(null);
+                }}
+                className={`py-2 px-3 rounded-lg text-center transition-all cursor-pointer ${
+                  !useMagicLink
+                    ? "bg-white/15 text-[#00fbfb] shadow-[0_0_10px_rgba(0,251,251,0.2)]"
+                    : "text-white/40 hover:text-white"
+                }`}
+              >
+                {t("onboarding.prelaunchGates.tabPassword", "Sign in with Password")}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setUseMagicLink(true);
+                  setErrorMsg(null);
+                }}
+                className={`py-2 px-3 rounded-lg text-center transition-all cursor-pointer ${
+                  useMagicLink
+                    ? "bg-[#00fbfb] text-black shadow-[0_0_15px_rgba(0,251,251,0.4)]"
+                    : "text-[#ffabf3] hover:text-white"
+                }`}
+              >
+                {t("onboarding.prelaunchGates.tabPasswordless", "✨ First-Time / Passwordless")}
+              </button>
             </div>
 
             {errorMsg && (
@@ -269,10 +304,30 @@ export default function LoginPage() {
             ) : (
               <form onSubmit={handleLogin} className="space-y-4">
                 
+                {/* Contextual Banner for Selected Mode */}
+                {useMagicLink ? (
+                  <div className="p-3 bg-[#00fbfb]/10 border border-[#00fbfb]/30 rounded-xl text-[11px] text-[#b9cac9] leading-relaxed flex items-start gap-2">
+                    <Sparkles className="w-4 h-4 text-[#00fbfb] shrink-0 mt-0.5" />
+                    <span>
+                      {t(
+                        "onboarding.prelaunchGates.firstTimeBadge",
+                        "Recommended for newly approved creators without a password yet. Enter your approved email to receive an instant 6-digit access code."
+                      )}
+                    </span>
+                  </div>
+                ) : (
+                  <div className="text-[10px] font-mono text-white/50 px-1">
+                    {t(
+                      "onboarding.prelaunchGates.loginReturningDesc",
+                      "Returning Creator with a saved password? Enter your credentials below."
+                    )}
+                  </div>
+                )}
+
                 {/* Email Input */}
                 <div className="space-y-1.5">
                   <label className="block text-[8px] font-mono text-white/40 uppercase font-bold tracking-wider">
-                    {locale === 'es' ? 'Correo Electrónico' : 'Email Address'}
+                    {locale === 'es' ? 'Correo Electrónico Aprobado' : 'Approved Email Address'}
                   </label>
                   <div className="relative">
                     <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
@@ -287,12 +342,12 @@ export default function LoginPage() {
                   </div>
                 </div>
 
-                {/* Password Input (Hidden for Magic Link) */}
+                {/* Password Input (Only in Password mode) */}
                 {!useMagicLink && (
                   <div className="space-y-1.5 animate-fade-in">
                     <div className="flex justify-between items-center">
                       <label className="block text-[8px] font-mono text-white/40 uppercase font-bold tracking-wider">
-                        {locale === 'es' ? 'Contraseña' : 'Password'}
+                        {t("onboarding.prelaunchGates.passwordLabel", "Account Password")}
                       </label>
                     </div>
                     <div className="relative">
@@ -306,24 +361,18 @@ export default function LoginPage() {
                         className="w-full bg-black/40 border border-white/10 focus:border-[#00fbfb]/50 rounded-xl py-2.5 pl-10 pr-4 text-xs outline-none transition text-white"
                       />
                     </div>
+                    <div className="text-[10px] text-white/40 pt-1 flex justify-between items-center">
+                      <span>{t("onboarding.prelaunchGates.passwordHint", "No password yet?")}</span>
+                      <button
+                        type="button"
+                        onClick={() => setUseMagicLink(true)}
+                        className="text-[#ffabf3] hover:underline font-mono font-bold cursor-pointer"
+                      >
+                        {locale === 'es' ? 'Usar Acceso Sin Contraseña →' : 'Use Passwordless Sign-In →'}
+                      </button>
+                    </div>
                   </div>
                 )}
-
-                {/* Switch Login Method */}
-                <div className="text-right">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setUseMagicLink(!useMagicLink);
-                      setErrorMsg(null);
-                    }}
-                    className="text-[9px] font-mono font-bold text-[#ffabf3] hover:underline uppercase tracking-wide cursor-pointer"
-                  >
-                    {useMagicLink 
-                      ? (locale === 'es' ? "Ingresar con contraseña" : "Sign in with password")
-                      : (locale === 'es' ? "Ingresar sin contraseña (Magic Link)" : "Passwordless sign in instead")}
-                  </button>
-                </div>
 
                 {/* Login Action Buttons */}
                 {useMagicLink ? (
@@ -339,7 +388,7 @@ export default function LoginPage() {
                       ) : (
                         <>
                           <Key className="w-4 h-4" />
-                          <span>{locale === 'es' ? '📱 Tengo la App (Enviar Código)' : '📱 I have the App (Send Magic Code)'}</span>
+                          <span>{locale === 'es' ? '📱 Tengo la App (Enviar Código 6 Dígitos)' : '📱 I have the App (Send 6-Digit Code)'}</span>
                         </>
                       )}
                     </button>
@@ -352,7 +401,7 @@ export default function LoginPage() {
                       {loading && sentMode === 'link' ? (
                         <Loader2 className="w-4 h-4 animate-spin" />
                       ) : (
-                        <span>{locale === 'es' ? '🌐 No tengo la App (Enviar Magic Link)' : '🌐 I don\'t have the App (Send Magic Link)'}</span>
+                        <span>{locale === 'es' ? '🌐 No tengo la App (Enviar Magic Link al Correo)' : '🌐 I don\'t have the App (Send Magic Link to Email)'}</span>
                       )}
                     </button>
                   </div>
@@ -367,11 +416,24 @@ export default function LoginPage() {
                     ) : (
                       <>
                         <Key className="w-4 h-4" />
-                        <span>{locale === 'es' ? 'Ingresar como Creador Aprobado' : 'Sign In as Approved Creator'}</span>
+                        <span>{locale === 'es' ? 'Ingresar con Contraseña' : 'Sign In with Password'}</span>
                       </>
                     )}
                   </button>
                 )}
+
+                {/* Direct First-Time Onboarding CTA */}
+                <div className="pt-2">
+                  <Link
+                    href={`/onboarding?role=creator${email ? `&email=${encodeURIComponent(email)}` : ''}`}
+                    className="block w-full py-2 px-3 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-[#00fbfb]/30 rounded-xl text-center text-[10px] font-mono font-bold text-[#ffabf3] hover:text-[#00fbfb] transition"
+                  >
+                    {t(
+                      "onboarding.prelaunchGates.completeSetupBtn",
+                      "First-time approved creator? Complete Setup & Set Password →"
+                    )}
+                  </Link>
+                </div>
               </form>
             )}
 
