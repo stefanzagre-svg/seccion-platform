@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin-client';
 import { checkBugReportRateLimit, calculateBugReward, BugCategory, BugSeverity } from '@/lib/bug-bounty';
-import { sendTelegramMessage } from '@/lib/telegram';
+import { sendTelegramNotification } from '@/lib/telegram';
 
 export async function POST(req: NextRequest) {
   try {
@@ -102,7 +102,7 @@ export async function POST(req: NextRequest) {
       `🎁 *Est. Reward:* ${reward.descriptionEn}\n` +
       `👉 [Review in Admin Dashboard](https://seccion.ai/admin/bugs)`;
 
-    sendTelegramMessage(telegramMessage).catch((err) => {
+    sendTelegramNotification(telegramMessage).catch((err) => {
       console.warn('[Bug Report] Telegram dispatch skipped:', err);
     });
 
