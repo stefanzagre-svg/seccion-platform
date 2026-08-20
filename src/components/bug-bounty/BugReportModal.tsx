@@ -16,7 +16,7 @@ import {
   Gift 
 } from 'lucide-react';
 import { BUG_CATEGORIES, BugCategory, BugSeverity, calculateBugReward } from '@/lib/bug-bounty';
-import { useTranslation } from '@/lib/i18n';
+import { useTranslation } from '@/context/LanguageContext';
 
 interface BugReportModalProps {
   isOpen: boolean;

@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { Bug, Sparkles } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import BugReportModal from './BugReportModal';
-import { useTranslation } from '@/lib/i18n';
+import { useTranslation } from '@/context/LanguageContext';
 
 export default function FloatingBugButton() {
   const pathname = usePathname();
