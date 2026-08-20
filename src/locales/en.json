@@ -564,5 +564,14 @@
     "system_default": "System Default",
     "km": "Kilometers (km)",
     "mi": "Miles (mi)"
+  },
+  "bounty": {
+    "modalTitle": "Report a Glitch & Earn Rewards",
+    "modalSubtitle": "Help improve SECCION and get rewarded for confirmed fixes.",
+    "categoryLabel": "1. What type of problem is it?",
+    "descriptionLabel": "2. Tell us what happened in your own words",
+    "severityLabel": "3. How much did this block your experience?",
+    "screenshotLabel": "Screenshot or Video Link (Optional)",
+    "submitBtn": "Send Report & Claim Bounty →"
   }
 }

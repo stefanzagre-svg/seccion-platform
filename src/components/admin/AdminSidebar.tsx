@@ -16,9 +16,10 @@ import {
   ChevronLeft,
   ChevronRight,
   Shield,
-  UserPlus
+  UserPlus,
+  Bug
 } from 'lucide-react';
-import { cn } from '@/lib/utils'; // wait, is cn helper available? Let's check or write our own simple one
+import { cn } from '@/lib/utils';
 
 interface SidebarProps {
   adminUser?: {
@@ -37,6 +38,7 @@ export default function AdminSidebar({ adminUser }: SidebarProps) {
     { name: 'Creators', href: '/admin/creators', icon: Tv },
     { name: 'Applications', href: '/admin/creators/applications', icon: Shield },
     { name: 'CRM Tracker', href: '/admin/creators/crm-outreach', icon: UserPlus },
+    { name: 'Bug Bounty', href: '/admin/bugs', icon: Bug },
     { name: 'Moderation', href: '/admin/moderation', icon: ShieldAlert },
     { name: 'Finance', href: '/admin/finance', icon: DollarSign },
     { name: 'Features', href: '/admin/features', icon: Activity },

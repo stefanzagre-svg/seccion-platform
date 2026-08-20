@@ -11,6 +11,7 @@ import PWAInstallPrompt from "@/components/pwa/PWAInstallPrompt";
 import JsonLdSchema from "@/components/JsonLdSchema";
 import CookieConsentBanner from "@/components/CookieConsentBanner";
 import EmailVerificationGuard from "@/components/auth/EmailVerificationGuard";
+import FloatingBugButton from "@/components/bug-bounty/FloatingBugButton";
 import { cookies } from "next/headers";
 import { LanguageProvider, SupportedLocale } from "@/context/LanguageContext";
 import en from "@/locales/en.json";
@@ -203,6 +204,8 @@ export default async function RootLayout({
           <SeccionAgentBubble />
           {/* AI Dating Wingman Coach for authenticated member accounts */}
           <AIWingmanBubble />
+          {/* Community Bug Bounty & Glitch Reporter */}
+          <FloatingBugButton />
           {/* JSON-LD Structured Data — rendered in body for RSC/Cloudflare Workers compatibility */}
           <JsonLdSchema />
           <CookieConsentBanner />

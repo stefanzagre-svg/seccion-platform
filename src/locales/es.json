@@ -606,5 +606,14 @@
       "loginMemberNotice": "¿Buscas acceso anticipado como miembro?",
       "loginJoinWaitlist": "UNIRSE A LA LISTA DE ACCESO"
     }
+  },
+  "bounty": {
+    "modalTitle": "Reportar Fallo & Ganar Recompensas",
+    "modalSubtitle": "Ayúdanos a mejorar SECCION y recibe recompensas por fallos confirmados.",
+    "categoryLabel": "1. ¿Qué tipo de problema es?",
+    "descriptionLabel": "2. Cuéntanos qué ocurrió con tus propias palabras",
+    "severityLabel": "3. ¿Qué tanto afectó tu experiencia?",
+    "screenshotLabel": "Enlace de Captura o Video (Opcional)",
+    "submitBtn": "Enviar Reporte & Reclamar Recompensa →"
   }
 }

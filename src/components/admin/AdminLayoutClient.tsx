@@ -35,6 +35,7 @@ export default function AdminLayoutClient({ children, adminUser }: AdminLayoutCl
     if (path === '/admin') return 'Overview';
     if (path.startsWith('/admin/users')) return 'User Management';
     if (path.startsWith('/admin/creators')) return 'Creators Station';
+    if (path.startsWith('/admin/bugs')) return 'Bug Bounty Triage';
     if (path.startsWith('/admin/moderation')) return 'Content Moderation';
     if (path.startsWith('/admin/finance')) return 'Finance Reconciliation';
     if (path.startsWith('/admin/features')) return 'Feature Analytics';
