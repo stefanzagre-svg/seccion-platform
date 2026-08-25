@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Script from 'next/script';
 import { 
   ShieldCheck, 
   Globe, 
@@ -15,13 +16,21 @@ import {
   Loader2,
   Wallet,
   Check,
-  Info
+  Info,
+  BadgeCheck
 } from 'lucide-react';
 import { useTranslation } from '@/context/LanguageContext';
 import ZkpWalletGuideModal from '@/components/onboarding/ZkpWalletGuideModal';
 
+declare global {
+  interface Window {
+    AgeChecker?: any;
+    AgeCheckerAPI?: any;
+  }
+}
+
 interface CountryAgeVerificationProps {
-  onVerified: (data: { birthDate: string; countryCode: string; verificationTier: 'declared' | 'micro' | 'kyc' | 'zkp' }) => void;
+  onVerified: (data: { birthDate: string; countryCode: string; verificationTier: 'declared' | 'micro' | 'kyc' | 'zkp' | 'agechecker' }) => void;
   isCreatorMode?: boolean;
 }
 
@@ -122,8 +131,10 @@ const REGULATORY_RULES: Record<string, CountryRegulation> = {
 export default function CountryAgeVerification({ onVerified, isCreatorMode = false }: CountryAgeVerificationProps) {
   const { t, locale } = useTranslation();
   const [countryCode, setCountryCode] = useState<string>('ES');
-  const [method, setMethod] = useState<'standard' | 'zkp'>('standard');
+  const [method, setMethod] = useState<'standard' | 'agechecker' | 'zkp'>('standard');
   const [isZkpGuideOpen, setIsZkpGuideOpen] = useState(false);
+  const [ageCheckerLoaded, setAgeCheckerLoaded] = useState(false);
+  const [isAgeCheckerLoading, setIsAgeCheckerLoading] = useState(false);
 
   // Standard DOB states
   const [birthYear, setBirthYear] = useState<string>('2000');
@@ -136,7 +147,7 @@ export default function CountryAgeVerification({ onVerified, isCreatorMode = fal
   const [zkpStep, setZkpStep] = useState<'idle' | 'scanning' | 'generating' | 'verified'>('idle');
   const [zkpProofHash, setZkpProofHash] = useState<string>('');
 
-  // Auto-detect user timezone / locale country on mount
+  // Auto-detect user timezone / locale country on mount & check AgeChecker window object
   useEffect(() => {
     try {
       const userTz = Intl.DateTimeFormat().resolvedOptions().timeZone || '';
@@ -150,6 +161,10 @@ export default function CountryAgeVerification({ onVerified, isCreatorMode = fal
       else setCountryCode('ES'); // Default to Spain
     } catch (e) {
       setCountryCode('ES');
+    }
+
+    if (typeof window !== 'undefined' && window.AgeChecker) {
+      setAgeCheckerLoaded(true);
     }
   }, []);
 
@@ -187,6 +202,54 @@ export default function CountryAgeVerification({ onVerified, isCreatorMode = fal
     });
   };
 
+  const handleTriggerAgeChecker = () => {
+    if (typeof window === 'undefined' || !window.AgeChecker) {
+      setErrorMsg(
+        locale === 'es'
+          ? 'Cargando el módulo seguro de AgeChecker.net... Por favor espera un momento o usa verificación estándar.'
+          : 'Loading secure AgeChecker.net module... Please wait a moment or use standard verification.'
+      );
+      return;
+    }
+
+    setErrorMsg(null);
+    setIsAgeCheckerLoading(true);
+
+    const apiKey = process.env.NEXT_PUBLIC_AGECHECKER_KEY || 'mpQGEPkUEFzj11gyaN746i228P11Dj0p';
+
+    window.AgeChecker.open({
+      key: apiKey,
+      onSuccess: function (response: any) {
+        setIsAgeCheckerLoading(false);
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('seccion_age_verified', 'true');
+          document.cookie = 'seccion_age_verified=true; path=/; max-age=31536000; SameSite=Lax';
+        }
+
+        const dobString = response?.dob || `${currentYear - 21}-01-01`;
+        const detectedCountry = response?.country || countryCode;
+
+        onVerified({
+          birthDate: dobString,
+          countryCode: detectedCountry,
+          verificationTier: 'agechecker',
+        });
+      },
+      onCancel: function () {
+        setIsAgeCheckerLoading(false);
+      },
+      onError: function (err: any) {
+        setIsAgeCheckerLoading(false);
+        console.error('AgeChecker error:', err);
+        setErrorMsg(
+          locale === 'es'
+            ? 'La verificación automática fue cancelada o presentó un problema. Puedes verificar con fecha manual.'
+            : 'Automatic verification was cancelled or encountered an issue. You can verify via manual date.'
+        );
+      }
+    });
+  };
+
   const handleZkpVerify = async () => {
     setErrorMsg(null);
     setZkpStep('scanning');
@@ -211,72 +274,95 @@ export default function CountryAgeVerification({ onVerified, isCreatorMode = fal
   };
 
   return (
-    <div className="w-full bg-[#0c1017] border border-[#00fbfb]/30 rounded-3xl p-5 sm:p-6 shadow-2xl relative overflow-hidden text-white font-sans space-y-5">
-      <ZkpWalletGuideModal isOpen={isZkpGuideOpen} onClose={() => setIsZkpGuideOpen(false)} />
+    <>
+      <Script
+        src="https://agechecker.net/api/v1/agechecker.js"
+        strategy="lazyOnload"
+        onLoad={() => setAgeCheckerLoaded(true)}
+      />
 
-      {/* Header Badge */}
-      <div className="flex items-center justify-between border-b border-white/10 pb-4">
-        <div className="flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-xl bg-[#00fbfb]/10 border border-[#00fbfb]/30 flex items-center justify-center text-[#00fbfb]">
-            <ShieldCheck className="w-5 h-5" />
+      <div className="w-full bg-[#0c1017] border border-[#00fbfb]/30 rounded-3xl p-5 sm:p-6 shadow-2xl relative overflow-hidden text-white font-sans space-y-5">
+        <ZkpWalletGuideModal isOpen={isZkpGuideOpen} onClose={() => setIsZkpGuideOpen(false)} />
+
+        {/* Header Badge */}
+        <div className="flex items-center justify-between border-b border-white/10 pb-4">
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-[#00fbfb]/10 border border-[#00fbfb]/30 flex items-center justify-center text-[#00fbfb]">
+              <ShieldCheck className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="text-xs font-mono font-bold tracking-wider uppercase text-white flex items-center gap-1.5">
+                <span>{reg.flag}</span>
+                <span>{reg.name} {locale === 'es' ? 'Verificación de Edad' : 'Age Verification'}</span>
+              </h3>
+              <p className="text-[10px] text-[#00fbfb] font-mono">{reg.lawName}</p>
+            </div>
           </div>
-          <div>
-            <h3 className="text-xs font-mono font-bold tracking-wider uppercase text-white flex items-center gap-1.5">
-              <span>{reg.flag}</span>
-              <span>{reg.name} {locale === 'es' ? 'Verificación de Edad' : 'Age Verification'}</span>
-            </h3>
-            <p className="text-[10px] text-[#00fbfb] font-mono">{reg.lawName}</p>
-          </div>
+
+          {/* Country Switcher */}
+          <select
+            value={countryCode}
+            onChange={(e) => setCountryCode(e.target.value)}
+            className="bg-black/60 border border-white/20 rounded-xl px-2.5 py-1.5 text-[11px] font-mono text-white outline-none focus:border-[#00fbfb]"
+          >
+            {Object.values(REGULATORY_RULES).map((c) => (
+              <option key={c.code} value={c.code}>
+                {c.flag} {c.code}
+              </option>
+            ))}
+          </select>
         </div>
 
-        {/* Country Switcher */}
-        <select
-          value={countryCode}
-          onChange={(e) => setCountryCode(e.target.value)}
-          className="bg-black/60 border border-white/20 rounded-xl px-2.5 py-1.5 text-[11px] font-mono text-white outline-none focus:border-[#00fbfb]"
-        >
-          {Object.values(REGULATORY_RULES).map((c) => (
-            <option key={c.code} value={c.code}>
-              {c.flag} {c.code}
-            </option>
-          ))}
-        </select>
-      </div>
+        {/* Method Selector (1-Tap vs AgeChecker Certified vs Sovereign ZKP) */}
+        <div className="grid grid-cols-3 bg-black/50 p-1 rounded-2xl border border-white/10 gap-1">
+          <button
+            type="button"
+            onClick={() => {
+              setMethod('standard');
+              setErrorMsg(null);
+            }}
+            className={`py-2 rounded-xl text-[11px] font-mono font-bold uppercase tracking-wider transition-all cursor-pointer flex items-center justify-center gap-1 ${
+              method === 'standard'
+                ? 'bg-[#00fbfb] text-black shadow-[0_0_15px_rgba(0,251,251,0.3)]'
+                : 'text-white/60 hover:text-white'
+            }`}
+          >
+            <Sparkles className="w-3.5 h-3.5" />
+            <span>{locale === 'es' ? '1-Toque' : '1-Tap'}</span>
+          </button>
 
-      {/* Method Selector (DSA Optimized: 1-Tap vs Sovereign ZKP) */}
-      <div className="flex bg-black/50 p-1 rounded-2xl border border-white/10">
-        <button
-          type="button"
-          onClick={() => {
-            setMethod('standard');
-            setErrorMsg(null);
-          }}
-          className={`flex-1 py-2 rounded-xl text-xs font-mono font-bold uppercase tracking-wider transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
-            method === 'standard'
-              ? 'bg-[#00fbfb] text-black shadow-[0_0_15px_rgba(0,251,251,0.3)]'
-              : 'text-white/60 hover:text-white'
-          }`}
-        >
-          <Sparkles className="w-3.5 h-3.5" />
-          <span>{locale === 'es' ? '1-Toque / Estándar' : '1-Tap Standard'}</span>
-        </button>
+          <button
+            type="button"
+            onClick={() => {
+              setMethod('agechecker');
+              setErrorMsg(null);
+            }}
+            className={`py-2 rounded-xl text-[11px] font-mono font-bold uppercase tracking-wider transition-all cursor-pointer flex items-center justify-center gap-1 ${
+              method === 'agechecker'
+                ? 'bg-gradient-to-r from-[#00fbfb] to-[#22c55e] text-black shadow-[0_0_15px_rgba(34,197,94,0.3)]'
+                : 'text-white/60 hover:text-white'
+            }`}
+          >
+            <BadgeCheck className="w-3.5 h-3.5" />
+            <span>{locale === 'es' ? 'AgeChecker' : 'AgeChecker'}</span>
+          </button>
 
-        <button
-          type="button"
-          onClick={() => {
-            setMethod('zkp');
-            setErrorMsg(null);
-          }}
-          className={`flex-1 py-2 rounded-xl text-xs font-mono font-bold uppercase tracking-wider transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
-            method === 'zkp'
-              ? 'bg-gradient-to-r from-[#00fbfb] to-[#ffabf3] text-black shadow-[0_0_20px_rgba(255,171,243,0.4)]'
-              : 'text-white/60 hover:text-white'
-          }`}
-        >
-          <Cpu className="w-3.5 h-3.5" />
-          <span>{locale === 'es' ? '🛡️ Billetera ZKP (100% Privado)' : '🛡️ ZKP Wallet (100% Private)'}</span>
-        </button>
-      </div>
+          <button
+            type="button"
+            onClick={() => {
+              setMethod('zkp');
+              setErrorMsg(null);
+            }}
+            className={`py-2 rounded-xl text-[11px] font-mono font-bold uppercase tracking-wider transition-all cursor-pointer flex items-center justify-center gap-1 ${
+              method === 'zkp'
+                ? 'bg-gradient-to-r from-[#00fbfb] to-[#ffabf3] text-black shadow-[0_0_20px_rgba(255,171,243,0.4)]'
+                : 'text-white/60 hover:text-white'
+            }`}
+          >
+            <Cpu className="w-3.5 h-3.5" />
+            <span>{locale === 'es' ? 'ZKP 🛡️' : 'ZKP 🛡️'}</span>
+          </button>
+        </div>
 
       {method === 'standard' ? (
         <>
@@ -383,6 +469,58 @@ export default function CountryAgeVerification({ onVerified, isCreatorMode = fal
             </button>
           </form>
         </>
+      ) : method === 'agechecker' ? (
+        /* AgeChecker.net Certified Verification View */
+        <div className="space-y-4 text-left">
+          <div className="p-5 bg-gradient-to-br from-emerald-500/10 via-[#00fbfb]/5 to-black border border-emerald-500/30 rounded-2xl space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-emerald-400">
+                <BadgeCheck className="w-5 h-5" />
+                <span className="text-xs font-mono font-black uppercase tracking-wider text-white">
+                  {locale === 'es' ? 'Verificación Oficial AgeChecker.net' : 'Official AgeChecker.net Verification'}
+                </span>
+              </div>
+              <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-mono text-[9px] uppercase font-bold border border-emerald-500/40">
+                {locale === 'es' ? 'Certificado 18+' : '18+ Certified'}
+              </span>
+            </div>
+
+            <p className="text-[11px] text-[#b9cac9] leading-relaxed">
+              {locale === 'es'
+                ? 'Validación segura instantánea de mayoría de edad por pasaporte, DNI o base de datos de identidad pública.'
+                : 'Instant secure 18+ age validation via official identity registries or digital document photo check.'}
+            </p>
+
+            {errorMsg && (
+              <div className="p-3 bg-red-500/10 border border-red-500/30 rounded-xl text-xs text-red-300 flex items-center gap-2 font-mono">
+                <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />
+                <span>{errorMsg}</span>
+              </div>
+            )}
+
+            <button
+              type="button"
+              onClick={handleTriggerAgeChecker}
+              disabled={isAgeCheckerLoading}
+              className="w-full py-3.5 bg-gradient-to-r from-[#00fbfb] to-[#22c55e] hover:brightness-110 text-black font-mono text-xs font-black uppercase tracking-wider rounded-xl transition flex items-center justify-center gap-2 cursor-pointer shadow-[0_0_20px_rgba(34,197,94,0.35)] disabled:opacity-50"
+            >
+              {isAgeCheckerLoading ? (
+                <Loader2 className="w-4 h-4 animate-spin text-black" />
+              ) : (
+                <>
+                  <BadgeCheck className="w-4 h-4" />
+                  <span>{locale === 'es' ? 'Abrir Verificación AgeChecker (18+) →' : 'Launch AgeChecker Verification (18+) →'}</span>
+                </>
+              )}
+            </button>
+
+            <p className="text-[10px] text-white/40 text-center font-mono">
+              {locale === 'es'
+                ? '🔒 Cumple con estándares internacionales de privacidad y leyes de protección al menor.'
+                : '🔒 Fully compliant with global online age gating and child safety frameworks.'}
+            </p>
+          </div>
+        </div>
       ) : (
         /* ZKP Autonomous Verification View */
         <div className="space-y-4 text-left">
@@ -474,5 +612,6 @@ export default function CountryAgeVerification({ onVerified, isCreatorMode = fal
         </div>
       )}
     </div>
+    </>
   );
 }
