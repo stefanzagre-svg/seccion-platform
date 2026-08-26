@@ -262,6 +262,61 @@ export default function CreatorKycPage() {
                 </div>
               )}
 
+              {/* ─── Fast-Track: DIDIT Instant KYC Gateway ─── */}
+              <div className="relative p-8 rounded-3xl border border-[#00fbfb]/30 bg-gradient-to-br from-[#00fbfb]/10 via-purple-500/5 to-transparent shadow-[0_0_40px_rgba(0,251,251,0.15)] space-y-5 overflow-hidden">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-[#00fbfb]/10 blur-2xl rounded-full pointer-events-none" />
+                
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className="p-3 bg-[#00fbfb]/20 border border-[#00fbfb]/40 rounded-2xl text-[#00fbfb]">
+                      <Sparkles className="w-6 h-6" />
+                    </div>
+                    <div>
+                      <div className="inline-block px-2.5 py-0.5 bg-[#00fbfb]/20 border border-[#00fbfb]/40 text-[9px] font-mono font-black text-[#00fbfb] uppercase tracking-widest rounded-full mb-1">
+                        Recommended • Fast Track
+                      </div>
+                      <h3 className="text-lg font-black uppercase tracking-wider text-white">
+                        Instant Identity Check via DIDIT™
+                      </h3>
+                    </div>
+                  </div>
+                  
+                  <a
+                    href="https://verify.didit.me/u/bPzKX19JQiawBcuyL9kraw"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="px-6 py-3.5 bg-[#00fbfb] hover:bg-[#00fbfb]/90 text-black font-mono text-xs font-black uppercase tracking-wider rounded-xl shadow-[0_0_20px_rgba(0,251,251,0.4)] transition flex items-center justify-center gap-2 cursor-pointer shrink-0"
+                  >
+                    <span>Launch DIDIT Verification →</span>
+                  </a>
+                </div>
+
+                <p className="text-xs text-[#b9cac9] leading-relaxed font-sans">
+                  Verify your government-issued ID and 3D facial biometrics securely in under 60 seconds with our zero-knowledge identity partner <strong>DIDIT</strong>. Once approved, your account is automatically upgraded to Creator status.
+                </p>
+
+                <div className="flex flex-wrap items-center gap-4 text-[10px] font-mono text-white/50 pt-1 border-t border-white/5">
+                  <span className="flex items-center gap-1.5 text-emerald-400">
+                    <CheckCircle2 className="w-3.5 h-3.5" /> Zero-Knowledge Biometrics
+                  </span>
+                  <span className="flex items-center gap-1.5 text-emerald-400">
+                    <CheckCircle2 className="w-3.5 h-3.5" /> 220+ Countries Supported
+                  </span>
+                  <span className="flex items-center gap-1.5 text-emerald-400">
+                    <CheckCircle2 className="w-3.5 h-3.5" /> Instant Payout Unlock
+                  </span>
+                </div>
+              </div>
+
+              {/* Divider */}
+              <div className="flex items-center gap-4 my-6">
+                <div className="flex-1 h-px bg-white/10" />
+                <span className="text-[10px] font-mono uppercase tracking-widest text-white/30 font-bold">
+                  Or Complete Manual Verification Below
+                </span>
+                <div className="flex-1 h-px bg-white/10" />
+              </div>
+
               {/* KYC Form Block */}
               <form onSubmit={handleKycSubmit} className="space-y-6">
                 
