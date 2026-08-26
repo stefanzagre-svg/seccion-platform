@@ -32,20 +32,21 @@ import VisibilityAdvisor from "@/components/onboarding/VisibilityAdvisor";
 import PublicNavbar from "@/components/PublicNavbar";
 
 const CITIES = [
-  // Pre-launch cities (top of list)
-  { value: 'medellin', label: '🥇 Medellín, Colombia', labelEs: '🥇 Medellín, Colombia', group: 'Pre-Launch' },
-  { value: 'bogota', label: '🥈 Bogotá, Colombia', labelEs: '🥈 Bogotá, Colombia', group: 'Pre-Launch' },
-  { value: 'barcelona', label: '🥉 Barcelona, Spain', labelEs: '🥉 Barcelona, España', group: 'Pre-Launch' },
-  { value: 'lisbon', label: 'Lisbon, Portugal', labelEs: 'Lisboa, Portugal', group: 'Pre-Launch' },
-  { value: 'mexico-city', label: 'Mexico City, Mexico', labelEs: 'Ciudad de México, México', group: 'Pre-Launch' },
-  // Expansion cities
-  { value: 'berlin', label: 'Berlin, Germany', labelEs: 'Berlín, Alemania', group: 'Expansion' },
-  { value: 'bucharest', label: 'Bucharest, Romania', labelEs: 'Bucarest, Rumania', group: 'Expansion' },
-  { value: 'london', label: 'London, UK', labelEs: 'Londres, Reino Unido', group: 'Expansion' },
-  { value: 'miami', label: 'Miami, USA', labelEs: 'Miami, EE. UU.', group: 'Expansion' },
-  { value: 'bangkok', label: 'Bangkok, Thailand', labelEs: 'Bangkok, Tailandia', group: 'Global' },
-  { value: 'sao-paulo', label: 'São Paulo, Brazil', labelEs: 'São Paulo, Brasil', group: 'Global' },
-  { value: 'other', label: 'Other City', labelEs: 'Otra ciudad', group: 'Global' },
+  { value: "global_other", label: "🌍 Global / Worldwide (Any City or Country)", labelEs: "🌍 Global / Internacional (Cualquier Ciudad o País)" },
+  { value: "medellin", label: "🇨🇴 Medellín (Soft Launch Hub)", labelEs: "🇨🇴 Medellín (Hub de Lanzamiento)" },
+  { value: "bogota", label: "🇨🇴 Bogotá", labelEs: "🇨🇴 Bogotá" },
+  { value: "cali", label: "🇨🇴 Cali", labelEs: "🇨🇴 Cali" },
+  { value: "madrid", label: "🇪🇸 Madrid", labelEs: "🇪🇸 Madrid" },
+  { value: "barcelona", label: "🇪🇸 Barcelona", labelEs: "🇪🇸 Barcelona" },
+  { value: "alicante", label: "🇪🇸 Alicante / Valencia", labelEs: "🇪🇸 Alicante / Valencia" },
+  { value: "paris", label: "🇫🇷 Paris", labelEs: "🇫🇷 París" },
+  { value: "london", label: "🇬🇧 London", labelEs: "🇬🇧 Londres" },
+  { value: "miami", label: "🇺🇸 Miami, FL", labelEs: "🇺🇸 Miami, FL" },
+  { value: "new_york", label: "🇺🇸 New York, NY", labelEs: "🇺🇸 Nueva York, NY" },
+  { value: "mexico_city", label: "🇲🇽 Mexico City", labelEs: "🇲🇽 Ciudad de México" },
+  { value: "buenos_aires", label: "🇦🇷 Buenos Aires", labelEs: "🇦🇷 Buenos Aires" },
+  { value: "santiago", label: "🇨🇱 Santiago", labelEs: "🇨🇱 Santiago" },
+  { value: "other", label: "✨ Other City (Type Below)", labelEs: "✨ Otra Ciudad (Escribir abajo)" },
 ];
 
 // Reusable Double-Bezel Container (Doppelrand)
@@ -905,11 +906,17 @@ export default function BecomeCreatorPage({ initialProfile, userEmail }: { initi
                   </p>
                 )}
 
-                {/* Pre-launch City Selection */}
-                <div className="space-y-1.5">
-                  <label className="block text-[11px] font-mono font-bold uppercase tracking-wider text-[#b9cac9]">
-                    {locale === "es" ? "Ciudad Principal / Ubicación Pre-Launch" : "Primary Pre-Launch City / Location"}
-                  </label>
+                {/* Primary Location Selection */}
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <label className="block text-[11px] font-mono font-bold uppercase tracking-wider text-[#b9cac9]">
+                      {locale === "es" ? "Ubicación / Ciudad Principal *" : "Primary Location / City *"}
+                    </label>
+                    <span className="text-[9px] text-[#00fbfb] font-mono font-bold">
+                      {locale === "es" ? "🌍 Streams & Contenido Activos a Nivel Mundial" : "🌍 Streams & Content Live Worldwide"}
+                    </span>
+                  </div>
+
                   <select
                     name="city"
                     value={formData.city}
@@ -917,7 +924,7 @@ export default function BecomeCreatorPage({ initialProfile, userEmail }: { initi
                     className="w-full px-4 py-3 rounded-xl bg-black/50 border border-white/10 focus:border-[#00fbfb] text-white text-xs focus:outline-none transition"
                   >
                     <option value="" className="bg-[#0F0F1A] text-white/50">
-                      {locale === "es" ? "-- Selecciona tu ciudad principal --" : "-- Select your primary city --"}
+                      {locale === "es" ? "-- Selecciona tu ubicación --" : "-- Select your location --"}
                     </option>
                     {CITIES.map((c) => (
                       <option key={c.value} value={c.value} className="bg-[#0F0F1A] text-white">
@@ -925,6 +932,25 @@ export default function BecomeCreatorPage({ initialProfile, userEmail }: { initi
                       </option>
                     ))}
                   </select>
+
+                  {/* Custom City Text Input when 'Other' or 'Global' is selected */}
+                  {(formData.city === "other" || formData.city === "global_other") && (
+                    <motion.div initial={{ opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }} className="pt-2">
+                      <input
+                        type="text"
+                        name="customCity"
+                        placeholder={locale === "es" ? "Escribe tu ciudad y país (ej. Buenos Aires, Argentina / Montreal, Canadá)" : "Enter your city & country (e.g. Buenos Aires, Argentina / Montreal, Canada)"}
+                        className="w-full px-4 py-3 rounded-xl bg-black/60 border border-[#00fbfb]/40 focus:border-[#00fbfb] text-white text-xs placeholder-white/30 focus:outline-none transition font-sans"
+                        onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                      />
+                    </motion.div>
+                  )}
+
+                  <p className="text-[10px] text-white/50 leading-relaxed font-mono pt-1">
+                    {locale === "es"
+                      ? "💡 Puedes transmitir en vivo y monetizar con miembros de todo el mundo sin importar tu país. Tu ubicación nos ayuda a activar los radares locales de fans."
+                      : "💡 You can broadcast live and monetize with members worldwide regardless of your country. Your location helps us prioritize local fan radars."}
+                  </p>
                 </div>
 
                 {/* Social & Creator Links */}
