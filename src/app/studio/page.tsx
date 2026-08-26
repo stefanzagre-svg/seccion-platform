@@ -17,6 +17,9 @@ import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import CreatorGoalProgress, { type CreatorGoal } from '@/components/CreatorGoalProgress';
 import CreatorGoalsTab from '@/components/studio/CreatorGoalsTab';
+import StudioStreamTab from '@/components/studio/StudioStreamTab';
+import StudioContentOpsTab from '@/components/studio/StudioContentOpsTab';
+import StudioAnalyticsTab from '@/components/studio/StudioAnalyticsTab';
 import SuggestionMovesModal from '@/components/SuggestionMovesModal';
 import { useTranslation } from '@/context/LanguageContext';
 import CreatorOrdersPanel from '@/components/CreatorOrdersPanel';
@@ -1454,6 +1457,36 @@ export default function CreatorStudio() {
                         <p className="text-[10px] text-white/70 leading-normal">{uploadError}</p>
                       </div>
                     </div>
+                  )}
+
+                  {activeTab === 'analytics' && (
+                    <StudioAnalyticsTab
+                      grossRevenue={creatorAnalytics?.total_gross_volume || 0}
+                      netRevenue={creatorAnalytics?.total_net_payout || 0}
+                      commissionRate={0.90}
+                      activeSubscribers={creatorAnalytics?.active_sponsors || 0}
+                      conversionRate={creatorAnalytics?.conversion_rate || 0}
+                      payouts={[
+                        {
+                          id: 'p1',
+                          period: 'Aug 2026 (Tranche 1)',
+                          grossAmount: (creatorAnalytics?.total_gross_volume || 1200) * 0.6,
+                          netPayout: (creatorAnalytics?.total_net_payout || 1080) * 0.6,
+                          channel: 'NOWPayments (USDT/BTC)',
+                          status: 'released',
+                          releasedAt: new Date().toISOString()
+                        },
+                        {
+                          id: 'p2',
+                          period: 'Aug 2026 (Tranche 2)',
+                          grossAmount: (creatorAnalytics?.total_gross_volume || 1200) * 0.4,
+                          netPayout: (creatorAnalytics?.total_net_payout || 1080) * 0.4,
+                          channel: 'NOWPayments (USDT/BTC)',
+                          status: 'escrow_pending'
+                        }
+                      ]}
+                      walletAddress={profile?.payout_wallet_address || undefined}
+                    />
                   )}
 
                   {uploadSuccess && (

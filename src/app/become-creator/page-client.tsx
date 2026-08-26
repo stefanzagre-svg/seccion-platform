@@ -25,7 +25,8 @@ import {
   SendHorizontal,
   Play,
   MapPin,
-  Loader2
+  Loader2,
+  AlertTriangle
 } from "lucide-react";
 import StudioTourModal from "@/components/onboarding/StudioTourModal";
 import VisibilityAdvisor from "@/components/onboarding/VisibilityAdvisor";
