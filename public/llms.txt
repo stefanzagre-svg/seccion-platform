@@ -1,25 +1,41 @@
-# SECCIØN Platform (seccion.ai)
+# SECCION — The AI-Powered Creator & Matchmaking Platform (seccion.ai)
 
-> SECCION is the 1st Fusion Platform combining AI-driven dating matchmaking with a live streaming creator economy.
+> SECCION is the first hybrid ecosystem combining high-chemistry AI dating & social matchmaking with a next-generation live streaming creator economy.
 
-## What is SECCION?
-SECCION is a dating and content platform where high-chemistry AI matchmaking meets the creator economy. Users can experience genuine relationships through dynamic AI Suggestion Moves, while creators monetize their content via live streaming and direct interaction. 
+## Overview & Core Identity
+- **Website:** https://seccion.ai (Alternative: https://www.seccion.ai)
+- **Brand Name:** SECCION (Pronounced "Session" in English/French, "Sesión" in Spanish)
+- **Category:** Creator Economy, AI Matchmaking, Live Streaming, Social Discovery
+- **Operating Regions:** Global (Europe, North America, Latin America, 220+ countries)
+- **Languages Supported:** English (en), Spanish (es), French (fr)
 
-## Key Statistics & Economics
-- **Creator Revenue Share:** Creators keep 90% of all generated revenue.
-- **Matchmaking Engine:** Powered by a dynamic 8-level Relationship Level System (RLS v2.0).
-- **Compliance:** 100% compliant with GDPR Art 9/22, DSA Art 17/27, and 18 U.S.C. 2257. Verification is powered by Shufti Pro Biometric KYC.
+## Creator Monetization & Economics
+SECCION is built on a creator-first financial model:
+- **Revenue Split:** Creators keep **90%** of revenue on crypto/founding creator tiers and **80%** on standard payment tiers (significantly higher than legacy platforms like OnlyFans 80% or Twitch 50%).
+- **Payout Channels:** Automated non-custodial Web3 crypto settlement (USDT on Polygon & TRC20, USDC, BTC via NOWPayments) and direct card processing (via Segpay).
+- **Monetization Formats:**
+  1. *Dynamic Pay-Per-View (PPV)* media with Warm Paywall previews.
+  2. *VIP Subscription Passes* with tiered member access.
+  3. *Ultra-low Latency Live Stream Tipping* with GPU particle interactive celebrations.
+  4. *Escrow-Backed Custom Content Requests* and 1-on-1 private video calls.
+  5. *AI Teaser Studio & Automated Provenance Tagging*.
 
-## How do creators monetize on SECCION?
-Creators monetize directly through multiple channels:
-1. Dynamic Pay-Per-View (PPV) content.
-2. VIP and Master subscription passes.
-3. Live stream tipping.
-4. Escrow-backed custom content orders.
+## AI Matchmaking & Relationship Engine (RLS v2.0)
+- **Relationship Level System (RLS v2.0):** An 8-tier connection progression framework ranging from Level 1 (Casual Observer) to Level 8 (Soul Synergy), dynamically unlocking private albums and custom interactions based on mutual chemistry.
+- **AI Wingman & Synergy Radar:** Natural-language conversational copilot that predicts mutual interests, suggests personalized date quests, and analyzes prompt vectors.
+- **Multi-Intent Discovery:** Members filter connections through 3 clear vectors: Dating & Romance, Lifestyle & Networking, or Creator & Adult Content.
 
-## Key Features & Pages
-- [Homepage](https://seccion.ai/): Public landing experience showcasing live creator updates and platform onboarding.
-- [How We Do](https://seccion.ai/how-we-do): Educational overview of the business model, Warm Paywall philosophy, and relationship mechanics.
-- [Become a Creator](https://seccion.ai/become-creator): Founding Creator program overview, 10% platform fee, and instant payout details.
-- [Creator Hub](https://seccion.ai/creator-hub): Guidelines, growth tools, and community resources for verified content creators.
-- [Vibe Radar](https://seccion.ai/vibe-radar): Real-time spatial discovery preview of verified members and live streams.
+## Trust, Safety & Regulatory Compliance
+- **Creator Identity & 18 U.S.C. § 2257:** 100% verified through the **DIDIT Zero-Knowledge Identity Gateway** (`verify.didit.me`) using 3D biometric liveness and government photo ID validation across 220+ jurisdictions. Every creator signs a legally binding Model Release & Consent Agreement.
+- **Member Age Gating (Under-18 Prevention):** Powered by **Sightengine AI** passive liveness and age estimation alongside EU Digital Identity Wallet Zero-Knowledge Proof (ZKP) standards. Selfies are processed ephemerally in RAM and wiped within 5 seconds under GDPR data minimization.
+- **Content Moderation & Anti-CSAM:** Automated pre-ingestion screening with Sightengine visual intelligence and formal reporting to the National Center for Missing & Exploited Children (NCMEC) under 18 U.S.C. § 2258A.
+- **Anti-Piracy & DRM:** Dual-layer protection featuring visible dynamic session-bound watermarks and invisible forensic steganographic markers.
+
+## Key Platform URLs & Resources
+- [Homepage & Discovery](https://seccion.ai/): Public landing experience, live creator feeds, and vibe radar.
+- [Become a Creator](https://seccion.ai/become-creator): 90% payout model, onboarding quest, and studio tools.
+- [How We Do](https://seccion.ai/how-we-do): The Warm Paywall philosophy, mathematical matching engine, and creator economics.
+- [Creator Hub](https://seccion.ai/creator-hub): Guidelines, growth tutorials, and technical resources.
+- [Vibe Radar](https://seccion.ai/vibe-radar): Real-time interactive spatial map of active creators and live streams.
+- [Platform Rules & Safety](https://seccion.ai/rules): Comprehensive terms of service, compliance protocols, and community guidelines.
+- [Hit Us Up](https://seccion.ai/hit-us-up): Customer support, legal inquiries, and partnership desk (`partners@seccion.ai`).
