@@ -8,7 +8,7 @@ import SeccionAgentBubble from "@/components/SeccionAgentBubble";
 import ServiceWorkerRegister from "@/components/pwa/ServiceWorkerRegister";
 import InAppBrowserDetector from "@/components/pwa/InAppBrowserDetector";
 import PWAInstallPrompt from "@/components/pwa/PWAInstallPrompt";
-import JsonLdSchema from "@/components/JsonLdSchema";
+import JsonLdSuite from "@/components/seo/JsonLd";
 import CookieConsentBanner from "@/components/CookieConsentBanner";
 import EmailVerificationGuard from "@/components/auth/EmailVerificationGuard";
 import FloatingBugButton from "@/components/bug-bounty/FloatingBugButton";
@@ -115,6 +115,8 @@ export default async function RootLayout({
           href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500&family=JetBrains+Mono:wght@500&family=Plus+Jakarta+Sans:wght@500;700;800&family=Outfit:wght@400;500;700;800;900&display=swap"
           rel="stylesheet"
         />
+        {/* Rich Structured Data for AI Search & Engine Indexing */}
+        <JsonLdSuite />
       </head>
       <body className="min-h-full flex flex-col bg-background text-foreground font-sans relative overflow-x-hidden pt-safe pb-safe">
         <LanguageProvider initialLocale={savedLocale}>
@@ -137,8 +139,6 @@ export default async function RootLayout({
           <AIWingmanBubble />
           {/* Community Bug Bounty & Glitch Reporter */}
           <FloatingBugButton />
-          {/* JSON-LD Structured Data — rendered in body for RSC/Cloudflare Workers compatibility */}
-          <JsonLdSchema />
           <CookieConsentBanner />
         </LanguageProvider>
       </body>
