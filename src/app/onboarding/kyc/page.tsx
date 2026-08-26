@@ -8,6 +8,7 @@ import {
   Loader2, AlertCircle, ShieldCheck, Upload, Camera, FileText, 
   Check, CheckCircle2, Lock, ArrowRight, Sparkles 
 } from 'lucide-react';
+import { DiditVerifyButton } from '@/components/kyc/DiditVerifyButton';
 
 export default function CreatorKycPage() {
   const router = useRouter();
@@ -281,14 +282,9 @@ export default function CreatorKycPage() {
                     </div>
                   </div>
                   
-                  <a
-                    href="https://verify.didit.me/u/bPzKX19JQiawBcuyL9kraw"
-                    target="_blank"
-                    rel="noreferrer"
-                    className="px-6 py-3.5 bg-[#00fbfb] hover:bg-[#00fbfb]/90 text-black font-mono text-xs font-black uppercase tracking-wider rounded-xl shadow-[0_0_20px_rgba(0,251,251,0.4)] transition flex items-center justify-center gap-2 cursor-pointer shrink-0"
-                  >
-                    <span>Launch DIDIT Verification →</span>
-                  </a>
+                  <DiditVerifyButton
+                    onSuccess={() => setStep('success')}
+                  />
                 </div>
 
                 <p className="text-xs text-[#b9cac9] leading-relaxed font-sans">
