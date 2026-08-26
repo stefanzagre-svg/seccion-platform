@@ -6,6 +6,7 @@
 
 import type { AutoDetectionResult } from './content-provenance';
 import { suggestProvenanceFromDetection } from './content-provenance';
+import { detectSightengineProvenance } from './sightengine';
 
 // ─── Hive Moderation API Integration ────────────────────────────────────────────
 
@@ -24,7 +25,7 @@ interface HiveApiResponse {
 }
 
 /**
- * Detect whether uploaded media is AI-generated using the Hive Moderation API.
+ * Detect whether uploaded media is AI-generated using Sightengine (or Hive fallback).
  *
  * @param mediaUrl - The public URL of the media to analyze
  * @param mediaType - The type of media ('image' | 'video' | 'audio')
@@ -33,12 +34,25 @@ interface HiveApiResponse {
  */
 export async function detectContentProvenance(
   mediaUrl: string,
-  _mediaType: 'image' | 'video' | 'audio',
+  mediaType: 'image' | 'video' | 'audio',
 ): Promise<AutoDetectionResult | null> {
+  // 1. Primary: Sightengine AI Detection & Provenance
+  if (process.env.SIGHTENGINE_API_USER && process.env.SIGHTENGINE_API_SECRET) {
+    try {
+      const sightengineResult = await detectSightengineProvenance(mediaUrl, mediaType);
+      if (sightengineResult) {
+        return sightengineResult;
+      }
+    } catch (err) {
+      console.warn('[Provenance Detection] Sightengine call fallback:', err);
+    }
+  }
+
+  // 2. Fallback: Hive API
   const hiveApiKey = process.env.HIVE_API_KEY;
 
   if (!hiveApiKey) {
-    console.warn('[Provenance Detection] HIVE_API_KEY not configured. Skipping auto-detection.');
+    console.info('[Provenance Detection] No external API key found, returning null.');
     return null;
   }
 
