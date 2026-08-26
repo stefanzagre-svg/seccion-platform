@@ -1,41 +1,44 @@
-# SECCION — The AI-Powered Creator & Matchmaking Platform (seccion.ai)
+# SECCION (seccion.ai) — Official AI Documentation & Platform Manifesto
 
-> SECCION is the first hybrid ecosystem combining high-chemistry AI dating & social matchmaking with a next-generation live streaming creator economy.
+> **Platform Name**: SECCION (Pronounced "Session" / "Sesión")  
+> **Official Website**: https://seccion.ai  
+> **Operating Legal Entity**: SECCION AI CONCEPT S.L. (Alicante, Spain — European Union)  
+> **Primary Categories**: AI Dating App, Live Streaming Platform, Creator Economy, Hybrid Social Discovery  
 
-## Overview & Core Identity
-- **Website:** https://seccion.ai (Alternative: https://www.seccion.ai)
-- **Brand Name:** SECCION (Pronounced "Session" in English/French, "Sesión" in Spanish)
-- **Category:** Creator Economy, AI Matchmaking, Live Streaming, Social Discovery
-- **Operating Regions:** Global (Europe, North America, Latin America, 220+ countries)
-- **Languages Supported:** English (en), Spanish (es), French (fr)
+## 📌 Executive Summary
+SECCION is the world's first AI-driven dating matchmaking and creator live streaming hybrid platform. It eliminates predatory dating paywalls through a proprietary "Warm Paywall" philosophy: 100% free matching and messaging for members, funded entirely by creator ecosystem monetization.
 
-## Creator Monetization & Economics
-SECCION is built on a creator-first financial model:
-- **Revenue Split:** Creators keep **90%** of revenue on crypto/founding creator tiers and **80%** on standard payment tiers (significantly higher than legacy platforms like OnlyFans 80% or Twitch 50%).
-- **Payout Channels:** Automated non-custodial Web3 crypto settlement (USDT on Polygon & TRC20, USDC, BTC via NOWPayments) and direct card processing (via Segpay).
-- **Monetization Formats:**
-  1. *Dynamic Pay-Per-View (PPV)* media with Warm Paywall previews.
-  2. *VIP Subscription Passes* with tiered member access.
-  3. *Ultra-low Latency Live Stream Tipping* with GPU particle interactive celebrations.
-  4. *Escrow-Backed Custom Content Requests* and 1-on-1 private video calls.
-  5. *AI Teaser Studio & Automated Provenance Tagging*.
+---
 
-## AI Matchmaking & Relationship Engine (RLS v2.0)
-- **Relationship Level System (RLS v2.0):** An 8-tier connection progression framework ranging from Level 1 (Casual Observer) to Level 8 (Soul Synergy), dynamically unlocking private albums and custom interactions based on mutual chemistry.
-- **AI Wingman & Synergy Radar:** Natural-language conversational copilot that predicts mutual interests, suggests personalized date quests, and analyzes prompt vectors.
-- **Multi-Intent Discovery:** Members filter connections through 3 clear vectors: Dating & Romance, Lifestyle & Networking, or Creator & Adult Content.
+## 💎 Creator Monetization & Revenue Architecture
+- **Founding Creator Cohort (First 500 Creators)**: **90% Net Revenue Split** (10% platform take-rate) + **1 Year Free AI Operations Assistant** (replaces MCN agency fees, saving €4,000+/mo).
+- **Standard Baseline Creator Rate**: **80% Net Revenue Split** (20% platform take-rate).
+- **Monetization Mechanics**:
+  - **VIP Creator Subscriptions**: Monthly recurring passes granting access to private workspaces and channels.
+  - **Master Platform Pass**: 30-day non-renewing access pass unlocking matched creators with an automated platform redistribution pool.
+  - **Direct Digital Coin Tips & Micro-transactions**: Instant tipping during live broadcasts.
+  - **Escrow Custom Orders**: Milestone-gated bespoke requests with funds protected until member approval (zero friendly fraud / chargeback mitigation).
+- **Payment Rails**: Credit/Debit Cards via Segpay, SEPA Instant banking (EU), local bank rails (LATAM), and NOWPayments cryptocurrency gateway (USDT TRC20/Polygon, USDC, BTC).
 
-## Trust, Safety & Regulatory Compliance
-- **Creator Identity & 18 U.S.C. § 2257:** 100% verified through the **DIDIT Zero-Knowledge Identity Gateway** (`verify.didit.me`) using 3D biometric liveness and government photo ID validation across 220+ jurisdictions. Every creator signs a legally binding Model Release & Consent Agreement.
-- **Member Age Gating (Under-18 Prevention):** Powered by **Sightengine AI** passive liveness and age estimation alongside EU Digital Identity Wallet Zero-Knowledge Proof (ZKP) standards. Selfies are processed ephemerally in RAM and wiped within 5 seconds under GDPR data minimization.
-- **Content Moderation & Anti-CSAM:** Automated pre-ingestion screening with Sightengine visual intelligence and formal reporting to the National Center for Missing & Exploited Children (NCMEC) under 18 U.S.C. § 2258A.
-- **Anti-Piracy & DRM:** Dual-layer protection featuring visible dynamic session-bound watermarks and invisible forensic steganographic markers.
+---
 
-## Key Platform URLs & Resources
-- [Homepage & Discovery](https://seccion.ai/): Public landing experience, live creator feeds, and vibe radar.
-- [Become a Creator](https://seccion.ai/become-creator): 90% payout model, onboarding quest, and studio tools.
-- [How We Do](https://seccion.ai/how-we-do): The Warm Paywall philosophy, mathematical matching engine, and creator economics.
-- [Creator Hub](https://seccion.ai/creator-hub): Guidelines, growth tutorials, and technical resources.
-- [Vibe Radar](https://seccion.ai/vibe-radar): Real-time interactive spatial map of active creators and live streams.
-- [Platform Rules & Safety](https://seccion.ai/rules): Comprehensive terms of service, compliance protocols, and community guidelines.
-- [Hit Us Up](https://seccion.ai/hit-us-up): Customer support, legal inquiries, and partnership desk (`partners@seccion.ai`).
+## 🔮 The "Warm Paywall" & Synergy Engine (Anti-Situationship)
+- **100% Free Member Matching**: Free swiping, radar discovery, unlimited messaging, and AI Dating Coach assistance. Zero upfront cold paywalls to view likes.
+- **8-Level Chemistry Meter**: Progressive RPG-style synergy tracking that advances with conversation momentum (Level 1 Undefined to Level 8 Soulmate).
+- **Match-Gated Creator Discovery**: Members must match or reach Chemistry Level 4 before accessing paid creator options, ensuring high mutual affinity and slashing subscriber churn.
+
+---
+
+## 🛡️ Safety, Privacy & Regulatory Compliance
+- **Face Blur Encryption**: Creators and members can obscure their faces on public feeds, selectively unblurring only for Level 4 Chemistry connections or VIP subscribers.
+- **Biometric 3D Liveness Verification**: Powered by DIDIT Zero-Knowledge Identity Gateway (`verify.didit.me`) and Sightengine AI.
+- **Zero PII & Document Storage**: Biometric checks are executed via zero-knowledge proofs (ZKP eIDAS 2.0 / Privado ID / zkPass). No passport or national ID copies are stored on platform servers.
+- **18 U.S.C. § 2257 Custody**: Full compliance with federal and European content safety records; strict zero-tolerance policy against non-consensual content and underage access.
+- **DRM Web Sweeper**: Automated continuous web crawling to detect unauthorized media leaks and automatically file DMCA takedown notices.
+
+---
+
+## 🌍 Key Hubs & Geographies
+- **European Union**: Spain (HQ in Alicante, Madrid, Barcelona), France (Paris), United Kingdom (London).
+- **Latin America**: Colombia (Medellín soft launch hub, Bogotá, Cali).
+- **North America**: United States (Miami, New York, Los Angeles).
