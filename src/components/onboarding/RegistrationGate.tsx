@@ -40,6 +40,42 @@ export default function RegistrationGate({ onComplete, initialError }: Registrat
   const [error, setError] = useState<string | null>(initialError || null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
+  // Personalized VIP Invitation State
+  const [invitedName, setInvitedName] = useState<string | null>(null);
+  const [invitedPromo, setInvitedPromo] = useState<string | null>(null);
+  const [isInvitedCreator, setIsInvitedCreator] = useState(false);
+
+  // Auto-fill from URL parameters on mount
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const nameParam = params.get('name') || params.get('user') || params.get('creator');
+      const emailParam = params.get('email');
+      const promoParam = params.get('promo') || params.get('code');
+      const roleParam = params.get('role');
+
+      if (nameParam) {
+        setInvitedName(nameParam);
+        setUsername(nameParam.toLowerCase().replace(/[^a-z0-9_]/g, ''));
+      }
+      if (emailParam) {
+        setEmail(emailParam);
+        setShowEmailForm(true);
+        setAcceptedTerms(true);
+        setAcceptedPrivacy(true);
+      }
+      if (promoParam) {
+        setInvitedPromo(promoParam);
+      }
+      if (roleParam === 'creator' || params.get('invite') === 'creator') {
+        setIsInvitedCreator(true);
+        setShowEmailForm(true);
+        setAcceptedTerms(true);
+        setAcceptedPrivacy(true);
+      }
+    }
+  }, []);
+
   const handleProviderSelect = (provider: string) => {
     if (!acceptedTerms || !acceptedPrivacy) {
       setError("Please accept both the terms and the privacy processing agreement to proceed.");
@@ -314,19 +350,40 @@ export default function RegistrationGate({ onComplete, initialError }: Registrat
             <Sparkles className="w-5 h-5" />
           </div>
 
-          {/* Pre-Launch Lock Notice */}
-          <div className="mb-4 p-4 bg-[#00fbfb]/10 border border-[#00fbfb]/30 rounded-2xl text-center space-y-2">
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#00fbfb]/20 text-[#00fbfb] font-mono text-[9px] font-bold uppercase tracking-wider">
-              <span>{locale === 'es' ? 'FASE DE PRE-LANZAMIENTO ACTIVA' : 'PRE-LAUNCH PHASE ACTIVE'}</span>
+          {/* Personalized VIP Invite Welcome */}
+          {(invitedName || isInvitedCreator) ? (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="mb-4 p-4 bg-gradient-to-br from-[#00fbfb]/15 via-black/40 to-[#ffabf3]/15 border border-[#00fbfb]/40 rounded-2xl text-center space-y-2"
+            >
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#00fbfb]/20 text-[#00fbfb] font-mono text-[10px] font-bold uppercase tracking-wider">
+                <Sparkles className="w-3.5 h-3.5 animate-pulse" />
+                <span>{invitedName ? (locale === 'es' ? `¡Bienvenida ${invitedName}!` : `Welcome ${invitedName}!`) : (locale === 'es' ? 'INVITACIÓN VIP DE CREADOR' : 'VIP CREATOR INVITATION')}</span>
+              </div>
+              <p className="text-[11px] text-[#b9cac9] leading-relaxed">
+                {locale === 'es' ? (
+                  <>Tu plaza exclusiva de <strong className="text-white">Creador Fundador</strong> (90% Comisión Neta + 1 Año de IA Gratis) está reservada para este registro.</>
+                ) : (
+                  <>Your exclusive <strong className="text-white">Founding Creator</strong> spot (90% Net Split + 1-Year Free AI Assistant) is reserved for this registration.</>
+                )}
+              </p>
+            </motion.div>
+          ) : (
+            /* Pre-Launch Lock Notice for general visitors */
+            <div className="mb-4 p-4 bg-[#00fbfb]/10 border border-[#00fbfb]/30 rounded-2xl text-center space-y-2">
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#00fbfb]/20 text-[#00fbfb] font-mono text-[9px] font-bold uppercase tracking-wider">
+                <span>{locale === 'es' ? 'FASE DE PRE-LANZAMIENTO ACTIVA' : 'PRE-LAUNCH PHASE ACTIVE'}</span>
+              </div>
+              <p className="text-[11px] text-[#b9cac9] leading-relaxed">
+                {locale === 'es' ? (
+                  <>El auto-registro público está reservado para <strong className="text-white">Creadores Aprobados</strong> y <strong className="text-white">Miembros Fundadores</strong> durante esta fase de pre-lanzamiento.</>
+                ) : (
+                  <>Public self-registration is reserved for <strong className="text-white">Approved Creators</strong> and <strong className="text-white">Founding Members</strong> during this pre-launch phase.</>
+                )}
+              </p>
             </div>
-            <p className="text-[11px] text-[#b9cac9] leading-relaxed">
-              {locale === 'es' ? (
-                <>El auto-registro público está reservado para <strong className="text-white">Creadores Aprobados</strong> y <strong className="text-white">Miembros Fundadores</strong> durante esta fase de pre-lanzamiento.</>
-              ) : (
-                <>Public self-registration is reserved for <strong className="text-white">Approved Creators</strong> and <strong className="text-white">Founding Members</strong> during this pre-launch phase.</>
-              )}
-            </p>
-          </div>
+          )}
         </div>
 
         {error && (

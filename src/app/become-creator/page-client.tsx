@@ -772,14 +772,57 @@ export default function BecomeCreatorPage({ initialProfile, userEmail }: { initi
                   </div>
                 </div>
 
-                {/* Direct CTA to Login once approved */}
+                {/* VIP Fast-Track Concierge & Login CTAs */}
                 <div className="pt-2 max-w-md mx-auto space-y-3">
+                  <div className="p-3.5 bg-white/[0.03] border border-[#00fbfb]/20 rounded-2xl space-y-2 text-center">
+                    <span className="text-[10px] font-mono text-[#00fbfb] font-bold uppercase tracking-wider block">
+                      {locale === "es" ? "⚡ Acelerador de Aprobación VIP" : "⚡ Fast-Track VIP Approval"}
+                    </span>
+                    <p className="text-[11px] text-[#b9cac9]">
+                      {locale === "es"
+                        ? "¿Quieres activar tu cuenta en minutos? Escríbenos directamente por WhatsApp o Telegram para verificar tus enlaces al instante."
+                        : "Want your account live in minutes? Message our concierge team directly to verify your creator links immediately."}
+                    </p>
+                    <div className="grid grid-cols-2 gap-2 pt-1">
+                      <a
+                        href={`https://wa.me/?text=${encodeURIComponent(
+                          locale === "es"
+                            ? `¡Hola equipo SECCION! Acabo de enviar mi solicitud como creador/a: ${formData.fullName} (${formData.email}). ¿Podemos revisar mi perfil para activar mi Pack 90% Creador Fundador?`
+                            : `Hi SECCION Team! I just submitted my creator application: ${formData.fullName} (${formData.email}). Can we fast-track my approval for the 90% Founding Creator Pack?`
+                        )}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="py-2.5 px-3 rounded-xl bg-[#25D366]/20 border border-[#25D366]/40 hover:bg-[#25D366] text-[#25D366] hover:text-black font-mono text-[11px] font-bold transition flex items-center justify-center gap-1.5"
+                      >
+                        <span>WhatsApp VIP</span>
+                        <ArrowUpRight className="w-3 h-3" />
+                      </a>
+                      <a
+                        href="https://t.me/seccion_ai"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="py-2.5 px-3 rounded-xl bg-[#229ED9]/20 border border-[#229ED9]/40 hover:bg-[#229ED9] text-[#229ED9] hover:text-white font-mono text-[11px] font-bold transition flex items-center justify-center gap-1.5"
+                      >
+                        <span>Telegram VIP</span>
+                        <ArrowUpRight className="w-3 h-3" />
+                      </a>
+                    </div>
+                  </div>
+
+                  <Link
+                    href={`/onboarding?role=creator&email=${encodeURIComponent(formData.email)}&name=${encodeURIComponent(formData.fullName)}`}
+                    className="w-full py-3.5 px-6 rounded-xl bg-gradient-to-r from-[#00fbfb] to-[#00d2d2] text-black font-mono text-xs font-black uppercase tracking-wider hover:shadow-[0_0_25px_rgba(0,251,251,0.5)] transition-all duration-300 flex items-center justify-center gap-2 shadow-lg cursor-pointer"
+                  >
+                    <span>{locale === "es" ? "Comenzar Tour de Creador" : "Start Creator Quest Tour"}</span>
+                    <ArrowUpRight className="w-4 h-4" />
+                  </Link>
+
                   <Link
                     href={`/login?email=${encodeURIComponent(formData.email)}`}
-                    className="w-full py-3.5 px-6 rounded-xl bg-white/10 hover:bg-[#00fbfb] text-white hover:text-black font-mono text-xs font-black uppercase tracking-wider transition-all duration-300 flex items-center justify-center gap-2 border border-white/10 hover:border-[#00fbfb] shadow-lg"
+                    className="w-full py-2.5 px-6 rounded-xl bg-white/5 hover:bg-white/10 text-white font-mono text-xs font-medium transition flex items-center justify-center gap-2 border border-white/10"
                   >
                     <span>{locale === "es" ? "Ir al Login de Creadores" : "Go to Creator Login"}</span>
-                    <ArrowUpRight className="w-4 h-4" />
+                    <ArrowUpRight className="w-3.5 h-3.5" />
                   </Link>
                 </div>
 
