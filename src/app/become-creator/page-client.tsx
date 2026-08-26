@@ -1055,6 +1055,21 @@ export default function BecomeCreatorPage({ initialProfile, userEmail }: { initi
 
           <div className="space-y-4">
             
+            {/* Global Creator FAQ */}
+            <div className="p-5 bg-white/[0.02] border border-white/5 rounded-2xl text-left space-y-2.5">
+              <h4 className="text-sm font-bold text-white flex items-center gap-2">
+                <HelpCircle className="w-4 h-4 text-[#00fbfb] shrink-0" />
+                {locale === "es" 
+                  ? "¿Puedo unirme como Creador/a si no estoy en Medellín o en una ciudad de pre-lanzamiento?" 
+                  : "Can I join as a Creator if I am not located in Medellín or a pre-launch city?"}
+              </h4>
+              <p className="text-xs text-[#b9cac9] leading-relaxed pl-6">
+                {locale === "es"
+                  ? "¡Sí, por supuesto! Mientras que las funciones de citas presenciales se despliegan ciudad por ciudad, las transmisiones en vivo, el contenido premium, los espacios VIP, las propinas y el Asistente IA están 100% activos a nivel mundial desde el Día 1. Creadores de cualquier país pueden registrarse hoy, asegurar su 90% de comisión neta de Creador Fundador y monetizar una audiencia global."
+                  : "Yes, absolutely! While in-person dating cohorts are expanding city by city, all Live Streaming, premium digital unlocks, VIP workspaces, direct tips, and AI Operations tools are 100% active worldwide from Day 1. Creators from any country can join today, secure the 90% Founding Creator revenue split, and monetize a global audience."}
+              </p>
+            </div>
+            
             {/* FAQ 1 */}
             <div className="p-5 bg-white/[0.02] border border-white/5 rounded-2xl text-left space-y-2.5">
               <h4 className="text-sm font-bold text-white flex items-center gap-2">
