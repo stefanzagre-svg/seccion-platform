@@ -126,20 +126,38 @@ export default function BecomeCreatorPage({ initialProfile, userEmail }: { initi
     }
   };
 
+  // Helper to normalize any handle or URL to a valid web link
+  const normalizeSocialLink = (input: string) => {
+    const trimmed = input.trim();
+    if (!trimmed) return "";
+    if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) return trimmed;
+    if (trimmed.startsWith("@")) return `https://instagram.com/${trimmed.slice(1)}`;
+    if (trimmed.includes(".com") || trimmed.includes(".me") || trimmed.includes(".tv") || trimmed.includes(".fans") || trimmed.includes(".ai")) return `https://${trimmed}`;
+    return `https://instagram.com/${trimmed}`;
+  };
+
   const validateInput = () => {
     const newErrors: { [key: string]: string } = {};
-    if (!formData.fullName) newErrors.fullName = locale === "es" ? "El Nombre Completo / Nombre de Creador es requerido" : "Full Name / Creator Name is required";
+    if (!formData.fullName.trim()) {
+      newErrors.fullName = locale === "es" ? "El nombre es obligatorio" : "Creator name is required";
+    }
     
-    if (!formData.email) newErrors.email = locale === "es" ? "El correo electrónico es requerido" : "Email is required";
-    else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = locale === "es" ? "Formato de correo electrónico inválido" : "Invalid email format";
+    if (!formData.email.trim() || !formData.email.includes("@")) {
+      newErrors.email = locale === "es" ? "Email válido obligatorio" : "Valid email required";
+    }
     
     if (!formData.phone?.trim() && !formData.telegram?.trim()) {
       newErrors.contact = locale === "es" 
-        ? "Se requiere al menos un método de contacto directo (WhatsApp o Telegram)" 
-        : "At least one direct contact method (WhatsApp or Telegram) is required";
+        ? "Indica WhatsApp o Telegram para enviarte tu acceso" 
+        : "Provide WhatsApp or Telegram to receive your access";
     }
 
-    if (!formData.link1) newErrors.link1 = locale === "es" ? "Al menos un enlace a perfil social o de creador es requerido" : "At least one social/creator profile link is required";
+    // Smart handle validation (Accepts @handle or full URL)
+    if (!formData.link1.trim()) {
+      newErrors.link1 = locale === "es" 
+        ? "Indica tu @usuario o enlace principal" 
+        : "Primary handle or link is required";
+    }
     
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -150,11 +168,18 @@ export default function BecomeCreatorPage({ initialProfile, userEmail }: { initi
     if (!validateInput()) return;
     
     setFormStep("submitting");
+
+    const payload = {
+      ...formData,
+      link1: normalizeSocialLink(formData.link1),
+      link2: normalizeSocialLink(formData.link2),
+      link3: normalizeSocialLink(formData.link3),
+    };
     
     try {
       const response = await fetch('/api/v2/creator/apply', { 
         method: 'POST', 
-        body: JSON.stringify(formData) 
+        body: JSON.stringify(payload) 
       });
       
       if (response.status === 409) {
@@ -171,7 +196,7 @@ export default function BecomeCreatorPage({ initialProfile, userEmail }: { initi
       
       if (typeof window !== "undefined") {
         localStorage.setItem("seccion_creator_applied", "true");
-        localStorage.setItem("seccion_creator_data", JSON.stringify(formData));
+        localStorage.setItem("seccion_creator_data", JSON.stringify(payload));
       }
       setFormStep("success");
     } catch (error) {
@@ -998,17 +1023,22 @@ export default function BecomeCreatorPage({ initialProfile, userEmail }: { initi
 
                 {/* Social & Creator Links */}
                 <div className="space-y-3 pt-2">
-                  <label className="block text-[11px] font-mono font-bold uppercase tracking-wider text-[#b9cac9]">
-                    {locale === "es" ? "Enlaces a Redes / Perfiles de Creador *" : "Social / Creator Profile Links *"}
-                  </label>
+                  <div className="flex justify-between items-center">
+                    <label className="block text-[11px] font-mono font-bold uppercase tracking-wider text-[#b9cac9]">
+                      {locale === "es" ? "Perfiles de Creador / Redes Sociales *" : "Creator Handles / Social Links *"}
+                    </label>
+                    <span className="text-[9px] text-[#00fbfb] font-mono font-semibold">
+                      {locale === "es" ? "✨ Acepta @usuario o enlaces" : "✨ Accepts @handle or full links"}
+                    </span>
+                  </div>
                   
-                  <div className="space-y-2">
+                  <div className="space-y-2.5">
                     <input
-                      type="url"
+                      type="text"
                       name="link1"
                       value={formData.link1}
                       onChange={handleInputChange}
-                      placeholder="https://instagram.com/... or https://tiktok.com/@... (Primary *)"
+                      placeholder={locale === "es" ? "@tuusuario o enlace (Instagram / TikTok / OF) *" : "@yourhandle or link (Instagram / TikTok / OF) *"}
                       className={`w-full px-4 py-3 rounded-xl bg-black/50 border ${errors.link1 ? "border-rose-500" : "border-white/10 focus:border-[#00fbfb]"} text-white text-xs placeholder-white/20 focus:outline-none transition font-sans`}
                     />
                     {errors.link1 && (
@@ -1016,23 +1046,38 @@ export default function BecomeCreatorPage({ initialProfile, userEmail }: { initi
                     )}
 
                     <input
-                      type="url"
+                      type="text"
                       name="link2"
                       value={formData.link2}
                       onChange={handleInputChange}
-                      placeholder="https://onlyfans.com/... / https://fansly.com/... (Optional)"
+                      placeholder={locale === "es" ? "Segundo perfil (Opcional, ej. @onlyfans / Fansly / Twitch)" : "Second handle/link (Optional, e.g. @onlyfans / Fansly / Twitch)"}
                       className="w-full px-4 py-3 rounded-xl bg-black/50 border border-white/10 focus:border-[#00fbfb] text-white text-xs placeholder-white/20 focus:outline-none transition font-sans"
                     />
 
                     <input
-                      type="url"
+                      type="text"
                       name="link3"
                       value={formData.link3}
                       onChange={handleInputChange}
-                      placeholder="https://twitch.tv/... / https://youtube.com/... (Optional)"
+                      placeholder={locale === "es" ? "Tercer perfil (Opcional, ej. Twitch / YouTube / Web)" : "Third handle/link (Optional, e.g. Twitch / YouTube / Web)"}
                       className="w-full px-4 py-3 rounded-xl bg-black/50 border border-white/10 focus:border-[#00fbfb] text-white text-xs placeholder-white/20 focus:outline-none transition font-sans"
                     />
                   </div>
+                </div>
+
+                {/* Zero-Risk Reassurance Banner */}
+                <div className="p-3.5 bg-gradient-to-r from-[#00fbfb]/10 to-transparent border border-[#00fbfb]/25 rounded-2xl flex items-center gap-3 text-left">
+                  <div className="w-8 h-8 rounded-xl bg-[#00fbfb]/10 flex items-center justify-center shrink-0 text-[#00fbfb]">
+                    <Zap className="w-4 h-4" />
+                  </div>
+                  <p className="text-[11px] text-[#b9cac9] leading-tight">
+                    <strong className="text-white font-semibold">
+                      {locale === "es" ? "Sin tarjeta ni DNI para comenzar: " : "No ID or credit card needed to apply: "}
+                    </strong>
+                    {locale === "es" 
+                      ? "Explora el Studio y prueba las herramientas de IA en 30 segundos. La verificación oficial solo se realiza cuando decidas retirar fondos." 
+                      : "Explore the Studio and test-drive AI tools in 30 seconds. Official ID check is only required when you are ready for payouts."}
+                  </p>
                 </div>
 
                 {/* Claim 1-Year Pack Checkbox */}
@@ -1072,11 +1117,28 @@ export default function BecomeCreatorPage({ initialProfile, userEmail }: { initi
                   )}
                 </button>
 
-                <p className="text-[10px] text-white/40 font-mono text-center">
-                  {locale === "es" 
-                    ? "Tus datos personales permanecen 100% cifrados y privados según nuestra estricta Política de Privacidad." 
-                    : "Your contact information is strictly encrypted and protected under our GDPR Privacy Policy."}
-                </p>
+                {/* Privacy & Discreet Guarantee Card */}
+                <div className="p-4 bg-white/[0.02] border border-white/5 rounded-2xl space-y-2 text-left backdrop-blur-md">
+                  <div className="flex items-center gap-2 text-white font-mono text-[10px] font-bold uppercase tracking-wider">
+                    <ShieldCheck className="w-3.5 h-3.5 text-[#39FF14]" />
+                    <span>{locale === "es" ? "Garantía de Privacidad y Anonimato" : "Discreet Privacy & Safety Guarantee"}</span>
+                  </div>
+                  
+                  <ul className="space-y-1.5 text-[10px] text-[#b9cac9] font-sans">
+                    <li className="flex items-center gap-2">
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#39FF14]" />
+                      <span>{locale === "es" ? "Tu nombre legal, teléfono y WhatsApp NUNCA se muestran a los miembros." : "Your legal name, phone, and WhatsApp are NEVER visible to members."}</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#00fbfb]" />
+                      <span>{locale === "es" ? "Cifrado Difuminado Facial activo por defecto en feeds públicos." : "Face Blur Encryption active by default on public discovery feeds."}</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#ffabf3]" />
+                      <span>{locale === "es" ? "Cero publicaciones automáticas ni acceso a tus contactos personales." : "Zero automatic posting and no access to your personal contacts."}</span>
+                    </li>
+                  </ul>
+                </div>
               </form>
             )}
           </DoubleBezelCard>
