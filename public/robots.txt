@@ -1,0 +1,43 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /admin/
+Disallow: /dashboard/
+Disallow: /messages/
+Disallow: /pulse/live/
+Disallow: /onboarding/
+Disallow: /settings/
+Disallow: /auth/
+
+# AI Crawlers for Citations and AEO
+User-agent: GPTBot
+Allow: /
+Allow: /llms.txt
+Allow: /become-creator
+Allow: /how-we-do
+Allow: /creator-hub
+Allow: /vibe-radar
+
+User-agent: ClaudeBot
+Allow: /
+Allow: /llms.txt
+Allow: /become-creator
+Allow: /how-we-do
+Allow: /creator-hub
+Allow: /vibe-radar
+
+User-agent: PerplexityBot
+Allow: /
+Allow: /llms.txt
+Allow: /become-creator
+Allow: /how-we-do
+Allow: /creator-hub
+Allow: /vibe-radar
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: Applebot-Extended
+Allow: /
+
+Sitemap: https://seccion.ai/sitemap.xml

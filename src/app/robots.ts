@@ -15,14 +15,34 @@ export default function robots(): MetadataRoute.Robots {
           '/onboarding-reset/',
           '/dashboard/',
           '/settings/',
-          '/profile/', // User profiles shouldn't be indexed unless specifically designed for SEO
+          '/profile/',
           '/messages/',
+          '/pulse/live/',
           '/auth/'
         ],
       },
       {
-        userAgent: ['GPTBot', 'ChatGPT-User', 'PerplexityBot', 'ClaudeBot', 'anthropic-ai', 'Google-Extended', 'Bingbot'],
-        allow: '/',
+        userAgent: [
+          'GPTBot',
+          'ChatGPT-User',
+          'ClaudeBot',
+          'anthropic-ai',
+          'PerplexityBot',
+          'Google-Extended',
+          'Applebot-Extended',
+          'Bingbot'
+        ],
+        allow: [
+          '/',
+          '/llms.txt',
+          '/become-creator',
+          '/how-we-do',
+          '/creator-hub',
+          '/vibe-radar',
+          '/early-access',
+          '/rules',
+          '/hit-us-up'
+        ],
       }
     ],
     sitemap: `${baseUrl}/sitemap.xml`,
