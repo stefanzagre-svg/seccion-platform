@@ -14,10 +14,6 @@ import EmailVerificationGuard from "@/components/auth/EmailVerificationGuard";
 import FloatingBugButton from "@/components/bug-bounty/FloatingBugButton";
 import { LanguageProvider, SupportedLocale } from "@/context/LanguageContext";
 
-const plusJakartaSans = { variable: "font-plus-jakarta-sans-fallback" };
-const hankenGrotesk = { variable: "font-hanken-grotesk-fallback" };
-const jetBrainsMono = { variable: "font-jetbrains-mono-fallback" };
-
 export const viewport: Viewport = {
   themeColor: "#0a0a0c",
   width: "device-width",
@@ -90,7 +86,7 @@ export default function RootLayout({
   return (
     <html
       lang={savedLocale}
-      className={`${plusJakartaSans.variable} ${hankenGrotesk.variable} ${jetBrainsMono.variable} h-full antialiased dark`}
+      className="h-full antialiased dark font-sans"
     >
       <body className="min-h-full flex flex-col bg-background text-foreground font-sans relative overflow-x-hidden pt-safe pb-safe">
         {/* Rich Structured Data for AI Search & Engine Indexing */}
