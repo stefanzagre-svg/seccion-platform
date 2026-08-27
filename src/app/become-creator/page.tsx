@@ -1,35 +1,15 @@
 import type { Metadata } from "next";
-import { cookies } from "next/headers";
-import { SupportedLocale } from "@/context/LanguageContext";
-import en from "@/locales/en.json";
-import es from "@/locales/es.json";
 import ClientPage from "./page-client";
 import { createClient } from "@/lib/supabase/server";
 
-export async function generateMetadata(): Promise<Metadata> {
-  try {
-    const cookieStore = await cookies();
-    const savedLocale = (cookieStore.get("seccion_user_locale")?.value || "en") as SupportedLocale;
-    const dict = savedLocale === "es" ? es : en;
-
-    const title = dict?.seo?.becomeCreator?.title || "Become a Creator — 90% Revenue Split & AI Studio | SECCION";
-    const description = dict?.seo?.becomeCreator?.desc || "Join SECCION as a Founding Creator. Enjoy a 90% net revenue split, AI Operations Assistant, and global reach.";
-
-    return {
-      title,
-      description,
-      openGraph: {
-        title,
-        description,
-      }
-    };
-  } catch {
-    return {
-      title: "Become a Creator — 90% Revenue Split & AI Studio | SECCION",
-      description: "Join SECCION as a Founding Creator. Enjoy a 90% net revenue split, AI Operations Assistant, and global reach.",
-    };
+export const metadata: Metadata = {
+  title: "Become a Creator — 90% Revenue Split & AI Studio | SECCION",
+  description: "Join SECCION as a Founding Creator. Enjoy a 90% net revenue split, AI Operations Assistant, and global reach.",
+  openGraph: {
+    title: "Become a Creator — 90% Revenue Split & AI Studio | SECCION",
+    description: "Join SECCION as a Founding Creator. Enjoy a 90% net revenue split, AI Operations Assistant, and global reach.",
   }
-}
+};
 
 export default async function Page() {
   const supabase = await createClient();
