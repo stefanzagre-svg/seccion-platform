@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin-client";
 
-const supabaseAdmin = createAdminClient();
-
 // Pre-approved 1-Year Free AI Assistant Passcodes
 const VALID_PASSCODES = [
   "VIP2026-AI-FREE",
@@ -13,6 +11,7 @@ const VALID_PASSCODES = [
 
 export async function POST(req: NextRequest) {
   try {
+    const supabaseAdmin = createAdminClient();
     const body = await req.json();
     const { passcode, creatorId } = body;
 

@@ -18,10 +18,9 @@ const creatorApplySchema = z.object({
   path: ["phone"]
 });
 
-const supabaseAdmin = createAdminClient();
-
 export async function POST(req: NextRequest) {
   try {
+    const supabaseAdmin = createAdminClient();
     const rawBody = await req.json().catch(() => null);
     const parsed = creatorApplySchema.safeParse(rawBody);
 

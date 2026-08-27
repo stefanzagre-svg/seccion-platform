@@ -2,10 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin-client";
 import { sendTelegramNotification } from "@/lib/telegram";
 
-const supabaseAdmin = createAdminClient();
-
 export async function POST(req: NextRequest) {
   try {
+    const supabaseAdmin = createAdminClient();
     const body = await req.json();
     const { email, city } = body;
 

@@ -1,10 +1,9 @@
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin-client';
 
-const supabaseAdmin = createAdminClient();
-
 export async function POST(request: Request) {
   try {
+    const supabaseAdmin = createAdminClient();
     const authHeader = request.headers.get('Authorization');
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return NextResponse.json({ error: 'Missing or invalid authorization header' }, { status: 401 });
