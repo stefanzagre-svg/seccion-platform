@@ -27,34 +27,49 @@ export async function middleware(request: NextRequest) {
     });
   }
 
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return request.cookies.getAll();
-        },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value }) =>
-            request.cookies.set(name, value)
-          );
-          supabaseResponse = NextResponse.next({ request });
-          cookiesToSet.forEach(({ name, value, options }) =>
-            supabaseResponse.cookies.set(name, value, options)
-          );
-        },
-      },
-    }
-  );
+  let user = null;
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  try {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+    if (supabaseUrl && supabaseAnonKey) {
+      const supabase = createServerClient(
+        supabaseUrl,
+        supabaseAnonKey,
+        {
+          cookies: {
+            getAll() {
+              return request.cookies.getAll();
+            },
+            setAll(cookiesToSet) {
+              try {
+                cookiesToSet.forEach(({ name, value }) =>
+                  request.cookies.set(name, value)
+                );
+                supabaseResponse = NextResponse.next({ request });
+                cookiesToSet.forEach(({ name, value, options }) =>
+                  supabaseResponse.cookies.set(name, value, options)
+                );
+              } catch {
+                // Ignore cookie setting errors on edge/RSC
+              }
+            },
+          },
+        }
+      );
+
+      const { data } = await supabase.auth.getUser();
+      user = data?.user || null;
+    }
+  } catch (err) {
+    console.warn('[Middleware] Supabase auth check failed safely:', err);
+    user = null;
+  }
 
   // Redirect unauthenticated users away from protected routes
-  const isPublic = PUBLIC_ROUTES.some(route => pathname.startsWith(route));
-  const isExplicitlyProtected = PROTECTED_ROUTES.some(route => pathname.startsWith(route));
+  const isPublic = PUBLIC_ROUTES.some(route => pathname?.startsWith(route));
+  const isExplicitlyProtected = PROTECTED_ROUTES.some(route => pathname?.startsWith(route));
   if (!user) {
     if (isExplicitlyProtected) {
       const url = request.nextUrl.clone();

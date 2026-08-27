@@ -12,22 +12,29 @@ export const metadata: Metadata = {
 };
 
 export default async function Page() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  
   let profile = null;
-  
-  if (user) {
-    const { data } = await supabase
-      .from('profiles')
-      .select('display_name, username, origins')
-      .eq('id', user.id)
-      .single();
-    
-    if (data) {
-       profile = data;
+  let userEmail: string | undefined = undefined;
+
+  try {
+    const supabase = await createClient();
+    const { data } = await supabase.auth.getUser();
+    const user = data?.user;
+    userEmail = user?.email;
+
+    if (user) {
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('display_name, username, origins')
+        .eq('id', user.id)
+        .maybeSingle();
+
+      if (profileData) {
+        profile = profileData;
+      }
     }
+  } catch (err) {
+    console.warn('[Become Creator Page] Server pre-fetch skipped safely:', err);
   }
 
-  return <ClientPage initialProfile={profile} userEmail={user?.email} />;
+  return <ClientPage initialProfile={profile} userEmail={userEmail} />;
 }
