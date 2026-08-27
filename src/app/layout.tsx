@@ -21,6 +21,8 @@ const plusJakartaSans = { variable: "font-plus-jakarta-sans-fallback" };
 const hankenGrotesk = { variable: "font-hanken-grotesk-fallback" };
 const jetBrainsMono = { variable: "font-jetbrains-mono-fallback" };
 
+export const dynamic = 'force-dynamic';
+
 export const viewport: Viewport = {
   themeColor: "#0a0a0c",
   width: "device-width",

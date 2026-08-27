@@ -5,6 +5,8 @@ import en from "@/locales/en.json";
 import es from "@/locales/es.json";
 import ClientPage from "./page-client";
 
+export const dynamic = 'force-dynamic';
+
 export async function generateMetadata(): Promise<Metadata> {
   try {
     const cookieStore = await cookies();
