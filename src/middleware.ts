@@ -28,13 +28,14 @@ export async function middleware(request: NextRequest) {
   }
 
   let user = null;
+  let supabaseClient: any = null;
 
   try {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
     if (supabaseUrl && supabaseAnonKey) {
-      const supabase = createServerClient(
+      supabaseClient = createServerClient(
         supabaseUrl,
         supabaseAnonKey,
         {
@@ -59,7 +60,7 @@ export async function middleware(request: NextRequest) {
         }
       );
 
-      const { data } = await supabase.auth.getUser();
+      const { data } = await supabaseClient.auth.getUser();
       user = data?.user || null;
     }
   } catch (err) {
@@ -130,9 +131,9 @@ export async function middleware(request: NextRequest) {
 
       return true;
     };
-    if (!onboardingCompleted) {
+    if (!onboardingCompleted && supabaseClient) {
       // Cookie missing — do the DB check once and set the cookie for next time
-      const { data: profile } = await supabase
+      const { data: profile } = await supabaseClient
         .from('profiles')
         .select('role, archetype, lifestyle_habits, active_purposes, privacy_settings, sexual_preferences, relationship_goals, relationship_types, current_location, career, education_level, hobbies, income_bracket, nsfw_boundaries')
         .eq('id', user.id)
