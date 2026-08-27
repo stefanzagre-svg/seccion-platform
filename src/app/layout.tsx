@@ -31,68 +31,77 @@ export const viewport: Viewport = {
 };
 
 export async function generateMetadata(): Promise<Metadata> {
-  const cookieStore = await cookies();
-  const savedLocale = (cookieStore.get("seccion_user_locale")?.value || "en") as SupportedLocale;
-  const dict = savedLocale === "es" ? es : en;
+  try {
+    const cookieStore = await cookies();
+    const savedLocale = (cookieStore.get("seccion_user_locale")?.value || "en") as SupportedLocale;
+    const dict = savedLocale === "es" ? es : en;
 
-  return {
-    metadataBase: new URL("https://seccion.ai"),
-    alternates: {
-      canonical: "https://seccion.ai",
-    },
-    title: {
-      default: dict.metadata.defaultTitle,
-      template: "%s | SECCION",
-    },
-    description: dict.metadata.description,
-    keywords: dict.metadata.keywords.split(", ").concat(["SECCION", "AI dating app for creators", "live streaming matchmaking app"]),
-    icons: {
-      icon: [
-        { url: '/favicon.ico', sizes: 'any' },
-        { url: '/favicon.png', type: 'image/png' },
-        { url: '/icon.png', type: 'image/png' },
-      ],
-      shortcut: '/favicon.ico',
-      apple: '/apple-touch-icon.png',
-    },
-    appleWebApp: {
-      capable: true,
-      statusBarStyle: "black-translucent",
-      title: "SECCION",
-    },
-    formatDetection: {
-      telephone: false,
-    },
-    openGraph: {
-      title: dict.metadata.defaultTitle,
-      description: dict.metadata.description,
-      url: "https://seccion.ai",
-      siteName: "SECCION",
-      images: [
-        {
-          url: "https://seccion.ai/assets/seo/og-image.jpg",
-          width: 1200,
-          height: 630,
-          alt: "SECCION Platform",
-        },
-      ],
-      locale: savedLocale,
-      type: "website",
-    },
-    twitter: {
-      card: "summary_large_image",
-      title: dict.metadata.defaultTitle,
-      description: dict.metadata.description,
-      images: ["https://seccion.ai/assets/seo/og-image.jpg"],
-      creator: "@seccionplatform",
-    },
-    // JSON-LD structured data injected via metadata 'other' — works in RSC streaming
-    other: {
-      "script:ld+json:organization": JSON.stringify(organizationSchema),
-      "script:ld+json:website": JSON.stringify(websiteSchema),
-      "script:ld+json:faq": JSON.stringify(faqSchema),
-    },
-  };
+    const defaultTitle = dict?.metadata?.defaultTitle || "SECCION.ai | 1st AI Dating & Creator Live Streaming Hybrid Platform";
+    const description = dict?.metadata?.description || "SECCION is the first AI-driven dating matchmaking and live streaming creator hybrid platform.";
+    const keywords = (dict?.metadata?.keywords || "").split(", ").filter(Boolean).concat(["SECCION", "AI dating app for creators", "live streaming matchmaking app"]);
+
+    return {
+      metadataBase: new URL("https://seccion.ai"),
+      alternates: {
+        canonical: "https://seccion.ai",
+      },
+      title: {
+        default: defaultTitle,
+        template: "%s | SECCION",
+      },
+      description,
+      keywords,
+      icons: {
+        icon: [
+          { url: '/favicon.ico', sizes: 'any' },
+          { url: '/favicon.png', type: 'image/png' },
+          { url: '/icon.png', type: 'image/png' },
+        ],
+        shortcut: '/favicon.ico',
+        apple: '/apple-touch-icon.png',
+      },
+      appleWebApp: {
+        capable: true,
+        statusBarStyle: "black-translucent",
+        title: "SECCION",
+      },
+      formatDetection: {
+        telephone: false,
+      },
+      openGraph: {
+        title: defaultTitle,
+        description,
+        url: "https://seccion.ai",
+        siteName: "SECCION",
+        images: [
+          {
+            url: "https://seccion.ai/assets/seo/og-image.jpg",
+            width: 1200,
+            height: 630,
+            alt: "SECCION Platform",
+          },
+        ],
+        locale: savedLocale,
+        type: "website",
+      },
+      twitter: {
+        card: "summary_large_image",
+        title: defaultTitle,
+        description,
+        images: ["https://seccion.ai/assets/seo/og-image.jpg"],
+        creator: "@seccionplatform",
+      },
+    };
+  } catch {
+    return {
+      metadataBase: new URL("https://seccion.ai"),
+      title: {
+        default: "SECCION.ai | 1st AI Dating & Creator Live Streaming Hybrid Platform",
+        template: "%s | SECCION",
+      },
+      description: "SECCION is the first AI-driven dating matchmaking and live streaming creator hybrid platform.",
+    };
+  }
 }
 
 export default async function RootLayout({
