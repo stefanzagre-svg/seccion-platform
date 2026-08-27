@@ -18,7 +18,13 @@ export async function middleware(request: NextRequest) {
 
   // Dedicated Admin Route Exemption: Pass all /admin requests directly to AdminLayout (zero redirects!)
   if (pathname.startsWith('/admin')) {
-    return supabaseResponse;
+    const requestHeaders = new Headers(request.headers);
+    requestHeaders.set('x-pathname', pathname);
+    return NextResponse.next({
+      request: {
+        headers: requestHeaders,
+      },
+    });
   }
 
   const supabase = createServerClient(
