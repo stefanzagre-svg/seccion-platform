@@ -117,17 +117,9 @@ export default async function RootLayout({
       lang={savedLocale}
       className={`${plusJakartaSans.variable} ${hankenGrotesk.variable} ${jetBrainsMono.variable} h-full antialiased dark`}
     >
-      <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500&family=JetBrains+Mono:wght@500&family=Plus+Jakarta+Sans:wght@500;700;800&family=Outfit:wght@400;500;700;800;900&display=swap"
-          rel="stylesheet"
-        />
+      <body className="min-h-full flex flex-col bg-background text-foreground font-sans relative overflow-x-hidden pt-safe pb-safe">
         {/* Rich Structured Data for AI Search & Engine Indexing */}
         <JsonLdSuite />
-      </head>
-      <body className="min-h-full flex flex-col bg-background text-foreground font-sans relative overflow-x-hidden pt-safe pb-safe">
         <LanguageProvider initialLocale={savedLocale}>
           {/* PWA Background Services & Smart Prompts */}
           <ServiceWorkerRegister />
