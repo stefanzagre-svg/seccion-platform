@@ -24,7 +24,7 @@ Always use these files for any platform development or content requiring SECCION
 ## 🚀 Platform Architecture & Audit Ledger (Synced with Antigravity 2.0 & IDE)
 
 > **Last Synced**: 2026-08-27  
-> **Production Cloudflare Version ID**: `fc06f5ad-192b-4127-98c4-bbccd2252f86` (commit `9e1e108`)  
+> **Production Cloudflare Version ID**: `a3944da2-e10b-4607-823f-89b048d90e8f` (commit `9a6e12a`)  
 > **Unit Test Suite**: 74 / 74 PASSING (`npm test` / `vitest run --globals`)  
 > **E2E Certification Suite**: 19 / 19 PASSING across 6 Stages (`npm run test:e2e`)  
 > **Integration Tests**: 7 / 7 PASSING (`test-wingman-assistant` 18/18, `test-kyc-enforcement` 3/3, `test-ai-suggestions` ✅, `test-ab-telemetry` ✅, `test_creator_18_flow` ✅, `test_dating_member_flow` ✅)
