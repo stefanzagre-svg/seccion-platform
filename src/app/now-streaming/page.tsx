@@ -6,18 +6,28 @@ import es from "@/locales/es.json";
 import ClientPage from "./page-client";
 
 export async function generateMetadata(): Promise<Metadata> {
-  const cookieStore = await cookies();
-  const savedLocale = (cookieStore.get("seccion_user_locale")?.value || "en") as SupportedLocale;
-  const dict = savedLocale === "es" ? es : en;
+  try {
+    const cookieStore = await cookies();
+    const savedLocale = (cookieStore.get("seccion_user_locale")?.value || "en") as SupportedLocale;
+    const dict = savedLocale === "es" ? es : en;
 
-  return {
-    title: dict.seo.nowStreaming.title,
-    description: dict.seo.nowStreaming.desc,
-    openGraph: {
-      title: dict.seo.nowStreaming.title,
-      description: dict.seo.nowStreaming.desc,
-    }
-  };
+    const title = dict?.seo?.nowStreaming?.title || "Live Streams & VIP Rooms | SECCION";
+    const description = dict?.seo?.nowStreaming?.desc || "Watch live broadcasts, connect in interactive VIP sessions, and engage with verified creators worldwide.";
+
+    return {
+      title,
+      description,
+      openGraph: {
+        title,
+        description,
+      }
+    };
+  } catch {
+    return {
+      title: "Live Streams & VIP Rooms | SECCION",
+      description: "Watch live broadcasts, connect in interactive VIP sessions, and engage with verified creators worldwide.",
+    };
+  }
 }
 
 export default function Page() {

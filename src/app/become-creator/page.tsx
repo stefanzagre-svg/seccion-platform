@@ -7,18 +7,28 @@ import ClientPage from "./page-client";
 import { createClient } from "@/lib/supabase/server";
 
 export async function generateMetadata(): Promise<Metadata> {
-  const cookieStore = await cookies();
-  const savedLocale = (cookieStore.get("seccion_user_locale")?.value || "en") as SupportedLocale;
-  const dict = savedLocale === "es" ? es : en;
+  try {
+    const cookieStore = await cookies();
+    const savedLocale = (cookieStore.get("seccion_user_locale")?.value || "en") as SupportedLocale;
+    const dict = savedLocale === "es" ? es : en;
 
-  return {
-    title: dict.seo.becomeCreator.title,
-    description: dict.seo.becomeCreator.desc,
-    openGraph: {
-      title: dict.seo.becomeCreator.title,
-      description: dict.seo.becomeCreator.desc,
-    }
-  };
+    const title = dict?.seo?.becomeCreator?.title || "Become a Creator — 90% Revenue Split & AI Studio | SECCION";
+    const description = dict?.seo?.becomeCreator?.desc || "Join SECCION as a Founding Creator. Enjoy a 90% net revenue split, AI Operations Assistant, and global reach.";
+
+    return {
+      title,
+      description,
+      openGraph: {
+        title,
+        description,
+      }
+    };
+  } catch {
+    return {
+      title: "Become a Creator — 90% Revenue Split & AI Studio | SECCION",
+      description: "Join SECCION as a Founding Creator. Enjoy a 90% net revenue split, AI Operations Assistant, and global reach.",
+    };
+  }
 }
 
 export default async function Page() {

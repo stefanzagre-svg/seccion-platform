@@ -4,6 +4,28 @@
     "description": "SECCION (seccion.ai) is the first AI-driven dating matchmaking and live streaming creator hybrid platform. 90% creator revenue split, 8-level chemistry meter, and real-life vibe synergy.",
     "keywords": "SECCION, seccion.ai, seccion ai hybrid platform, AI matchmaking, AI dating app, creator live streaming, vibe synergy, Co-Op dating, creator economy, chemistry meter"
   },
+  "seo": {
+    "home": {
+      "title": "SECCION.ai | 1st AI Dating & Creator Live Streaming Hybrid Platform",
+      "desc": "SECCION (seccion.ai) is the first AI-driven dating matchmaking and live streaming creator hybrid platform. 90% creator revenue split, 8-level chemistry meter, and real-life vibe synergy."
+    },
+    "vibeRadar": {
+      "title": "Vibe Radar — Real-Time Discovery | SECCION",
+      "desc": "Explore creators, active live sessions, and compatible dating connections in real time on SECCION Vibe Radar."
+    },
+    "nowStreaming": {
+      "title": "Live Streams & VIP Rooms | SECCION",
+      "desc": "Watch live broadcasts, connect in interactive VIP sessions, and engage with verified creators worldwide."
+    },
+    "howWeDo": {
+      "title": "How SECCION Works — AI Matchmaking & Creator Economy",
+      "desc": "Discover how SECCION blends zero-knowledge AI matchmaking with high-yield creator live streaming."
+    },
+    "becomeCreator": {
+      "title": "Become a Creator — 90% Revenue Split & AI Studio | SECCION",
+      "desc": "Join SECCION as a Founding Creator. Enjoy a 90% net revenue split, AI Operations Assistant, and global reach."
+    }
+  },
   "nav": {
     "home": "Home",
     "howWeDo": "How We Do",

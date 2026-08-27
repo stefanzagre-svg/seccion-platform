@@ -6,18 +6,28 @@ import es from "@/locales/es.json";
 import ClientPage from "./page-client";
 
 export async function generateMetadata(): Promise<Metadata> {
-  const cookieStore = await cookies();
-  const savedLocale = (cookieStore.get("seccion_user_locale")?.value || "en") as SupportedLocale;
-  const dict = savedLocale === "es" ? es : en;
+  try {
+    const cookieStore = await cookies();
+    const savedLocale = (cookieStore.get("seccion_user_locale")?.value || "en") as SupportedLocale;
+    const dict = savedLocale === "es" ? es : en;
 
-  return {
-    title: dict.seo.vibeRadar.title,
-    description: dict.seo.vibeRadar.desc,
-    openGraph: {
-      title: dict.seo.vibeRadar.title,
-      description: dict.seo.vibeRadar.desc,
-    }
-  };
+    const title = dict?.seo?.vibeRadar?.title || "Vibe Radar — Real-Time Discovery | SECCION";
+    const description = dict?.seo?.vibeRadar?.desc || "Explore creators, active live sessions, and compatible dating connections in real time.";
+
+    return {
+      title,
+      description,
+      openGraph: {
+        title,
+        description,
+      }
+    };
+  } catch {
+    return {
+      title: "Vibe Radar — Real-Time Discovery | SECCION",
+      description: "Explore creators, active live sessions, and compatible dating connections in real time.",
+    };
+  }
 }
 
 export default function Page() {

@@ -4,6 +4,28 @@
     "description": "SECCION (seccion.ai) es la primera plataforma híbrida que fusiona matchmaking con IA y streaming en vivo para creadores. 90% de ingresos para creadores y sinergia de vibes real.",
     "keywords": "SECCION, seccion.ai, seccion ai hybrid platform, plataforma híbrida, citas con IA, emparejamiento por IA, streaming en vivo, plataforma de creadores, sinergia de vibes"
   },
+  "seo": {
+    "home": {
+      "title": "SECCION.ai | La 1ra Plataforma Híbrida de Dating IA y Live Streaming para Creadores",
+      "desc": "SECCION (seccion.ai) es la primera plataforma híbrida que fusiona matchmaking con IA y streaming en vivo para creadores. 90% de ingresos para creadores y sinergia de vibes real."
+    },
+    "vibeRadar": {
+      "title": "Radar de Vibes — Descubrimiento en Tiempo Real | SECCION",
+      "desc": "Explora creadores, transmisiones en vivo y conexiones compatibles en tiempo real con el Radar de Vibes de SECCION."
+    },
+    "nowStreaming": {
+      "title": "Transmisiones en Vivo y Salas VIP | SECCION",
+      "desc": "Mira transmisiones en vivo, participa en salas VIP interactivas y conecta con creadores verificados a nivel mundial."
+    },
+    "howWeDo": {
+      "title": "Cómo Funciona SECCION — Matchmaking con IA y Economía de Creadores",
+      "desc": "Descubre cómo SECCION combina matchmaking inteligente con IA y transmisión en vivo de alto rendimiento para creadores."
+    },
+    "becomeCreator": {
+      "title": "Sé Creador/a — 90% de Comisión Neta y Estudio con IA | SECCION",
+      "desc": "Únete a SECCION como Creador/a Fundador/a. Asegura un 90% de ingresos netos, Asistente de Operaciones con IA y alcance global."
+    }
+  },
   "nav": {
     "home": "Inicio",
     "howWeDo": "Cómo Funciona",
