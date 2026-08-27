@@ -111,8 +111,13 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const cookieStore = await cookies();
-  const savedLocale = (cookieStore.get("seccion_user_locale")?.value || "en") as SupportedLocale;
+  let savedLocale: SupportedLocale = "en";
+  try {
+    const cookieStore = await cookies();
+    savedLocale = (cookieStore.get("seccion_user_locale")?.value || "en") as SupportedLocale;
+  } catch {
+    savedLocale = "en";
+  }
 
   return (
     <html

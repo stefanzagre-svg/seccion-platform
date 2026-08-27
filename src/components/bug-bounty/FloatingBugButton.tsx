@@ -25,7 +25,7 @@ export default function FloatingBugButton() {
   }, []);
 
   // Hide on admin routes to prevent duplicate triage UI
-  if (pathname.startsWith('/admin')) {
+  if (pathname?.startsWith('/admin')) {
     return null;
   }
 
