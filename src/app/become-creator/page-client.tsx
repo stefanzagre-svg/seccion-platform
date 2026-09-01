@@ -811,7 +811,7 @@ export default function BecomeCreatorPage({ initialProfile, userEmail }: { initi
                     </p>
                     <div className="grid grid-cols-2 gap-2 pt-1">
                       <a
-                        href={`https://wa.me/?text=${encodeURIComponent(
+                        href={`https://wa.me/34662907153?text=${encodeURIComponent(
                           locale === "es"
                             ? `¡Hola equipo SECCION! Acabo de enviar mi solicitud como creador/a: ${formData.fullName} (${formData.email}). ¿Podemos revisar mi perfil para activar mi Pack 90% Creador Fundador?`
                             : `Hi SECCION Team! I just submitted my creator application: ${formData.fullName} (${formData.email}). Can we fast-track my approval for the 90% Founding Creator Pack?`

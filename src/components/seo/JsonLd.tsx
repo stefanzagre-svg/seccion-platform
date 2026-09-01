@@ -24,6 +24,12 @@ export function OrganizationSchema() {
     "contactPoint": [
       {
         "@type": "ContactPoint",
+        "telephone": "+34662907153",
+        "contactType": "creator support and onboarding",
+        "availableLanguage": ["English", "Spanish", "French"]
+      },
+      {
+        "@type": "ContactPoint",
         "email": "legal@seccion.ai",
         "contactType": "legal support",
         "availableLanguage": ["English", "Spanish", "French"]
@@ -42,8 +48,11 @@ export function OrganizationSchema() {
       }
     ],
     "sameAs": [
-      "https://twitter.com/seccion_ai",
-      "https://instagram.com/seccion.ai",
+      "https://x.com/steveseccion",
+      "https://youtube.com/@seccion-platform",
+      "https://instagram.com/seccionplatform",
+      "https://tiktok.com/@seccionplatform",
+      "https://wa.me/34662907153",
       "https://t.me/seccion_ai"
     ]
   };
