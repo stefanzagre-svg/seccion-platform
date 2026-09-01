@@ -1,10 +1,35 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
-// Routes that don't require authentication
-const PUBLIC_ROUTES = ['/admin', '/onboarding', '/onboarding/step-2', '/auth/callback', '/api', '/how-we-do', '/become-creator', '/creator-hub', '/vibe-radar', '/login', '/now-streaming', '/privacy', '/rules', '/hit-us-up', '/early-access'];
+// Routes that don't require authentication (explicit public pages)
+const PUBLIC_ROUTES = [
+  '/login',
+  '/become-creator',
+  '/how-we-do',
+  '/creator-hub',
+  '/vibe-radar',
+  '/privacy',
+  '/rules',
+  '/hit-us-up',
+  '/early-access',
+  '/onboarding',
+  '/onboarding/step-2',
+  '/auth/callback'
+];
+
+// Explicit public API endpoints that do not require an active user session
+const PUBLIC_API_ROUTES = [
+  '/api/crypto/nowpayments-webhook',
+  '/api/billing/segpay-postback',
+  '/api/kyc/didit-webhook',
+  '/api/webhooks/telegram',
+  '/api/auth/callback',
+  '/api/early-access',
+  '/api/contact'
+];
+
 // Routes that require authentication (explicitly excluded from PUBLIC_ROUTES)
-const PROTECTED_ROUTES = ['/stream-demo'];
+const PROTECTED_ROUTES = ['/stream-demo', '/dashboard', '/studio', '/feed', '/messages', '/profile'];
 // Routes that authenticated users should be redirected away from
 const AUTH_ROUTES = ['/onboarding', '/onboarding/step-2'];
 
@@ -68,16 +93,26 @@ export async function middleware(request: NextRequest) {
     user = null;
   }
 
-  // Redirect unauthenticated users away from protected routes
-  const isPublic = PUBLIC_ROUTES.some(route => pathname?.startsWith(route));
-  const isExplicitlyProtected = PROTECTED_ROUTES.some(route => pathname?.startsWith(route));
+  // Check route public status
+  const isPublicPage = PUBLIC_ROUTES.some(route => pathname === route || pathname.startsWith(route + '/'));
+  const isPublicApi = PUBLIC_API_ROUTES.some(route => pathname === route || pathname.startsWith(route + '/'));
+  const isExplicitlyProtected = PROTECTED_ROUTES.some(route => pathname === route || pathname.startsWith(route + '/'));
+
   if (!user) {
+    // 1. If hitting an unauthenticated private API route, return 401 Unauthorized
+    if (pathname.startsWith('/api/') && !isPublicApi) {
+      return NextResponse.json({ error: 'Unauthorized: Valid user session required' }, { status: 401 });
+    }
+
+    // 2. If hitting protected page, redirect to login
     if (isExplicitlyProtected) {
       const url = request.nextUrl.clone();
       url.pathname = '/login';
       return NextResponse.redirect(url);
     }
-    if (!isPublic && pathname !== '/') {
+
+    // 3. If accessing non-public site route
+    if (!isPublicPage && pathname !== '/') {
       const url = request.nextUrl.clone();
       url.pathname = '/onboarding';
       return NextResponse.redirect(url);

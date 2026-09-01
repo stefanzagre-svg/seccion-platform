@@ -25,11 +25,23 @@ export async function POST(req: NextRequest) {
     }
 
     // Determine permissions
-    // Creators can publish and subscribe. Members usually only subscribe (in a livestream)
-    // For 1-on-1 private calls, both can publish and subscribe. We'll grant both for simplicity 
-    // in 1-on-1, but for live stream we'd check if it's a broadcast room.
+    // Broadcast rooms (live_*): Only verified room owner (creator) can publish video/audio.
     const isBroadcast = roomName.startsWith('live_');
-    const canPublish = isCreator || !isBroadcast; // Members can publish in private calls
+    let canPublish = false;
+
+    if (isBroadcast) {
+      // Check if current user is the creator owner of this room or has role 'creator'
+      const { data: creatorProf } = await supabase
+        .from('creator_profiles')
+        .select('id')
+        .eq('id', user.id)
+        .single();
+      
+      canPublish = !!creatorProf;
+    } else {
+      // Private 1-on-1 calls: both authenticated participants can publish
+      canPublish = true;
+    }
 
     const at = new AccessToken(apiKey, apiSecret, {
       identity: user.id,
