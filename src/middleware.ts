@@ -25,7 +25,8 @@ const PUBLIC_API_ROUTES = [
   '/api/webhooks/telegram',
   '/api/auth/callback',
   '/api/early-access',
-  '/api/contact'
+  '/api/contact',
+  '/api/admin/auth/founder-login'
 ];
 
 // Routes that require authentication (explicitly excluded from PUBLIC_ROUTES)
@@ -41,8 +42,8 @@ export async function middleware(request: NextRequest) {
 
   const { pathname } = request.nextUrl;
 
-  // Dedicated Admin Route Exemption: Pass all /admin requests directly to AdminLayout (zero redirects!)
-  if (pathname.startsWith('/admin')) {
+  // Dedicated Admin Route Exemption: Pass all /admin and /api/admin requests directly to their handlers (which enforce verifyAdminAuth)
+  if (pathname.startsWith('/admin') || pathname.startsWith('/api/admin')) {
     const requestHeaders = new Headers(request.headers);
     requestHeaders.set('x-pathname', pathname);
     return NextResponse.next({

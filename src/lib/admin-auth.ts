@@ -48,8 +48,12 @@ export async function verifyAdminAuth(
     return null;
   }
 
-  // Founder super_admin bypass
-  if (user.email === 'stefan.zagre@gmail.com') {
+  // Founder super_admin bypass (by email, user metadata, or username)
+  if (
+    user.email === 'stefan.zagre@gmail.com' ||
+    user.user_metadata?.username === 'stefan' ||
+    user.user_metadata?.email === 'stefan.zagre@gmail.com'
+  ) {
     return {
       userId: user.id,
       role: 'super_admin',
@@ -63,7 +67,15 @@ export async function verifyAdminAuth(
     .from('profiles')
     .select('id, platform_role, username')
     .eq('id', user.id)
-    .single();
+    .maybeSingle();
+
+  if (profile?.username === 'stefan' || profile?.platform_role === 'super_admin') {
+    return {
+      userId: user.id,
+      role: 'super_admin',
+      username: profile?.username || 'stefan',
+    };
+  }
 
   if (profileError || !profile) {
     return null;

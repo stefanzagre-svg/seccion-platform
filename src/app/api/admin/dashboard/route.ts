@@ -13,47 +13,47 @@ export async function GET(request: NextRequest) {
 
     const adminClient = createAdminClient();
 
-    // Parallel fetch all dashboard data
+    // Parallel fetch all dashboard data with safe query fallbacks
+    const safeQuery = async (promise: any) => {
+      try {
+        const res = await promise;
+        return res?.data || [];
+      } catch (e) {
+        console.warn('[Admin Dashboard] Query fallback:', e);
+        return [];
+      }
+    };
+
     const [
-      profilesResult,
-      subsResult,
-      moderationResult,
-      translationResult,
-      liveStreamsResult,
-      growthResult,
-      revenueResult,
-      goalsResult,
-      relationshipsResult,
+      profiles,
+      subs,
+      moderation,
+      translation,
+      liveStreams,
+      recentUsers,
+      recentSubs,
+      goals,
+      relationships,
     ] = await Promise.all([
       // Total profiles by role
-      adminClient.from('profiles').select('id, role, is_kyc_verified, platform_role, created_at'),
+      safeQuery(adminClient.from('profiles').select('id, role, is_kyc_verified, platform_role, created_at')),
       // Active subscriptions
-      adminClient.from('subscriptions').select('id, tier, is_active, price_paid, created_at'),
+      safeQuery(adminClient.from('subscriptions').select('id, tier, is_active, price_paid, created_at')),
       // Moderation queue
-      adminClient.from('content_moderation_queue').select('id, status, created_at, resolved_at'),
+      safeQuery(adminClient.from('content_moderation_queue').select('id, status, created_at, resolved_at')),
       // Translation revenue
-      adminClient.from('translation_audit_logs').select('id, cost_charged, session_type, duration_seconds, created_at'),
+      safeQuery(adminClient.from('translation_audit_logs').select('id, cost_charged, session_type, duration_seconds, created_at')),
       // Live streams
-      adminClient.from('live_streams').select('id, is_live, viewer_count'),
+      safeQuery(adminClient.from('live_streams').select('id, is_live, viewer_count')),
       // User growth (last 30 days) - manual aggregation
-      adminClient.from('profiles').select('id, created_at').gte('created_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()),
+      safeQuery(adminClient.from('profiles').select('id, created_at').gte('created_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString())),
       // Revenue (last 30 days) 
-      adminClient.from('subscriptions').select('id, price_paid, created_at').gte('created_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()),
+      safeQuery(adminClient.from('subscriptions').select('id, price_paid, created_at').gte('created_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString())),
       // Goal contributions
-      adminClient.from('goal_contributions').select('id, amount'),
+      safeQuery(adminClient.from('goal_contributions').select('id, amount')),
       // Relationship level distribution
-      adminClient.from('relationships').select('current_level, is_matched'),
+      safeQuery(adminClient.from('relationships').select('current_level, is_matched')),
     ]);
-
-    const profiles = profilesResult.data || [];
-    const subs = subsResult.data || [];
-    const moderation = moderationResult.data || [];
-    const translation = translationResult.data || [];
-    const liveStreams = liveStreamsResult.data || [];
-    const recentUsers = growthResult.data || [];
-    const recentSubs = revenueResult.data || [];
-    const goals = goalsResult.data || [];
-    const relationships = relationshipsResult.data || [];
 
     // --- KPIs ---
     const totalUsers = profiles.length;
