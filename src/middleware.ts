@@ -26,7 +26,8 @@ const PUBLIC_API_ROUTES = [
   '/api/auth/callback',
   '/api/early-access',
   '/api/contact',
-  '/api/admin/auth/founder-login'
+  '/api/admin/auth/founder-login',
+  '/api/media/blur'
 ];
 
 // Routes that require authentication (explicitly excluded from PUBLIC_ROUTES)

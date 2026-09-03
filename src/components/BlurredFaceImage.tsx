@@ -40,12 +40,30 @@ export default function BlurredFaceImage({
   // Default coordinate fallback (upper-center face region)
   const coords = faceCoordinates || { x: 0.5, y: 0.38, r: 0.18 };
 
+  // When face blur is required, route the image source through the Server-Side Blur transformation endpoint.
+  // This guarantees that raw, unblurred facial pixels are NEVER transferred over the network or exposed in DOM.
+  const effectiveSrc = React.useMemo(() => {
+    if (!src) return src;
+    if (!isBlurred) return src;
+
+    // Route through server-side pixelation/blur API
+    const params = new URLSearchParams({
+      url: src,
+      faceOnly: 'true',
+      fx: coords.x.toString(),
+      fy: coords.y.toString(),
+      fr: coords.r.toString(),
+      blur: '24'
+    });
+    return `/api/media/blur?${params.toString()}`;
+  }, [src, isBlurred, coords.x, coords.y, coords.r]);
+
   return (
     <div className={`relative overflow-hidden ${className}`}>
-      {/* Base Layer: Render children if present, otherwise render the <img> */}
+      {/* Base Layer: Render children if present, otherwise render the server-obfuscated or clear <img> */}
       {children ? children : (
         <img
-          src={src}
+          src={effectiveSrc}
           alt={alt || ''}
           className={`w-full h-full object-cover ${imgClassName}`}
         />
