@@ -64,7 +64,7 @@ AS $$
     SELECT p.*
     FROM public.profiles p
     WHERE p.id != p_user_id
-      AND p.is_onboarded = true
+      AND p.avatar_url IS NOT NULL
       AND NOT EXISTS (
           SELECT 1 FROM public.interactions i
           WHERE i.actor_id = p_user_id AND i.target_id = p.id
@@ -77,4 +77,4 @@ $$;
 CREATE INDEX IF NOT EXISTS idx_messages_conv_created ON public.messages(conversation_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_subs_subscriber_active ON public.subscriptions(subscriber_id, is_active);
 CREATE INDEX IF NOT EXISTS idx_interactions_actor_target ON public.interactions(actor_id, target_id);
-CREATE INDEX IF NOT EXISTS idx_profiles_role_onboarded ON public.profiles(role, is_onboarded);
+CREATE INDEX IF NOT EXISTS idx_profiles_role_created ON public.profiles(role, created_at DESC);
