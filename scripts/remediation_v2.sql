@@ -74,7 +74,8 @@ AS $$
 $$;
 
 -- 3. High-Performance Composite Indexes for High-Traffic Query Paths
-CREATE INDEX IF NOT EXISTS idx_messages_conv_created ON public.messages(conversation_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_messages_sender_receiver ON public.messages(sender_id, receiver_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_messages_receiver_sender ON public.messages(receiver_id, sender_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_subs_subscriber_active ON public.subscriptions(subscriber_id, is_active);
 CREATE INDEX IF NOT EXISTS idx_interactions_actor_target ON public.interactions(actor_id, target_id);
 CREATE INDEX IF NOT EXISTS idx_profiles_role_created ON public.profiles(role, created_at DESC);
