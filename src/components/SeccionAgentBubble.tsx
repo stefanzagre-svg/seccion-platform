@@ -26,6 +26,11 @@ export default function SeccionAgentBubble() {
     if (typeof window !== 'undefined') {
       const searchParams = new URLSearchParams(window.location.search);
       const isSegpayReviewer = searchParams.get('reviewer') === 'segpay';
+      const isCreatorGuide = 
+        searchParams.get('guide') === 'creator' || 
+        searchParams.get('ref') === 'creator' ||
+        (searchParams.get('role') === 'creator' && searchParams.get('help') === 'steve');
+
       if (isSegpayReviewer) {
         setIsOpen(true);
         setMessages([
@@ -33,6 +38,21 @@ export default function SeccionAgentBubble() {
             id: 'segpay-welcome',
             sender: 'agent',
             text: "Hello Lauren & Segpay Underwriting Team! 👋 I'm Steve, SECCION's Onboarding & Compliance Specialist. Feel free to ask me anything regarding our platform mechanics, 18+ biometric KYC verification, 18 U.S.C. 2257 record-keeping, SFW vs. NSFW purchase gating, escrow protection, terms of service, or refund protocols.",
+            timestamp: new Date()
+          }
+        ]);
+        return;
+      }
+
+      if (isCreatorGuide) {
+        setIsOpen(true);
+        setMessages([
+          {
+            id: 'creator-guide-welcome',
+            sender: 'agent',
+            text: locale === 'es'
+              ? "¡Hola Creadora / Creador! 🌟 Soy Steve, tu Asesor de Onboarding y Monetización en SECCION. Estoy aquí para guiarte paso a paso: desde tu verificación KYC segura y configuración del Creator Studio, hasta cómo activar tus suscripciones VIP, pases Master (80% revenue pool), transmisiones en vivo y herramientas de IA. ¿Tienes alguna pregunta para empezar?"
+              : "Hey Creator! 🌟 I'm Steve, your dedicated Creator Onboarding & Monetization Coach on SECCION. I'm here to guide you through every step: from your private biometric KYC verification and Creator Studio setup, to activating VIP tiers, Master Platform Passes (80% pool redistribution), live broadcasts, and AI growth tools. What can I help you with first?",
             timestamp: new Date()
           }
         ]);
