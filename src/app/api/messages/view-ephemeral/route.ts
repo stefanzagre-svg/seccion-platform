@@ -3,7 +3,13 @@ import { createAdminClient } from '@/lib/supabase/admin-client';
 
 export async function POST(req: NextRequest) {
   try {
-    const { messageId } = await req.json();
+    let body: any;
+    try {
+      body = await req.json();
+    } catch {
+      return NextResponse.json({ error: 'Malformed JSON payload' }, { status: 400 });
+    }
+    const { messageId } = body || {};
 
     if (!messageId) {
       return NextResponse.json({ error: 'Missing required field: messageId' }, { status: 400 });

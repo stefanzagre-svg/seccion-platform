@@ -39,6 +39,16 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Email verification required before purchasing.' }, { status: 403 });
     }
 
+    // Security & Compliance Firewall: Explicit/18+ stream content MUST be unlocked via Matrix Red Pills (💊)
+    // Direct credit card checkout is disabled for explicit assets to protect standard merchant status
+    if (tier === 'nsfw_18' || tier === 'explicit_stream' || type === 'unlock') {
+      return NextResponse.json({
+        error: 'USE_MATRIX_WALLET',
+        message: 'Explicit 18+ content and creator stream unlocks require Matrix Red Pills (💊). Please top up your Matrix wallet.',
+        requiresMatrixPills: true
+      }, { status: 403 });
+    }
+
     const origin = req.nextUrl.origin;
     const merchantId = process.env.SEGPAY_MERCHANT_ID;
     const packageId = process.env.SEGPAY_PACKAGE_ID;

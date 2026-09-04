@@ -119,18 +119,27 @@ export class NOWPaymentsService {
   }
 
   /**
-   * Verify HMAC-SHA512 signature from NOWPayments IPN webhook
+   * Verify HMAC-SHA512 signature from NOWPayments IPN webhook.
+   * Fails closed: rejects if secret or signature is missing/invalid.
+   * Compares signatures using constant-time crypto.timingSafeEqual.
    */
   verifyIPNSignature(rawBody: string, receivedSignature: string): boolean {
-    if (!this.ipnSecret || this.ipnSecret === 'demo_ipn_secret') {
-      // In demo mode, accept if signature is provided or skip
-      return true;
+    if (!this.ipnSecret || !receivedSignature) {
+      return false;
     }
 
     try {
       const hmac = crypto.createHmac('sha512', this.ipnSecret);
       const calculatedSignature = hmac.update(rawBody).digest('hex');
-      return calculatedSignature.toLowerCase() === receivedSignature.toLowerCase();
+
+      const calcBuf = Buffer.from(calculatedSignature.toLowerCase(), 'utf8');
+      const recvBuf = Buffer.from(receivedSignature.toLowerCase(), 'utf8');
+
+      if (calcBuf.length !== recvBuf.length) {
+        return false;
+      }
+
+      return crypto.timingSafeEqual(calcBuf, recvBuf);
     } catch (err) {
       console.error('Error verifying IPN signature:', err);
       return false;

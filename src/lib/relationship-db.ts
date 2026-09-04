@@ -1,5 +1,5 @@
 import { supabase } from './supabase';
-import { applyInteractionEvent, scoreToLevel, POINT_VALUES, type InteractionEventType } from './relationship-engine';
+import { applyInteractionEvent, scoreToLevel, resolveSharedScore, POINT_VALUES, type InteractionEventType } from './relationship-engine';
 import { awardXp } from './xp-service';
 import type { FaceCoordinates } from '@/components/BlurredFaceImage';
 
@@ -57,7 +57,15 @@ export interface MatchInfo {
  */
 export async function fetchSwipeableProfiles(currentUserId: string): Promise<Profile[]> {
   try {
-    // 1. Get list of user IDs that the current user has already interacted with
+    // 1. Attempt scalable get_swipeable_profiles RPC first (prevents HTTP 414 URI Too Long)
+    const { data: rpcProfiles, error: rpcError } = await supabase
+      .rpc('get_swipeable_profiles', { p_user_id: currentUserId, p_limit: 10 });
+
+    if (!rpcError && rpcProfiles && Array.isArray(rpcProfiles) && rpcProfiles.length > 0) {
+      return rpcProfiles as Profile[];
+    }
+
+    // 2. Fallback to query with excluded IDs
     const { data: interactions, error: intError } = await supabase
       .from('interactions')
       .select('target_id')

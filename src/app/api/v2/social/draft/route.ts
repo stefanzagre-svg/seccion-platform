@@ -7,9 +7,14 @@ import { pushSocialDraft, SocialDraftPayload } from '@/lib/social-scheduler';
  */
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json();
+    let body: any;
+    try {
+      body = await req.json();
+    } catch {
+      return NextResponse.json({ error: 'Malformed JSON payload' }, { status: 400 });
+    }
 
-    if (!body.text || typeof body.text !== 'string') {
+    if (!body?.text || typeof body.text !== 'string') {
       return NextResponse.json(
         { error: 'Field "text" is required and must be a string.' },
         { status: 400 }

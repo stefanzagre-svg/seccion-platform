@@ -12,8 +12,13 @@ const VALID_PASSCODES = [
 export async function POST(req: NextRequest) {
   try {
     const supabaseAdmin = createAdminClient();
-    const body = await req.json();
-    const { passcode, creatorId } = body;
+    let body: any;
+    try {
+      body = await req.json();
+    } catch {
+      return NextResponse.json({ error: "Malformed JSON payload" }, { status: 400 });
+    }
+    const { passcode, creatorId } = body || {};
 
     if (!passcode || !creatorId) {
       return NextResponse.json(

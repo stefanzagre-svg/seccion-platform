@@ -3,7 +3,13 @@ import { createClient } from '@/lib/supabase/server';
 
 export async function POST(request: NextRequest) {
   try {
-    const { transactionId, action } = await request.json();
+    let body: any;
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json({ error: 'Malformed JSON payload' }, { status: 400 });
+    }
+    const { transactionId, action } = body || {};
 
     if (!transactionId || !action || !['accepted', 'declined'].includes(action)) {
       return NextResponse.json({ error: 'Missing or invalid parameters: transactionId, action' }, { status: 400 });

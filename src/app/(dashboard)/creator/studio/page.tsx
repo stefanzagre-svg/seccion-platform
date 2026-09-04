@@ -2,9 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { UploadCloud, PlayCircle, Loader2, CheckCircle2, AlertTriangle, Play, Video } from 'lucide-react';
+import { UploadCloud, PlayCircle, Loader2, CheckCircle2, AlertTriangle, Play, Video, Coins } from 'lucide-react';
 import ContentUploader from '@/components/creator/ContentUploader';
 import LiveManager from '@/components/creator/LiveManager';
+import CreatorPayoutSettings from '@/components/creator/CreatorPayoutSettings';
 import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
 
@@ -120,6 +121,14 @@ export default function CreatorStudioPage() {
           >
             <Video className="w-4 h-4" /> Live
           </button>
+          <button
+            onClick={() => setActiveTab('finance' as any)}
+            className={`px-6 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition flex items-center gap-2 ml-1 ${
+              (activeTab as any) === 'finance' ? 'bg-[#39FF14]/20 text-[#39FF14] border border-[#39FF14]/50' : 'text-white/60 hover:text-white'
+            }`}
+          >
+            <Coins className="w-4 h-4" /> Payouts (90%)
+          </button>
         </div>
       </div>
 
@@ -142,6 +151,15 @@ export default function CreatorStudioPage() {
             exit={{ opacity: 0, y: -20 }}
           >
             <LiveManager />
+          </motion.div>
+        ) : (activeTab as any) === 'finance' ? (
+          <motion.div
+            key="finance"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+          >
+            <CreatorPayoutSettings />
           </motion.div>
         ) : (
           <motion.div

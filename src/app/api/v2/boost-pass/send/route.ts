@@ -3,7 +3,13 @@ import { createClient } from '@/lib/supabase/server';
 
 export async function POST(request: NextRequest) {
   try {
-    const { senderId, receiverId } = await request.json();
+    let body: any;
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json({ error: 'Malformed JSON payload' }, { status: 400 });
+    }
+    const { senderId, receiverId } = body || {};
 
     if (!senderId || !receiverId) {
       return NextResponse.json({ error: 'Missing required fields: senderId, receiverId' }, { status: 400 });

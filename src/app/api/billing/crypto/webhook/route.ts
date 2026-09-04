@@ -8,13 +8,24 @@ export async function POST(req: NextRequest) {
     const signature = req.headers.get('x-nowpayments-sig') || '';
 
     // 1. Verify HMAC-SHA512 Signature
+    if (!signature) {
+      console.warn('[NOWPayments IPN] Missing x-nowpayments-sig header');
+      return NextResponse.json({ error: 'Missing signature' }, { status: 401 });
+    }
+
     const isValid = nowPayments.verifyIPNSignature(rawBody, signature);
     if (!isValid) {
       console.warn('[NOWPayments IPN] Invalid HMAC signature rejected');
       return NextResponse.json({ error: 'Invalid signature' }, { status: 403 });
     }
 
-    const payload: NOWPaymentsIPNPayload = JSON.parse(rawBody);
+    let payload: NOWPaymentsIPNPayload;
+    try {
+      payload = JSON.parse(rawBody);
+    } catch {
+      return NextResponse.json({ error: 'Malformed JSON payload' }, { status: 400 });
+    }
+
     console.info(`[NOWPayments IPN] Received payment status ${payload.payment_status} for order ${payload.order_id}`);
 
     // We only finalize on confirmed / finished status
@@ -55,6 +66,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: true, processed: true, split });
   } catch (error: any) {
     console.error('Error processing NOWPayments IPN webhook:', error);
-    return NextResponse.json({ error: error.message || 'Internal error' }, { status: 500 });
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }

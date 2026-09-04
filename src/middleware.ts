@@ -20,6 +20,7 @@ const PUBLIC_ROUTES = [
 // Explicit public API endpoints that do not require an active user session
 const PUBLIC_API_ROUTES = [
   '/api/crypto/nowpayments-webhook',
+  '/api/billing/crypto/webhook',
   '/api/billing/segpay-postback',
   '/api/kyc/didit-webhook',
   '/api/webhooks/telegram',
@@ -39,9 +40,10 @@ const AUTH_ROUTES = ['/onboarding', '/onboarding/step-2'];
 const ONBOARDING_DONE_COOKIE = 'sb_ob';
 
 export async function middleware(request: NextRequest) {
-  let supabaseResponse = NextResponse.next({ request });
+  try {
+    let supabaseResponse = NextResponse.next({ request });
 
-  const { pathname } = request.nextUrl;
+    const { pathname } = request.nextUrl;
 
   // Dedicated Admin Route Exemption: Pass all /admin and /api/admin requests directly to their handlers (which enforce verifyAdminAuth)
   if (pathname.startsWith('/admin') || pathname.startsWith('/api/admin')) {
@@ -113,8 +115,8 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(url);
     }
 
-    // 3. If accessing non-public site route
-    if (!isPublicPage && pathname !== '/') {
+    // 3. If accessing non-public site route (exempting API routes)
+    if (!isPublicPage && !pathname.startsWith('/api/') && pathname !== '/') {
       const url = request.nextUrl.clone();
       url.pathname = '/onboarding';
       return NextResponse.redirect(url);
@@ -197,8 +199,8 @@ export async function middleware(request: NextRequest) {
         return NextResponse.redirect(url);
       }
     } else {
-      // Redirect users with incomplete profiles to onboarding if they try to access protected pages
-      if (!isPublic && pathname !== '/') {
+      // Redirect users with incomplete profiles to onboarding if they try to access protected pages (exempting API routes)
+      if (!isPublicPage && !pathname.startsWith('/api/') && pathname !== '/') {
         const url = request.nextUrl.clone();
         url.pathname = '/onboarding';
         return NextResponse.redirect(url);
@@ -207,6 +209,10 @@ export async function middleware(request: NextRequest) {
   }
 
   return supabaseResponse;
+  } catch (err) {
+    console.error('[Middleware] Unexpected error in middleware, failing safely:', err);
+    return NextResponse.next({ request });
+  }
 }
 
 export const config = {

@@ -12,8 +12,13 @@ interface AnalyzePromptRequest {
 
 export async function POST(req: NextRequest) {
   try {
-    const body = (await req.json()) as Partial<AnalyzePromptRequest>;
-    const promptCategory = body.promptCategory || 'lifestyle';
+    let body: Partial<AnalyzePromptRequest>;
+    try {
+      body = (await req.json()) as Partial<AnalyzePromptRequest>;
+    } catch {
+      return NextResponse.json({ error: 'Malformed JSON payload' }, { status: 400 });
+    }
+    const promptCategory = body?.promptCategory || 'lifestyle';
     const promptQuestion = body.promptQuestion || 'Cozy homebody or active explorer on weekends?';
     const promptAnswer = (body.promptAnswer || '').trim();
     const promptIndex = body.promptIndex || 1;

@@ -16,7 +16,13 @@ const IS_DEV = process.env.NODE_ENV === 'development';
 
 export async function POST(req: NextRequest) {
   try {
-    const { creatorId, topic, isSponsored } = await req.json();
+    let body: any;
+    try {
+      body = await req.json();
+    } catch {
+      return NextResponse.json({ error: 'Malformed JSON payload' }, { status: 400 });
+    }
+    const { creatorId, topic, isSponsored } = body || {};
 
     if (!creatorId) {
       return NextResponse.json(

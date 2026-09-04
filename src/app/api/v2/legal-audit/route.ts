@@ -11,7 +11,13 @@ interface AuditRisk {
 
 export async function POST(req: NextRequest) {
   try {
-    const { contractText } = await req.json();
+    let body: any;
+    try {
+      body = await req.json();
+    } catch {
+      return NextResponse.json({ error: 'Malformed JSON payload' }, { status: 400 });
+    }
+    const { contractText } = body || {};
 
     if (!contractText || contractText.trim().length === 0) {
       return NextResponse.json({ error: 'Missing required field: contractText' }, { status: 400 });

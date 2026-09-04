@@ -62,7 +62,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { text, targetLanguage, sourceLanguage } = await req.json();
+    let body: any;
+    try {
+      body = await req.json();
+    } catch {
+      return NextResponse.json({ error: 'Malformed JSON payload' }, { status: 400 });
+    }
+    const { text, targetLanguage, sourceLanguage } = body || {};
 
     if (!text || !targetLanguage) {
       return NextResponse.json({ error: 'Missing text or targetLanguage' }, { status: 400 });

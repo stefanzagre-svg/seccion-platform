@@ -1,5 +1,34 @@
 import { NextRequest, NextResponse } from 'next/server';
+import crypto from 'crypto';
 import { createAdminClient } from '@/lib/supabase/admin-client';
+
+export function verifySegpaySignature(data: URLSearchParams, secret: string, receivedHash: string): boolean {
+  if (!receivedHash || !secret) return false;
+
+  const sortedParams = Array.from(data.entries())
+    .filter(([k]) => k !== 'hash' && k !== 'signature')
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([k, v]) => `${k}=${v}`)
+    .join('&');
+
+  const hmac256 = crypto.createHmac('sha256', secret).update(sortedParams).digest('hex');
+  const hmacMd5 = crypto.createHmac('md5', secret).update(sortedParams).digest('hex');
+  const rawConcat = secret + (data.get('tranid') || '') + (data.get('action') || '') + (data.get('price') || '');
+  const md5Raw = crypto.createHash('md5').update(rawConcat).digest('hex');
+  const directHmac = crypto.createHmac('sha256', secret).update(data.toString()).digest('hex');
+
+  const candidates = [hmac256, hmacMd5, md5Raw, directHmac];
+
+  for (const cand of candidates) {
+    if (cand.length === receivedHash.length) {
+      if (crypto.timingSafeEqual(Buffer.from(cand.toLowerCase(), 'utf8'), Buffer.from(receivedHash.toLowerCase(), 'utf8'))) {
+        return true;
+      }
+    }
+  }
+
+  return false;
+}
 
 /**
  * Segpay Postback Endpoint
@@ -31,10 +60,24 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Missing necessary custom tracking parameters' }, { status: 400 });
     }
 
-    // TODO: Verify Segpay Postback Security Hash if enabled in Merchant Portal
-    // const hash = data.get('hash');
-    // const secret = process.env.SEGPAY_POSTBACK_SECRET;
-    // ... verification logic ...
+    // Cryptographic signature verification against SEGPAY_POSTBACK_SECRET
+    const secret = process.env.SEGPAY_POSTBACK_SECRET;
+    if (!secret) {
+      console.error('[Segpay Webhook] SEGPAY_POSTBACK_SECRET is not configured');
+      return NextResponse.json({ error: 'Webhook secret not configured' }, { status: 500 });
+    }
+
+    const receivedHash = data.get('hash') || data.get('signature') || req.headers.get('x-segpay-signature');
+    if (!receivedHash) {
+      console.warn('[Segpay Webhook] Missing signature/hash');
+      return NextResponse.json({ error: 'Missing security signature' }, { status: 401 });
+    }
+
+    const isValid = verifySegpaySignature(data, secret, receivedHash);
+    if (!isValid) {
+      console.warn('[Segpay Webhook] Invalid signature rejected');
+      return NextResponse.json({ error: 'Invalid security signature' }, { status: 403 });
+    }
 
     const adminClient = createAdminClient();
 
@@ -139,7 +182,6 @@ export async function POST(req: NextRequest) {
 
   } catch (err: any) {
     console.error('[Segpay Webhook] Error:', err);
-    // Still return 200 so Segpay stops retrying on logic errors, or 500 if we want retries.
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }

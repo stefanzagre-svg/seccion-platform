@@ -5,8 +5,13 @@ import { sendTelegramNotification } from "@/lib/telegram";
 export async function POST(req: NextRequest) {
   try {
     const supabaseAdmin = createAdminClient();
-    const body = await req.json();
-    const { email, city } = body;
+    let body: any;
+    try {
+      body = await req.json();
+    } catch {
+      return NextResponse.json({ error: "Malformed JSON payload" }, { status: 400 });
+    }
+    const { email, city } = body || {};
 
     if (!email || !city) {
       return NextResponse.json(

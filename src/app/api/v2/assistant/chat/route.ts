@@ -59,35 +59,24 @@ export async function POST(req: NextRequest) {
       // H6 FIX: Atomic RPC check-and-decrement to prevent concurrent race condition bypasses
       const { data: rpcRes, error: rpcErr } = await supabase.rpc('consume_wingman_credit', { p_user_id: userId });
 
-      if (!rpcErr && rpcRes) {
-        if (!rpcRes.success) {
-          return NextResponse.json({
-            error: 'credits_exhausted',
-            isTrial: false,
-            trialDaysLeft: 0,
-            credits: 0
-          }, { status: 402 });
-        }
-        remainingCredits = rpcRes.remaining_credits;
-      } else {
-        // Fallback if RPC is not yet created in Supabase
-        if (credits <= 0) {
-          return NextResponse.json({
-            error: 'credits_exhausted',
-            isTrial: false,
-            trialDaysLeft: 0,
-            credits: 0
-          }, { status: 402 });
-        }
-        remainingCredits = Math.max(0, credits - 1);
-        const updates = {
-          privacy_settings: {
-            ...(profile.privacy_settings || {}),
-            wingman_credits: remainingCredits
-          }
-        };
-        await supabase.from('profiles').update(updates).eq('id', userId);
+      if (rpcErr) {
+        console.error('[Wingman Assistant] Failed to execute consume_wingman_credit RPC:', rpcErr);
+        return NextResponse.json({
+          error: 'service_unavailable',
+          message: 'Credit verification service unavailable'
+        }, { status: 503 });
       }
+
+      if (!rpcRes?.success) {
+        return NextResponse.json({
+          error: 'credits_exhausted',
+          isTrial: false,
+          trialDaysLeft: 0,
+          credits: rpcRes?.balance ?? 0
+        }, { status: 402 });
+      }
+
+      remainingCredits = rpcRes.balance ?? rpcRes.remaining_credits ?? 0;
     }
 
     // 9. Fetch top compatible creators/candidates for context

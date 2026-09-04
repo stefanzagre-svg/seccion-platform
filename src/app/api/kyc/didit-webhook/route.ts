@@ -4,7 +4,7 @@ import { createAdminClient } from '@/lib/supabase/admin-client';
 import { sendTelegramNotification } from '@/lib/telegram';
 
 // Whole-number floats (1.0) -> integers (1), recursively. Matches Didit's server canonicalisation.
-function shortenFloats(v: unknown): unknown {
+export function shortenFloats(v: unknown): unknown {
   if (Array.isArray(v)) return v.map(shortenFloats);
   if (v && typeof v === 'object') {
     return Object.fromEntries(
@@ -16,7 +16,7 @@ function shortenFloats(v: unknown): unknown {
 }
 
 // Recursive lexicographic key sort (array order preserved).
-function sortKeys(v: unknown): unknown {
+export function sortKeys(v: unknown): unknown {
   if (Array.isArray(v)) return v.map(sortKeys);
   if (v && typeof v === 'object') {
     return Object.keys(v as object)
@@ -27,6 +27,26 @@ function sortKeys(v: unknown): unknown {
       }, {});
   }
   return v;
+}
+
+export function verifyDiditSignature(rawBody: string, sig: string, secret: string): boolean {
+  if (!secret || !sig) return false;
+  try {
+    const parsed = JSON.parse(rawBody);
+    const canonical = JSON.stringify(sortKeys(shortenFloats(parsed)));
+    const expected = crypto
+      .createHmac('sha256', secret)
+      .update(canonical, 'utf8')
+      .digest('hex');
+
+    if (sig.length !== expected.length) return false;
+    return crypto.timingSafeEqual(
+      Buffer.from(expected.toLowerCase()),
+      Buffer.from(sig.toLowerCase())
+    );
+  } catch {
+    return false;
+  }
 }
 
 // In-memory processed event set for idempotency deduplication
@@ -45,25 +65,30 @@ export async function POST(req: NextRequest) {
       return new Response('stale', { status: 401 });
     }
 
-    // 2. Signature verification (if secret configured)
-    if (secret && sig) {
-      const parsed = JSON.parse(raw);
-      const canonical = JSON.stringify(sortKeys(shortenFloats(parsed)));
-      const expected = crypto
-        .createHmac('sha256', secret)
-        .update(canonical, 'utf8')
-        .digest('hex');
-
-      if (
-        sig.length !== expected.length ||
-        !crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(sig))
-      ) {
-        console.warn('[DIDIT Webhook] Bad signature rejected');
-        return new Response('bad sig', { status: 401 });
-      }
+    // 2. Strict Signature verification (fail-closed)
+    if (!secret) {
+      console.error('[DIDIT Webhook] Secret not configured');
+      return new Response('secret not configured', { status: 500 });
     }
 
-    const payload = JSON.parse(raw);
+    if (!sig) {
+      console.warn('[DIDIT Webhook] Missing x-signature-v2 header');
+      return new Response('missing signature', { status: 401 });
+    }
+
+    let parsed: any;
+    try {
+      parsed = JSON.parse(raw);
+    } catch {
+      return new Response('invalid json', { status: 400 });
+    }
+
+    if (!verifyDiditSignature(raw, sig, secret)) {
+      console.warn('[DIDIT Webhook] Bad signature rejected');
+      return new Response('bad sig', { status: 401 });
+    }
+
+    const payload = parsed;
     const eventId = payload.event_id || payload.session_id;
 
     // 3. Idempotency dedupe

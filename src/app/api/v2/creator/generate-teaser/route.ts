@@ -3,8 +3,13 @@ import { GoogleGenAI } from '@google/genai';
 
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json();
-    const { orderTitle, description } = body;
+    let body: any;
+    try {
+      body = await req.json();
+    } catch {
+      return NextResponse.json({ error: 'Malformed JSON payload' }, { status: 400 });
+    }
+    const { orderTitle, description } = body || {};
 
     if (!orderTitle) {
       return NextResponse.json({ error: 'Missing orderTitle' }, { status: 400 });

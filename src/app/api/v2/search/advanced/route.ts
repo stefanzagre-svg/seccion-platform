@@ -4,6 +4,13 @@ import { calculateMatch } from '@/lib/match-engine';
 
 export async function POST(request: NextRequest) {
   try {
+    let body: any;
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json({ error: 'Malformed JSON payload' }, { status: 400 });
+    }
+
     const {
       userId,
       query,
@@ -21,7 +28,7 @@ export async function POST(request: NextRequest) {
       specialization,
       includeAdultContent = false,
       profileStatus,
-    } = await request.json();
+    } = body || {};
 
     if (!userId) {
       return NextResponse.json({ error: 'userId is required' }, { status: 400 });

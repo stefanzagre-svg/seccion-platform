@@ -4,7 +4,14 @@ import { createClient } from '@/lib/supabase/server';
 
 export async function POST(req: NextRequest) {
   try {
-    const { roomName, participantName, isCreator } = await req.json();
+    let body: any;
+    try {
+      body = await req.json();
+    } catch {
+      return NextResponse.json({ error: 'Malformed JSON payload' }, { status: 400 });
+    }
+
+    const { roomName, participantName, isCreator } = body || {};
 
     if (!roomName || !participantName) {
       return NextResponse.json({ error: 'Missing roomName or participantName' }, { status: 400 });
@@ -25,27 +32,81 @@ export async function POST(req: NextRequest) {
     }
 
     // Determine permissions
-    // Broadcast rooms (live_*): Only verified room owner (creator) can publish video/audio.
     const isBroadcast = roomName.startsWith('live_');
+    const isPrivateCall = roomName.startsWith('call_');
     let canPublish = false;
 
     if (isBroadcast) {
-      // Check if current user is the creator owner of this room or has role 'creator'
+      // Broadcast rooms (live_*): Only verified room owner (creator) can publish video/audio.
+      const roomIdentifier = roomName.replace(/^live_/, '');
+
+      // Check if current user has creator profile
       const { data: creatorProf } = await supabase
         .from('creator_profiles')
         .select('id')
         .eq('id', user.id)
         .single();
-      
-      canPublish = !!creatorProf;
-    } else {
-      // Private 1-on-1 calls: both authenticated participants can publish
+
+      if (isCreator) {
+        if (!creatorProf) {
+          return NextResponse.json({ error: 'Forbidden: Creator profile required to publish' }, { status: 403 });
+        }
+
+        const isDirectOwner = roomIdentifier === user.id;
+        let isStreamOwner = false;
+
+        if (!isDirectOwner) {
+          const { data: stream } = await supabase
+            .from('live_streams')
+            .select('creator_id')
+            .eq('id', roomIdentifier)
+            .single();
+          if (stream && stream.creator_id === user.id) {
+            isStreamOwner = true;
+          }
+        }
+
+        if (!isDirectOwner && !isStreamOwner) {
+          return NextResponse.json({ error: 'Forbidden: You do not own this live broadcast room' }, { status: 403 });
+        }
+
+        canPublish = true;
+      } else {
+        // Audience / viewer member joining live stream
+        canPublish = false;
+      }
+    } else if (isPrivateCall) {
+      // Private 1-on-1 calls (call_*): Both authorized participants can publish
+      const callIdentifier = roomName.replace(/^call_/, '');
+      let isAuthorizedParticipant = false;
+
+      // Check call_requests table
+      const { data: callReq } = await supabase
+        .from('call_requests')
+        .select('member_id, creator_id')
+        .eq('id', callIdentifier)
+        .single();
+
+      if (callReq) {
+        if (callReq.member_id === user.id || callReq.creator_id === user.id) {
+          isAuthorizedParticipant = true;
+        }
+      }
+
+      if (!isAuthorizedParticipant) {
+        return NextResponse.json({ error: 'Forbidden: You are not an authorized participant in this private call' }, { status: 403 });
+      }
+
       canPublish = true;
+    } else {
+      // Other rooms: authenticated subscriber only
+      canPublish = false;
     }
 
     const at = new AccessToken(apiKey, apiSecret, {
       identity: user.id,
       name: participantName,
+      ttl: 3600, // Bounded 1 hour TTL
     });
 
     at.addGrant({

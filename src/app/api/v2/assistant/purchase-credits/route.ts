@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
     });
 
     if (!rpcErr && rpcRes && rpcRes.success) {
-      newCredits = rpcRes.new_credits;
+      newCredits = rpcRes.new_credits ?? rpcRes.balance;
     } else {
       // Fallback if RPC is not yet created in Supabase
       const currentCredits = profile.privacy_settings?.wingman_credits ?? 10;

@@ -3,7 +3,13 @@ import { createClient } from '@/lib/supabase/server';
 
 export async function POST(request: Request) {
   try {
-    const { creatorId, title, description, mediaUrl, mediaType, tier, tags } = await request.json();
+    let body: any;
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json({ error: 'Malformed JSON payload' }, { status: 400 });
+    }
+    const { creatorId, title, description, mediaUrl, mediaType, tier, tags } = body || {};
 
     if (!creatorId || !title || !mediaUrl || !tier) {
       return NextResponse.json({ error: 'Missing required fields: creatorId, title, mediaUrl, tier' }, { status: 400 });

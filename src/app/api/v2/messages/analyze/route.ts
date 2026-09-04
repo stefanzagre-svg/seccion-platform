@@ -20,8 +20,13 @@ export async function POST(req: NextRequest) {
     // userId is now derived from the verified session — not from the request body
     const userId = user.id;
 
-    const body = (await req.json()) as AnalyzeRequest;
-    const { targetId, messages: customMessages } = body;
+    let body: AnalyzeRequest;
+    try {
+      body = (await req.json()) as AnalyzeRequest;
+    } catch {
+      return NextResponse.json({ error: 'Malformed JSON payload' }, { status: 400 });
+    }
+    const { targetId, messages: customMessages } = body || {};
 
     let messages = customMessages;
 
