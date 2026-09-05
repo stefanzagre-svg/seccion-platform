@@ -4,13 +4,15 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, useMotionValue, useTransform, AnimatePresence } from 'framer-motion';
 import { 
   Heart, HeartCrack, Sparkles, MessageCircleHeart, Info, X, Star,
-  Compass, Activity, Clock, MapPin, ShieldAlert, Lock, Send, Brain, Flag, ShieldCheck, ArrowRight
+  Compass, Activity, Clock, MapPin, ShieldAlert, Lock, Send, Brain, Flag, ShieldCheck, ArrowRight,
+  Terminal, Utensils, Dumbbell, Briefcase, Palette, Smile, Flame, Eye
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { fetchSwipeableProfiles, recordInteraction, fetchProfileMedia, checkPublicPhotoRequirement, type ProfileMedia } from '@/lib/relationship-db';
+import { awardXp } from '@/lib/xp-service';
 import { calculateMatch, type UserProfile, type MatchResult, calculateMockDistance } from '@/lib/match-engine';
-import { ARCHETYPE_PROFILES, type ArchetypeId } from '@/lib/constants';
+import { ARCHETYPE_PROFILES, type ArchetypeId, SWIPECARD_INTENT_THEMES, resolveProfileIntentTheme, type SwipecardIntentTheme } from '@/lib/constants';
 import dynamic from 'next/dynamic';
 import SuggestionMovesModal from './SuggestionMovesModal';
 import BlurredFaceImage from '@/components/BlurredFaceImage';
@@ -277,6 +279,11 @@ export default function MatchSwiper({ filters }: MatchSwiperProps) {
   
   const [reportingContent, setReportingContent] = useState<{ id: string, type: 'platform_content' | 'profile' | 'message' } | null>(null);
 
+  // Gamified Synergy bonus notification
+  const [synergyBonusNotice, setSynergyBonusNotice] = useState<{ active: boolean; text: string; category: string } | null>(null);
+  // Active Action snapshot modal per card
+  const [activeIntentPreview, setActiveIntentPreview] = useState<{ candidate: any; theme: SwipecardIntentTheme } | null>(null);
+
   // Favorites list state (persist in localStorage)
   const [favorites, setFavorites] = useState<string[]>([]);
 
@@ -452,6 +459,23 @@ export default function MatchSwiper({ filters }: MatchSwiperProps) {
     // Save interaction to database
     const { matched } = await recordInteraction(currentUser.id, topCard.id, interactionType);
 
+    // Gamified Synergy bonus check (Blue Pills XP)
+    if (direction === 'right') {
+      const topCardTheme = resolveProfileIntentTheme(topCard);
+      const myTheme = resolveProfileIntentTheme(currentUserProfile);
+
+      if (topCardTheme.id === myTheme.id) {
+        // Aligned intent synergy bonus! Award +25 Blue Pills XP asynchronously
+        awardXp(currentUser.id, 25).catch(() => {});
+        setSynergyBonusNotice({
+          active: true,
+          text: '+25 Blue Pills XP',
+          category: topCardTheme.badgeLabel
+        });
+        setTimeout(() => setSynergyBonusNotice(null), 2500);
+      }
+    }
+
     if (matched) {
       setMatchData(topCard);
     }
@@ -596,10 +620,16 @@ export default function MatchSwiper({ filters }: MatchSwiperProps) {
               const reqLabel = activeMedia?.required_level === 'subscriber' ? 'Subscription' : (requiredLevelObj?.name || 'Higher Level');
               const lockedCount = mediaList.filter(m => !isMediaUnlocked(m, gaugeLevel, isSubscribed)).length;
 
+              const cardTheme = resolveProfileIntentTheme(card);
+
               return (
                 <motion.div
                   key={card.id}
-                  className={`absolute w-full h-full rounded-3xl overflow-hidden border transition-shadow duration-500 bg-[#111] ${isTop ? tierConfig.glow : 'border-white/10'}`}
+                  className={`absolute w-full h-full rounded-3xl overflow-hidden border transition-all duration-500 bg-[#111] ${
+                    isTop 
+                      ? `${cardTheme.borderGlow} ${cardTheme.cardBorder}` 
+                      : 'border-white/10'
+                  }`}
                   style={{
                     x: isTop ? x : 0,
                     rotate: isTop ? rotate : 0,
@@ -615,6 +645,12 @@ export default function MatchSwiper({ filters }: MatchSwiperProps) {
                   animate={{ scale: 1, opacity: 1 }}
                   exit={{ x: x.get() > 0 ? 300 : -300, opacity: 0 }}
                 >
+                  {/* Subtle Intent Ambient Light */}
+                  <div 
+                    className="absolute -top-20 -right-20 w-48 h-48 rounded-full blur-3xl pointer-events-none z-10"
+                    style={{ backgroundColor: cardTheme.ambientHighlight }}
+                  />
+
                   {/* Top indicators */}
                   {mediaList.length > 1 && (
                     <div className="absolute top-3 inset-x-4 z-20 flex gap-1 pointer-events-none">
@@ -723,16 +759,24 @@ export default function MatchSwiper({ filters }: MatchSwiperProps) {
                     )}
                   </div>
 
-                  {/* Compatibility Float Badge */}
-                  <div className="absolute top-4 left-4 z-20 flex items-center gap-1.5">
-                    <div className={`px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-[0.2em] flex items-center gap-1.5 backdrop-blur-md border border-white/15 bg-gradient-to-r ${tierConfig.gradient} text-white`}>
-                      <span>{tierConfig.emoji}</span>
-                      <span>{tierConfig.emoji} CHEMISTRY</span>
+                  {/* Compatibility & Dynamic Intent Badges */}
+                  <div className="absolute top-4 left-4 z-20 flex flex-col items-start gap-2 pointer-events-none">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <div className={`px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-[0.2em] flex items-center gap-1.5 backdrop-blur-md border border-white/15 bg-gradient-to-r ${tierConfig.gradient} text-white shadow-lg`}>
+                        <span>{tierConfig.emoji}</span>
+                        <span>{tierConfig.emoji} CHEMISTRY</span>
+                      </div>
+
+                      {/* Dynamic Themed Intent Badge */}
+                      <div className={`px-2.5 py-1 rounded-full text-[8.5px] font-mono font-bold uppercase tracking-wider flex items-center gap-1.5 backdrop-blur-md border bg-gradient-to-r ${cardTheme.badgeGradient} shadow-md`}>
+                        <span>{cardTheme.icon}</span>
+                        <span>{cardTheme.badgeLabel}</span>
+                      </div>
                     </div>
                   </div>
                   
                   {/* Card Info Overlay */}
-                  <div className="absolute bottom-0 w-full p-6 bg-gradient-to-t from-black/95 via-black/60 to-transparent flex flex-col gap-2 z-20">
+                  <div className="absolute bottom-0 w-full p-6 bg-gradient-to-t from-black/95 via-black/70 to-transparent flex flex-col gap-2 z-20">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <button 
@@ -757,17 +801,38 @@ export default function MatchSwiper({ filters }: MatchSwiperProps) {
                         </span>
                       </div>
                       
-                      <button 
-                        ref={stopPropagationRef}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setActiveBreakdownCardId(isBreakdownOpen ? null : card.id);
-                        }}
-                        className="p-2 bg-primary text-black rounded-full hover:shadow-[0_0_15px_rgba(102,252,241,0.5)] scale-100 hover:scale-105 active:scale-95 transition"
-                        title="View Details"
-                      >
-                        <Info className="w-4 h-4" />
-                      </button>
+                      <div className="flex items-center gap-2">
+                        {/* Interactive Themed Action Pill */}
+                        <button 
+                          ref={stopPropagationRef}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setActiveIntentPreview({ candidate: card, theme: cardTheme });
+                          }}
+                          className="px-3 py-1.5 rounded-full text-[10px] font-mono font-bold uppercase tracking-wider flex items-center gap-1.5 backdrop-blur-md border transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer shadow-lg"
+                          style={{
+                            backgroundColor: `${cardTheme.accentColor}1A`,
+                            borderColor: `${cardTheme.accentColor}80`,
+                            color: cardTheme.accentColor
+                          }}
+                          title={cardTheme.tagline}
+                        >
+                          <span>{cardTheme.icon}</span>
+                          <span>{cardTheme.actionPillLabel}</span>
+                        </button>
+
+                        <button 
+                          ref={stopPropagationRef}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setActiveBreakdownCardId(isBreakdownOpen ? null : card.id);
+                          }}
+                          className="p-2 bg-primary text-black rounded-full hover:shadow-[0_0_15px_rgba(102,252,241,0.5)] scale-100 hover:scale-105 active:scale-95 transition"
+                          title="View Details"
+                        >
+                          <Info className="w-4 h-4" />
+                        </button>
+                      </div>
                     </div>
 
                     <div className="flex flex-wrap items-center gap-3 text-[10px] text-white/60 font-semibold mt-1">
@@ -783,6 +848,10 @@ export default function MatchSwiper({ filters }: MatchSwiperProps) {
                           {mappedCandidate.archetype}
                         </span>
                       )}
+
+                      <span className="text-[9px] font-mono text-white/40 italic">
+                        {cardTheme.tagline}
+                      </span>
                     </div>
                   </div>
 
@@ -1333,6 +1402,139 @@ export default function MatchSwiper({ filters }: MatchSwiperProps) {
             </motion.div>
           );
         })()}
+      </AnimatePresence>
+
+      {/* Gamified Synergy Bonus Floating Toast */}
+      <AnimatePresence>
+        {synergyBonusNotice && (
+          <motion.div
+            initial={{ opacity: 0, y: 30, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -20, scale: 0.9 }}
+            className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 px-5 py-3 rounded-2xl bg-black/85 backdrop-blur-xl border border-[#00fbfb]/40 shadow-[0_0_30px_rgba(0,251,251,0.3)] flex items-center gap-3 text-center"
+          >
+            <div className="w-8 h-8 rounded-full bg-[#00fbfb]/15 flex items-center justify-center text-[#00fbfb] text-base border border-[#00fbfb]/30 animate-pulse">
+              💊
+            </div>
+            <div className="text-left">
+              <div className="flex items-center gap-1.5">
+                <span className="text-xs font-mono font-bold text-[#00fbfb] tracking-wider">
+                  {synergyBonusNotice.text}
+                </span>
+                <span className="px-1.5 py-0.2 rounded text-[8px] font-mono font-bold bg-[#00fbfb]/20 text-[#00fbfb]">
+                  SYNERGY
+                </span>
+              </div>
+              <p className="text-[10px] text-white/70">
+                {t('swipecard.synergyBonusDesc', 'Synergy Match! +25 Blue Pills awarded for aligned intent.')}
+              </p>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Quick Intent Preview Modal */}
+      <AnimatePresence>
+        {activeIntentPreview && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-xl">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              className="relative w-full max-w-md bg-[#0F0F1A] border rounded-3xl p-6 shadow-[0_0_50px_rgba(0,0,0,0.9)] overflow-hidden"
+              style={{
+                borderColor: `${activeIntentPreview.theme.accentColor}60`
+              }}
+            >
+              <div 
+                className="absolute top-0 right-0 w-48 h-48 rounded-full blur-3xl pointer-events-none"
+                style={{ backgroundColor: activeIntentPreview.theme.ambientHighlight }}
+              />
+
+              <div className="flex items-center justify-between pb-4 border-b border-white/10 relative z-10">
+                <div className="flex items-center gap-3">
+                  <div 
+                    className="w-10 h-10 rounded-2xl flex items-center justify-center text-xl shadow-lg border"
+                    style={{
+                      backgroundColor: `${activeIntentPreview.theme.accentColor}20`,
+                      borderColor: `${activeIntentPreview.theme.accentColor}60`,
+                      color: activeIntentPreview.theme.accentColor
+                    }}
+                  >
+                    {activeIntentPreview.theme.icon}
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-mono font-bold text-white tracking-wider">
+                      {activeIntentPreview.theme.badgeLabel}
+                    </h3>
+                    <p className="text-[11px] text-white/50">
+                      {activeIntentPreview.theme.tagline}
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => setActiveIntentPreview(null)}
+                  className="p-1.5 rounded-full bg-white/5 hover:bg-white/10 text-white/60 hover:text-white transition cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <div className="mt-5 space-y-4 relative z-10 text-left">
+                <div className="p-3.5 rounded-2xl bg-white/[0.03] border border-white/5 space-y-2">
+                  <span className="text-[9px] font-mono font-bold uppercase tracking-widest text-white/40">
+                    Candidate Focus
+                  </span>
+                  <p className="text-xs text-white/90 leading-relaxed font-medium">
+                    {activeIntentPreview.candidate.bio || activeIntentPreview.candidate.bio_prompt_answer || 'Passionate creator and active member on SECCION.'}
+                  </p>
+                </div>
+
+                {activeIntentPreview.candidate.hobbies && activeIntentPreview.candidate.hobbies.length > 0 && (
+                  <div>
+                    <span className="text-[9px] font-mono font-bold uppercase tracking-widest text-white/40 block mb-2">
+                      Synergy Specializations
+                    </span>
+                    <div className="flex flex-wrap gap-1.5">
+                      {activeIntentPreview.candidate.hobbies.map((h: string, idx: number) => (
+                        <span
+                          key={idx}
+                          className="px-2.5 py-1 rounded-full text-[10px] font-mono border"
+                          style={{
+                            backgroundColor: `${activeIntentPreview.theme.accentColor}12`,
+                            borderColor: `${activeIntentPreview.theme.accentColor}40`,
+                            color: activeIntentPreview.theme.accentColor
+                          }}
+                        >
+                          #{h}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div className="pt-2">
+                  <button
+                    onClick={() => {
+                      const candId = activeIntentPreview.candidate.id;
+                      setActiveIntentPreview(null);
+                      router.push(`/profile/${candId}`);
+                    }}
+                    className="w-full py-3.5 rounded-2xl font-mono font-bold text-xs uppercase tracking-wider transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer shadow-lg"
+                    style={{
+                      backgroundColor: activeIntentPreview.theme.accentColor,
+                      color: '#000000'
+                    }}
+                  >
+                    <span>Inspect Full Profile</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
       </AnimatePresence>
     </div>
   );

@@ -10,6 +10,7 @@ import ProvenanceBadge from '@/components/ProvenanceBadge';
 import { type ProvenanceLevel } from '@/lib/content-provenance';
 import { cn } from '@/lib/utils';
 import { useTranslation } from '@/context/LanguageContext';
+import { resolveProfileIntentTheme } from '@/lib/constants';
 
 export interface FeedPostItem {
   id: string;
@@ -20,6 +21,9 @@ export interface FeedPostItem {
   timestamp: string;
   provenance_level?: ProvenanceLevel;
   matchScore: number;
+  core_passion?: string;
+  specialization?: string;
+  hobbies?: string[];
   matchResult?: {
     explanation?: Array<{
       factor: string;
@@ -33,7 +37,7 @@ export interface FeedPostItem {
   image: string;
   teaser_type?: 'none' | 'video_clip' | 'main_photo' | 'custom';
   video_start_time?: number;
-  thumbnail_url?: string;
+  thumbnail_url?: string | null;
   thumbnail_type?: 'photo' | 'video';
   media_type?: 'video' | 'album' | 'photo';
   video_duration?: string;
@@ -87,15 +91,27 @@ export default function FeedCardSwiper({
     }
   };
 
+  const cardTheme = resolveProfileIntentTheme(post);
+
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.95 }}
       whileInView={{ opacity: 1, scale: 1 }}
       viewport={{ once: true }}
       onClick={handleCardClick}
-      className="bg-white/[0.02] border border-white/5 p-2 rounded-[2.5rem] shadow-[0_30px_60px_-15px_rgba(0,0,0,0.8)] backdrop-blur-xl hover:scale-[1.01] hover:border-primary/25 hover:shadow-[0_0_30px_rgba(102,252,241,0.15)] transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] cursor-pointer group flex flex-col justify-between"
+      className={cn(
+        "bg-white/[0.02] border p-2 rounded-[2.5rem] shadow-[0_30px_60px_-15px_rgba(0,0,0,0.8)] backdrop-blur-xl hover:scale-[1.01] transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] cursor-pointer group flex flex-col justify-between relative overflow-hidden",
+        cardTheme.cardBorder,
+        "hover:shadow-[0_0_30px_rgba(0,251,251,0.15)]"
+      )}
     >
-      <div className="bg-black/40 border border-white/5 rounded-[2rem] p-5 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)] h-full flex flex-col justify-between overflow-hidden">
+      {/* Intent Ambient Glow */}
+      <div 
+        className="absolute -top-24 -right-24 w-48 h-48 rounded-full blur-3xl pointer-events-none opacity-40 group-hover:opacity-70 transition-opacity"
+        style={{ backgroundColor: cardTheme.ambientHighlight }}
+      />
+
+      <div className="bg-black/40 border border-white/5 rounded-[2rem] p-5 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)] h-full flex flex-col justify-between overflow-hidden relative z-10">
         
         {/* Creator Header */}
         <div className="flex items-center justify-between mb-4">
@@ -125,6 +141,17 @@ export default function FeedCardSwiper({
                 </p>
                 <span className="text-[9px] font-bold text-yellow-500 bg-yellow-500/10 px-1.5 py-0.5 rounded border border-yellow-500/20 shrink-0">
                   ⭐ {post.ratingScore?.toFixed(2) || '10.00'}
+                </span>
+                {/* Intent Tag Pill */}
+                <span 
+                  className="text-[8px] font-mono font-bold px-2 py-0.5 rounded-full border hidden sm:inline-flex items-center gap-1"
+                  style={{
+                    backgroundColor: `${cardTheme.accentColor}15`,
+                    borderColor: `${cardTheme.accentColor}40`,
+                    color: cardTheme.accentColor
+                  }}
+                >
+                  {cardTheme.icon} {cardTheme.badgeLabel}
                 </span>
               </div>
               <p className="text-[10px] text-muted-foreground opacity-60 flex items-center gap-1">

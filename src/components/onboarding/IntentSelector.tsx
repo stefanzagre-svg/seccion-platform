@@ -2,9 +2,9 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ShieldCheck, Lock, Wallet, Loader2, CheckCircle2, Plane, Palette, Music, Dumbbell, Briefcase, GraduationCap, Brain, Lightbulb, Rocket, Cpu } from 'lucide-react';
+import { ShieldCheck, Lock, Wallet, Loader2, CheckCircle2, Plane, Palette, Music, Dumbbell, Briefcase, GraduationCap, Brain, Lightbulb, Rocket, Cpu, Utensils, Heart, Sparkles, Flame } from 'lucide-react';
 import { useTranslation } from '@/context/LanguageContext';
-import { type MemberPurposeId } from '@/lib/constants';
+import { type MemberPurposeId, SWIPECARD_INTENT_THEMES, MasterIntentId } from '@/lib/constants';
 
 const INTENTS = [
   // Learning, Mentorship & Growth Vibes (Knowledge & Growth)
@@ -31,13 +31,14 @@ const INTENTS = [
 ];
 
 const CORE_PASSIONS = [
-  { id: 'ai_tech', label: 'AI & Technology', icon: <Cpu className="w-8 h-8 text-[#00fbfb]" />, desc: 'AI courses, coding & custom task builds', color: 'border-[#00fbfb]/30 shadow-[#00fbfb]/20 bg-[#00fbfb]/10' },
-  { id: 'education', label: 'Learning & Skills', icon: <GraduationCap className="w-8 h-8 text-[#00fbfb]" />, desc: 'Mastering new crafts & knowledge', color: 'border-[#00fbfb]/30 shadow-[#00fbfb]/20 bg-[#00fbfb]/10' },
-  { id: 'career', label: 'Career & Business', icon: <Briefcase className="w-8 h-8 text-[#f59e0b]" />, desc: 'Building empires & mentoring', color: 'border-[#f59e0b]/30 shadow-[#f59e0b]/20 bg-[#f59e0b]/10' },
-  { id: 'wellness', label: 'Wellness & Mindset', icon: <Brain className="w-8 h-8 text-[#10b981]" />, desc: 'Health, meditation & optimization', color: 'border-[#10b981]/30 shadow-[#10b981]/20 bg-[#10b981]/10' },
-  { id: 'art', label: 'Art & Design', icon: <Palette className="w-8 h-8 text-[#ffabf3]" />, desc: 'Creating & curating media', color: 'border-[#ffabf3]/30 shadow-[#ffabf3]/20 bg-[#ffabf3]/10' },
-  { id: 'music', label: 'Music & Performance', icon: <Music className="w-8 h-8 text-[#a855f7]" />, desc: 'Rhythms, beats & audio masterclasses', color: 'border-[#a855f7]/30 shadow-[#a855f7]/20 bg-[#a855f7]/10' },
-  { id: 'travel', label: 'Travel & Languages', icon: <Plane className="w-8 h-8 text-[#3b82f6]" />, desc: 'Cultural exchange & global trips', color: 'border-[#3b82f6]/30 shadow-[#3b82f6]/20 bg-[#3b82f6]/10' },
+  { id: 'ai_tech', label: 'AI & Software Architecture', icon: <Cpu className="w-7 h-7 text-[#00fbfb]" />, desc: 'AI courses, coding mentorship & custom task builds', color: 'border-[#00fbfb]/40 shadow-[#00fbfb]/25 bg-[#00fbfb]/10' },
+  { id: 'culinary', label: 'Culinary & Gastronomy', icon: <Utensils className="w-7 h-7 text-[#10b981]" />, desc: 'Gourmet cooking, wine pairing & romantic menus', color: 'border-[#10b981]/40 shadow-[#10b981]/25 bg-[#10b981]/10' },
+  { id: 'dating', label: 'Romance & Real Connection', icon: <Heart className="w-7 h-7 text-[#ff204e]" />, desc: 'Dating, chemistry sparks & genuine long-term vibes', color: 'border-[#ff204e]/40 shadow-[#ff204e]/25 bg-[#ff204e]/10' },
+  { id: 'fitness', label: 'Fitness & Vitality', icon: <Dumbbell className="w-7 h-7 text-[#84cc16]" />, desc: 'Biohacking, workout habits, stamina & wellness', color: 'border-[#84cc16]/40 shadow-[#84cc16]/25 bg-[#84cc16]/10' },
+  { id: 'career', label: 'Career & Wealth Building', icon: <Briefcase className="w-7 h-7 text-[#f59e0b]" />, desc: 'Startup strategy, career mentorship & financial growth', color: 'border-[#f59e0b]/40 shadow-[#f59e0b]/25 bg-[#f59e0b]/10' },
+  { id: 'creative', label: 'Art, Music & Creative Flow', icon: <Palette className="w-7 h-7 text-[#a855f7]" />, desc: 'Visual media, acoustics, performance & curation', color: 'border-[#a855f7]/40 shadow-[#a855f7]/25 bg-[#a855f7]/10' },
+  { id: 'wellness', label: 'Mindset & Holistic Wellness', icon: <Brain className="w-7 h-7 text-[#14b8a6]" />, desc: 'Meditation, somatic healing & high-frequency calm', color: 'border-[#14b8a6]/40 shadow-[#14b8a6]/25 bg-[#14b8a6]/10' },
+  { id: 'adult', label: '18+ Sensual & Unfiltered', icon: <Flame className="w-7 h-7 text-[#dc143c]" />, desc: 'Behind closed doors, adult VIP perks & sensual art', color: 'border-[#dc143c]/40 shadow-[#dc143c]/25 bg-[#dc143c]/10' },
 ];
 
 import SeccionWordmark from '@/components/ui/SeccionWordmark';

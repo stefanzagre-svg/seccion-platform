@@ -641,5 +641,14 @@
     "severityLabel": "3. ¿Qué tanto afectó tu experiencia?",
     "screenshotLabel": "Enlace de Captura o Video (Opcional)",
     "submitBtn": "Enviar Reporte & Reclamar Recompensa →"
+  },
+  "swipecard": {
+    "synergyBonus": "+25 Blue Pills XP",
+    "synergyBonusDesc": "¡Sinergia de Intención! +25 Blue Pills ganadas por sintonía mutua.",
+    "inspectAction": "Vista Rápida",
+    "closeAction": "Cerrar Detalles",
+    "intentMatchBadge": "Sinergia de Intención",
+    "viewVault": "Ver Contenido de Bóveda",
+    "actionPillTitle": "Acción Instantánea"
   }
 }

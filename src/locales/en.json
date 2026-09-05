@@ -599,5 +599,14 @@
     "severityLabel": "3. How much did this block your experience?",
     "screenshotLabel": "Screenshot or Video Link (Optional)",
     "submitBtn": "Send Report & Claim Bounty →"
+  },
+  "swipecard": {
+    "synergyBonus": "+25 Blue Pills XP",
+    "synergyBonusDesc": "Synergy Match! +25 Blue Pills awarded for aligned intent.",
+    "inspectAction": "Quick Preview",
+    "closeAction": "Close Details",
+    "intentMatchBadge": "Intent Synergy",
+    "viewVault": "View Vault Items",
+    "actionPillTitle": "Action Snapshot"
   }
 }

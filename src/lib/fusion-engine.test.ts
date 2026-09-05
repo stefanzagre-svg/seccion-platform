@@ -397,4 +397,68 @@ describe('Match Engine v2', () => {
       expect(result.breakdown.archetypeChemistry).toBe(50);
     });
   });
+
+  describe('Swipecard Intent Theming & Gamification', () => {
+    it('has all 8 master intent themes configured with complete design tokens', async () => {
+      const { SWIPECARD_INTENT_THEMES } = await import('./constants');
+      const requiredKeys = ['ai_tech', 'culinary', 'dating', 'fitness', 'career', 'creative', 'wellness', 'adult'];
+
+      expect(Object.keys(SWIPECARD_INTENT_THEMES)).toHaveLength(8);
+
+      for (const key of requiredKeys) {
+        const theme = (SWIPECARD_INTENT_THEMES as any)[key];
+        expect(theme).toBeDefined();
+        expect(theme.id).toBe(key);
+        expect(theme.name).toBeTruthy();
+        expect(theme.badgeLabel).toBeTruthy();
+        expect(theme.icon).toBeTruthy();
+        expect(theme.accentColor).toMatch(/^#/);
+        expect(theme.actionPillLabel).toBeTruthy();
+        expect(theme.actionType).toBeTruthy();
+      }
+    });
+
+    it('resolves AI & Tech theme from core_passion and action type', async () => {
+      const { resolveProfileIntentTheme } = await import('./constants');
+      const profile = { core_passion: 'ai_tech' };
+      const theme = resolveProfileIntentTheme(profile);
+      expect(theme.id).toBe('ai_tech');
+      expect(theme.badgeLabel).toBe('AI & TECH ARCHITECT');
+      expect(theme.actionType).toBe('tech_spec');
+    });
+
+    it('resolves Culinary theme from gourmet keywords', async () => {
+      const { resolveProfileIntentTheme } = await import('./constants');
+      const profile = { core_passion: 'gourmet' };
+      const theme = resolveProfileIntentTheme(profile);
+      expect(theme.id).toBe('culinary');
+      expect(theme.badgeLabel).toBe('CULINARY MASTER');
+      expect(theme.actionType).toBe('culinary_menu');
+    });
+
+    it('resolves Fitness theme from creator specialization', async () => {
+      const { resolveProfileIntentTheme } = await import('./constants');
+      const creator = { specialization: 'Fitness & Vitality' };
+      const theme = resolveProfileIntentTheme(creator);
+      expect(theme.id).toBe('fitness');
+      expect(theme.badgeLabel).toBe('VITALITY COACH');
+      expect(theme.actionType).toBe('fitness_stats');
+    });
+
+    it('resolves 18+ VIP theme from explicit active purposes', async () => {
+      const { resolveProfileIntentTheme } = await import('./constants');
+      const profile = { active_purposes: ['explicit'] };
+      const theme = resolveProfileIntentTheme(profile);
+      expect(theme.id).toBe('adult');
+      expect(theme.badgeLabel).toBe('18+ VIP SENSUAL');
+      expect(theme.actionType).toBe('vip_vault');
+    });
+
+    it('falls back safely to dating when profile is empty or null', async () => {
+      const { resolveProfileIntentTheme } = await import('./constants');
+      expect(resolveProfileIntentTheme(null).id).toBe('dating');
+      expect(resolveProfileIntentTheme({}).id).toBe('dating');
+      expect(resolveProfileIntentTheme({ core_passion: 'unknown_hobby_xyz' }).id).toBe('dating');
+    });
+  });
 });

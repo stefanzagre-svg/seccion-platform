@@ -832,3 +832,245 @@ export const PURPOSE_PROMPTS_ES: Record<MemberPurposeId, Record<string, { catego
   }
 };
 
+// ─── Master Swipecard Intent Theming & Gamification ──────────────────────────
+
+export type MasterIntentId =
+  | 'ai_tech'
+  | 'culinary'
+  | 'dating'
+  | 'fitness'
+  | 'career'
+  | 'creative'
+  | 'wellness'
+  | 'adult';
+
+export interface SwipecardIntentTheme {
+  id: MasterIntentId;
+  name: string;
+  nameEs: string;
+  badgeLabel: string;
+  badgeLabelEs: string;
+  icon: string;
+  badgeGradient: string;
+  borderGlow: string;
+  ambientHighlight: string;
+  actionPillLabel: string;
+  actionPillLabelEs: string;
+  actionPillIcon: string;
+  actionType: 'tech_spec' | 'culinary_menu' | 'chemistry_prompt' | 'fitness_stats' | 'career_pitch' | 'creative_vault' | 'wellness_vibe' | 'vip_vault';
+  accentColor: string;
+  cardBorder: string;
+  tagline: string;
+  taglineEs: string;
+}
+
+export const SWIPECARD_INTENT_THEMES: Record<MasterIntentId, SwipecardIntentTheme> = {
+  ai_tech: {
+    id: 'ai_tech',
+    name: 'AI & Software Architecture',
+    nameEs: 'IA & Arquitectura de Software',
+    badgeLabel: 'AI & TECH ARCHITECT',
+    badgeLabelEs: 'ARQUITECTO IA & TECH',
+    icon: '💻',
+    badgeGradient: 'from-cyan-500/30 to-blue-600/30 border-cyan-400/50 text-cyan-300',
+    borderGlow: 'border-cyan-500/40 shadow-[0_0_35px_rgba(0,251,251,0.22)]',
+    ambientHighlight: 'rgba(0, 251, 251, 0.15)',
+    actionPillLabel: 'Terminal Inspect',
+    actionPillLabelEs: 'Inspeccionar Terminal',
+    actionPillIcon: 'Terminal',
+    actionType: 'tech_spec',
+    accentColor: '#00fbfb',
+    cardBorder: 'border-cyan-400/30 hover:border-cyan-400/60',
+    tagline: 'Code mentorship & custom AI workflows',
+    taglineEs: 'Mentoría de código y flujos de IA'
+  },
+  culinary: {
+    id: 'culinary',
+    name: 'Culinary & Gastronomy',
+    nameEs: 'Gastronomía & Alta Cocina',
+    badgeLabel: 'CULINARY MASTER',
+    badgeLabelEs: 'MAESTRO CULINARIO',
+    icon: '👨‍🍳',
+    badgeGradient: 'from-emerald-500/30 to-amber-500/30 border-emerald-400/50 text-emerald-300',
+    borderGlow: 'border-emerald-500/40 shadow-[0_0_35px_rgba(16,185,129,0.22)]',
+    ambientHighlight: 'rgba(16, 185, 129, 0.15)',
+    actionPillLabel: 'Signature Dish',
+    actionPillLabelEs: 'Platillo Insignia',
+    actionPillIcon: 'Utensils',
+    actionType: 'culinary_menu',
+    accentColor: '#10b981',
+    cardBorder: 'border-emerald-400/30 hover:border-emerald-400/60',
+    tagline: 'Gourmet cook-alongs & romantic tasting',
+    taglineEs: 'Cocina en vivo y maridaje romántico'
+  },
+  dating: {
+    id: 'dating',
+    name: 'Romance & Connection',
+    nameEs: 'Romance & Conexión',
+    badgeLabel: 'ROMANCE SEEKER',
+    badgeLabelEs: 'BUSCADOR DE ROMANCE',
+    icon: '🩷',
+    badgeGradient: 'from-pink-500/30 to-rose-600/30 border-pink-400/50 text-pink-300',
+    borderGlow: 'border-pink-500/40 shadow-[0_0_35px_rgba(255,32,78,0.22)]',
+    ambientHighlight: 'rgba(255, 32, 78, 0.15)',
+    actionPillLabel: 'Chemistry Spark',
+    actionPillLabelEs: 'Chispa de Química',
+    actionPillIcon: 'Sparkles',
+    actionType: 'chemistry_prompt',
+    accentColor: '#ff204e',
+    cardBorder: 'border-pink-400/30 hover:border-pink-400/60',
+    tagline: 'Deep connection & romantic alignment',
+    taglineEs: 'Conexión profunda y química romántica'
+  },
+  fitness: {
+    id: 'fitness',
+    name: 'Fitness & Vitality',
+    nameEs: 'Fitness & Vitalidad',
+    badgeLabel: 'VITALITY COACH',
+    badgeLabelEs: 'COACH DE VITALIDAD',
+    icon: '🏋️',
+    badgeGradient: 'from-lime-500/30 to-emerald-600/30 border-lime-400/50 text-lime-300',
+    borderGlow: 'border-lime-500/40 shadow-[0_0_35px_rgba(132,204,22,0.22)]',
+    ambientHighlight: 'rgba(132, 204, 22, 0.15)',
+    actionPillLabel: 'Vitals Radar',
+    actionPillLabelEs: 'Radar de Vitalidad',
+    actionPillIcon: 'Activity',
+    actionType: 'fitness_stats',
+    accentColor: '#84cc16',
+    cardBorder: 'border-lime-400/30 hover:border-lime-400/60',
+    tagline: 'Biohacking, workout habits & stamina',
+    taglineEs: 'Biohacking, hábitos de gym y resistencia'
+  },
+  career: {
+    id: 'career',
+    name: 'Career & Wealth',
+    nameEs: 'Carrera & Patrimonio',
+    badgeLabel: 'CAREER STRATEGIST',
+    badgeLabelEs: 'ESTRATEGA DE CARRERA',
+    icon: '💼',
+    badgeGradient: 'from-amber-500/30 to-yellow-600/30 border-amber-400/50 text-amber-300',
+    borderGlow: 'border-amber-500/40 shadow-[0_0_35px_rgba(245,158,11,0.22)]',
+    ambientHighlight: 'rgba(245, 158, 11, 0.15)',
+    actionPillLabel: 'Career Pitch',
+    actionPillLabelEs: 'Pitch Profesional',
+    actionPillIcon: 'Briefcase',
+    actionType: 'career_pitch',
+    accentColor: '#f59e0b',
+    cardBorder: 'border-amber-400/30 hover:border-amber-400/60',
+    tagline: 'Business building & executive mindset',
+    taglineEs: 'Construcción de negocios y mentalidad ejecutiva'
+  },
+  creative: {
+    id: 'creative',
+    name: 'Art & Performance',
+    nameEs: 'Arte & Performance',
+    badgeLabel: 'CREATIVE ALCHEMIST',
+    badgeLabelEs: 'ALQUIMISTA CREATIVO',
+    icon: '🎨',
+    badgeGradient: 'from-purple-500/30 to-fuchsia-600/30 border-purple-400/50 text-purple-300',
+    borderGlow: 'border-purple-500/40 shadow-[0_0_35px_rgba(168,85,247,0.22)]',
+    ambientHighlight: 'rgba(168, 85, 247, 0.15)',
+    actionPillLabel: 'Creative Vault',
+    actionPillLabelEs: 'Bóveda Creativa',
+    actionPillIcon: 'Palette',
+    actionType: 'creative_vault',
+    accentColor: '#a855f7',
+    cardBorder: 'border-purple-400/30 hover:border-purple-400/60',
+    tagline: 'Visual masterpieces, music & flow',
+    taglineEs: 'Obras visuales, música y estado de flow'
+  },
+  wellness: {
+    id: 'wellness',
+    name: 'Mindset & Holistic Wellness',
+    nameEs: 'Mindfulness & Bienestar',
+    badgeLabel: 'WELLNESS GUIDE',
+    badgeLabelEs: 'GUÍA DE BIENESTAR',
+    icon: '🌿',
+    badgeGradient: 'from-teal-500/30 to-cyan-600/30 border-teal-400/50 text-teal-300',
+    borderGlow: 'border-teal-500/40 shadow-[0_0_35px_rgba(20,184,166,0.22)]',
+    ambientHighlight: 'rgba(20, 184, 166, 0.15)',
+    actionPillLabel: 'Zen Frequency',
+    actionPillLabelEs: 'Frecuencia Zen',
+    actionPillIcon: 'Smile',
+    actionType: 'wellness_vibe',
+    accentColor: '#14b8a6',
+    cardBorder: 'border-teal-400/30 hover:border-teal-400/60',
+    tagline: 'Breathwork, somatic healing & calm',
+    taglineEs: 'Respiración, sanación somática y serenidad'
+  },
+  adult: {
+    id: 'adult',
+    name: 'Sensual & Explicit (18+)',
+    nameEs: 'Sensual & Explícito (18+)',
+    badgeLabel: '18+ VIP SENSUAL',
+    badgeLabelEs: '18+ VIP SENSUAL',
+    icon: '🔞',
+    badgeGradient: 'from-red-600/40 to-pink-900/40 border-red-500/60 text-red-300',
+    borderGlow: 'border-red-600/50 shadow-[0_0_35px_rgba(220,20,60,0.3)]',
+    ambientHighlight: 'rgba(220, 20, 60, 0.2)',
+    actionPillLabel: 'Vault Teaser Pulse',
+    actionPillLabelEs: 'Pulso de Bóveda VIP',
+    actionPillIcon: 'Lock',
+    actionType: 'vip_vault',
+    accentColor: '#dc143c',
+    cardBorder: 'border-red-500/40 hover:border-red-500/70',
+    tagline: 'Private exclusive unlocks & behind-closed-doors',
+    taglineEs: 'Acceso privado exclusivo y contenido sin censura'
+  }
+};
+
+/**
+ * Pure, zero-overhead helper to resolve a profile's intent theme configuration.
+ * Adheres to a strict fallback hierarchy:
+ * 1. Explicit core_passion match
+ * 2. Specialization mapping
+ * 3. Active purposes
+ * 4. First hobby keyword match
+ * 5. Default: 'dating'
+ */
+export function resolveProfileIntentTheme(profile: any): SwipecardIntentTheme {
+  if (!profile) return SWIPECARD_INTENT_THEMES.dating;
+
+  // 1. Direct core_passion check
+  const rawPassion = (profile.core_passion || profile.corePassion || '').toLowerCase();
+  if (rawPassion === 'ai_tech' || rawPassion === 'tech' || rawPassion === 'ai') return SWIPECARD_INTENT_THEMES.ai_tech;
+  if (rawPassion === 'culinary' || rawPassion === 'cooking' || rawPassion === 'gourmet') return SWIPECARD_INTENT_THEMES.culinary;
+  if (rawPassion === 'dating' || rawPassion === 'romance') return SWIPECARD_INTENT_THEMES.dating;
+  if (rawPassion === 'fitness' || rawPassion === 'vitality') return SWIPECARD_INTENT_THEMES.fitness;
+  if (rawPassion === 'career' || rawPassion === 'wealth' || rawPassion === 'finance' || rawPassion === 'ambition') return SWIPECARD_INTENT_THEMES.career;
+  if (rawPassion === 'art' || rawPassion === 'creative' || rawPassion === 'music') return SWIPECARD_INTENT_THEMES.creative;
+  if (rawPassion === 'wellness' || rawPassion === 'health' || rawPassion === 'mindset') return SWIPECARD_INTENT_THEMES.wellness;
+  if (rawPassion === 'adult' || rawPassion === 'explicit' || rawPassion === 'sensual') return SWIPECARD_INTENT_THEMES.adult;
+
+  // 2. Specialization check (Creators)
+  const spec = (profile.specialization || '').toLowerCase();
+  if (spec.includes('tech') || spec.includes('software') || spec.includes('ai')) return SWIPECARD_INTENT_THEMES.ai_tech;
+  if (spec.includes('culinary') || spec.includes('food') || spec.includes('dining')) return SWIPECARD_INTENT_THEMES.culinary;
+  if (spec.includes('dating') || spec.includes('wingman')) return SWIPECARD_INTENT_THEMES.dating;
+  if (spec.includes('fitness') || spec.includes('vitality')) return SWIPECARD_INTENT_THEMES.fitness;
+  if (spec.includes('career') || spec.includes('financial') || spec.includes('wealth')) return SWIPECARD_INTENT_THEMES.career;
+  if (spec.includes('creative') || spec.includes('beauty') || spec.includes('style')) return SWIPECARD_INTENT_THEMES.creative;
+  if (spec.includes('health') || spec.includes('wellness')) return SWIPECARD_INTENT_THEMES.wellness;
+  if (spec.includes('adult') || spec.includes('sensual') || spec.includes('18')) return SWIPECARD_INTENT_THEMES.adult;
+
+  // 3. Active purposes check
+  const purposes: string[] = Array.isArray(profile.active_purposes) ? profile.active_purposes : [];
+  if (purposes.includes('explicit')) return SWIPECARD_INTENT_THEMES.adult;
+  if (purposes.includes('lifestyle')) return SWIPECARD_INTENT_THEMES.career;
+  if (purposes.includes('dating')) return SWIPECARD_INTENT_THEMES.dating;
+
+  // 4. Hobbies keyword inspect
+  const hobbies: string[] = Array.isArray(profile.hobbies) ? profile.hobbies : [];
+  const hobbyStr = hobbies.join(' ').toLowerCase();
+  if (hobbyStr.includes('tech') || hobbyStr.includes('gaming') || hobbyStr.includes('ai')) return SWIPECARD_INTENT_THEMES.ai_tech;
+  if (hobbyStr.includes('cook') || hobbyStr.includes('wine') || hobbyStr.includes('gourmet')) return SWIPECARD_INTENT_THEMES.culinary;
+  if (hobbyStr.includes('fitness') || hobbyStr.includes('gym') || hobbyStr.includes('workout')) return SWIPECARD_INTENT_THEMES.fitness;
+  if (hobbyStr.includes('business') || hobbyStr.includes('invest') || hobbyStr.includes('crypto')) return SWIPECARD_INTENT_THEMES.career;
+  if (hobbyStr.includes('art') || hobbyStr.includes('music') || hobbyStr.includes('photo')) return SWIPECARD_INTENT_THEMES.creative;
+  if (hobbyStr.includes('yoga') || hobbyStr.includes('meditat') || hobbyStr.includes('wellness')) return SWIPECARD_INTENT_THEMES.wellness;
+
+  // 5. Default safe return
+  return SWIPECARD_INTENT_THEMES.dating;
+}
+
+
