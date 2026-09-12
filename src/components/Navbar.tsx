@@ -86,40 +86,90 @@ export default function Navbar() {
   }, [user]);
 
   useEffect(() => {
+    let isCancelled = false;
+
+    // Safety timeout: Never let the navbar auth spinner hang indefinitely
+    const safetyTimer = setTimeout(() => {
+      if (!isCancelled) {
+        setIsLoading(false);
+      }
+    }, 4000);
+
     async function getSession() {
       try {
         const { data: { session } } = await supabase.auth.getSession();
+        if (isCancelled) return;
+
         if (session?.user) {
-          setUser(session.user);
-          const { data: profileData } = await supabase
+          const { data: profileData, error } = await supabase
             .from('profiles')
             .select('*')
             .eq('id', session.user.id)
-            .single();
+            .maybeSingle();
           
-          if (profileData) {
-            setProfile(profileData);
+          if (isCancelled) return;
+
+          if (!profileData && error?.code === 'PGRST116' || (!profileData && !error)) {
+            console.warn('[Navbar] Orphan auth session detected (no profile row). Signing out cleanly.');
+            await supabase.auth.signOut();
+            setUser(null);
+            setProfile(null);
+          } else {
+            setUser(session.user);
+            if (profileData) {
+              setProfile(profileData);
+            }
           }
+        } else {
+          setUser(null);
+          setProfile(null);
         }
       } catch (err) {
         console.error('Error fetching session/profile:', err);
+        if (!isCancelled) {
+          setUser(null);
+          setProfile(null);
+        }
       } finally {
-        setIsLoading(false);
+        if (!isCancelled) {
+          clearTimeout(safetyTimer);
+          setIsLoading(false);
+        }
       }
     }
 
     getSession();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (isCancelled) return;
+
       if (session?.user) {
-        setUser(session.user);
-        const { data: profileData } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', session.user.id)
-          .single();
-        if (profileData) {
-          setProfile(profileData);
+        try {
+          const { data: profileData, error } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', session.user.id)
+            .maybeSingle();
+
+          if (isCancelled) return;
+
+          if (!profileData && error?.code === 'PGRST116' || (!profileData && !error)) {
+            console.warn('[Navbar] Orphan auth session detected on state change. Signing out cleanly.');
+            await supabase.auth.signOut();
+            setUser(null);
+            setProfile(null);
+          } else {
+            setUser(session.user);
+            if (profileData) {
+              setProfile(profileData);
+            }
+          }
+        } catch (err) {
+          console.error('Error fetching profile on auth change:', err);
+          if (!isCancelled) {
+            setUser(null);
+            setProfile(null);
+          }
         }
       } else {
         setUser(null);
@@ -128,6 +178,8 @@ export default function Navbar() {
     });
 
     return () => {
+      isCancelled = true;
+      clearTimeout(safetyTimer);
       subscription.unsubscribe();
     };
   }, []);

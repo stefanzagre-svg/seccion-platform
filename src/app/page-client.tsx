@@ -26,52 +26,99 @@ export default function Home() {
   const router = useRouter();
 
   useEffect(() => {
+    let isCancelled = false;
+
+    // Safety timeout: Never let the page spinner hang indefinitely
+    const safetyTimer = setTimeout(() => {
+      if (!isCancelled) {
+        setLoading(false);
+      }
+    }, 4000);
+
     async function checkAuth() {
-      const { data: { session } } = await supabase.auth.getSession();
-      const currentUser = session?.user || null;
-      setUser(currentUser);
-      
-      if (currentUser) {
-        try {
-          const { data: profile } = await supabase
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        const currentUser = session?.user || null;
+        if (isCancelled) return;
+        
+        if (currentUser) {
+          const { data: profile, error } = await supabase
             .from('profiles')
             .select('archetype, lifestyle_habits')
             .eq('id', currentUser.id)
-            .single();
-          setOnboardingCompleted(!!(profile?.archetype && profile?.lifestyle_habits));
-        } catch (err) {
-          console.warn("Error checking onboarding status:", err);
+            .maybeSingle();
+          
+          if (isCancelled) return;
+
+          // If auth user exists but profile was deleted/doesn't exist, sign out cleanly
+          if (!profile && error?.code === 'PGRST116' || (!profile && !error)) {
+            console.warn("[page-client] Orphan auth session detected (no profile found). Signing out cleanly.");
+            await supabase.auth.signOut();
+            setUser(null);
+            setOnboardingCompleted(false);
+          } else {
+            setUser(currentUser);
+            setOnboardingCompleted(!!(profile?.archetype && profile?.lifestyle_habits));
+          }
+        } else {
+          setUser(null);
           setOnboardingCompleted(false);
         }
-      } else {
-        setOnboardingCompleted(false);
+      } catch (err) {
+        console.warn("Error checking onboarding status:", err);
+        if (!isCancelled) {
+          setUser(null);
+          setOnboardingCompleted(false);
+        }
+      } finally {
+        if (!isCancelled) {
+          clearTimeout(safetyTimer);
+          setLoading(false);
+        }
       }
-      setLoading(false);
     }
     checkAuth();
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      if (isCancelled) return;
       const currentUser = session?.user || null;
-      setUser(currentUser);
+      
       if (currentUser) {
         try {
-          const { data: profile } = await supabase
+          const { data: profile, error } = await supabase
             .from('profiles')
             .select('archetype, lifestyle_habits')
             .eq('id', currentUser.id)
-            .single();
-          setOnboardingCompleted(!!(profile?.archetype && profile?.lifestyle_habits));
+            .maybeSingle();
+
+          if (isCancelled) return;
+
+          if (!profile && error?.code === 'PGRST116' || (!profile && !error)) {
+            console.warn("[page-client] Orphan auth session detected on state change. Signing out cleanly.");
+            await supabase.auth.signOut();
+            setUser(null);
+            setOnboardingCompleted(false);
+          } else {
+            setUser(currentUser);
+            setOnboardingCompleted(!!(profile?.archetype && profile?.lifestyle_habits));
+          }
         } catch (err) {
           console.warn("Error checking onboarding status on auth change:", err);
-          setOnboardingCompleted(false);
+          if (!isCancelled) {
+            setUser(null);
+            setOnboardingCompleted(false);
+          }
         }
       } else {
+        setUser(null);
         setOnboardingCompleted(false);
       }
     });
 
     return () => {
+      isCancelled = true;
+      clearTimeout(safetyTimer);
       subscription.unsubscribe();
     };
   }, []);

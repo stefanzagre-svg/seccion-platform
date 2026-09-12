@@ -32,7 +32,7 @@ const PUBLIC_API_ROUTES = [
 ];
 
 // Routes that require authentication (explicitly excluded from PUBLIC_ROUTES)
-const PROTECTED_ROUTES = ['/stream-demo', '/dashboard', '/studio', '/feed', '/messages', '/profile'];
+const PROTECTED_ROUTES = ['/stream-demo', '/dashboard', '/studio', '/feed', '/messages', '/profile', '/top-profile'];
 // Routes that authenticated users should be redirected away from
 const AUTH_ROUTES = ['/onboarding', '/onboarding/step-2'];
 
