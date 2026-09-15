@@ -12,6 +12,7 @@ const PUBLIC_ROUTES = [
   '/rules',
   '/hit-us-up',
   '/early-access',
+  '/blog',
   '/onboarding',
   '/onboarding/step-2',
   '/auth/callback'

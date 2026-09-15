@@ -7,23 +7,23 @@
   "seo": {
     "home": {
       "title": "SECCION.ai | La 1ra Plataforma Híbrida de Dating IA y Live Streaming para Creadores",
-      "desc": "SECCION (seccion.ai) es la primera plataforma híbrida que fusiona matchmaking con IA y streaming en vivo para creadores. 90% de ingresos para creadores y sinergia de vibes real."
-    },
-    "vibeRadar": {
-      "title": "Radar de Vibes — Descubrimiento en Tiempo Real | SECCION",
-      "desc": "Explora creadores, transmisiones en vivo y conexiones compatibles en tiempo real con el Radar de Vibes de SECCION."
-    },
-    "nowStreaming": {
-      "title": "Transmisiones en Vivo y Salas VIP | SECCION",
-      "desc": "Mira transmisiones en vivo, participa en salas VIP interactivas y conecta con creadores verificados a nivel mundial."
+      "desc": "SECCION.ai es la 1ra plataforma híbrida que fusiona matchmaking con IA y streaming en vivo para creadores. 90% de ingresos y química de vibes real."
     },
     "howWeDo": {
-      "title": "Cómo Funciona SECCION — Matchmaking con IA y Economía de Creadores",
-      "desc": "Descubre cómo SECCION combina matchmaking inteligente con IA y transmisión en vivo de alto rendimiento para creadores."
+      "title": "Cómo Funciona | SECCION",
+      "desc": "Explora el ciclo de juego de SECCION: emparejamiento, progresión de química y economía de creadores de streaming en vivo."
+    },
+    "vibeRadar": {
+      "title": "Vibe Radar | SECCION",
+      "desc": "Experimenta nuestro motor de emparejamiento sin monetización oculta, arquetipos de personalidad y coach de citas por IA."
     },
     "becomeCreator": {
-      "title": "Sé Creador/a — 90% de Comisión Neta y Estudio con IA | SECCION",
-      "desc": "Únete a SECCION como Creador/a Fundador/a. Asegura un 90% de ingresos netos, Asistente de Operaciones con IA y alcance global."
+      "title": "Sé Creador | SECCION",
+      "desc": "Consigue el 90% de ingresos, transmite en vivo para tus matches y monetiza tu contenido con total libertad."
+    },
+    "nowStreaming": {
+      "title": "Transmitiendo Ahora | SECCION",
+      "desc": "Mira a creadores de contenido activos transmitiendo en vivo, interactúa y desbloquea el acceso VIP."
     }
   },
   "nav": {
@@ -36,7 +36,8 @@
     "logout": "Cerrar Sesión",
     "dashboard": "Panel",
     "radar": "Vibe Radar",
-    "messages": "Mensajes"
+    "messages": "Mensajes",
+    "blog": "Blog"
   },
   "prelaunch": {
     "breaking": "PRE-LANZAMIENTO EXCLUSIVO",
@@ -48,6 +49,7 @@
     "gotIt": "ENTENDIDO"
   },
   "footer": {
+    "blog": "Blog & Insights",
     "privacy": "Tu Privacidad",
     "rules": "Las Reglas",
     "creatorHub": "Hub de Creadores",
@@ -86,7 +88,12 @@
     "creatorFeature5Title": "DRM Web Sweeper",
     "creatorFeature5Desc": "Rastrea leaks en la web y ejecuta takedowns automáticos para proteger tu contenido.",
     "creatorFeature6Title": "NLP Contract Scanner",
-    "creatorFeature6Desc": "Escanea contratos de marcas en segundos: detecta comisiones de sunset abusivas y cesiones de derechos de réplica digital IA antes de firmar."
+    "creatorFeature6Desc": "Escanea contratos de marcas en segundos: detecta comisiones de sunset abusivas y cesiones de derechos de réplica digital IA antes de firmar.",
+    "heroConnectMembers": "Quiero Conectar con Nuevas Personas y Creadores",
+    "heroConnectMembersSub": "Únete a la lista de espera de miembros por ciudad",
+    "heroLaunchCreator": "Soy Creador/a — Ganar el 90%",
+    "heroLaunchCreatorSub": "Postula al pase fundador y Copiloto IA gratis",
+    "tabApplyCreatorBtn": "Reclamar Pase de Creador Fundador (90%)"
   },
   "howWeDo": {
     "title": "How We Do SECCION",
@@ -257,28 +264,6 @@
     "sendAnother": "Enviar otro mensaje",
     "backHome": "Volver al Home"
   },
-  "seo": {
-    "home": {
-      "title": "SECCION.ai | La 1ra Plataforma Híbrida de Dating IA y Live Streaming para Creadores",
-      "desc": "SECCION.ai es la 1ra plataforma híbrida que fusiona matchmaking con IA y streaming en vivo para creadores. 90% de ingresos y química de vibes real."
-    },
-    "howWeDo": {
-      "title": "Cómo Funciona | SECCION",
-      "desc": "Explora el ciclo de juego de SECCION: emparejamiento, progresión de química y economía de creadores de streaming en vivo."
-    },
-    "vibeRadar": {
-      "title": "Vibe Radar | SECCION",
-      "desc": "Experimenta nuestro motor de emparejamiento sin monetización oculta, arquetipos de personalidad y coach de citas por IA."
-    },
-    "becomeCreator": {
-      "title": "Sé Creador | SECCION",
-      "desc": "Consigue el 90% de ingresos, transmite en vivo para tus matches y monetiza tu contenido con total libertad."
-    },
-    "nowStreaming": {
-      "title": "Transmitiendo Ahora | SECCION",
-      "desc": "Mira a creadores de contenido activos transmitiendo en vivo, interactúa y desbloquea el acceso VIP."
-    }
-  },
   "replicant": {
     "badge": "Generado por el Replicant de {creatorName}",
     "badgeSelf": "Enviado por tu Replicant",
@@ -313,40 +298,80 @@
   },
   "onboarding": {
     "main": {
-      "buildIdentity": "Forja tu Identidad",
-      "setupProfile": "Configura tu perfil de radar.",
-      "profileSetup": "Configuraci�n de Perfil",
+      "buildIdentity": "Construye Tu Identidad",
+      "setupProfile": "Configura el perfil de tu vibe.",
+      "previewProfile": "Previsualizar Perfil",
+      "profileSetup": "Configuración de Perfil",
       "done": "{progress}% Completado",
       "tabPhoto": "1. Foto",
       "tabBio": "2. Bio",
       "tabMatch": "3. Match",
-      "selectPhoto": "Selecciona tu Foto",
-      "uploadOption1": "Opci�n 1: Subir desde PC o Galer�a",
+      "selectPhoto": "Seleccionar Foto de Perfil",
+      "photoReqTitle": "Requisito de Fotos: 1 Avatar de Perfil + 2 Fotos de Álbum Público",
+      "photoReqDesc": "Sube 1 avatar de perfil (tu portada principal, visible en todos lados) y 2 fotos de álbum público para desbloquear el Feed de Matchmaking completo.",
+      "mainAvatarTitle": "1. Avatar Principal de Perfil (Visible para Todos)",
+      "mainAvatarDesc": "Tu Avatar Principal es tu vibe card principal mostrada en el feed comunitario y deck de matches. Todos en SECCION verán esta foto como tu portada.",
+      "uploadAvatar": "Subir Foto Principal de Avatar",
+      "replaceAvatar": "Cambiar Foto Principal de Avatar",
       "uploadingFile": "Subiendo Imagen...",
-      "chooseFile": "Elegir archivo local",
-      "option2": "Opci�n 2: Usar Avatares de Prueba",
-      "livenessCheck": "Verificaci�n de Biometr�a",
-      "livenessDesc": "Para mantener SECCION libre de perfiles falsos, verifica que eres t� con un escaneo r�pido de 3 segundos.",
-      "livenessLock": "No guardamos tu DNI. Los datos faciales se eliminan al instante.",
-      "startCheck": "Iniciar Verificaci�n",
-      "connectingCamera": "Conectando C�mara...",
-      "nextStep": "Siguiente: Prompts de Bio",
-      "bioPrompts": "Prompts Relacionales",
-      "bioDesc": "Ayuda a nuestro Motor de Sinergia a leer tu vibra. Responde 2 preguntas.",
+      "mainAvatarReady": "Avatar Principal Listo",
+      "imageLoadedComputer": "Imagen cargada desde tu dispositivo",
+      "publicAlbumTitle": "2. Álbum de Fotos Público (Visible para Todos los Miembros)",
+      "publicAlbumDesc": "Tu Álbum Público muestra tu estilo de vida auténtico, pasiones y mundo. Agrega 2 fotos de álbum público: son visibles para todos los miembros y son obligatorias para desbloquear el Feed.",
+      "addPhotosAlbum": "Agregar Fotos al Álbum Público",
+      "livenessCheck": "Verificación Biométrica Anti-Catfishing",
+      "livenessDesc": "Para mantener SECCION seguro, realiza una rápida prueba biométrica para confirmar tu rostro con la foto seleccionada.",
+      "startCheck": "Iniciar Prueba de Selfie Biométrica",
+      "savePhotosContinue": "Guardar Fotos y Continuar →",
+      "bioPrompts": "Check de Prompts Relacionales",
       "promptStep": "Prompt {step} de 2",
-      "selectCategory": "Elige una categor�a",
-      "selectPrompt": "Elige una pregunta",
-      "answerPlaceholder": "Escribe tu respuesta sincera (m�n 10 caracteres)...",
-      "saving": "Guardando y Analizando Vibra...",
-      "saveNext": "Guardar y Siguiente",
-      "matchPreferences": "Preferencias de Sinergia",
-      "matchDesc": "Ajusta tus filtros para que el Wingman sepa exactamente a qui�n poner en tu radar.",
-      "languageTitle": "Idiomas de Vibra",
-      "languageDesc": "�Qu� idiomas hablas? (Nuestro traductor S2S cubre el resto)",
-      "sexPrefTitle": "Preferencia Sexual",
-      "relGoalTitle": "Objetivo de Relaci�n",
-      "relTypeTitle": "Tipo de Relaci�n",
-      "finalize": "Finalizar Perfil"
+      "bioDesc": "Ayuda a nuestro Motor de Sinergia IA a entender tu vibra. Responde 2 preguntas a continuación.",
+      "selectCategory": "1. Elige tu Zona de Vibe",
+      "selectPrompt": "2. Selecciona la Pregunta",
+      "writeResponse": "3. Escribe tu Respuesta Narrativa",
+      "minCharsReq": "Mínimo 10 caracteres requeridos",
+      "lengthValidated": "Longitud Validada",
+      "analyzeSavePrompt": "Analizar y Guardar Prompt {step}",
+      "continueDashboard": "Continuar al Panel →",
+      "selectAvatarErr": "Por favor selecciona o sube una foto de avatar.",
+      "promptMissingErr": "Por favor selecciona una categoría, pregunta y escribe una respuesta.",
+      "promptLengthErr": "Escribe un poco más para que nuestra IA pueda leer tu vibra (mín. 10 caracteres)."
+    },
+    "creatorExt": {
+      "title": "Extensión Creador",
+      "subtitle": "Tu perfil de miembro está listo. Escribe tu Bio de Creador para publicar tu presencia en el Studio. El Reel de Portafolio es opcional pero ayuda a atraer suscriptores más rápido.",
+      "optional": "Opcional",
+      "required": "Obligatorio",
+      "portfolioLabel": "URL del Reel de Portafolio",
+      "portfolioPlaceholder": "https://vimeo.com/... · YouTube · OnlyFans · etc.",
+      "portfolioHint": "Enlaza tu contenido existente (Vimeo, YouTube, etc.) para mostrar tu estilo y atraer suscriptores en tu perfil.",
+      "bioLabel": "Bio de Creador",
+      "bioPlaceholder": "Describe tu contenido premium, niveles VIP y lo que reciben los suscriptores...",
+      "bioMinHint": "Escribe un poco más — mínimo 20 caracteres para que los suscriptores sepan lo que van a obtener.",
+      "publishBtn": "Publicar Perfil de Creador",
+      "saveError": "Error al guardar el perfil de extensión de creador."
+    },
+    "prelaunchGates": {
+      "creatorNoticeTitle": "¿Eres Creador de Contenido?",
+      "creatorNoticeDesc": "Aplica al Creator Studio de Pre-Lanzamiento para desbloquear 90% de reparto de ingresos directo, 1 Año de Asistente IA Gratis y visibilidad prioritaria.",
+      "creatorApplyBtn": "Aplicar como Creador →",
+      "whatIsApprovedTitle": "¿Qué es un Creador Aprobado?",
+      "whatIsApprovedDesc": "Creadores que completaron la solicitud de pre-lanzamiento y fueron verificados por nuestro equipo. Si fuiste aprobado, haz clic arriba y regístrate con el correo exacto de tu postulación.",
+      "notApprovedYet": "¿Aún no has aplicado o esperas tu aprobación?",
+      "applyHereLink": "Aplica como Creador Aquí →",
+      "loginApprovedExplanation": "El acceso de pre-lanzamiento está reservado para creadores aprobados y el equipo fundador.",
+      "loginReturningDesc": "¿Eres creador recurrente con contraseña guardada? Ingresa tus credenciales abajo.",
+      "loginFirstTimeDesc": "¿Aprobado recientemente y aún sin contraseña? Usa el Acceso Sin Contraseña con tu correo aprobado para recibir un código de 6 dígitos, o completa tu onboarding inicial.",
+      "tabPassword": "Ingresar con Contraseña",
+      "tabPasswordless": "✨ Primera Vez / Sin Contraseña",
+      "firstTimeBadge": "Recomendado para creadores recién aprobados que aún no crearon contraseña",
+      "passwordLabel": "Contraseña de la Cuenta",
+      "passwordHint": "¿Fuiste aprobado pero nunca creaste contraseña? Cambia a la pestaña Sin Contraseña arriba.",
+      "completeSetupBtn": "¿Creador aprobado por primera vez? Completa tu Setup y Crea Contraseña →",
+      "loginNotAppliedNotice": "¿Eres un creador que aún no ha aplicado por el 90% de ingresos y 1 Año de Asistente IA Gratis?",
+      "loginApplyNow": "APLICA AHORA",
+      "loginMemberNotice": "¿Buscas acceso anticipado como miembro?",
+      "loginJoinWaitlist": "UNIRSE A LA LISTA DE ACCESO"
     }
   },
   "sessionQuest": {
@@ -554,84 +579,6 @@
     "system_default": "Predeterminado del Sistema",
     "km": "Kilómetros (km)",
     "mi": "Millas (mi)"
-  },
-  "onboarding": {
-    "main": {
-      "buildIdentity": "Construye Tu Identidad",
-      "setupProfile": "Configura el perfil de tu vibe.",
-      "previewProfile": "Previsualizar Perfil",
-      "profileSetup": "Configuración de Perfil",
-      "done": "{progress}% Completado",
-      "tabPhoto": "1. Foto",
-      "tabBio": "2. Bio",
-      "tabMatch": "3. Match",
-      "selectPhoto": "Seleccionar Foto de Perfil",
-      "photoReqTitle": "Requisito de Fotos: 1 Avatar de Perfil + 2 Fotos de Álbum Público",
-      "photoReqDesc": "Sube 1 avatar de perfil (tu portada principal, visible en todos lados) y 2 fotos de álbum público para desbloquear el Feed de Matchmaking completo.",
-      "mainAvatarTitle": "1. Avatar Principal de Perfil (Visible para Todos)",
-      "mainAvatarDesc": "Tu Avatar Principal es tu vibe card principal mostrada en el feed comunitario y deck de matches. Todos en SECCION verán esta foto como tu portada.",
-      "uploadAvatar": "Subir Foto Principal de Avatar",
-      "replaceAvatar": "Cambiar Foto Principal de Avatar",
-      "uploadingFile": "Subiendo Imagen...",
-      "mainAvatarReady": "Avatar Principal Listo",
-      "imageLoadedComputer": "Imagen cargada desde tu dispositivo",
-      "publicAlbumTitle": "2. Álbum de Fotos Público (Visible para Todos los Miembros)",
-      "publicAlbumDesc": "Tu Álbum Público muestra tu estilo de vida auténtico, pasiones y mundo. Agrega 2 fotos de álbum público: son visibles para todos los miembros y son obligatorias para desbloquear el Feed.",
-      "addPhotosAlbum": "Agregar Fotos al Álbum Público",
-      "livenessCheck": "Verificación Biométrica Anti-Catfishing",
-      "livenessDesc": "Para mantener SECCION seguro, realiza una rápida prueba biométrica para confirmar tu rostro con la foto seleccionada.",
-      "startCheck": "Iniciar Prueba de Selfie Biométrica",
-      "savePhotosContinue": "Guardar Fotos y Continuar →",
-      "bioPrompts": "Check de Prompts Relacionales",
-      "promptStep": "Prompt {step} de 2",
-      "bioDesc": "Ayuda a nuestro Motor de Sinergia IA a entender tu vibra. Responde 2 preguntas a continuación.",
-      "selectCategory": "1. Elige tu Zona de Vibe",
-      "selectPrompt": "2. Selecciona la Pregunta",
-      "writeResponse": "3. Escribe tu Respuesta Narrativa",
-      "minCharsReq": "Mínimo 10 caracteres requeridos",
-      "lengthValidated": "Longitud Validada",
-      "analyzeSavePrompt": "Analizar y Guardar Prompt {step}",
-      "continueDashboard": "Continuar al Panel →",
-      "selectAvatarErr": "Por favor selecciona o sube una foto de avatar.",
-      "promptMissingErr": "Por favor selecciona una categoría, pregunta y escribe una respuesta.",
-      "promptLengthErr": "Escribe un poco más para que nuestra IA pueda leer tu vibra (mín. 10 caracteres)."
-    },
-    "creatorExt": {
-      "title": "Extensión Creador",
-      "subtitle": "Tu perfil de miembro está listo. Escribe tu Bio de Creador para publicar tu presencia en el Studio. El Reel de Portafolio es opcional pero ayuda a atraer suscriptores más rápido.",
-      "optional": "Opcional",
-      "required": "Obligatorio",
-      "portfolioLabel": "URL del Reel de Portafolio",
-      "portfolioPlaceholder": "https://vimeo.com/... · YouTube · OnlyFans · etc.",
-      "portfolioHint": "Enlaza tu contenido existente (Vimeo, YouTube, etc.) para mostrar tu estilo y atraer suscriptores en tu perfil.",
-      "bioLabel": "Bio de Creador",
-      "bioPlaceholder": "Describe tu contenido premium, niveles VIP y lo que reciben los suscriptores...",
-      "bioMinHint": "Escribe un poco más — mínimo 20 caracteres para que los suscriptores sepan lo que van a obtener.",
-      "publishBtn": "Publicar Perfil de Creador",
-      "saveError": "Error al guardar el perfil de extensión de creador."
-    },
-    "prelaunchGates": {
-      "creatorNoticeTitle": "¿Eres Creador de Contenido?",
-      "creatorNoticeDesc": "Aplica al Creator Studio de Pre-Lanzamiento para desbloquear 90% de reparto de ingresos directo, 1 Año de Asistente IA Gratis y visibilidad prioritaria.",
-      "creatorApplyBtn": "Aplicar como Creador →",
-      "whatIsApprovedTitle": "¿Qué es un Creador Aprobado?",
-      "whatIsApprovedDesc": "Creadores que completaron la solicitud de pre-lanzamiento y fueron verificados por nuestro equipo. Si fuiste aprobado, haz clic arriba y regístrate con el correo exacto de tu postulación.",
-      "notApprovedYet": "¿Aún no has aplicado o esperas tu aprobación?",
-      "applyHereLink": "Aplica como Creador Aquí →",
-      "loginApprovedExplanation": "El acceso de pre-lanzamiento está reservado para creadores aprobados y el equipo fundador.",
-      "loginReturningDesc": "¿Eres creador recurrente con contraseña guardada? Ingresa tus credenciales abajo.",
-      "loginFirstTimeDesc": "¿Aprobado recientemente y aún sin contraseña? Usa el Acceso Sin Contraseña con tu correo aprobado para recibir un código de 6 dígitos, o completa tu onboarding inicial.",
-      "tabPassword": "Ingresar con Contraseña",
-      "tabPasswordless": "✨ Primera Vez / Sin Contraseña",
-      "firstTimeBadge": "Recomendado para creadores recién aprobados que aún no crearon contraseña",
-      "passwordLabel": "Contraseña de la Cuenta",
-      "passwordHint": "¿Fuiste aprobado pero nunca creaste contraseña? Cambia a la pestaña Sin Contraseña arriba.",
-      "completeSetupBtn": "¿Creador aprobado por primera vez? Completa tu Setup y Crea Contraseña →",
-      "loginNotAppliedNotice": "¿Eres un creador que aún no ha aplicado por el 90% de ingresos y 1 Año de Asistente IA Gratis?",
-      "loginApplyNow": "APLICA AHORA",
-      "loginMemberNotice": "¿Buscas acceso anticipado como miembro?",
-      "loginJoinWaitlist": "UNIRSE A LA LISTA DE ACCESO"
-    }
   },
   "bounty": {
     "modalTitle": "Reportar Fallo & Ganar Recompensas",

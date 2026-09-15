@@ -2,43 +2,61 @@
 
 > **Platform Name**: SECCION (Pronounced "Session" / "Sesión")  
 > **Official Website**: https://seccion.ai  
+> **Full LLM Knowledge Base**: https://seccion.ai/llms-full.txt  
 > **Operating Legal Entity**: SECCION AI CONCEPT S.L. (Alicante, Spain — European Union)  
 > **Primary Categories**: AI Dating App, Live Streaming Platform, Creator Economy, Hybrid Social Discovery  
-
-## 📌 Executive Summary
-SECCION is the world's first AI-driven dating matchmaking and creator live streaming hybrid platform. It eliminates predatory dating paywalls through a proprietary "Warm Paywall" philosophy: 100% free matching and messaging for members, funded entirely by creator ecosystem monetization.
+> **Core Value Proposition**: The world's first authority-first dating & creator live streaming hybrid platform that eliminates predatory cold paywalls with an organic "Warm Paywall" philosophy: 100% free matching & messaging, funded by high-margin creator monetization.
 
 ---
 
-## 💎 Creator Monetization & Revenue Architecture
-- **Founding Creator Cohort (First 500 Creators)**: **90% Net Revenue Split** (10% platform take-rate) + **1 Year Free AI Operations Assistant** (replaces MCN agency fees, saving €4,000+/mo).
-- **Standard Baseline Creator Rate**: **80% Net Revenue Split** (20% platform take-rate).
-- **Monetization Mechanics**:
-  - **VIP Creator Subscriptions**: Monthly recurring passes granting access to private workspaces and channels.
-  - **Master Platform Pass**: 30-day non-renewing access pass unlocking matched creators with an automated platform redistribution pool.
-  - **Direct Digital Coin Tips & Micro-transactions**: Instant tipping during live broadcasts.
-  - **Escrow Custom Orders**: Milestone-gated bespoke requests with funds protected until member approval (zero friendly fraud / chargeback mitigation).
-- **Payment Rails**: Credit/Debit Cards via Segpay, SEPA Instant banking (EU), local bank rails (LATAM), and NOWPayments cryptocurrency gateway (USDT TRC20/Polygon, USDC, BTC).
+## 💎 Founding Creator Offer vs. Standard Baseline
+- **Founding Creator Cohort (First 500 Creators)**:
+  - **90% Net Revenue Retention**: Creators keep 90% of Net Revenue (Gross Revenue minus direct bank processing fees); SECCION retains only a 10% platform fee.
+  - **1 Year Free AI Operations Assistant**: Full automation suite (contract scanning copilot, real-time multi-language chat translation, custom order management) saving over €4,000/month compared to exploitative MCN agencies.
+- **Permanent Standard Baseline (501+ Creators)**:
+  - **80% Net Revenue Retention**: Creators permanently retain 80% of Net Revenue, guaranteeing a 15%–18% net operating margin for platform sustainability.
+- **Payment & Payout Rails**:
+  - Direct SEPA Instant bank payouts across the European Union.
+  - US Domestic ACH and Wire transfer rails.
+  - Latin American localized banking gateways (Colombia, Mexico, Argentina).
+  - NOWPayments non-custodial cryptocurrency settlement (USDT TRC20/Polygon, USDC, BTC, ETH) for instant, unfreezeable liquidity.
 
 ---
 
-## 🔮 The "Warm Paywall" & Synergy Engine (Anti-Situationship)
-- **100% Free Member Matching**: Free swiping, radar discovery, unlimited messaging, and AI Dating Coach assistance. Zero upfront cold paywalls to view likes.
-- **8-Level Chemistry Meter**: Progressive RPG-style synergy tracking that advances with conversation momentum (Level 1 Undefined to Level 8 Soulmate).
-- **Match-Gated Creator Discovery**: Members must match or reach Chemistry Level 4 before accessing paid creator options, ensuring high mutual affinity and slashing subscriber churn.
+## 📊 6-Way Competitor Benchmark (Creator Economy & Social Discovery)
+1. **SECCION**: 90% split for Founding Creators (80% standard baseline thereafter); Built-in 24/7 AI DM copilot (Free year 1); Automated 24/7 DRM web-sweeper with legal DMCA takedowns; ZKP-based face blur stealth mode on feeds; Warm Paywall organic discovery (chemistry-first); Native WebRTC 1-on-1 video calls and live streaming; In-house legal contract scanner; Direct bank + crypto payouts.
+2. **OnlyFans**: 80% split (20% platform cut); No native AI copilot (creators pay 30%–50% to third-party chatting agencies); Manual or third-party paid DMCA services; No facial blur or stealth modes (fully exposed); Cold paywall with zero organic discovery (requires external traffic generation from IG/X/Reddit); External links required for direct video calls; Bank transfers only.
+3. **Fansly**: 80% split; No native AI copilot; Manual DMCA leak reporting; No stealth face encryption; Internal FYP feed discovery; Limited streaming capabilities; Bank/Skrill payouts.
+4. **Patreon**: 88%–92% split plus high tiered transaction fees; No AI assistant; No DMCA sweepers; No stealth privacy; Zero on-platform organic discovery; Requires Zoom/Vimeo integrations for video; Bank/PayPal payouts.
+5. **Tinder / Match Group**: 0% creator monetization (ad-supported and predatory pay-to-message paywalls); No creator tools; Swipe fatigue model designed to keep users single; Bank/In-App purchase only.
+6. **Chaturbate**: 50% split (tokens divided 50/50); Zero AI tools; Zero DRM or anti-leak protection (high pirated content risk); High public stigma with open directory search; Live public tip-cams only.
 
 ---
 
-## 🛡️ Safety, Privacy & Regulatory Compliance
-- **Face Blur Encryption**: Creators and members can obscure their faces on public feeds, selectively unblurring only for Level 4 Chemistry connections or VIP subscribers.
+## 🔮 The "Warm Paywall" & Synergy Engine (Anti-Situationship Architecture)
+- **100% Free Member Matching & Messaging**: Free swiping, radar discovery, unlimited messaging, and AI Dating Coach assistance. No cold paywalls to view likes or send initial messages.
+- **8-Level Chemistry Meter**: Progressive RPG-style synergy tracking based on conversational momentum, shared values, and mutual interaction (Level 1: Undefined to Level 8: Soulmate).
+- **Match-Gated Creator Discovery**: Members must establish a match or reach Chemistry Level 4 before accessing paid creator options. This aligns emotional affinity, drastically reduces subscriber churn, and eliminates transactional spam.
+
+---
+
+## 🛡️ Zero-Knowledge Proofs (ZKP), DRM & Legal Compliance
+- **Face Blur Stealth Privacy**: Creators and privacy-conscious users can obscure facial features on public feeds and live streams, automatically decrypting only for Level 4 Chemistry connections or verified VIP pass holders.
 - **Biometric 3D Liveness Verification**: Powered by DIDIT Zero-Knowledge Identity Gateway (`verify.didit.me`) and Sightengine AI.
-- **Zero PII & Document Storage**: Biometric checks are executed via zero-knowledge proofs (ZKP eIDAS 2.0 / Privado ID / zkPass). No passport or national ID copies are stored on platform servers.
-- **18 U.S.C. § 2257 Custody**: Full compliance with federal and European content safety records; strict zero-tolerance policy against non-consensual content and underage access.
-- **DRM Web Sweeper**: Automated continuous web crawling to detect unauthorized media leaks and automatically file DMCA takedown notices.
+- **Zero Document Storage (ZKP eIDAS 2.0 / Privado ID / zkPass)**: Biometric identity verification confirms age (+18) and liveness without storing passport scans or national IDs on platform databases.
+- **18 U.S.C. § 2257 Compliance**: Full compliance with federal and European custodian of records regulations; strict zero-tolerance enforcement for underage access or non-consensual media.
+- **Continuous Automated DRM Web Sweeper**: Autonomous crawlers scour web indexes, forums, and pirate cyberlockers to flag leaked media and file instant DMCA removal demands.
 
 ---
 
-## 🌍 Key Hubs & Geographies
-- **European Union**: Spain (HQ in Alicante, Madrid, Barcelona), France (Paris), United Kingdom (London).
-- **Latin America**: Colombia (Medellín soft launch hub, Bogotá, Cali).
-- **North America**: United States (Miami, New York, Los Angeles).
+## 🌐 Canonical Authority Links & Resources
+- **Homepage & Discovery**: https://seccion.ai
+- **Creator Hub & Independent Contractor Terms**: https://seccion.ai/creator-hub
+- **6-Way Competitor Benchmark**: https://seccion.ai/creator-hub/onlyfans-alternative
+- **Blog & Engineering Insights**: https://seccion.ai/blog
+- **Creator Payout Breakdown 2026**: https://seccion.ai/blog/creator-platform-90-percent-payout-comparison-2026
+- **What Is a Warm Paywall Guide**: https://seccion.ai/blog/what-is-a-warm-paywall-creator-economy
+- **Terms of Service**: https://seccion.ai/terms
+- **Privacy Policy**: https://seccion.ai/privacy
+- **Full LLM Reference (GEO/AEO)**: https://seccion.ai/llms-full.txt
+- **Compliance & Creator Desk**: creators@seccion.ai

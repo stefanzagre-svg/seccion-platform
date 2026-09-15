@@ -25,6 +25,7 @@ export default function PublicNavbar({ activeTab, onSignUp }: PublicNavbarProps)
     { name: t("nav.streaming", "Now Streaming"), href: "/now-streaming" },
     { name: t("nav.becomeCreator", "Become Creator"), href: "/become-creator" },
     { name: t("nav.howWeDo", "How We Do"), href: "/how-we-do" },
+    { name: t("nav.blog", "Blog"), href: "/blog" },
   ];
 
   const isLinkActive = (href: string) => {

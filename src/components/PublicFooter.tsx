@@ -20,6 +20,9 @@ export default function PublicFooter() {
 
       {/* Middle: Navigation Links */}
       <div className="flex flex-wrap justify-center gap-4 sm:gap-8">
+        <Link className="text-[#b9cac9] hover:text-[#ffabf3] transition-colors font-mono text-[11px] font-medium tracking-widest uppercase" href="/blog">
+          {t("footer.blog", "Blog & Insights")}
+        </Link>
         <Link className="text-[#b9cac9] hover:text-[#ffabf3] transition-colors font-mono text-[11px] font-medium tracking-widest uppercase" href="/privacy">
           {t("footer.privacy", "Your Privacy")}
         </Link>

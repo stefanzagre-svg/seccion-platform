@@ -34,6 +34,7 @@ export default function Navbar() {
     pathname?.startsWith('/creator-hub') ||
     pathname?.startsWith('/hit-us-up') ||
     pathname?.startsWith('/login') ||
+    pathname?.startsWith('/blog') ||
     (pathname === '/' && !user && !isLoading);
 
   // Sync search query from URL on load/pathname change

@@ -40,9 +40,12 @@ export default function robots(): MetadataRoute.Robots {
         allow: [
           '/',
           '/llms.txt',
+          '/blog',
+          '/blog/',
           '/become-creator',
           '/how-we-do',
           '/creator-hub',
+          '/creator-hub/onlyfans-alternative',
           '/vibe-radar',
           '/early-access',
           '/rules',

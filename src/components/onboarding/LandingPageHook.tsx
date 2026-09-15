@@ -7,7 +7,7 @@ import { usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import PublicNavbar from '../PublicNavbar';
 import { useTranslation } from '@/context/LanguageContext';
-import { Heart, Flame, Compass, Cpu, Zap, EyeOff, UserCheck, ShieldCheck, Landmark, Sparkles } from 'lucide-react';
+import { ArrowRight, Heart, Flame, Compass, Cpu, Zap, EyeOff, UserCheck, ShieldCheck, Landmark, Sparkles } from 'lucide-react';
 import SeccionWordmark from '@/components/ui/SeccionWordmark';
 
 // Custom Hook for Mouse Tracking on Glass Cards
@@ -148,51 +148,51 @@ export default function LandingPageHook({ onAccept, onBecomeCreator }: { onAccep
               </h1>
             </div>
 
-            {/* Swipe to Sign Up Card */}
-            {isAlreadyOnboarding ? (
-              <button 
-                type="button"
-                onClick={onAccept} 
-                className="w-full bg-white/[0.03] backdrop-blur-xl border border-white/10 hover:border-[#00fbfb]/50 p-5 sm:p-8 rounded-[1.5rem] sm:rounded-[2rem] shadow-[0_20px_40px_rgba(0,0,0,0.4)] text-center group cursor-pointer hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 relative overflow-hidden z-40 block"
+            {/* Dual Hero Decision CTAs */}
+            <div className="space-y-3.5 w-full">
+              {/* Primary Creator CTA (Pre-Launch Priority) */}
+              <Link
+                href="/become-creator"
+                className="w-full bg-gradient-to-r from-[#ffabf3]/20 via-[#00fbfb]/15 to-[#ffabf3]/20 hover:from-[#ffabf3]/30 hover:to-[#00fbfb]/30 backdrop-blur-xl border border-[#ffabf3]/50 hover:border-[#00fbfb] p-4 sm:p-5 rounded-2xl transition-all duration-300 hover:scale-[1.01] active:scale-[0.99] group shadow-[0_10px_30px_rgba(255,171,243,0.15)] flex items-center justify-between gap-4 block text-left"
               >
-                {/* Refraction edge highlights */}
-                <div className="absolute inset-0 border border-white/5 rounded-[1.5rem] sm:rounded-[2rem] pointer-events-none" />
-                <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-center font-['Plus_Jakarta_Sans'] text-base sm:text-[22px] md:text-[24px] font-extrabold leading-tight tracking-tight text-white mb-2">
-                  <span>{t("landing.swipeToSignUp", "SWIPE TO SIGN UP TO")}</span>
-                  <SeccionWordmark variant="cyan" className="h-9 sm:h-12 md:h-14 inline-block drop-shadow-[0_0_25px_rgba(0,251,251,1)] group-hover:drop-shadow-[0_0_35px_rgba(0,251,251,1)] transition-all duration-300" />
-                </div>
-                <div className="flex justify-center items-center gap-4 mt-4">
-                  <div className="h-[1px] w-12 bg-gradient-to-r from-transparent to-[#00fbfb]/50 group-hover:to-[#00fbfb] transition-all duration-300"></div>
-                  <div className="w-10 h-10 rounded-full border border-[#00fbfb]/30 group-hover:border-[#00fbfb] flex items-center justify-center animate-bounce shadow-[0_0_15px_rgba(0,251,251,0.1)] group-hover:shadow-[0_0_15px_rgba(0,251,251,0.4)] transition-all duration-300">
-                    <svg className="w-5 h-5 text-[#00fbfb]" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M9 11.24V7.5C9 6.12 10.12 5 11.5 5S14 6.12 14 7.5v3.74c1.21-.81 2-2.18 2-3.74C16 5.01 13.99 3 11.5 3S7 5.01 7 7.5c0 1.56.79 2.93 2 3.74zm9.84 4.63l-4.54-2.26c-.17-.07-.35-.11-.54-.11H13v-6c0-.83-.67-1.5-1.5-1.5S10 6.67 10 7.5v10.74l-3.43-.72c-.08-.01-.15-.03-.24-.03-.31 0-.59.13-.79.33l-.79.8 4.94 4.94c.27.27.65.44 1.06.44h6.79c.75 0 1.33-.55 1.44-1.28l.75-5.27c.01-.07.02-.14.02-.2 0-.62-.38-1.16-.91-1.38z"/>
-                    </svg>
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm sm:text-base font-['Plus_Jakarta_Sans'] font-extrabold text-white tracking-wide">
+                      {t("landing.heroLaunchCreator", "I'm a Creator — Keep 90%")}
+                    </span>
+                    <span className="px-2 py-0.5 rounded-full bg-[#ffabf3]/20 text-[#ffabf3] font-mono text-[9px] font-bold uppercase tracking-wider border border-[#ffabf3]/40">
+                      Founding Pass
+                    </span>
                   </div>
-                  <div className="h-[1px] w-12 bg-gradient-to-l from-transparent to-[#00fbfb]/50 group-hover:to-[#00fbfb] transition-all duration-300"></div>
+                  <p className="text-[11px] text-[#b9cac9] font-['Hanken_Grotesk'] leading-tight">
+                    {t("landing.heroLaunchCreatorSub", "Apply for pre-launch founding pass & free AI")}
+                  </p>
                 </div>
-              </button>
-            ) : (
-              <Link 
-                href="/onboarding"
-                className="w-full bg-white/[0.03] backdrop-blur-xl border border-white/10 hover:border-[#00fbfb]/50 p-5 sm:p-8 rounded-[1.5rem] sm:rounded-[2rem] shadow-[0_20px_40px_rgba(0,0,0,0.4)] text-center group cursor-pointer hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 relative overflow-hidden z-40 block"
-              >
-                {/* Refraction edge highlights */}
-                <div className="absolute inset-0 border border-white/5 rounded-[1.5rem] sm:rounded-[2rem] pointer-events-none" />
-                <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-center font-['Plus_Jakarta_Sans'] text-base sm:text-[22px] md:text-[24px] font-extrabold leading-tight tracking-tight text-white mb-2">
-                  <span>{t("landing.swipeToSignUp", "SWIPE TO SIGN UP TO")}</span>
-                  <SeccionWordmark variant="cyan" className="h-9 sm:h-12 md:h-14 inline-block drop-shadow-[0_0_25px_rgba(0,251,251,1)] group-hover:drop-shadow-[0_0_35px_rgba(0,251,251,1)] transition-all duration-300" />
-                </div>
-                <div className="flex justify-center items-center gap-4 mt-4">
-                  <div className="h-[1px] w-12 bg-gradient-to-r from-transparent to-[#00fbfb]/50 group-hover:to-[#00fbfb] transition-all duration-300"></div>
-                  <div className="w-10 h-10 rounded-full border border-[#00fbfb]/30 group-hover:border-[#00fbfb] flex items-center justify-center animate-bounce shadow-[0_0_15px_rgba(0,251,251,0.1)] group-hover:shadow-[0_0_15px_rgba(0,251,251,0.4)] transition-all duration-300">
-                    <svg className="w-5 h-5 text-[#00fbfb]" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M9 11.24V7.5C9 6.12 10.12 5 11.5 5S14 6.12 14 7.5v3.74c1.21-.81 2-2.18 2-3.74C16 5.01 13.99 3 11.5 3S7 5.01 7 7.5c0 1.56.79 2.93 2 3.74zm9.84 4.63l-4.54-2.26c-.17-.07-.35-.11-.54-.11H13v-6c0-.83-.67-1.5-1.5-1.5S10 6.67 10 7.5v10.74l-3.43-.72c-.08-.01-.15-.03-.24-.03-.31 0-.59.13-.79.33l-.79.8 4.94 4.94c.27.27.65.44 1.06.44h6.79c.75 0 1.33-.55 1.44-1.28l.75-5.27c.01-.07.02-.14.02-.2 0-.62-.38-1.16-.91-1.38z"/>
-                    </svg>
-                  </div>
-                  <div className="h-[1px] w-12 bg-gradient-to-l from-transparent to-[#00fbfb]/50 group-hover:to-[#00fbfb] transition-all duration-300"></div>
+                <div className="w-10 h-10 rounded-xl bg-[#ffabf3]/20 border border-[#ffabf3]/40 flex items-center justify-center shrink-0 group-hover:bg-[#ffabf3] group-hover:text-black transition-colors text-[#ffabf3]">
+                  <ArrowRight className="w-5 h-5" />
                 </div>
               </Link>
-            )}
+
+              {/* Secondary Member Waitlist CTA */}
+              <Link
+                href="/early-access"
+                className="w-full bg-white/[0.03] hover:bg-white/[0.06] backdrop-blur-xl border border-white/10 hover:border-[#00fbfb]/60 p-4 sm:p-5 rounded-2xl transition-all duration-300 hover:scale-[1.01] active:scale-[0.99] group flex items-center justify-between gap-4 block text-left"
+              >
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs sm:text-sm font-['Plus_Jakarta_Sans'] font-bold text-white tracking-wide">
+                      {t("landing.heroConnectMembers", "I want to connect New People and Creators")}
+                    </span>
+                  </div>
+                  <p className="text-[10px] text-[#b9cac9]/80 font-['Hanken_Grotesk'] leading-tight">
+                    {t("landing.heroConnectMembersSub", "Join the Founding Members waitlist by city")}
+                  </p>
+                </div>
+                <div className="w-8 h-8 rounded-lg bg-[#00fbfb]/10 border border-[#00fbfb]/30 flex items-center justify-center shrink-0 text-[#00fbfb] group-hover:bg-[#00fbfb] group-hover:text-black transition-colors">
+                  <ArrowRight className="w-4 h-4" />
+                </div>
+              </Link>
+            </div>
           </div>
 
           {/* Right Column: Tabbed Key Points Switcher Card */}
@@ -376,6 +376,16 @@ export default function LandingPageHook({ onAccept, onBecomeCreator }: { onAccep
                             </div>
                           </div>
 
+                        </div>
+                        {/* Direct CTA Inside Creator Tab */}
+                        <div className="pt-4">
+                          <Link
+                            href="/become-creator"
+                            className="w-full py-3.5 px-5 rounded-xl bg-gradient-to-r from-[#ffabf3] to-[#00fbfb] text-black font-mono text-xs font-black uppercase tracking-wider hover:shadow-[0_0_20px_rgba(255,171,243,0.4)] transition flex items-center justify-center gap-2 cursor-pointer shadow-lg"
+                          >
+                            <span>{t("landing.tabApplyCreatorBtn", "Claim 90% Founding Creator Pass")}</span>
+                            <ArrowRight className="w-4 h-4" />
+                          </Link>
                         </div>
                       </motion.div>
                     )}

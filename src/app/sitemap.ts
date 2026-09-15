@@ -1,10 +1,11 @@
 import { MetadataRoute } from 'next';
+import { getAllBlogPosts } from '@/lib/blog-data';
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl = 'https://seccion.ai';
 
   // Core public routes
-  const routes = [
+  const routes: MetadataRoute.Sitemap = [
     {
       url: `${baseUrl}/`,
       lastModified: new Date(),
@@ -24,6 +25,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.8,
     },
     {
+      url: `${baseUrl}/creator-hub/onlyfans-alternative`,
+      lastModified: new Date(),
+      changeFrequency: 'weekly' as const,
+      priority: 0.95,
+    },
+    {
       url: `${baseUrl}/become-creator`,
       lastModified: new Date(),
       changeFrequency: 'monthly' as const,
@@ -37,6 +44,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
     },
     {
       url: `${baseUrl}/now-streaming`,
+      lastModified: new Date(),
+      changeFrequency: 'daily' as const,
+      priority: 0.9,
+    },
+    {
+      url: `${baseUrl}/blog`,
       lastModified: new Date(),
       changeFrequency: 'daily' as const,
       priority: 0.9,
@@ -67,5 +80,14 @@ export default function sitemap(): MetadataRoute.Sitemap {
     }
   ];
 
-  return routes;
+  // Dynamic blog articles
+  const blogPosts = getAllBlogPosts();
+  const blogRoutes: MetadataRoute.Sitemap = blogPosts.map((post) => ({
+    url: `${baseUrl}/blog/${post.slug}`,
+    lastModified: post.lastModified ? new Date(post.lastModified) : new Date(post.date),
+    changeFrequency: 'weekly' as const,
+    priority: 0.85,
+  }));
+
+  return [...routes, ...blogRoutes];
 }
