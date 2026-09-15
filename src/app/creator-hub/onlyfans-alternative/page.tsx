@@ -8,9 +8,9 @@ import {
 } from "./faq-schema-data";
 
 export const metadata: Metadata = {
-  title: "The Best Creator Platform in 2026 | Safe AI Alternative to OnlyFans, Fansly, Patreon & Cams — SECCION",
+  title: "Best Creator Platform 2026: OnlyFans & Fansly Alternative | SECCION",
   description:
-    "Looking for the best alternative to OnlyFans, Fansly, Patreon, Tinder or Chaturbate in 2026? SECCION gives creators a 90% net payout, built-in 24/7 AI DM Copilot, automated DRM anti-leak protection, and stealth Face Blur.",
+    "Looking for the best OnlyFans alternative in 2026? SECCION gives creators a 90% net payout, 24/7 AI DM Copilot, automated DRM protection, and stealth Face Blur.",
   keywords: [
     "best creator platform in 2026",
     "the best alternative platform to onlyfans fansly or patreon in 2026",
