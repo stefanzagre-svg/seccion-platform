@@ -116,12 +116,12 @@ export default function CreatorHubPage() {
                 >
                   {locale === "es" ? "Comparativa 6 Plataformas" : "Compare 6 Platforms"}
                 </Link>
-                <a
-                  href="mailto:creators@seccion.ai?subject=Founding%20Creator%20Cohort%20Application"
+                <Link
+                  href="/become-creator#apply"
                   className="w-full text-center px-4 py-3 rounded-xl bg-white/[0.05] border border-white/15 text-white font-mono font-semibold text-xs uppercase tracking-wider hover:bg-white/10 hover:border-white/30 transition-all"
                 >
                   {locale === "es" ? "Solicitar Cupo Fundador" : "Apply For Founding Cohort"}
-                </a>
+                </Link>
               </div>
             </div>
           </div>

@@ -10,8 +10,8 @@ describe('Empirical Verification of Middleware Webhook & Public API Pass-Through
     '/api/kyc/didit-webhook',
     '/api/media/blur',
     '/api/webhooks/telegram',
-    '/api/contact',
-    '/api/early-access',
+    '/api/v2/creator/apply',
+    '/api/v2/waitlist/join',
   ];
 
   for (const endpoint of publicApiEndpoints) {

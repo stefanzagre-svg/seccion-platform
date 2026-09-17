@@ -50,8 +50,6 @@ export function OrganizationSchema() {
     "sameAs": [
       "https://x.com/steveseccion",
       "https://youtube.com/@seccion-platform",
-      "https://instagram.com/seccionplatform",
-      "https://tiktok.com/@seccionplatform",
       "https://wa.me/34662907153",
       "https://t.me/seccion_ai"
     ]
@@ -77,13 +75,6 @@ export function SoftwareAppSchema() {
       "price": "0",
       "priceCurrency": "EUR",
       "description": "Free matchmaking and swiping for members. Creator VIP monetization starting from 10 EUR."
-    },
-    "aggregateRating": {
-      "@type": "AggregateRating",
-      "ratingValue": "4.9",
-      "ratingCount": "1250",
-      "bestRating": "5",
-      "worstRating": "1"
     },
     "featureList": [
       "AI Synergy Engine Matchmaking",
@@ -179,8 +170,6 @@ export default function JsonLdSuite() {
     <>
       <OrganizationSchema />
       <SoftwareAppSchema />
-      <FAQSchema faqs={defaultFaqs} />
-      <BreadcrumbSchema items={defaultBreadcrumbs} />
     </>
   );
 }

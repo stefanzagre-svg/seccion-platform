@@ -26,8 +26,8 @@ const PUBLIC_API_ROUTES = [
   '/api/kyc/didit-webhook',
   '/api/webhooks/telegram',
   '/api/auth/callback',
-  '/api/early-access',
-  '/api/contact',
+  '/api/v2/creator/apply',
+  '/api/v2/waitlist/join',
   '/api/admin/auth/founder-login',
   '/api/media/blur'
 ];

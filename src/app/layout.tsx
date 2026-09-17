@@ -25,9 +25,7 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://seccion.ai"),
-  alternates: {
-    canonical: "https://seccion.ai",
-  },
+  alternates: {},
   title: {
     default: "SECCION.ai | 1st AI Dating & Creator Live Streaming Hybrid Platform",
     template: "%s | SECCION",
@@ -72,7 +70,7 @@ export const metadata: Metadata = {
     title: "SECCION.ai | 1st AI Dating & Creator Live Streaming Hybrid Platform",
     description: "SECCION is the first AI-driven dating matchmaking and live streaming creator hybrid platform.",
     images: ["https://seccion.ai/assets/seo/og-image.jpg"],
-    creator: "@seccionplatform",
+    creator: "@steveseccion",
   },
 };
 

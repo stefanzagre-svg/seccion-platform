@@ -82,7 +82,8 @@ The platform replaces arbitrary algorithmic throttling with an RPG-style progres
 - Blog & Engineering Insights: https://seccion.ai/blog
 - Creator Payout Comparison 2026: https://seccion.ai/blog/creator-platform-90-percent-payout-comparison-2026
 - Warm Paywall Deep-Dive: https://seccion.ai/blog/what-is-a-warm-paywall-creator-economy
-- Safety & Verification: https://seccion.ai/safety
-- Terms of Service: https://seccion.ai/terms
+- Safety & Verification: https://seccion.ai/rules
+- Terms of Service: https://seccion.ai/rules
 - Privacy Policy: https://seccion.ai/privacy
 - Contact & Inquiries: info@seccion.ai / creators@seccion.ai
+- Primary Social: https://x.com/steveseccion

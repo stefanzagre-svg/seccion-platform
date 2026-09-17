@@ -162,7 +162,7 @@ export default function OnlyFansAlternativeClient() {
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
           <Link
-            href="/onboarding?role=creator"
+            href="/become-creator#apply"
             className="w-full sm:w-auto px-8 py-4 rounded-xl bg-gradient-to-r from-[#00fbfb] to-[#00d2d2] text-black font-mono font-bold text-sm uppercase tracking-wider hover:shadow-[0_0_25px_rgba(0,251,251,0.5)] transition-all flex items-center justify-center gap-2 cursor-pointer shadow-lg"
           >
             <span>{locale === "es" ? "Reclamar Pase Creador 90%" : "Claim 90% Founding Creator Pass"}</span>
@@ -304,7 +304,7 @@ export default function OnlyFansAlternativeClient() {
               : "Join the Founding Creator program. Claim your 90% payout rate and 1 Year of free AI Copilot tools today."}
           </p>
           <Link
-            href="/onboarding?role=creator"
+            href="/become-creator#apply"
             className="inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-[#00fbfb] text-black font-mono font-bold text-sm uppercase tracking-wider hover:shadow-[0_0_25px_rgba(0,251,251,0.5)] transition-all cursor-pointer shadow-lg"
           >
             <span>{locale === "es" ? "Comenzar Registro de Creador" : "Apply as a Founding Creator"}</span>
