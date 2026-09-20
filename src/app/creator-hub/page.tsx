@@ -13,9 +13,13 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title: savedLocale === "es" ? "Centro de Creadores | SECCION" : "Creator Hub | SECCION",
     description: dict.metadata.description,
+    alternates: {
+      canonical: "https://seccion.ai/creator-hub",
+    },
     openGraph: {
       title: savedLocale === "es" ? "Centro de Creadores | SECCION" : "Creator Hub | SECCION",
       description: dict.metadata.description,
+      url: "https://seccion.ai/creator-hub",
     }
   };
 }

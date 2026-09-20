@@ -13,9 +13,13 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title: savedLocale === "es" ? "Reglas | SECCION" : "Rules | SECCION",
     description: dict.metadata.description,
+    alternates: {
+      canonical: "https://seccion.ai/rules",
+    },
     openGraph: {
       title: savedLocale === "es" ? "Reglas | SECCION" : "Rules | SECCION",
       description: dict.metadata.description,
+      url: "https://seccion.ai/rules",
     }
   };
 }
