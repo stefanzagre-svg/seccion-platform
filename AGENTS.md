@@ -90,7 +90,7 @@ Always use these files for any platform development or content requiring SECCION
 - **[✓] Global Creator Outreach**: Worldwide option (`global_other`) added to `become-creator`, smart handle/URL normalizer, multilingual FAQ explaining Day 1 worldwide access
 - **[✓] 18 Specialization Filters**: Added full category chip coverage (including AI & Tech, Fashion, Career, Wellness) with EN/ES labels and archetype bindings
 - **[✓] Creator Approval Messaging Protocol**: Confirmation emails, WhatsApp, and Telegram approval notifications MUST include direct links to `/onboarding?role=creator&email={email}` or `/login?email={email}` redirecting creators directly to the Registration Gate with their approved status pre-loaded.
-- **[✓] Supabase Cleanup SQL**: `web/scripts/cleanup_demo_accounts.sql` ready to purge stale `guest_*/demo-*` rows
+- **[✓] Supabase Universal RLS Security Remediation**: Enabled RLS and strict ownership/gating policies across all 23 database tables (`web/scripts/enable_universal_rls.sql`), resolving `rls_disabled_in_public` warning while preserving anonymous pre-launch signups and feed discovery.
 - **[✓] C5 KYC Provider**: Live **DIDIT Zero-Knowledge Identity Gateway** (`verify.didit.me`) & Sightengine AI integrated
 - **[⏳] Run cleanup_demo_accounts.sql**: Execute once in Supabase SQL Editor (service role) to purge existing ghost rows
 - **[⏳] Dynamic Founding Spots Counter**: Trigger display when creator applications hit 50 milestone
