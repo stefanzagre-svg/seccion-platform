@@ -10,13 +10,17 @@ import {
   User, 
   ShieldAlert, 
   Check, 
-  X,
-  ExternalLink,
-  ChevronDown,
-  RefreshCw,
-  MessageSquare,
-  Bell,
-  Sparkles
+  X, 
+  ExternalLink, 
+  ChevronDown, 
+  RefreshCw, 
+  MessageSquare, 
+  Bell, 
+  Sparkles,
+  Users as UsersIcon,
+  Clock,
+  MapPin,
+  Sparkle
 } from 'lucide-react';
 import DataTable, { Column } from '@/components/admin/DataTable';
 import { cn } from '@/lib/utils';
@@ -35,12 +39,24 @@ interface UserProfile {
   bio: string | null;
 }
 
+interface WaitlistMember {
+  id: string;
+  email: string;
+  city: string;
+  founding_member: boolean;
+  created_at: string;
+}
+
 export default function UsersManagement() {
+  // Tab state: 'registered' vs 'waitlist'
+  const [activeTab, setActiveTab] = useState<'registered' | 'waitlist'>('registered');
+
+  // Registered Users State
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Pagination & Filtering state
+  // Registered Users Pagination & Filtering state
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(10);
   const [totalItems, setTotalItems] = useState(0);
@@ -66,6 +82,17 @@ export default function UsersManagement() {
   // Realtime signup alert notification banner (Option A)
   const [latestRealtimeSignup, setLatestRealtimeSignup] = useState<{ username: string; role: string } | null>(null);
 
+  // Waitlist State
+  const [waitlist, setWaitlist] = useState<WaitlistMember[]>([]);
+  const [waitlistLoading, setWaitlistLoading] = useState(false);
+  const [waitlistPage, setWaitlistPage] = useState(0);
+  const [waitlistPageSize, setWaitlistPageSize] = useState(10);
+  const [waitlistTotalItems, setWaitlistTotalItems] = useState(0);
+  const [waitlistTotalPages, setWaitlistTotalPages] = useState(1);
+  const [waitlistSearch, setWaitlistSearch] = useState('');
+  const [waitlistCityFilter, setWaitlistCityFilter] = useState('');
+  const [waitlistCities, setWaitlistCities] = useState<string[]>([]);
+
   const fetchUsers = async () => {
     setLoading(true);
     try {
@@ -86,7 +113,7 @@ export default function UsersManagement() {
         throw new Error('Failed to fetch user list');
       }
       const data = await res.json();
-      setUsers(data.users);
+      setUsers(data.users || []);
       setTotalItems(data.pagination.total);
       setTotalPages(data.pagination.totalPages);
     } catch (err: any) {
@@ -96,9 +123,71 @@ export default function UsersManagement() {
     }
   };
 
-  useEffect(() => {
-    fetchUsers();
+  const fetchWaitlist = async () => {
+    setWaitlistLoading(true);
+    try {
+      const params = new URLSearchParams({
+        page: String(waitlistPage + 1),
+        limit: String(waitlistPageSize),
+      });
 
+      if (waitlistSearch) params.append('search', waitlistSearch);
+      if (waitlistCityFilter) params.append('city', waitlistCityFilter);
+
+      const res = await fetch(`/api/admin/waitlist?${params.toString()}`);
+      if (!res.ok) {
+        throw new Error('Failed to fetch waitlist');
+      }
+      const data = await res.json();
+      setWaitlist(data.waitlist || []);
+      if (data.cities) setWaitlistCities(data.cities);
+      setWaitlistTotalItems(data.pagination.total);
+      setWaitlistTotalPages(data.pagination.totalPages);
+    } catch (err: any) {
+      console.error('Waitlist fetch error:', err);
+    } finally {
+      setWaitlistLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'registered') {
+      fetchUsers();
+    } else {
+      fetchWaitlist();
+    }
+  }, [
+    activeTab, 
+    page, 
+    pageSize, 
+    roleFilter, 
+    kycFilter, 
+    platformRoleFilter, 
+    sortField, 
+    sortOrder,
+    waitlistPage,
+    waitlistPageSize,
+    waitlistCityFilter
+  ]);
+
+  // Initial load of waitlist count for tab badge
+  useEffect(() => {
+    const fetchCounts = async () => {
+      try {
+        const res = await fetch('/api/admin/waitlist?limit=1');
+        if (res.ok) {
+          const data = await res.json();
+          setWaitlistTotalItems(data.pagination.total);
+          if (data.cities) setWaitlistCities(data.cities);
+        }
+      } catch (e) {
+        // silent
+      }
+    };
+    fetchCounts();
+  }, []);
+
+  useEffect(() => {
     // Option A: Subscribe to real-time new user signups via Supabase Realtime
     const supabase = createClient();
     const channel = supabase
@@ -115,8 +204,16 @@ export default function UsersManagement() {
               role: newProfile.role || 'member',
             });
             // Automatically refresh user list
-            fetchUsers();
+            if (activeTab === 'registered') fetchUsers();
           }
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'member_waitlist' },
+        () => {
+          // Auto-refresh waitlist when new signup happens
+          fetchWaitlist();
         }
       )
       .subscribe();
@@ -124,13 +221,19 @@ export default function UsersManagement() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [page, pageSize, roleFilter, kycFilter, platformRoleFilter, sortField, sortOrder]);
+  }, [activeTab, page, pageSize, roleFilter, kycFilter, platformRoleFilter, sortField, sortOrder, waitlistPage, waitlistPageSize, waitlistCityFilter]);
 
   // Handle manual trigger for search
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setPage(0);
     fetchUsers();
+  };
+
+  const handleWaitlistSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setWaitlistPage(0);
+    fetchWaitlist();
   };
 
   // Row Selection logic
@@ -185,7 +288,7 @@ export default function UsersManagement() {
     }
   };
 
-  // Define Columns
+  // Define Columns for Registered Users
   const columns: Column<UserProfile>[] = [
     {
       header: 'Username',
@@ -301,6 +404,73 @@ export default function UsersManagement() {
     }
   ];
 
+  // Define Columns for Early Access Waitlist
+  const waitlistColumns: Column<WaitlistMember>[] = [
+    {
+      header: 'Member Email',
+      accessorKey: 'email',
+      cell: ({ row }) => (
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-full border border-primary/20 bg-primary/10 flex items-center justify-center shrink-0">
+            <User className="w-4 h-4 text-primary" />
+          </div>
+          <div>
+            <span className="font-mono font-bold text-xs text-white block">{row.email}</span>
+            <span className="text-[10px] text-white/40 font-mono">ID: {row.id.substring(0, 8)}...</span>
+          </div>
+        </div>
+      )
+    },
+    {
+      header: 'City Hub',
+      accessorKey: 'city',
+      cell: ({ row }) => (
+        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/5 border border-white/10 font-mono text-xs text-white">
+          <MapPin className="w-3 h-3 text-[#00fbfb]" />
+          <span>{row.city || 'Global / Other'}</span>
+        </div>
+      )
+    },
+    {
+      header: 'Cohort Status',
+      accessorKey: 'founding_member',
+      cell: ({ row }) => (
+        <span className={cn(
+          "text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md border inline-flex items-center gap-1 font-mono",
+          row.founding_member
+            ? "bg-primary/15 text-primary border-primary/30"
+            : "bg-white/5 text-white/50 border-white/10"
+        )}>
+          <Sparkle className="w-3 h-3 text-primary" />
+          {row.founding_member ? 'Founding Member' : 'Standard Member'}
+        </span>
+      )
+    },
+    {
+      header: 'Signed Up',
+      accessorKey: 'created_at',
+      cell: ({ row }) => (
+        <div className="flex items-center gap-1.5 text-white/50 font-mono text-xs">
+          <Clock className="w-3.5 h-3.5" />
+          <span>{new Date(row.created_at).toLocaleString()}</span>
+        </div>
+      )
+    },
+    {
+      header: 'Contact Action',
+      accessorKey: 'id',
+      cell: ({ row }) => (
+        <a
+          href={`mailto:${row.email}?subject=Welcome%20to%20SECCION%20Founding%20Member%20Early%20Access`}
+          className="px-2.5 py-1.5 rounded-lg border border-primary/30 bg-primary/10 text-primary hover:bg-primary/20 hover:border-primary/50 transition-all inline-flex items-center gap-1.5 text-[10px] font-mono uppercase font-bold"
+        >
+          <span>Send Invitation</span>
+          <ExternalLink className="w-3 h-3" />
+        </a>
+      )
+    }
+  ];
+
   return (
     <div className="space-y-6">
       {/* Option A: Real-Time Signup Alert Banner */}
@@ -340,172 +510,286 @@ export default function UsersManagement() {
         </div>
 
         <button 
-          onClick={fetchUsers}
+          onClick={activeTab === 'registered' ? fetchUsers : fetchWaitlist}
           className="self-start p-2 rounded-xl border border-white/10 bg-white/5 text-white/60 hover:text-white hover:border-primary/45 transition-all"
-          title="Refresh User Data"
+          title="Refresh Data"
         >
           <RefreshCw className="w-4 h-4" />
         </button>
       </div>
 
-      {/* Filters Form */}
-      <div className="glass p-5 rounded-2xl">
-        <form onSubmit={handleSearchSubmit} className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4 items-end">
-          {/* Search */}
-          <div className="md:col-span-2">
-            <label className="text-[10px] font-black uppercase tracking-widest text-white/40 block mb-2 font-mono">
-              Search Username / Display Name
-            </label>
-            <div className="relative group">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40 group-focus-within:text-primary transition-colors" />
-              <input
-                type="text"
-                placeholder="Enter search term..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="w-full bg-black/40 border border-white/10 rounded-xl py-2 pl-11 pr-4 outline-none focus:border-primary/50 focus:bg-black/60 transition-all text-xs font-semibold text-white placeholder-white/30"
-              />
-            </div>
-          </div>
+      {/* Tabs navigation */}
+      <div className="flex items-center gap-2 border-b border-white/10 pb-2">
+        <button
+          onClick={() => setActiveTab('registered')}
+          className={cn(
+            "flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-mono uppercase font-bold tracking-wider transition-all",
+            activeTab === 'registered'
+              ? "bg-primary text-black shadow-[0_0_15px_rgba(0,251,251,0.3)]"
+              : "text-white/60 hover:text-white hover:bg-white/5"
+          )}
+        >
+          <UsersIcon className="w-3.5 h-3.5" />
+          <span>Registered Profiles</span>
+          <span className={cn(
+            "text-[10px] px-1.5 py-0.5 rounded-full font-mono",
+            activeTab === 'registered' ? "bg-black/20 text-black" : "bg-white/10 text-white/70"
+          )}>
+            {totalItems}
+          </span>
+        </button>
 
-          {/* Role filter */}
-          <div>
-            <label className="text-[10px] font-black uppercase tracking-widest text-white/40 block mb-2 font-mono">
-              Profile Role
-            </label>
-            <select
-              value={roleFilter}
-              onChange={(e) => { setRoleFilter(e.target.value); setPage(0); }}
-              className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-primary/50"
-            >
-              <option value="">All Roles</option>
-              <option value="member">Member</option>
-              <option value="creator">Creator</option>
-            </select>
-          </div>
-
-          {/* KYC filter */}
-          <div>
-            <label className="text-[10px] font-black uppercase tracking-widest text-white/40 block mb-2 font-mono">
-              KYC Status
-            </label>
-            <select
-              value={kycFilter}
-              onChange={(e) => { setKycFilter(e.target.value); setPage(0); }}
-              className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-primary/50"
-            >
-              <option value="">All Statuses</option>
-              <option value="true">Verified</option>
-              <option value="false">Unverified</option>
-            </select>
-          </div>
-
-          {/* Platform Role Filter */}
-          <div>
-            <label className="text-[10px] font-black uppercase tracking-widest text-white/40 block mb-2 font-mono">
-              Platform Role
-            </label>
-            <select
-              value={platformRoleFilter}
-              onChange={(e) => { setPlatformRoleFilter(e.target.value); setPage(0); }}
-              className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-primary/50"
-            >
-              <option value="">All Platform Roles</option>
-              <option value="user">User</option>
-              <option value="moderator">Moderator</option>
-              <option value="admin">Admin</option>
-              <option value="super_admin">Super Admin</option>
-            </select>
-          </div>
-        </form>
+        <button
+          onClick={() => setActiveTab('waitlist')}
+          className={cn(
+            "flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-mono uppercase font-bold tracking-wider transition-all",
+            activeTab === 'waitlist'
+              ? "bg-primary text-black shadow-[0_0_15px_rgba(0,251,251,0.3)]"
+              : "text-white/60 hover:text-white hover:bg-white/5"
+          )}
+        >
+          <Sparkles className="w-3.5 h-3.5" />
+          <span>Early Access Waitlist</span>
+          <span className={cn(
+            "text-[10px] px-1.5 py-0.5 rounded-full font-mono font-bold",
+            activeTab === 'waitlist' ? "bg-black/20 text-black" : "bg-primary/20 text-primary border border-primary/30"
+          )}>
+            {waitlistTotalItems}
+          </span>
+        </button>
       </div>
 
-      {/* Main Table */}
-      <div className="glass-card p-6 min-h-[400px]">
-        <DataTable
-          columns={columns}
-          data={users}
-          loading={loading}
-          pageIndex={page}
-          pageSize={pageSize}
-          pageCount={totalPages}
-          totalItems={totalItems}
-          onPageChange={setPage}
-          onPageSizeChange={(size) => { setPageSize(size); setPage(0); }}
-          onSort={(col, dir) => { setSortField(col); setSortOrder(dir); }}
-          selectedRows={selectedRows}
-          onSelectRow={handleSelectRow}
-          onSelectAll={handleSelectAll}
-          getRowId={(row) => row.id}
-        />
-      </div>
-
-      {/* Bulk Action Panel (Fixed float at the bottom of page if selection active) */}
-      {selectedRows.size > 0 && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 bg-black/90 backdrop-blur-xl border border-primary/30 rounded-2xl px-6 py-4 shadow-2xl flex items-center gap-6 animate-fade-in glow-cyan-sm">
-          <div className="text-xs font-bold text-white">
-            <span className="text-primary font-mono font-black">{selectedRows.size}</span> users selected
-          </div>
-
-          <div className="h-6 w-px bg-white/10" />
-
-          <div className="flex gap-2">
-            <button
-              onClick={() => handleBulkAction('verify_kyc')}
-              disabled={actionLoading}
-              className="px-3 py-1.5 rounded-xl border border-success/30 bg-success/10 text-success hover:bg-success/20 active:scale-95 transition-all text-[10px] uppercase font-bold"
-            >
-              Verify KYC
-            </button>
-            <button
-              onClick={() => handleBulkAction('unverify_kyc')}
-              disabled={actionLoading}
-              className="px-3 py-1.5 rounded-xl border border-white/10 bg-white/5 text-white hover:bg-white/10 active:scale-95 transition-all text-[10px] uppercase font-bold"
-            >
-              Unverify KYC
-            </button>
-            <button
-              onClick={() => handleBulkAction('change_role', { role: 'creator' })}
-              disabled={actionLoading}
-              className="px-3 py-1.5 rounded-xl border border-[#ffabf3]/30 bg-[#ffabf3]/10 text-[#ffabf3] hover:bg-[#ffabf3]/20 active:scale-95 transition-all text-[10px] uppercase font-bold"
-            >
-              Make Creator
-            </button>
-            <button
-              onClick={() => handleBulkAction('change_role', { role: 'member' })}
-              disabled={actionLoading}
-              className="px-3 py-1.5 rounded-xl border border-[#00fbfb]/30 bg-[#00fbfb]/10 text-[#00fbfb] hover:bg-[#00fbfb]/20 active:scale-95 transition-all text-[10px] uppercase font-bold"
-            >
-              Make Member
-            </button>
-
-            {/* Platform Role Promote Trigger */}
-            <div className="relative">
-              <button
-                onClick={() => setShowPlatformRoleSelect(!showPlatformRoleSelect)}
-                disabled={actionLoading}
-                className="px-3 py-1.5 rounded-xl border border-red-500/30 bg-red-500/10 text-red-400 hover:bg-red-500/20 active:scale-95 transition-all text-[10px] uppercase font-bold flex items-center gap-1"
-              >
-                Promote Role
-                <ChevronDown className="w-3.5 h-3.5" />
-              </button>
-
-              {showPlatformRoleSelect && (
-                <div className="absolute bottom-full right-0 mb-2 w-40 rounded-xl border border-white/10 bg-black p-1 shadow-2xl z-50">
-                  {['user', 'moderator', 'admin', 'super_admin'].map((role) => (
-                    <button
-                      key={role}
-                      onClick={() => handleBulkAction('change_platform_role', { platform_role: role })}
-                      className="w-full text-left px-2.5 py-1.5 rounded-lg text-[10px] font-bold text-white/70 hover:text-white hover:bg-white/5 transition-all uppercase"
-                    >
-                      {role}
-                    </button>
-                  ))}
+      {/* Tab 1: Registered Users View */}
+      {activeTab === 'registered' && (
+        <>
+          {/* Filters Form */}
+          <div className="glass p-5 rounded-2xl">
+            <form onSubmit={handleSearchSubmit} className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4 items-end">
+              {/* Search */}
+              <div className="md:col-span-2">
+                <label className="text-[10px] font-black uppercase tracking-widest text-white/40 block mb-2 font-mono">
+                  Search Username / Display Name
+                </label>
+                <div className="relative group">
+                  <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40 group-focus-within:text-primary transition-colors" />
+                  <input
+                    type="text"
+                    placeholder="Enter search term..."
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    className="w-full bg-black/40 border border-white/10 rounded-xl py-2 pl-11 pr-4 outline-none focus:border-primary/50 focus:bg-black/60 transition-all text-xs font-semibold text-white placeholder-white/30"
+                  />
                 </div>
-              )}
-            </div>
+              </div>
+
+              {/* Role filter */}
+              <div>
+                <label className="text-[10px] font-black uppercase tracking-widest text-white/40 block mb-2 font-mono">
+                  Profile Role
+                </label>
+                <select
+                  value={roleFilter}
+                  onChange={(e) => { setRoleFilter(e.target.value); setPage(0); }}
+                  className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-primary/50"
+                >
+                  <option value="">All Roles</option>
+                  <option value="member">Member</option>
+                  <option value="creator">Creator</option>
+                </select>
+              </div>
+
+              {/* KYC filter */}
+              <div>
+                <label className="text-[10px] font-black uppercase tracking-widest text-white/40 block mb-2 font-mono">
+                  KYC Status
+                </label>
+                <select
+                  value={kycFilter}
+                  onChange={(e) => { setKycFilter(e.target.value); setPage(0); }}
+                  className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-primary/50"
+                >
+                  <option value="">All Statuses</option>
+                  <option value="true">Verified</option>
+                  <option value="false">Unverified</option>
+                </select>
+              </div>
+
+              {/* Platform Role Filter */}
+              <div>
+                <label className="text-[10px] font-black uppercase tracking-widest text-white/40 block mb-2 font-mono">
+                  Platform Role
+                </label>
+                <select
+                  value={platformRoleFilter}
+                  onChange={(e) => { setPlatformRoleFilter(e.target.value); setPage(0); }}
+                  className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-primary/50"
+                >
+                  <option value="">All Platform Roles</option>
+                  <option value="user">User</option>
+                  <option value="moderator">Moderator</option>
+                  <option value="admin">Admin</option>
+                  <option value="super_admin">Super Admin</option>
+                </select>
+              </div>
+            </form>
           </div>
-        </div>
+
+          {/* Main Table */}
+          <div className="glass-card p-6 min-h-[400px]">
+            <DataTable
+              columns={columns}
+              data={users}
+              loading={loading}
+              pageIndex={page}
+              pageSize={pageSize}
+              pageCount={totalPages}
+              totalItems={totalItems}
+              onPageChange={setPage}
+              onPageSizeChange={(size) => { setPageSize(size); setPage(0); }}
+              onSort={(col, dir) => { setSortField(col); setSortOrder(dir); }}
+              selectedRows={selectedRows}
+              onSelectRow={handleSelectRow}
+              onSelectAll={handleSelectAll}
+              getRowId={(row) => row.id}
+            />
+          </div>
+
+          {/* Bulk Action Panel (Fixed float at the bottom of page if selection active) */}
+          {selectedRows.size > 0 && (
+            <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 bg-black/90 backdrop-blur-xl border border-primary/30 rounded-2xl px-6 py-4 shadow-2xl flex items-center gap-6 animate-fade-in glow-cyan-sm">
+              <div className="text-xs font-bold text-white">
+                <span className="text-primary font-mono font-black">{selectedRows.size}</span> users selected
+              </div>
+
+              <div className="h-6 w-px bg-white/10" />
+
+              <div className="flex gap-2">
+                <button
+                  onClick={() => handleBulkAction('verify_kyc')}
+                  disabled={actionLoading}
+                  className="px-3 py-1.5 rounded-xl border border-success/30 bg-success/10 text-success hover:bg-success/20 active:scale-95 transition-all text-[10px] uppercase font-bold"
+                >
+                  Verify KYC
+                </button>
+                <button
+                  onClick={() => handleBulkAction('unverify_kyc')}
+                  disabled={actionLoading}
+                  className="px-3 py-1.5 rounded-xl border border-white/10 bg-white/5 text-white hover:bg-white/10 active:scale-95 transition-all text-[10px] uppercase font-bold"
+                >
+                  Unverify KYC
+                </button>
+                <button
+                  onClick={() => handleBulkAction('change_role', { role: 'creator' })}
+                  disabled={actionLoading}
+                  className="px-3 py-1.5 rounded-xl border border-[#ffabf3]/30 bg-[#ffabf3]/10 text-[#ffabf3] hover:bg-[#ffabf3]/20 active:scale-95 transition-all text-[10px] uppercase font-bold"
+                >
+                  Make Creator
+                </button>
+                <button
+                  onClick={() => handleBulkAction('change_role', { role: 'member' })}
+                  disabled={actionLoading}
+                  className="px-3 py-1.5 rounded-xl border border-[#00fbfb]/30 bg-[#00fbfb]/10 text-[#00fbfb] hover:bg-[#00fbfb]/20 active:scale-95 transition-all text-[10px] uppercase font-bold"
+                >
+                  Make Member
+                </button>
+
+                {/* Platform Role Promote Trigger */}
+                <div className="relative">
+                  <button
+                    onClick={() => setShowPlatformRoleSelect(!showPlatformRoleSelect)}
+                    disabled={actionLoading}
+                    className="px-3 py-1.5 rounded-xl border border-red-500/30 bg-red-500/10 text-red-400 hover:bg-red-500/20 active:scale-95 transition-all text-[10px] uppercase font-bold flex items-center gap-1"
+                  >
+                    Promote Role
+                    <ChevronDown className="w-3.5 h-3.5" />
+                  </button>
+
+                  {showPlatformRoleSelect && (
+                    <div className="absolute bottom-full right-0 mb-2 w-40 rounded-xl border border-white/10 bg-black p-1 shadow-2xl z-50">
+                      {['user', 'moderator', 'admin', 'super_admin'].map((role) => (
+                        <button
+                          key={role}
+                          onClick={() => handleBulkAction('change_platform_role', { platform_role: role })}
+                          className="w-full text-left px-2.5 py-1.5 rounded-lg text-[10px] font-bold text-white/70 hover:text-white hover:bg-white/5 transition-all uppercase"
+                        >
+                          {role}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+        </>
+      )}
+
+      {/* Tab 2: Early Access Waitlist View */}
+      {activeTab === 'waitlist' && (
+        <>
+          {/* Filters Form for Waitlist */}
+          <div className="glass p-5 rounded-2xl">
+            <form onSubmit={handleWaitlistSearchSubmit} className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 items-end">
+              {/* Search by email */}
+              <div className="md:col-span-2">
+                <label className="text-[10px] font-black uppercase tracking-widest text-white/40 block mb-2 font-mono">
+                  Search Member Email
+                </label>
+                <div className="relative group">
+                  <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40 group-focus-within:text-primary transition-colors" />
+                  <input
+                    type="text"
+                    placeholder="Enter email to search..."
+                    value={waitlistSearch}
+                    onChange={(e) => setWaitlistSearch(e.target.value)}
+                    className="w-full bg-black/40 border border-white/10 rounded-xl py-2 pl-11 pr-4 outline-none focus:border-primary/50 focus:bg-black/60 transition-all text-xs font-semibold text-white placeholder-white/30"
+                  />
+                </div>
+              </div>
+
+              {/* City filter */}
+              <div>
+                <label className="text-[10px] font-black uppercase tracking-widest text-white/40 block mb-2 font-mono">
+                  Filter by City Hub
+                </label>
+                <select
+                  value={waitlistCityFilter}
+                  onChange={(e) => { setWaitlistCityFilter(e.target.value); setWaitlistPage(0); }}
+                  className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-primary/50"
+                >
+                  <option value="">All Cities</option>
+                  {waitlistCities.map((city) => (
+                    <option key={city} value={city}>{city}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Total Summary Badge */}
+              <div className="flex items-center justify-end">
+                <div className="px-4 py-2 rounded-xl bg-primary/10 border border-primary/20 text-right">
+                  <div className="text-[10px] font-mono uppercase text-white/50">Total Signups</div>
+                  <div className="text-base font-mono font-black text-primary">{waitlistTotalItems}</div>
+                </div>
+              </div>
+            </form>
+          </div>
+
+          {/* Waitlist Data Table */}
+          <div className="glass-card p-6 min-h-[400px]">
+            <DataTable
+              columns={waitlistColumns}
+              data={waitlist}
+              loading={waitlistLoading}
+              pageIndex={waitlistPage}
+              pageSize={waitlistPageSize}
+              pageCount={waitlistTotalPages}
+              totalItems={waitlistTotalItems}
+              onPageChange={setWaitlistPage}
+              onPageSizeChange={(size) => { setWaitlistPageSize(size); setWaitlistPage(0); }}
+              getRowId={(row) => row.id}
+            />
+          </div>
+        </>
       )}
 
       {/* Direct Message Modal */}
