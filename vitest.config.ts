@@ -10,6 +10,7 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'node',
+    testTimeout: 15000,
     include: ['src/**/*.test.ts', 'tests/**/*.test.ts'],
     exclude: ['e2e/**', 'node_modules/**']
   }
