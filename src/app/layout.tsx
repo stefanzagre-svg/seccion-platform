@@ -27,11 +27,25 @@ export const metadata: Metadata = {
   metadataBase: new URL("https://seccion.ai"),
   alternates: {},
   title: {
-    default: "SECCION.ai | 1st AI Dating & Creator Live Streaming Hybrid Platform",
+    // Page-level titles should NOT include "| SECCION" — this template appends it automatically
+    default: "SECCION — AI-Powered Creator Platform | 90% Payout, AI Copilot & DRM Protection",
     template: "%s | SECCION",
   },
-  description: "SECCION is the first AI-driven dating matchmaking and live streaming creator hybrid platform.",
-  keywords: ["SECCION", "AI dating app for creators", "live streaming matchmaking app", "seccion.ai", "creator economy"],
+  description: "SECCION is the creator platform built for independence: keep 90% of your earnings, engage fans 24/7 with an AI Copilot trained in your exact voice, and protect your content with an unbreakable DRM vault. Zero agency cuts.",
+  keywords: [
+    "creator platform 90% payout",
+    "OnlyFans alternative 2026",
+    "AI copilot for content creators",
+    "DRM content protection creator",
+    "content creator anti-piracy",
+    "best Patreon alternative",
+    "AI DM manager creators",
+    "live streaming creator platform",
+    "creator monetization platform",
+    "warm paywall creator economy",
+    "SECCION platform",
+    "creator economy 2026"
+  ],
   icons: {
     icon: [
       { url: '/favicon.ico', sizes: 'any' },
@@ -50,8 +64,8 @@ export const metadata: Metadata = {
     telephone: false,
   },
   openGraph: {
-    title: "SECCION.ai | 1st AI Dating & Creator Live Streaming Hybrid Platform",
-    description: "SECCION is the first AI-driven dating matchmaking and live streaming creator hybrid platform.",
+    title: "SECCION — 90% Payout, AI Copilot & DRM Content Vault",
+    description: "Keep 90% of your earnings. Your AI Copilot handles DMs 24/7 in your exact voice. Your content is sealed with DRM anti-piracy protection. Zero agency cuts.",
     url: "https://seccion.ai",
     siteName: "SECCION",
     images: [
@@ -59,20 +73,22 @@ export const metadata: Metadata = {
         url: "https://seccion.ai/assets/seo/og-image.jpg",
         width: 1200,
         height: 630,
-        alt: "SECCION Platform",
+        alt: "SECCION — AI-Powered Creator Platform",
       },
     ],
-    locale: "en",
+    locale: "en_US",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "SECCION.ai | 1st AI Dating & Creator Live Streaming Hybrid Platform",
-    description: "SECCION is the first AI-driven dating matchmaking and live streaming creator hybrid platform.",
+    title: "SECCION — The Creator Platform That Pays 90% & Kills Piracy",
+    description: "Keep 90% of your earnings. AI Copilot DMs 24/7 in your voice. DRM vault locks out piracy. No agency cuts. Built for independent creators.",
     images: ["https://seccion.ai/assets/seo/og-image.jpg"],
+    site: "@steveseccion",
     creator: "@steveseccion",
   },
 };
+
 
 export default function RootLayout({
   children,
