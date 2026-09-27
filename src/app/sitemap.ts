@@ -12,9 +12,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl = 'https://seccion.ai';
 
   // ── Core public marketing routes ────────────────────────────────────────
-  // IMPORTANT: Do NOT include auth-gated or session-protected routes here.
-  // /vibe-radar and /now-streaming require auth → excluded to prevent soft-404
-  // devaluation. /early-access and /hit-us-up kept as low-priority signals.
+  // Public marketing and discoverability routes for indexing.
   const routes: MetadataRoute.Sitemap = [
     {
       url: `${baseUrl}/`,
@@ -76,8 +74,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: 'weekly' as const,
       priority: 0.9,
     },
-    // NOTE: /now-streaming excluded — confirmed 307 redirect to /onboarding (auth-gated).
-    // Including it would cause Google to index the login page instead, creating a soft-404.
+    {
+      url: `${baseUrl}/now-streaming`,
+      lastModified: CONTENT_REFRESH_DATE,
+      changeFrequency: 'daily' as const,
+      priority: 0.85,
+    },
     {
       url: `${baseUrl}/early-access`,
       lastModified: PLATFORM_LAUNCH_DATE,

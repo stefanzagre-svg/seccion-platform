@@ -15,6 +15,7 @@ const PUBLIC_ROUTES = [
   '/blog',
   '/faq',
   '/features',
+  '/now-streaming',
   '/onboarding',
   '/onboarding/step-2',
   '/auth/callback'
@@ -47,6 +48,12 @@ export async function middleware(request: NextRequest) {
     let supabaseResponse = NextResponse.next({ request });
 
     const { pathname } = request.nextUrl;
+ 
+    if (pathname === '/nowstreaming' || pathname === '/nowstreaming/') {
+      const url = request.nextUrl.clone();
+      url.pathname = '/now-streaming';
+      return NextResponse.redirect(url, 301);
+    }
 
   // Dedicated Admin Route Exemption: Pass all /admin and /api/admin requests directly to their handlers (which enforce verifyAdminAuth)
   if (pathname.startsWith('/admin') || pathname.startsWith('/api/admin')) {
