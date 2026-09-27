@@ -29,6 +29,24 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.95,
     },
     {
+      url: `${baseUrl}/faq`,
+      lastModified: CONTENT_REFRESH_DATE,
+      changeFrequency: 'monthly' as const,
+      priority: 0.85,
+    },
+    {
+      url: `${baseUrl}/features/ai-copilot`,
+      lastModified: CONTENT_REFRESH_DATE,
+      changeFrequency: 'monthly' as const,
+      priority: 0.85,
+    },
+    {
+      url: `${baseUrl}/features/drm-protection`,
+      lastModified: CONTENT_REFRESH_DATE,
+      changeFrequency: 'monthly' as const,
+      priority: 0.85,
+    },
+    {
       url: `${baseUrl}/creator-hub`,
       lastModified: CONTENT_REFRESH_DATE,
       changeFrequency: 'weekly' as const,
