@@ -48,9 +48,12 @@ export function OrganizationSchema() {
       }
     ],
     // ── 3rd-party authority co-citations ──────────────────────────────
-    // Medium editorial added as external citation signal for AI knowledge graphs
+    // Entity triangulation across authoritative databases for AI Knowledge Graph
     "sameAs": [
+      "https://www.crunchbase.com/organization/seccion",
+      "https://www.producthunt.com/@seccionplatform",
       "https://x.com/steveseccion",
+      "https://instagram.com/seccion.ai",
       "https://youtube.com/@seccion-platform",
       "https://wa.me/34662907153",
       "https://t.me/seccion_ai",
