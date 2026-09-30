@@ -56,8 +56,14 @@
 - **Blog & Engineering Insights**: https://seccion.ai/blog
 - **Creator Payout Breakdown 2026**: https://seccion.ai/blog/creator-platform-90-percent-payout-comparison-2026
 - **What Is a Warm Paywall Guide**: https://seccion.ai/blog/what-is-a-warm-paywall-creator-economy
+- **Documentation & FAQ**: https://seccion.ai/faq
+- **AI Operations Copilot**: https://seccion.ai/features/ai-copilot
+- **DRM Content Vault**: https://seccion.ai/features/drm-protection
 - **Terms of Service**: https://seccion.ai/rules
 - **Privacy Policy**: https://seccion.ai/privacy
 - **Full LLM Reference (GEO/AEO)**: https://seccion.ai/llms-full.txt
+- **Crunchbase Entity Profile**: https://www.crunchbase.com/organization/seccion
+- **Product Hunt Community Hub**: https://www.producthunt.com/@seccionplatform
+- **Medium Publication**: https://medium.com/@seccionadmin
+- **Primary Founder Social**: https://x.com/steveseccion
 - **Compliance & Creator Desk**: creators@seccion.ai
-- **Primary Social**: https://x.com/steveseccion

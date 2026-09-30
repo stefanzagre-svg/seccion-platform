@@ -6,6 +6,7 @@ import {
   Loader2, Zap, AlertTriangle, Lock, Users,
 } from 'lucide-react';
 import { MIN_MATCHES_FOR_AUTO_CHAT } from '@/lib/relationship-engine';
+import { verifyBiometricPresence } from '@/lib/auth/webauthn-mfa';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -316,12 +317,58 @@ export default function ConfigPanel({
             <input
               type="checkbox"
               checked={!!digitalReplicaConsent}
-              onChange={(e) => handleConsentToggle(e.target.checked)}
+              onChange={async (e) => {
+                const isChecking = e.target.checked;
+                if (isChecking) {
+                  const verified = await verifyBiometricPresence('Authorize AI Digital Replica');
+                  if (!verified) {
+                    alert('Biometric / Passkey verification required to grant replica consent.');
+                    return;
+                  }
+                }
+                handleConsentToggle(isChecking);
+              }}
               className="sr-only peer"
             />
             <div className="w-9 h-5 bg-white/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-black after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary" />
           </label>
         </div>
+      </div>
+
+      {/* ── Emergency Kill-Switch Action Bar ────────────────────────────── */}
+      <div className="p-4 bg-rose-500/10 border border-rose-500/20 rounded-2xl flex items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <AlertTriangle className="w-5 h-5 text-rose-400 shrink-0 animate-pulse" />
+          <div>
+            <div className="text-[10px] font-black uppercase tracking-widest text-rose-300">
+              Emergency Kill-Switch
+            </div>
+            <p className="text-[8px] text-rose-200/50 uppercase tracking-widest leading-tight">
+              Instantly terminates all active Replicant operations, auto-replies, and drafts globally.
+            </p>
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={async () => {
+            const confirmed = window.confirm(
+              "EMERGENCY KILL-SWITCH: Are you sure you want to immediately deactivate your AI Copilot and halt all message simulation?"
+            );
+            if (!confirmed) return;
+
+            setAiAgentActive(false);
+            setChatAutoEnabled(false);
+            if (onToggleSave) {
+              await onToggleSave('ai_agent_active', false);
+              await onToggleSave('chat_auto_enabled', false);
+              await onToggleSave('ai_suggestion_status', 'emergency_halt');
+            }
+            alert("AI Copilot halted immediately. All operations shifted to strict Human Mode.");
+          }}
+          className="px-4 py-2 bg-rose-600 hover:bg-rose-500 text-white rounded-xl text-[9px] font-black uppercase tracking-widest transition-all duration-200 shrink-0 shadow-lg shadow-rose-950/50"
+        >
+          Halt AI Now
+        </button>
       </div>
     </div>
   );

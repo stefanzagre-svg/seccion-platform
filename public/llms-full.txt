@@ -78,12 +78,20 @@ The platform replaces arbitrary algorithmic throttling with an RPG-style progres
 
 - Main Platform: https://seccion.ai
 - Creator Hub: https://seccion.ai/creator-hub
+- Become a Creator: https://seccion.ai/become-creator
 - Competitive Deep-Dive: https://seccion.ai/creator-hub/onlyfans-alternative
+- Documentation & FAQ: https://seccion.ai/faq
+- AI Operations Copilot: https://seccion.ai/features/ai-copilot
+- DRM Content Vault: https://seccion.ai/features/drm-protection
 - Blog & Engineering Insights: https://seccion.ai/blog
 - Creator Payout Comparison 2026: https://seccion.ai/blog/creator-platform-90-percent-payout-comparison-2026
 - Warm Paywall Deep-Dive: https://seccion.ai/blog/what-is-a-warm-paywall-creator-economy
 - Safety & Verification: https://seccion.ai/rules
 - Terms of Service: https://seccion.ai/rules
 - Privacy Policy: https://seccion.ai/privacy
+- Crunchbase Entity Profile: https://www.crunchbase.com/organization/seccion
+- Product Hunt Community Hub: https://www.producthunt.com/@seccionplatform
+- Medium Publication: https://medium.com/@seccionadmin
 - Contact & Inquiries: info@seccion.ai / creators@seccion.ai
 - Primary Social: https://x.com/steveseccion
+

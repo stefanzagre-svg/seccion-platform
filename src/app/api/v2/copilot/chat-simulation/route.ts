@@ -3,6 +3,10 @@ import { GoogleGenAI } from '@google/genai';
 import { scoreToLevel, resolveSharedScore, MIN_MATCHES_FOR_AUTO_CHAT } from '@/lib/relationship-engine';
 import { createAdminClient } from '@/lib/supabase/admin-client';
 import { createClient as createServerClient } from '@/lib/supabase/server';
+import { scrubPIIBeforeLLM } from '@/lib/ai/pii-scrubber';
+import { classifyMessageIntent } from '@/lib/ai/intent-classifier';
+import { analyzeMemberFriction } from '@/lib/ai/whale-friction-detector';
+import { resolveRampDirective, calculateTypingCadence } from '@/lib/ai/conversion-engine';
 
 /**
  * Sandbox / Development convenience:
@@ -13,9 +17,6 @@ import { createClient as createServerClient } from '@/lib/supabase/server';
  *     relationship level without needing real DB rows.
  *   - Pass `devMatchCount` to simulate the creator's total match count (defaults
  *     to MIN_MATCHES_FOR_AUTO_CHAT so tests pass unless explicitly overridden).
- *     e.g. { creatorId, targetId, devGaugeScore: 22 }          → Friendly, allowed
- *          { creatorId, targetId, devGaugeScore: 36 }          → Close Friend, blocked
- *          { creatorId, targetId, devMatchCount: 5 }           → Not enough matches
  * When GEMINI_API_KEY is absent, the local reply generator is used.
  */
 
@@ -40,13 +41,12 @@ export async function POST(req: NextRequest) {
 
     const hasServiceKey = !!process.env.SUPABASE_SERVICE_ROLE_KEY;
     const sandboxMode = IS_DEV && !hasServiceKey;
-
     const supabase: any = hasServiceKey ? createAdminClient() : await createServerClient();
 
-    // ── 1. Fetch Creator Profile ─────────────────────────────────────────────
+    // ── 1. Fetch Creator Profile & Global Emergency Halt Check ───────────────
     const { data: creatorProfile, error: profileError } = await supabase
       .from('profiles')
-      .select('id, username, display_name, ai_agent_active, chat_auto_enabled')
+      .select('id, username, display_name, ai_agent_active, chat_auto_enabled, ai_suggestion_status')
       .eq('id', creatorId)
       .single();
 
@@ -56,6 +56,17 @@ export async function POST(req: NextRequest) {
       } else {
         return NextResponse.json({ error: 'Creator profile not found' }, { status: 404 });
       }
+    }
+
+    // Emergency Kill-Switch verification
+    if (creatorProfile?.ai_suggestion_status === 'emergency_halt') {
+      return NextResponse.json(
+        {
+          error: 'AI Copilot is in Emergency Halt mode. Replicant operations suspended.',
+          emergencyHalt: true,
+        },
+        { status: 503 }
+      );
     }
 
     // ── 2. AI Agent activation gate ──────────────────────────────────────────
@@ -77,11 +88,77 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // ── 3. Minimum 30-matches gate ───────────────────────────────────────────
-    // Count how many non-stranger connections the creator has accumulated.
-    // In sandbox mode devMatchCount can override this (defaults to MIN so tests pass).
-    let totalMatchCount: number;
+    // ── 3. Ephemeral In-Memory PII Scrubbing ──────────────────────────────────
+    const scrubbed = scrubPIIBeforeLLM(messageContext || '');
 
+    // ── 4. Whale & Member Sentiment Friction Detector ─────────────────────────
+    const friction = analyzeMemberFriction(scrubbed.sanitizedText);
+    if (friction.requiresHumanEscalation) {
+      // Log escalation and halt automated generation
+      supabase
+        .from('ai_interaction_logs')
+        .insert({
+          sender_id: creatorId,
+          recipient_id: targetId,
+          interaction_type: 'AUTO_CHAT',
+          is_ai_generated: false,
+          execution_status: 'whale_escalated',
+          sentiment_score: friction.sentimentScore,
+          whale_escalated: true,
+        })
+        .then(() => {});
+
+      return NextResponse.json({
+        humanModeEscalated: true,
+        reason: friction.escalationReason,
+        isWhale: friction.isWhale,
+        message: 'Personal creator touch required. Message queued for creator manual review.',
+      }, { status: 200 });
+    }
+
+    // ── 5. Intent Classifier & Threat Guardrail ───────────────────────────────
+    // Query any specific creator restrictions
+    let creatorRestrictions: any = null;
+    try {
+      const { data: restrictions } = await supabase
+        .from('copilot_intent_restrictions')
+        .select('*')
+        .eq('creator_id', creatorId)
+        .limit(1)
+        .maybeSingle();
+      creatorRestrictions = restrictions;
+    } catch {
+      // non-fatal
+    }
+
+    const intentCheck = classifyMessageIntent(scrubbed.sanitizedText, creatorRestrictions);
+    if (!intentCheck.isSafe) {
+      // Write to audit log as blocked guardrail
+      supabase
+        .from('ai_interaction_logs')
+        .insert({
+          sender_id: creatorId,
+          recipient_id: targetId,
+          interaction_type: 'AUTO_CHAT',
+          is_ai_generated: true,
+          execution_status: 'blocked_guardrail',
+          flagged_intent: intentCheck.flaggedIntent,
+          pii_redacted: scrubbed.hasRedactions,
+          redacted_types: scrubbed.redactedTypes,
+        })
+        .then(() => {});
+
+      return NextResponse.json({
+        draftText: intentCheck.deflectionMessage,
+        flaggedIntent: intentCheck.flaggedIntent,
+        reason: intentCheck.reason,
+        isGuardrailDeflection: true,
+        isAiGenerated: true,
+      });
+    }
+
+    // ── 6. Minimum 30-matches gate ───────────────────────────────────────────
+    let totalMatchCount: number;
     if (sandboxMode) {
       totalMatchCount = typeof devMatchCount === 'number' ? devMatchCount : MIN_MATCHES_FOR_AUTO_CHAT;
     } else {
@@ -89,14 +166,9 @@ export async function POST(req: NextRequest) {
         .from('relationships')
         .select('id', { count: 'exact', head: true })
         .eq('user_id', creatorId)
-        .gt('gauge_score', 0); // any non-zero score = a meaningful match
+        .gt('gauge_score', 0);
 
-      if (countError) {
-        console.warn('[AI Copilot] Could not count matches (non-fatal):', countError.message);
-        totalMatchCount = 0;
-      } else {
-        totalMatchCount = count ?? 0;
-      }
+      totalMatchCount = countError ? 0 : (count ?? 0);
     }
 
     if (totalMatchCount < MIN_MATCHES_FOR_AUTO_CHAT) {
@@ -112,21 +184,18 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // ── 4. Resolve relationship level ────────────────────────────────────────
+    // ── 7. Resolve relationship level ────────────────────────────────────────
     let sharedScore = 0;
-
     if (sandboxMode && typeof devGaugeScore === 'number') {
       sharedScore = devGaugeScore;
     } else {
-      const { data: rels, error: relError } = await supabase
+      const { data: rels } = await supabase
         .from('relationships')
         .select('user_id, target_id, gauge_score')
         .or(
           `and(user_id.eq.${creatorId},target_id.eq.${targetId}),` +
           `and(user_id.eq.${targetId},target_id.eq.${creatorId})`
         );
-
-      if (relError) console.error('[AI Copilot] Error fetching relationships:', relError);
 
       const myScore    = rels?.find((r: any) => r.user_id === creatorId)?.gauge_score ?? 0;
       const theirScore = rels?.find((r: any) => r.user_id === targetId)?.gauge_score  ?? 0;
@@ -135,7 +204,7 @@ export async function POST(req: NextRequest) {
 
     const currentLevel = scoreToLevel(sharedScore);
 
-    // ── 5. Hard block: Level 4 Close Friend ──────────────────────────────────
+    // ── 8. Hard block: Level 4 Close Friend ──────────────────────────────────
     if (currentLevel.key === 'close') {
       return NextResponse.json(
         {
@@ -150,7 +219,41 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // ── 6. Generate reply ────────────────────────────────────────────────────
+    // ── 9. Resolve Conversation Goal & Multi-Turn Ramp ────────────────────────
+    let activeGoalType = 'DISCOVERY';
+    let currentRampStep = 1;
+
+    try {
+      const { data: goalRow } = await supabase
+        .from('copilot_interaction_goals')
+        .select('goal_type')
+        .eq('creator_id', creatorId)
+        .eq('is_active', true)
+        .limit(1)
+        .maybeSingle();
+
+      if (goalRow?.goal_type) {
+        activeGoalType = goalRow.goal_type;
+      }
+
+      const { data: rampRow } = await supabase
+        .from('copilot_sales_ramps')
+        .select('current_step')
+        .eq('creator_id', creatorId)
+        .eq('member_id', targetId)
+        .eq('active_goal_type', activeGoalType)
+        .maybeSingle();
+
+      if (rampRow?.current_step) {
+        currentRampStep = rampRow.current_step;
+      }
+    } catch {
+      // non-fatal
+    }
+
+    const rampDirective = resolveRampDirective(activeGoalType, currentRampStep);
+
+    // ── 10. Generate Reply with Gemini 2.5 Flash ──────────────────────────────
     const geminiKey   = process.env.GEMINI_API_KEY;
     const creatorName = creatorProfile?.display_name || creatorProfile?.username || 'Creator';
     let replyText     = '';
@@ -160,19 +263,24 @@ export async function POST(req: NextRequest) {
         const ai = new GoogleGenAI({ apiKey: geminiKey });
 
         const systemInstruction = `
-You are the AI Assistant for the Creator ${creatorName}.
-Your role is to draft authentic, engaging direct message responses to a fan based on the creator's tone.
-Creator Tone: Friendly, charismatic, slightly flirty but respectful, and authentic.
-Tone instructions: Speak in lowercase or casual case, use brief 1-2 sentence replies, avoid robotic templates, and keep it human.
+You are the AI Digital Twin for Creator "${creatorName}".
+Creator Tone: Friendly, authentic, witty, engaging, peer-level.
+Tone guidelines: Speak casually, brief 1-2 sentences maximum.
 
-Waiver & Consent status: The creator has explicitly consented to your operations.
-Constraint: Keep it safe and fun. Do not suggest private meetings or give financial advice.
+CONVERSATION GOAL & RAMP DIRECTIVE:
+${rampDirective.instruction}
+
+STRICT SAFETY CONSTRAINTS:
+1. NEVER arrange or agree to in-person rendezvous.
+2. NEVER give investment or financial advice.
+3. NEVER solicit off-platform payments (CashApp, Venmo, etc.).
+4. Keep the connection respectful, fun, and aligned with SECCION guidelines.
 `;
         const prompt = `
-Recent chat history context:
-${messageContext || 'No previous history. Start a warm conversation.'}
+Recent chat history context (Sanitized):
+${scrubbed.sanitizedText || 'No previous history. Start a warm conversation.'}
 
-Draft a single-sentence or double-sentence casual reply. Keep it very conversational.
+Draft a single-sentence or double-sentence casual reply:
 `;
 
         const response = await ai.models.generateContent({
@@ -184,13 +292,30 @@ Draft a single-sentence or double-sentence casual reply. Keep it very conversati
         replyText = response.text || '';
       } catch (geminiError: any) {
         console.warn('[AI Copilot] Gemini unavailable, using local reply generator:', geminiError);
-        replyText = getLocalSimulatedReply(creatorName, messageContext);
+        replyText = getLocalSimulatedReply(creatorName, scrubbed.sanitizedText);
       }
     } else {
-      replyText = getLocalSimulatedReply(creatorName, messageContext);
+      replyText = getLocalSimulatedReply(creatorName, scrubbed.sanitizedText);
     }
 
-    // ── 7. Log AI interaction (best-effort, non-blocking) ───────────────────
+    // ── 11. Calculate Organic Typing Cadence ──────────────────────────────────
+    const latencyEmulatedMs = calculateTypingCadence(replyText);
+
+    // ── 12. Advance Sales Ramp (Next Step) ───────────────────────────────────
+    if (currentRampStep < 3) {
+      supabase
+        .from('copilot_sales_ramps')
+        .upsert({
+          creator_id: creatorId,
+          member_id: targetId,
+          active_goal_type: activeGoalType,
+          current_step: currentRampStep + 1,
+          last_interaction_at: new Date().toISOString(),
+        })
+        .then(() => {});
+    }
+
+    // ── 13. Audit Log AI interaction ─────────────────────────────────────────
     supabase
       .from('ai_interaction_logs')
       .insert({
@@ -199,9 +324,14 @@ Draft a single-sentence or double-sentence casual reply. Keep it very conversati
         interaction_type: 'AUTO_CHAT',
         is_ai_generated: true,
         resolved_level_key: currentLevel.key,
+        pii_redacted: scrubbed.hasRedactions,
+        redacted_types: scrubbed.redactedTypes,
+        sentiment_score: friction.sentimentScore,
+        execution_status: 'success',
+        latency_emulated_ms: latencyEmulatedMs,
       })
       .then(({ error }: { error: any }) => {
-        if (error) console.warn('[AI Copilot] Interaction log insert failed (non-fatal):', error.message);
+        if (error) console.warn('[AI Copilot] Interaction log insert failed:', error.message);
       });
 
     return NextResponse.json({
@@ -210,6 +340,9 @@ Draft a single-sentence or double-sentence casual reply. Keep it very conversati
       isAiGenerated: true,
       replicantCreatorName: creatorName,
       matchCount: totalMatchCount,
+      latencyEmulatedMs,
+      activeGoal: activeGoalType,
+      rampStep: currentRampStep,
       ...(sandboxMode && { _sandboxMode: true, devGaugeScore: sharedScore }),
     });
   } catch (err: any) {

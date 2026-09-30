@@ -20,10 +20,11 @@ import {
   Users,
   Crown,
   BarChart3,
-  Settings,
-  Shield
+  Shield,
+  Network
 } from 'lucide-react';
 import Link from 'next/link';
+import VaultAndStrategyCockpit from '@/components/studio/VaultAndStrategyCockpit';
 
 export default function AIToolsHub() {
   const router = useRouter();
@@ -278,11 +279,36 @@ export default function AIToolsHub() {
                   </div>
                 </div>
               </div>
+            {activeTool === 'vault_strategy' && (
+              <div className="space-y-6">
+                <div className="flex items-center gap-3 mb-6 text-primary">
+                  <Network className="w-8 h-8" />
+                  <h2 className="text-2xl font-black uppercase">Replicant Vault & Strategy Cockpit</h2>
+                </div>
+                <VaultAndStrategyCockpit />
+              </div>
             )}
 
           </div>
         ) : (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="space-y-10">
+            {/* Primary Strategy Cockpit Section */}
+            <div className="p-6 md:p-8 bg-black/40 border border-white/10 rounded-3xl space-y-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="p-3 bg-primary/10 rounded-2xl border border-primary/20 text-primary">
+                    <Network className="w-6 h-6 animate-pulse" />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-black uppercase tracking-wider text-white">Replicant Strategy & Vault Cockpit</h2>
+                    <p className="text-xs text-white/50 uppercase tracking-widest mt-0.5">Obsidian Knowledge Graph, Interaction Directives & Media Vault</p>
+                  </div>
+                </div>
+              </div>
+              <VaultAndStrategyCockpit />
+            </div>
+
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             <ToolCard 
               icon={MessageSquare} 
               title="Auto-Messaging" 

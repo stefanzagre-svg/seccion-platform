@@ -78,10 +78,20 @@ export interface AssistantChatResponse {
 
 export interface CopilotChatSimResponse {
   draftText: string;
-  resolvedLevel: string;
+  resolvedLevel?: string;
   isAiGenerated: boolean;
-  replicantCreatorName: string;
+  replicantCreatorName?: string;
+  matchCount?: number;
+  latencyEmulatedMs?: number;
+  activeGoal?: string;
+  rampStep?: number;
+  flaggedIntent?: string;
+  reason?: string;
+  isGuardrailDeflection?: boolean;
+  humanModeEscalated?: boolean;
+  emergencyHalt?: boolean;
   _sandboxMode?: boolean;
+  devGaugeScore?: number;
 }
 
 export interface CopilotContentOpsResponse {
