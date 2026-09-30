@@ -18,8 +18,6 @@
     "test:e2e:stage6": "playwright test e2e/tests/stage6-chaos-memory.spec.ts",
     "test:e2e:report": "playwright show-report reports/playwright-report",
     "lint": "eslint",
-    "pages:build": "npx @cloudflare/next-on-pages",
-    "pages:deploy": "npm run pages:build && npx wrangler pages deploy .vercel/output/static",
     "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
     "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
     "upload": "opennextjs-cloudflare build && opennextjs-cloudflare upload",
@@ -51,7 +49,6 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
-    "@cloudflare/next-on-pages": "^1.13.16",
     "@faker-js/faker": "^10.6.0",
     "@playwright/test": "^1.62.1",
     "@tailwindcss/postcss": "^4",
