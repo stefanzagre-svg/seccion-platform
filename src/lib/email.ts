@@ -4,7 +4,7 @@ export async function sendCreatorWelcomeEmail(params: {
   applicationId?: string;
   locale?: string;
 }) {
-  const apiKey = process.env.RESEND_API_KEY || "process.env.RESEND_API_KEY || """;
+  const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey) return;
 
   const isEs = params.locale !== "en";
