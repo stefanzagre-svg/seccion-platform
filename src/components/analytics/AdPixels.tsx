@@ -8,7 +8,7 @@ import Script from "next/script";
  * cookie banner (localStorage `seccion_cookie_consent`). CookieConsentBanner
  * calls grant/revoke when the choice is made.
  */
-const META_ID = process.env.NEXT_PUBLIC_META_PIXEL_ID;
+const META_ID = process.env.NEXT_PUBLIC_META_PIXEL_ID || "4537170363228364";
 const TIKTOK_ID = process.env.NEXT_PUBLIC_TIKTOK_PIXEL_ID || "DB11RQRC77U5DCODBVT0";
 
 export default function AdPixels() {
