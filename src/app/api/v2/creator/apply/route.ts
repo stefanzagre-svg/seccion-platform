@@ -137,11 +137,14 @@ export async function POST(req: NextRequest) {
     
     sendTelegramNotification(msg).catch(() => {});
 
+    const visitorLocale = typeof (rawBody as any)?.locale === "string" ? (rawBody as any).locale : "es";
+
     // Send automated welcome & next-steps email to creator via Resend
     sendCreatorWelcomeEmail({
       email: email.trim(),
       fullName: fullName.trim(),
       applicationId: data?.id,
+      locale: visitorLocale,
     }).catch(() => {});
 
     return NextResponse.json(

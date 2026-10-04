@@ -56,6 +56,7 @@ export default function CreatorQuickApplyModal({ isOpen, onClose }: CreatorQuick
         link1: normalizeSocialLink(handleOrLink),
         claimOffer: true,
         stage: "lead",
+        locale,
         source: getLeadSource(),
       }),
       keepalive: true,
