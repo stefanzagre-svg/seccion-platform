@@ -1,4 +1,4 @@
-const CACHE_NAME = "seccion-pwa-static-v3";
+const CACHE_NAME = "seccion-pwa-static-v4";
 const DYNAMIC_CACHE = "seccion-pwa-dynamic-v3";
 
 const STATIC_ASSETS = [

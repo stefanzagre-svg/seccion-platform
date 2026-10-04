@@ -41,14 +41,32 @@ export async function POST(req: NextRequest) {
 
     const { fullName, email, phone, telegram, link1, link2, link3, city, claimOffer } = parsed.data;
 
+    const source = typeof (rawBody as any)?.source === "string" ? (rawBody as any).source.slice(0, 120) : "direct";
+    const stage = (rawBody as any)?.stage === "details" ? "details" : "lead";
+
     // Check for duplicate email
     const { data: existing } = await supabaseAdmin
       .from("creator_applications")
       .select("id, status")
       .eq("email", email.toLowerCase().trim())
-      .single();
+      .maybeSingle();
 
     if (existing) {
+      // Step 2 of the quick-apply flow: enrich the partial lead with optional details
+      if (stage === "details") {
+        const patch: Record<string, string> = {};
+        if (phone?.trim()) patch.phone = phone.trim();
+        if (telegram?.trim()) patch.telegram = telegram.trim();
+        if (city?.trim()) patch.city = city.trim();
+        if (fullName?.trim()) patch.full_name = fullName.trim();
+        if (Object.keys(patch).length) {
+          await supabaseAdmin.from("creator_applications").update(patch).eq("id", existing.id);
+          sendTelegramNotification(
+            `➕ <b>LEAD DETAILS ADDED</b>\n📧 ${email.trim()}\n📱 ${patch.phone || "-"}\n✈️ ${patch.telegram || "-"}\n📍 ${patch.city || "-"}`
+          ).catch(() => {});
+        }
+        return NextResponse.json({ success: true, updated: true, applicationId: existing.id }, { status: 200 });
+      }
       return NextResponse.json(
         {
           error: "An application with this email already exists",
@@ -57,6 +75,7 @@ export async function POST(req: NextRequest) {
         { status: 409 }
       );
     }
+
 
     // Insert the application
     const { data, error } = await supabaseAdmin
@@ -88,11 +107,12 @@ export async function POST(req: NextRequest) {
     const msg = `🚨 <b>NEW CREATOR APPLICATION!</b>\n\n` +
       `👤 <b>Name:</b> ${fullName.trim()}\n` +
       `📧 <b>Email:</b> ${email.trim()}\n` +
-      `📱 <b>Phone:</b> ${phone.trim()}\n` +
-      `✈️ <b>Telegram:</b> ${telegram.trim()}\n` +
+      `📱 <b>Phone:</b> ${phone?.trim() || "-"}\n` +
+      `✈️ <b>Telegram:</b> ${telegram?.trim() || "-"}\n` +
       `📍 <b>City:</b> ${city || "Not specified"}\n` +
       `🔗 <b>Link:</b> ${link1.trim()}\n` +
-      `🎁 <b>Founding Offer:</b> ${claimOffer ? "YES (10% Rate)" : "NO"}`;
+      `📣 <b>Source:</b> ${source}\n` +
+      `🎁 <b>Founding Offer:</b> ${claimOffer ? "YES (pending approval for 90% year-1 rate)" : "NO"}`;
     
     sendTelegramNotification(msg).catch(() => {});
 

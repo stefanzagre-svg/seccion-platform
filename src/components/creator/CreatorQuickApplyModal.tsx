@@ -46,6 +46,27 @@ export default function CreatorQuickApplyModal({ isOpen, onClose }: CreatorQuick
     }
     setError("");
     setStep(2);
+    // Capture the lead immediately so abandoning step 2 never loses it
+    fetch("/api/v2/creator/apply", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        fullName: handleOrLink.replace("@", "").trim() || "Creator",
+        email: email.toLowerCase().trim(),
+        link1: normalizeSocialLink(handleOrLink),
+        claimOffer: true,
+        stage: "lead",
+        source: getLeadSource(),
+      }),
+      keepalive: true,
+    }).catch(() => {});
+  };
+
+  const getLeadSource = () => {
+    if (typeof window === "undefined") return "direct";
+    const p = new URLSearchParams(window.location.search);
+    const utm = ["utm_source", "utm_medium", "utm_campaign"].map((k) => p.get(k)).filter(Boolean).join("/");
+    return (utm || document.referrer || navigator.userAgent.match(/Instagram|TikTok|musical_ly|FBAN|FBAV/i)?.[0] || "direct") as string;
   };
 
   // Step 2: Finalize optional extra details & send
@@ -62,6 +83,8 @@ export default function CreatorQuickApplyModal({ isOpen, onClose }: CreatorQuick
       telegram: phoneOrTelegram.startsWith("@") ? phoneOrTelegram.trim() : null,
       city: city.trim() || null,
       claimOffer: true,
+      stage: "details",
+      source: getLeadSource(),
     };
 
     try {
@@ -87,6 +110,8 @@ export default function CreatorQuickApplyModal({ isOpen, onClose }: CreatorQuick
       if (typeof window !== "undefined") {
         localStorage.setItem("seccion_creator_applied", "true");
         localStorage.setItem("seccion_creator_data", JSON.stringify(payload));
+        (window as any).fbq?.("track", "Lead");
+        (window as any).ttq?.track("SubmitForm");
       }
 
       setStep("success");
@@ -101,9 +126,12 @@ export default function CreatorQuickApplyModal({ isOpen, onClose }: CreatorQuick
     const defaultMsg = locale === "es"
       ? "Hola SECCION, vi su plataforma y quiero asegurar mi 90% de ganancias y Pack de IA como Creador Fundador."
       : "Hi SECCION, I saw your platform and want to claim my 90% payout and free AI Pack as a Founding Creator.";
-    const url = `https://wa.me/34600000000?text=${encodeURIComponent(defaultMsg)}`;
+    const url = `https://wa.me/34662907153?text=${encodeURIComponent(defaultMsg)}`;
+    (window as any).fbq?.("track", "Contact");
+    (window as any).ttq?.track("Contact");
     window.open(url, "_blank");
   };
+
 
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-xl overflow-y-auto">

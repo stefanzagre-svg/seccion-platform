@@ -9,6 +9,7 @@ import ServiceWorkerRegister from "@/components/pwa/ServiceWorkerRegister";
 import InAppBrowserDetector from "@/components/pwa/InAppBrowserDetector";
 import PWAInstallPrompt from "@/components/pwa/PWAInstallPrompt";
 import JsonLdSuite from "@/components/seo/JsonLd";
+import AdPixels from "@/components/analytics/AdPixels";
 import CookieConsentBanner from "@/components/CookieConsentBanner";
 import EmailVerificationGuard from "@/components/auth/EmailVerificationGuard";
 import FloatingBugButton from "@/components/bug-bounty/FloatingBugButton";
@@ -105,6 +106,7 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col bg-background text-foreground font-sans relative overflow-x-hidden pt-safe pb-safe">
         {/* Rich Structured Data for AI Search & Engine Indexing */}
         <JsonLdSuite />
+        <AdPixels />
         <LanguageProvider initialLocale={savedLocale}>
           {/* PWA Background Services & Smart Prompts */}
           <ServiceWorkerRegister />
