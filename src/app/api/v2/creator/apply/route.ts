@@ -77,30 +77,50 @@ export async function POST(req: NextRequest) {
     }
 
 
-    // Insert the application
-    const { data, error } = await supabaseAdmin
+    // Insert the application — supply empty string fallback in case database has NOT NULL on phone/telegram
+    const insertPayload = {
+      full_name: fullName.trim(),
+      email: email.toLowerCase().trim(),
+      phone: phone?.trim() || "",
+      telegram: telegram?.trim() || "",
+      link1: link1.trim(),
+      link2: link2?.trim() || null,
+      link3: link3?.trim() || null,
+      city: city?.trim() || null,
+      claim_offer: claimOffer ?? true,
+      status: "pending",
+    };
+
+    let { data, error } = await supabaseAdmin
       .from("creator_applications")
-      .insert({
-        full_name: fullName.trim(),
-        email: email.toLowerCase().trim(),
-        phone: phone?.trim() || null,
-        telegram: telegram?.trim() || null,
-        link1: link1.trim(),
-        link2: link2?.trim() || null,
-        link3: link3?.trim() || null,
-        city: city?.trim() || null,
-        claim_offer: claimOffer ?? true,
-        status: "pending",
-      })
+      .insert(insertPayload)
       .select()
-      .single();
+      .maybeSingle();
 
     if (error) {
       console.error("Supabase insert error:", error);
-      return NextResponse.json(
-        { error: "Failed to submit application. Please try again." },
-        { status: 500 }
-      );
+      // If error was due to unexpected column or constraint, attempt minimal insert
+      const fallback = await supabaseAdmin
+        .from("creator_applications")
+        .insert({
+          full_name: fullName.trim(),
+          email: email.toLowerCase().trim(),
+          phone: phone?.trim() || "N/A",
+          telegram: telegram?.trim() || "N/A",
+          link1: link1.trim(),
+          status: "pending",
+        })
+        .select()
+        .maybeSingle();
+
+      if (fallback.error) {
+        console.error("Supabase fallback insert error:", fallback.error);
+        return NextResponse.json(
+          { error: `Database error: ${fallback.error.message || "Failed to submit"}` },
+          { status: 500 }
+        );
+      }
+      data = fallback.data;
     }
 
     // Trigger instant Telegram alert to founder
