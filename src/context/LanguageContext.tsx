@@ -51,10 +51,17 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode; initialLoca
     // Check localStorage on mount as client fallback if cookie is not set
     try {
       const saved = localStorage.getItem("seccion_user_locale") as SupportedLocale;
-      if (saved && LOCALES[saved] && saved !== locale) {
+      if (saved && LOCALES[saved]) {
         setLocaleState(saved);
         document.documentElement.setAttribute("lang", saved);
         document.documentElement.setAttribute("dir", LOCALES[saved]?.dir || "ltr");
+      } else if (typeof navigator !== "undefined") {
+        // Auto-detect browser/system language (e.g. es-AR, es-DO, es-ES -> 'es')
+        const browserLang = (navigator.language || (navigator as any).userLanguage || "").toLowerCase();
+        const detectedLocale: SupportedLocale = browserLang.startsWith("es") ? "es" : "en";
+        setLocaleState(detectedLocale);
+        document.documentElement.setAttribute("lang", detectedLocale);
+        document.documentElement.setAttribute("dir", LOCALES[detectedLocale]?.dir || "ltr");
       } else {
         document.documentElement.setAttribute("lang", locale);
         document.documentElement.setAttribute("dir", LOCALES[locale]?.dir || "ltr");

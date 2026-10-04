@@ -31,6 +31,7 @@ import {
 import StudioTourModal from "@/components/onboarding/StudioTourModal";
 import VisibilityAdvisor from "@/components/onboarding/VisibilityAdvisor";
 import PublicNavbar from "@/components/PublicNavbar";
+import CreatorQuickApplyModal from "@/components/creator/CreatorQuickApplyModal";
 
 const CITIES = [
   { value: "global_other", label: "🌍 Global / Worldwide (Any City or Country)", labelEs: "🌍 Global / Internacional (Cualquier Ciudad o País)" },
@@ -74,6 +75,9 @@ function MonoNumber({ value, suffix = "" }: { value: string | number; suffix?: s
 
 export default function BecomeCreatorPage({ initialProfile, userEmail }: { initialProfile?: any, userEmail?: string }) {
   const { t, locale } = useTranslation();
+  // Quick Apply Modal State
+  const [isQuickApplyOpen, setIsQuickApplyOpen] = useState<boolean>(false);
+
   // Tour State
   const [isTourOpen, setIsTourOpen] = useState<boolean>(false);
 
@@ -140,17 +144,11 @@ export default function BecomeCreatorPage({ initialProfile, userEmail }: { initi
   const validateInput = () => {
     const newErrors: { [key: string]: string } = {};
     if (!formData.fullName.trim()) {
-      newErrors.fullName = locale === "es" ? "El nombre es obligatorio" : "Creator name is required";
+      newErrors.fullName = locale === "es" ? "El nombre o apodo es obligatorio" : "Creator name is required";
     }
     
     if (!formData.email.trim() || !formData.email.includes("@")) {
       newErrors.email = locale === "es" ? "Email válido obligatorio" : "Valid email required";
-    }
-    
-    if (!formData.phone?.trim() && !formData.telegram?.trim()) {
-      newErrors.contact = locale === "es" 
-        ? "Indica WhatsApp o Telegram para enviarte tu acceso" 
-        : "Provide WhatsApp or Telegram to receive your access";
     }
 
     // Smart handle validation (Accepts @handle or full URL)
@@ -274,19 +272,20 @@ export default function BecomeCreatorPage({ initialProfile, userEmail }: { initi
             </p>
 
             <div className="flex flex-wrap items-center gap-3 pt-2">
-              <a 
-                href="#apply" 
-                className="group px-5 py-3 rounded-full bg-[#00fbfb] text-black font-mono text-[11px] font-black uppercase tracking-wider inline-flex items-center justify-between gap-3 hover:shadow-[0_0_30px_rgba(0,251,251,0.6)] active:scale-[0.98] transition-all duration-300 min-h-[44px] cursor-pointer"
+              <button 
+                type="button"
+                onClick={() => setIsQuickApplyOpen(true)}
+                className="group px-6 py-3.5 rounded-full bg-gradient-to-r from-[#00fbfb] to-[#00d2d2] text-black font-mono text-[11px] font-black uppercase tracking-wider inline-flex items-center justify-between gap-3 hover:shadow-[0_0_35px_rgba(0,251,251,0.7)] active:scale-[0.98] transition-all duration-300 min-h-[48px] cursor-pointer shadow-lg"
               >
-                <span>{locale === "es" ? "Reclama tu 90% y Año Gratis" : "Claim 90% & Free Year"}</span>
+                <span>{locale === "es" ? "⚡ Aplicar en 30s (90% Ganancias)" : "⚡ Fast-Track Apply in 30s (90%)"}</span>
                 <span className="w-6 h-6 rounded-full bg-black/10 flex items-center justify-center shrink-0 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform duration-300">
                   <ArrowUpRight className="w-3.5 h-3.5" />
                 </span>
-              </a>
+              </button>
               <button 
                 type="button"
                 onClick={() => setIsTourOpen(true)}
-                className="group px-5 py-3 rounded-full border border-[#ffabf3]/40 bg-[#ffabf3]/5 text-[#ffabf3] font-mono text-[11px] font-black uppercase tracking-wider inline-flex items-center justify-between gap-3 hover:bg-[#ffabf3]/15 hover:border-[#ffabf3] active:scale-[0.98] transition-all duration-300 shadow-[0_0_15px_rgba(255,171,243,0.2)] hover:shadow-[0_0_25px_rgba(255,171,243,0.4)] min-h-[44px] cursor-pointer"
+                className="group px-5 py-3.5 rounded-full border border-[#ffabf3]/40 bg-[#ffabf3]/5 text-[#ffabf3] font-mono text-[11px] font-black uppercase tracking-wider inline-flex items-center justify-between gap-3 hover:bg-[#ffabf3]/15 hover:border-[#ffabf3] active:scale-[0.98] transition-all duration-300 shadow-[0_0_15px_rgba(255,171,243,0.2)] hover:shadow-[0_0_25px_rgba(255,171,243,0.4)] min-h-[48px] cursor-pointer"
               >
                 <span>{locale === "es" ? "Tour de la Demo" : "Take Demo Tour"}</span>
                 <span className="w-6 h-6 rounded-full bg-[#ffabf3]/10 flex items-center justify-center shrink-0">
@@ -935,7 +934,7 @@ export default function BecomeCreatorPage({ initialProfile, userEmail }: { initi
                         {locale === "es" ? "WhatsApp / Teléfono" : "WhatsApp / Phone"}
                       </label>
                       <span className="text-[9px] text-[#00fbfb]/70 font-mono">
-                        {locale === "es" ? "(Requerido WhatsApp o Telegram)" : "(WhatsApp or Telegram required)"}
+                        {locale === "es" ? "(Opcional)" : "(Optional)"}
                       </span>
                     </div>
                     <input
@@ -944,7 +943,7 @@ export default function BecomeCreatorPage({ initialProfile, userEmail }: { initi
                       value={formData.phone}
                       onChange={handleInputChange}
                       placeholder="+34 600 000 000 / +57 300 000 0000"
-                      className={`w-full px-4 py-3 rounded-xl bg-black/50 border ${errors.contact ? "border-amber-500/60" : "border-white/10 focus:border-[#00fbfb]"} text-white text-xs placeholder-white/20 focus:outline-none transition font-sans`}
+                      className="w-full px-4 py-3 rounded-xl bg-black/50 border border-white/10 focus:border-[#00fbfb] text-white text-xs placeholder-white/20 focus:outline-none transition font-sans"
                     />
                   </div>
 
@@ -955,7 +954,7 @@ export default function BecomeCreatorPage({ initialProfile, userEmail }: { initi
                         {locale === "es" ? "Usuario de Telegram (@tag)" : "Telegram Handle (@tag)"}
                       </label>
                       <span className="text-[9px] text-[#ffabf3]/70 font-mono">
-                        {locale === "es" ? "(Requerido WhatsApp o Telegram)" : "(WhatsApp or Telegram required)"}
+                        {locale === "es" ? "(Opcional)" : "(Optional)"}
                       </span>
                     </div>
                     <input
@@ -964,7 +963,7 @@ export default function BecomeCreatorPage({ initialProfile, userEmail }: { initi
                       value={formData.telegram}
                       onChange={handleInputChange}
                       placeholder="@yourcreatorhandle"
-                      className={`w-full px-4 py-3 rounded-xl bg-black/50 border ${errors.contact ? "border-amber-500/60" : "border-white/10 focus:border-[#00fbfb]"} text-white text-xs placeholder-white/20 focus:outline-none transition font-mono`}
+                      className="w-full px-4 py-3 rounded-xl bg-black/50 border border-white/10 focus:border-[#00fbfb] text-white text-xs placeholder-white/20 focus:outline-none transition font-mono"
                     />
                   </div>
                 </div>
@@ -1288,17 +1287,29 @@ export default function BecomeCreatorPage({ initialProfile, userEmail }: { initi
       {/* Footer */}
       <PublicFooter />
 
+      {/* Sticky Mobile Fast-Apply Trigger Bar */}
+      <div className="fixed bottom-0 left-0 right-0 z-40 p-3 bg-[#0A0A14]/95 backdrop-blur-xl border-t border-white/10 sm:hidden flex items-center gap-2">
+        <button
+          type="button"
+          onClick={() => setIsQuickApplyOpen(true)}
+          className="flex-1 py-3 px-4 rounded-xl bg-gradient-to-r from-[#00fbfb] to-[#00d2d2] text-black font-mono font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(0,251,251,0.4)] cursor-pointer"
+        >
+          <span>{locale === "es" ? "⚡ Aplicar en 30s (90% Ganancias)" : "⚡ Apply in 30s (90% Split)"}</span>
+          <ArrowUpRight className="w-4 h-4" />
+        </button>
+      </div>
+
+      <CreatorQuickApplyModal
+        isOpen={isQuickApplyOpen}
+        onClose={() => setIsQuickApplyOpen(false)}
+      />
+
       <StudioTourModal 
         isOpen={isTourOpen} 
         onClose={() => setIsTourOpen(false)} 
         onClaimOffer={() => {
           setIsTourOpen(false);
-          const applyElem = document.getElementById("apply");
-          if (applyElem) {
-            applyElem.scrollIntoView({ behavior: "smooth" });
-          } else {
-            window.location.href = '#apply';
-          }
+          setIsQuickApplyOpen(true);
         }}
       />
     </div>

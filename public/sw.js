@@ -83,8 +83,28 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // HTML Page Navigation: Stale-While-Revalidate with Offline Fallback
+  // Public Marketing & Application Pages: Pure Network, NEVER hijack with /offline.html
+  const isMarketingRoute = 
+    url.pathname === "/" || 
+    url.pathname === "/become-creator" || 
+    url.pathname === "/early-access" || 
+    url.pathname === "/how-we-do" || 
+    url.pathname === "/now-streaming" || 
+    url.pathname === "/rules" || 
+    url.pathname === "/privacy" || 
+    url.pathname === "/creator-hub" || 
+    url.pathname.startsWith("/creator-hub/") || 
+    url.pathname.startsWith("/blog") || 
+    url.pathname === "/login";
+
   if (request.mode === "navigate") {
+    if (isMarketingRoute) {
+      // Direct network pass-through to ensure marketing campaigns never get trapped in offline.html
+      event.respondWith(fetch(request));
+      return;
+    }
+
+    // Authenticated App navigation: Stale-While-Revalidate with cached fallback
     event.respondWith(
       fetch(request)
         .then((networkResponse) => {

@@ -3,19 +3,27 @@ import { createAdminClient } from "@/lib/supabase/admin-client";
 import { sendTelegramNotification } from "@/lib/telegram";
 import { z } from "zod";
 
+// Helper to normalize any handle or URL to a valid web link
+const normalizeLink = (val: unknown) => {
+  if (typeof val !== "string") return "";
+  const trimmed = val.trim();
+  if (!trimmed) return "";
+  if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) return trimmed;
+  if (trimmed.startsWith("@")) return `https://instagram.com/${trimmed.slice(1)}`;
+  if (trimmed.includes(".com") || trimmed.includes(".me") || trimmed.includes(".tv") || trimmed.includes(".fans") || trimmed.includes(".ai") || trimmed.includes(".")) return `https://${trimmed}`;
+  return `https://instagram.com/${trimmed}`;
+};
+
 const creatorApplySchema = z.object({
   fullName: z.string().min(2, "Full name must be at least 2 characters").max(100),
   email: z.string().email("Invalid email address format"),
-  phone: z.string().max(30).optional().or(z.literal("")),
-  telegram: z.string().max(50).optional().or(z.literal("")),
-  link1: z.string().url("link1 must be a valid URL"),
-  link2: z.string().url("link2 must be a valid URL").optional().or(z.literal("")),
-  link3: z.string().url("link3 must be a valid URL").optional().or(z.literal("")),
-  city: z.string().max(100).optional(),
+  phone: z.string().max(30).optional().nullable().or(z.literal("")),
+  telegram: z.string().max(50).optional().nullable().or(z.literal("")),
+  link1: z.string().min(1, "Primary handle or link is required").transform(normalizeLink),
+  link2: z.string().optional().nullable().transform(val => val ? normalizeLink(val) : ""),
+  link3: z.string().optional().nullable().transform(val => val ? normalizeLink(val) : ""),
+  city: z.string().max(100).optional().nullable(),
   claimOffer: z.boolean().optional(),
-}).refine(data => (data.phone && data.phone.trim().length >= 5) || (data.telegram && data.telegram.trim().length >= 2), {
-  message: "At least one direct contact method (WhatsApp/Phone or Telegram) is required",
-  path: ["phone"]
 });
 
 export async function POST(req: NextRequest) {
@@ -56,8 +64,8 @@ export async function POST(req: NextRequest) {
       .insert({
         full_name: fullName.trim(),
         email: email.toLowerCase().trim(),
-        phone: phone.trim(),
-        telegram: telegram.trim(),
+        phone: phone?.trim() || null,
+        telegram: telegram?.trim() || null,
         link1: link1.trim(),
         link2: link2?.trim() || null,
         link3: link3?.trim() || null,

@@ -198,10 +198,10 @@ export default function StudioTourModal({ isOpen, onClose, onClaimOffer }: Studi
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#020205]/95 backdrop-blur-md overflow-y-auto">
-      {/* Outer Close Button */}
+      {/* Outer Close Button with safe-area support */}
       <button 
         onClick={onClose} 
-        className="fixed top-6 right-6 z-[60] p-2 rounded-full bg-white/5 border border-white/10 text-white/60 hover:text-white hover:bg-white/10 transition cursor-pointer"
+        className="fixed top-4 right-4 sm:top-6 sm:right-6 z-[60] p-2.5 rounded-full bg-[#0F0F1A]/90 border border-white/20 text-white/80 hover:text-white hover:bg-white/20 transition cursor-pointer shadow-lg mt-[env(safe-area-inset-top,0px)] mr-[env(safe-area-inset-right,0px)]"
       >
         <X className="w-5 h-5" />
       </button>

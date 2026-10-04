@@ -225,3 +225,19 @@ body.mobile-chat-open .mobile-bottom-nav {
   }
 }
 
+/* ── Mobile In-App Browser & iOS Keyboard Auto-Zoom Prevention ──────── */
+/* iOS Safari/Instagram zooms the viewport if input font-size is < 16px */
+@media (max-width: 768px) {
+  input[type="text"],
+  input[type="email"],
+  input[type="tel"],
+  input[type="password"],
+  input[type="number"],
+  input[type="url"],
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}
+
+
