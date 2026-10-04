@@ -19,13 +19,16 @@ export default function CookieConsentBanner() {
   const handleAccept = () => {
     localStorage.setItem("seccion_cookie_consent", "accepted");
     setIsVisible(false);
-    // Here we would typically initialize Google Analytics, Meta Pixel, etc.
+    (window as any).ttq?.grantConsent?.();
+    (window as any).fbq?.("consent", "grant");
   };
 
   const handleReject = () => {
     localStorage.setItem("seccion_cookie_consent", "rejected");
     setIsVisible(false);
     // Only strictly necessary cookies will be used.
+    (window as any).ttq?.revokeConsent?.();
+    (window as any).fbq?.("consent", "revoke");
   };
 
   return (
