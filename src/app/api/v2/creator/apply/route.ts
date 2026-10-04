@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin-client";
 import { sendTelegramNotification } from "@/lib/telegram";
+import { sendCreatorWelcomeEmail } from "@/lib/email";
 import { z } from "zod";
 
 // Helper to normalize any handle or URL to a valid web link
@@ -136,11 +137,18 @@ export async function POST(req: NextRequest) {
     
     sendTelegramNotification(msg).catch(() => {});
 
+    // Send automated welcome & next-steps email to creator via Resend
+    sendCreatorWelcomeEmail({
+      email: email.trim(),
+      fullName: fullName.trim(),
+      applicationId: data?.id,
+    }).catch(() => {});
+
     return NextResponse.json(
       {
         success: true,
         message: "Application submitted successfully",
-        applicationId: data.id,
+        applicationId: data?.id,
       },
       { status: 201 }
     );
