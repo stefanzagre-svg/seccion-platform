@@ -19,6 +19,15 @@ For all communication, design projects, and social media content creation, stric
 
 Always use these files for any platform development or content requiring SECCION's branding.
 
+## 📱 Official Communication & Social Handles
+- **Telegram Username**: `@seccionplatform`
+- **WhatsApp Support & Onboarding**: `+34 662 907 153` (`@seccionplatform`)
+- **Instagram**: `@seccionplatform`
+- **TikTok**: `@seccionplatform`
+- **Official Creator Email**: `creator@seccion.ai` (Forwarded to `steveseccion@gmail.com`)
+- **Founder / Operations**: Stefan Zagre (@steveseccion)
+
+
 ---
 
 ## 🚀 Platform Architecture & Audit Ledger (Synced with Antigravity 2.0 & IDE)
