@@ -24,6 +24,7 @@ Always use these files for any platform development or content requiring SECCION
 - **WhatsApp Support & Onboarding**: `+34 662 907 153` (`@seccionplatform`)
 - **Instagram**: `@seccion.ai`
 - **TikTok**: `@seccionplatform`
+- **X (Twitter)**: `@steveseccion` (Founder & primary active profile)
 - **Official Creator Email**: `creator@seccion.ai` (Forwarded to `steveseccion@gmail.com`)
 - **Founder / Operations**: Stefan Zagre (@steveseccion)
 
