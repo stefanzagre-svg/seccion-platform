@@ -143,9 +143,15 @@ export async function verifyC2PA(
   return null;
 }
 
+// ─── Run Full Pipeline ──────────────────────────────────────────────────────────
+
+import { detectSynthId } from './synthid';
+
 /**
  * Run the full auto-detection pipeline on uploaded content.
- * Tries C2PA first (cryptographic proof), falls back to Hive (probabilistic).
+ * 1. Tries C2PA first (cryptographic metadata proof).
+ * 2. Checks Google SynthID (latent statistical watermarks from Imagen/Veo/AI).
+ * 3. Falls back to Sightengine / Hive (visual neural network classification).
  */
 export async function runAutoDetection(
   mediaUrl: string,
@@ -171,6 +177,16 @@ export async function runAutoDetection(
     }
   }
 
-  // Phase 2: Fall back to Hive probabilistic detection
+  // Phase 2: Google SynthID Detection (Google DeepMind latent watermarks)
+  try {
+    const synthIdResult = await detectSynthId(mediaUrl, mediaType, mediaBuffer);
+    if (synthIdResult && synthIdResult.isAiGenerated) {
+      return synthIdResult;
+    }
+  } catch (err) {
+    console.warn('[AutoDetection] SynthID inspection skipped:', err);
+  }
+
+  // Phase 3: Fall back to Sightengine & Hive probabilistic detection
   return detectContentProvenance(mediaUrl, mediaType);
 }

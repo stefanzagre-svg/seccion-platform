@@ -179,7 +179,7 @@ export async function detectSightengineProvenance(
 
   return {
     confidence: overallAiConfidence,
-    suggestedLevel,
+    suggestedLevel: suggestedLevel ?? 'genuine',
     isAiGenerated: overallAiConfidence >= 0.50,
     matchedModel: deepfakeScore > 0.5 ? 'deepfake-detection' : aiScore > 0.7 ? 'sightengine-genai' : undefined,
   };
