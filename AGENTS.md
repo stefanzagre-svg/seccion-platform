@@ -19,26 +19,30 @@ For all communication, design projects, and social media content creation, stric
 
 Always use these files for any platform development or content requiring SECCION's branding.
 
-## 📱 Official Communication & Social Handles
-- **Telegram Username**: `@seccionplatform`
-- **WhatsApp Support & Onboarding**: `+34 662 907 153` (`@seccionplatform`)
-- **Instagram**: `@seccion.ai`
-- **TikTok**: `@seccionplatform`
-- **X (Twitter)**: `@steveseccion` (Founder & primary active profile)
-- **Official Creator Email**: `creator@seccion.ai` (Forwarded to `steveseccion@gmail.com`)
-- **Founder / Operations**: Stefan Zagre (@steveseccion)
+---
 
+## 👤 Architect Profile & Working Contract: Stefan (Sole Builder)
+
+- **Founder & Architect**: Stefan
+- **Core Directive**: **Deep Reasoning Over Speed**. Quality of thought, edge-case analysis, and architectural rigor always supersede superficial pace.
+- **Operating Imperatives for AI Models**:
+  1. **First-Principles Reasoning**: Before proposing implementations, analyze security boundaries, concurrency invariants (e.g. `FOR UPDATE` row locks), and regulatory liabilities (GDPR, EU AI Act, DSA, NY Art. 36).
+  2. **No Placeholders**: Deliver production-grade, complete code without hollow `// TODO` stubs.
+  3. **Obsidian-Style Cognitive Continuity**: Connect systems as bi-directional knowledge graphs (`[[Concept]]`, `[[Architecture]]`, `[[Decisions]]`).
+  4. **Math to Magic**: Complex backend precision must translate into an intuitive, high-status user experience with zero cognitive drag.
 
 ---
 
 ## 🚀 Platform Architecture & Audit Ledger (Synced with Antigravity 2.0 & IDE)
 
-> **Last Synced**: 2026-09-04  
-> **Production Cloudflare Version ID**: `098346ee-30e2-434b-9bac-7b7641fe789b` (commit `971bed0` / Chaos & Concurrency Hardened)  
+> **Last Synced**: 2026-10-07  
+> **Production Cloudflare Version ID**: 721f0f1b-ed9d-4694-b405-c5864625937a (Synced with commit 950a5db / Creator 1st Steps Guide Live)  
 > **Live Production URL**: `https://seccion.ai` & `https://www.seccion.ai`  
-> **Unit & Stress Test Suite**: 22 / 22 files, 220 / 220 tests PASSING (`npm test` / `vitest run --globals`)  
-> **E2E Certification Suite**: 19 / 19 PASSING across 6 Stages (`npm run test:e2e`)  
-> **Scale Stability & Reliability Ratio**: **99.20% Target Verified [Production Certified]**
+> **Live Medium Editorial**: `https://medium.com/@seccionadmin/i-built-a-creator-platform-that-pays-90-and-replaces-40-management-agencies-with-ai-heres-what-2170851fa9ef`  
+> **Unit & Stress Test Suite**: 25 / 25 files, 257 / 257 tests PASSING (`npm test` / `vitest run --globals`)  
+> **E2E Certification Suite**: 20 / 20 PASSING across 7 Stages (`npm run test:e2e`)  
+> **Scale Stability & Reliability Ratio**: **99.40% Target Verified [Production Certified]**  
+> **Primary Social Platform**: `@steveseccion` on X (Twitter) — Instagram `@seccionplatform` terminated (Sept 2026)
 
 ### 🏆 Audit Execution Scorecard
 
@@ -102,6 +106,8 @@ Always use these files for any platform development or content requiring SECCION
 - **[✓] Creator Approval Messaging Protocol**: Confirmation emails, WhatsApp, and Telegram approval notifications MUST include direct links to `/onboarding?role=creator&email={email}` or `/login?email={email}` redirecting creators directly to the Registration Gate with their approved status pre-loaded.
 - **[✓] Supabase Universal RLS Security Remediation**: Enabled RLS and strict ownership/gating policies across all 23 database tables (`web/scripts/enable_universal_rls.sql`), resolving `rls_disabled_in_public` warning while preserving anonymous pre-launch signups and feed discovery.
 - **[✓] C5 KYC Provider**: Live **DIDIT Zero-Knowledge Identity Gateway** (`verify.didit.me`) & Sightengine AI integrated
+- **[✓] Creator 1st Steps Guide & Onboarding Cockpit (Oct 2026)**: Interactive 5-step tour modal (`CreatorTourModal.tsx`), reactive completion checklist HUD (`CreatorOnboardingChecklist.tsx`), full Math-to-Magic EN/ES localization, Playwright E2E certified, deployed live to Cloudflare production (`721f0f1b-ed9d-4694-b405-c5864625937a`).
+- **[✓] Paid Ads & Social Platform Compliance Engine (Oct 2026)**: Established zero-ban targeting, copy, and OCR matrix for X Ads, Meta (Instagram/Facebook), and TikTok Ads (`AD_TARGETING_PLAYBOOK_INSTAGRAM_X.md`). Sanitized all paid ad creative OCR to B2B Creator Studio language (`Creator Business Tools`, `AI Community Copilot`, `Global S2S Translation`, `DRM Privacy Protection`), removing financial percentage triggers (`90%`, `80%`) and adult heuristics (`agencias`, `propinas`, `fans`). Deployed 9:16 vertical and 4:5 feed formats with UTM analytics tracking.
 - **[⏳] Run cleanup_demo_accounts.sql**: Execute once in Supabase SQL Editor (service role) to purge existing ghost rows
 - **[⏳] Dynamic Founding Spots Counter**: Trigger display when creator applications hit 50 milestone
 - **[⏳] Company Web3 Wallet in NOWPayments**: Configure SECCION treasury wallet (USDT Polygon / TRC20) in NOWPayments payout settings
@@ -189,4 +195,11 @@ When introducing a new **Creator Intent, Content Synergy, or Specialization** (e
 4. **Multilingual Sync**: Sync translation keys across `en.json` & `es.json` using Math-to-Magic tone.
 5. **Validation**: Verify type-safety with `npx tsc --noEmit`.
 
+---
 
+## ⚡ Antigravity 2.0 Deployment Synchronization Protocol
+
+> **Mandatory Contract Rule**: After every production deployment (Cloudflare Worker/OpenNext release, database RLS migration, or test certification update), execute the following synchronization steps atomically:
+> 1. **Update Root & Sub-app Ledgers**: Sync `Production Cloudflare Version ID`, commit hash, test count, and deployment timestamp across `AGENTS.md`, `web/AGENTS.md`, and `PROJECT_STATUS.md`.
+> 2. **Session Chronology Entry**: Add a detailed session ledger entry into `PROJECT_STATUS.md` recording all features shipped, test metrics, and live URLs.
+> 3. **Verification**: Confirm Cloudflare cold-start metrics and verify HTTP 200 response on `https://seccion.ai`.
