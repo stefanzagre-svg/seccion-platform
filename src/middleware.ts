@@ -118,8 +118,11 @@ export async function middleware(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized: Valid user session required' }, { status: 401 });
     }
 
-    // 2. If hitting protected page, redirect to login
+    // 2. If hitting protected page, redirect to login (allow dev mode studio inspection)
     if (isExplicitlyProtected) {
+      if (process.env.NODE_ENV === 'development' && pathname.startsWith('/studio')) {
+        return supabaseResponse;
+      }
       const url = request.nextUrl.clone();
       url.pathname = '/login';
       return NextResponse.redirect(url);

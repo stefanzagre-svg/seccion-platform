@@ -29,6 +29,8 @@ import BlurredFaceImage from '@/components/BlurredFaceImage';
 import ProvenanceSelector from '@/components/ProvenanceSelector';
 import { type ProvenanceLevel } from '@/lib/content-provenance';
 import { awardXp } from '@/lib/xp-service';
+import CreatorTourModal from '@/components/studio/CreatorTourModal';
+import CreatorOnboardingChecklist, { type CreatorChecklistMetrics } from '@/components/studio/CreatorOnboardingChecklist';
 
 interface TeaserMetadata {
   teaser_type: 'none' | 'video_clip' | 'main_photo' | 'custom';
@@ -291,6 +293,7 @@ export default function CreatorStudio() {
   const [activeTab, setActiveTab] = useState<'content' | 'live' | 'analytics' | 'settings' | 'goals' | 'safety_ops' | 'orders' | 'consent_inbox'>('content');
   const [customRequestPermission, setCustomRequestPermission] = useState<'anyone' | 'restricted'>('anyone');
   const [isUploading, setIsUploading] = useState(false);
+  const [isTourOpen, setIsTourOpen] = useState(false);
 
   // Registered Users lookup for co-performance tagging
   const REGISTERED_USERS = [
@@ -895,6 +898,26 @@ export default function CreatorStudio() {
               .gt('gauge_score', 0)
               .then(({ count }) => setCreatorMatchCount(count ?? 0));
           }
+        } else if (process.env.NODE_ENV === 'development') {
+          // Dev sandbox: mount demo creator profile for visual verification & testing
+          const demoCreator = {
+            id: '364177d5-8664-460d-8534-111111111111',
+            username: 'elena_demo',
+            display_name: 'Elena Rostova',
+            avatar_url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=800&q=80',
+            role: 'creator',
+            is_kyc_verified: false,
+            base_subscription_price: 19.99,
+            ai_agent_active: true,
+            chat_auto_enabled: false,
+            content_ops_enabled: true,
+            legal_audit_enabled: true,
+            residence: 'ES'
+          };
+          setProfile(demoCreator);
+          setBaseSubscriptionPrice(19.99);
+          setPpvBaseRate(4.99);
+          setPrivateCallPrice(3.00);
         }
       } catch (err) {
         console.error('Error loading settings:', err);
@@ -1411,6 +1434,33 @@ export default function CreatorStudio() {
             </button>
           </div>
         </div>
+
+        {/* ── CREATOR 1ST STEPS GUIDE & ONBOARDING CHECKLIST ── */}
+        <CreatorOnboardingChecklist
+          metrics={{
+            hasVisuals: !!profile?.avatar_url,
+            hasMonetization: baseSubscriptionPrice > 0 || ppvBaseRate > 0,
+            hasSeedContent: uploadedPosts.length >= 2,
+            hasVaultNote: true, // Profile has default Obsidian persona
+            hasKyc: !!profile?.is_kyc_verified,
+            hasTaxId: !!(profile?.tax_id_number || taxIdNumber)
+          }}
+          onNavigateTab={(tabId) => setActiveTab(tabId as any)}
+          onNavigateAiTools={() => router.push('/studio/ai-tools')}
+          onOpenTour={() => setIsTourOpen(true)}
+          onOpenKyc={() => router.push('/creator/kyc')}
+          onAskCopilot={(question) => {
+            alert(`[AI Copilot Direct Assist]:\n\n${question}\n\nAsk this in the Copilot chat or AI Tools hub for immediate guidance.`);
+          }}
+        />
+
+        {/* ── CREATOR TOUR MODAL ── */}
+        <CreatorTourModal
+          isOpen={isTourOpen}
+          onClose={() => setIsTourOpen(false)}
+          onNavigateTab={(tabId) => setActiveTab(tabId as any)}
+          onNavigateAiTools={() => router.push('/studio/ai-tools')}
+        />
 
         <div className="flex items-center gap-2 bg-white/5 p-1.5 rounded-2xl border border-white/5 w-fit">
           {[

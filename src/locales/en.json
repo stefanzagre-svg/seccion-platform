@@ -593,5 +593,85 @@
     "intentMatchBadge": "Intent Synergy",
     "viewVault": "View Vault Items",
     "actionPillTitle": "Action Snapshot"
+  },
+  "creatorTour": {
+    "steps": {
+      "welcome": {
+        "badge": "Step 1 of 5 • Orientation",
+        "title": "Welcome to SECCION Creator Studio",
+        "desc": "Your high-status creator headquarters. Everything is built to replace 40% agency tolls with direct, authentic monetization and automated fan nurturing.",
+        "highlight": "You retain 90% Net Revenue from day one across all 7 income streams.",
+        "action": "Next: Earnings & Rates"
+      },
+      "pricing": {
+        "badge": "Step 2 of 5 • Monetization",
+        "title": "Configure Your Founding Rates",
+        "desc": "Set your base VIP subscription, PPV unlocks, and private 1-on-1 call pricing. Members unlock content through cash or earned Chemistry XP.",
+        "highlight": "Recommended baseline: $9.99/mo VIP Pass • $4.99 PPV Media • $3.00/min Private Call.",
+        "action": "Go to Earnings Settings"
+      },
+      "content": {
+        "badge": "Step 3 of 5 • Content & DRM",
+        "title": "DRM Vault & Progressive Privacy",
+        "desc": "Upload your initial seed portfolio with forensic DRM watermarking. If you enable Face-Blur, your identity stays encrypted until connections reach Relationship Level 3.",
+        "highlight": "Seed your feed with 2–3 exclusive posts so new subscribers get immediate value.",
+        "action": "Open Content Vault"
+      },
+      "stream": {
+        "badge": "Step 4 of 5 • Live Experience",
+        "title": "Interactive WebRTC Live Cockpit",
+        "desc": "Broadcast with sub-500ms latency. The live Audience Vibe Dashboard calculates chemistry scores in real time so you always know who is tipping and engaging.",
+        "highlight": "Requires 18+ KYC Identity Shield before your first public broadcast.",
+        "action": "Inspect Live Station"
+      },
+      "copilot": {
+        "badge": "Step 5 of 5 • AI Second Brain",
+        "title": "Obsidian Vault & AI Copilot",
+        "desc": "Your digital twin replies to fan DMs when you are offline. Train your Copilot using Obsidian Markdown notes with [[Persona]] and [[Boundaries]] to ensure safe, authentic conversations.",
+        "highlight": "Protected by an instant 1-click Emergency Halt kill-switch.",
+        "action": "Open Obsidian AI Tools"
+      }
+    }
+  },
+  "creatorChecklist": {
+    "header": {
+      "title": "Creator 1st Steps Cockpit",
+      "sub": "Complete your initial setup to unlock live streaming and start collecting your 90% founding revenue."
+    },
+    "status": {
+      "ready": "Portfolio Ready",
+      "steps": "Completed"
+    },
+    "actions": {
+      "tour": "Studio Tour",
+      "configure": "Configure",
+      "upload": "Upload",
+      "writeVault": "Edit Vault",
+      "verify": "Verify",
+      "submitTax": "Submit Tax",
+      "askAi": "Ask Copilot about this step"
+    },
+    "items": {
+      "pricing": {
+        "title": "Set Base VIP & PPV Rates",
+        "desc": "Configure monthly subscription and per-item PPV unlocks."
+      },
+      "content": {
+        "title": "Seed DRM Content Vault",
+        "desc": "Upload at least 2 exclusive posts or teasers for early members."
+      },
+      "vault": {
+        "title": "Define Copilot Second Brain",
+        "desc": "Write your [[Persona]] and [[Boundaries]] note in the Obsidian Vault."
+      },
+      "kyc": {
+        "title": "Identity Shield (KYC 18+)",
+        "desc": "Verify zero-knowledge 18+ identity to unlock public live streams & payouts."
+      },
+      "tax": {
+        "title": "Tax Profile & Payout Destination",
+        "desc": "Register tax business name and TIN in settings for global DAC7/1099 compliance."
+      }
+    }
   }
 }

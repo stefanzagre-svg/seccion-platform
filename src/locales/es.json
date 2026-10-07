@@ -597,5 +597,85 @@
     "intentMatchBadge": "Sinergia de Intención",
     "viewVault": "Ver Contenido de Bóveda",
     "actionPillTitle": "Acción Instantánea"
+  },
+  "creatorTour": {
+    "steps": {
+      "welcome": {
+        "badge": "Paso 1 de 5 • Orientación",
+        "title": "Bienvenido a tu Creator Studio en SECCION",
+        "desc": "Tu cuartel general de creador. Todo diseñado para eliminar las comisiones del 40% de las agencias con monetización directa y fidelización automática de tu comunidad.",
+        "highlight": "Mantienes el 90% de Ingresos Netos desde el primer día en tus 7 canales de monetización.",
+        "action": "Siguiente: Tarifas & Ganancias"
+      },
+      "pricing": {
+        "badge": "Paso 2 de 5 • Monetización",
+        "title": "Configura tus Tarifas Fundadoras",
+        "desc": "Establece tu pase VIP mensual, tus desbloqueos PPV y videollamadas privadas 1 a 1. Los miembros desbloquean contenido con dinero real o su XP de Química.",
+        "highlight": "Tarifas recomendadas: $9.99/mes Pase VIP • $4.99 Contenido PPV • $3.00/min Llamada Privada.",
+        "action": "Ir a Ajustes de Tarifas"
+      },
+      "content": {
+        "badge": "Paso 3 de 5 • Contenido & DRM",
+        "title": "Bóveda DRM & Privacidad Progresiva",
+        "desc": "Sube tu portafolio inicial con marcas de agua forenses DRM. Si activas Face-Blur, tu rostro permanece encriptado hasta que una conexión alcance el Nivel 3 de relación.",
+        "highlight": "Siembra tu feed con 2–3 publicaciones exclusivas para dar valor inmediato a tus primeros suscriptores.",
+        "action": "Abrir Bóveda de Contenido"
+      },
+      "stream": {
+        "badge": "Paso 4 de 5 • Experiencia en Vivo",
+        "title": "Cockpit Live WebRTC Interactivo",
+        "desc": "Transmite con latencia ultrabaja (sub-500ms). Tu Radar de Audiencia calcula la química en tiempo real para que veas al instante quién aporta y conecta.",
+        "highlight": "Requiere verificación de Escudo de Identidad (+18) antes de tu primera transmisión pública.",
+        "action": "Inspeccionar Sala Live"
+      },
+      "copilot": {
+        "badge": "Paso 5 de 5 • Segundo Cerebro IA",
+        "title": "Bóveda Obsidian & Copilot IA",
+        "desc": "Tu gemelo digital responde mensajes directos cuando estás fuera de línea. Entrena tu Copilot con notas Markdown en Obsidian con [[Persona]] y [[Límites]] para interacciones seguras y auténticas.",
+        "highlight": "Protegido por un interruptor de emergencia instantáneo (Emergency Halt).",
+        "action": "Abrir Herramientas Obsidian"
+      }
+    }
+  },
+  "creatorChecklist": {
+    "header": {
+      "title": "Cockpit de Primeros Pasos del Creador",
+      "sub": "Completa tu configuración inicial para desbloquear transmisiones en vivo y recibir tu 90% de ingresos fundadores."
+    },
+    "status": {
+      "ready": "Portafolio Listo",
+      "steps": "Completados"
+    },
+    "actions": {
+      "tour": "Tour del Studio",
+      "configure": "Configurar",
+      "upload": "Subir",
+      "writeVault": "Editar Bóveda",
+      "verify": "Verificar",
+      "submitTax": "Datos Fiscales",
+      "askAi": "Consultar al Copilot sobre este paso"
+    },
+    "items": {
+      "pricing": {
+        "title": "Fijar Tarifas VIP & PPV",
+        "desc": "Define el pase mensual y el costo de desbloqueo por publicación PPV."
+      },
+      "content": {
+        "title": "Sembrar Bóveda de Contenido DRM",
+        "desc": "Sube al menos 2 publicaciones o teasers exclusivos para tus miembros."
+      },
+      "vault": {
+        "title": "Definir Segundo Cerebro en Obsidian",
+        "desc": "Crea tus notas de [[Persona]] y [[Límites]] en tu Bóveda de Obsidian."
+      },
+      "kyc": {
+        "title": "Escudo de Identidad (KYC +18)",
+        "desc": "Verificación sin revelación de datos personales para habilitar directos y retiros."
+      },
+      "tax": {
+        "title": "Perfil Fiscal & Billetera de Retiros",
+        "desc": "Registra tu nombre legal y número de identificación fiscal para cumplimiento DAC7/1099."
+      }
+    }
   }
 }
