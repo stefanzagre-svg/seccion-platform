@@ -22,6 +22,7 @@ export default function AuditTrailLogs() {
 
   const fetchLogs = async () => {
     setLoading(true);
+    setError(null);
     try {
       const params = new URLSearchParams({
         page: String(page),
@@ -35,12 +36,13 @@ export default function AuditTrailLogs() {
 
       const res = await fetch(`/api/admin/audit?${params.toString()}`);
       if (!res.ok) {
-        throw new Error('Failed to load audit trail logs');
+        const errJson = await res.json().catch(() => null);
+        throw new Error(errJson?.error || 'Failed to load audit trail logs');
       }
       const data = await res.json();
-      setLogs(data.logs);
-      setTotalItems(data.pagination.total);
-      setTotalPages(data.pagination.totalPages);
+      setLogs(data.logs || []);
+      setTotalItems(data.pagination?.total || 0);
+      setTotalPages(data.pagination?.totalPages || 1);
     } catch (err: any) {
       setError(err.message || 'Error loading logs');
     } finally {

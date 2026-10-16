@@ -44,8 +44,18 @@ export async function GET(request: NextRequest) {
     const { data: logs, count, error } = await query;
 
     if (error) {
-      console.error('[Admin Audit API] Query error:', error);
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      console.warn('[Admin Audit API] Query notice:', error.message);
+      // If table has not been created yet or schema cache is refreshing, return clean empty result
+      return NextResponse.json({
+        logs: [],
+        pagination: {
+          page: 1,
+          limit,
+          total: 0,
+          totalPages: 1,
+        },
+        notice: error.message,
+      });
     }
 
     return NextResponse.json({

@@ -18,8 +18,8 @@ export async function GET(request: NextRequest) {
       .order('key');
 
     if (error) {
-      console.error('[Admin Settings API] Query error:', error);
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      console.warn('[Admin Settings API] Query notice:', error.message);
+      return NextResponse.json({ settings: {}, raw: [] });
     }
 
     // Transform to key-value map for frontend

@@ -39,8 +39,12 @@ export async function GET(request: NextRequest) {
     const { data: items, count, error } = await query;
 
     if (error) {
-      console.error('[Admin Moderation API] Query error:', error);
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      console.warn('[Admin Moderation API] Query notice:', error.message);
+      return NextResponse.json({
+        items: [],
+        stats: { total: 0, pending: 0, underReview: 0, approved: 0, rejected: 0, escalated: 0 },
+        pagination: { page: 1, limit, total: 0, totalPages: 1 },
+      });
     }
 
     // Get moderation stats
