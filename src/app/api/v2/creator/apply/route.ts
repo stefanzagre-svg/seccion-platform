@@ -62,9 +62,13 @@ export async function POST(req: NextRequest) {
         if (fullName?.trim()) patch.full_name = fullName.trim();
         if (Object.keys(patch).length) {
           await supabaseAdmin.from("creator_applications").update(patch).eq("id", existing.id);
-          sendTelegramNotification(
-            `➕ <b>LEAD DETAILS ADDED</b>\n📧 ${email.trim()}\n📱 ${patch.phone || "-"}\n✈️ ${patch.telegram || "-"}\n📍 ${patch.city || "-"}`
-          ).catch(() => {});
+          try {
+            await sendTelegramNotification(
+              `➕ <b>LEAD DETAILS ADDED</b>\n📧 ${email.trim()}\n📱 ${patch.phone || "-"}\n✈️ ${patch.telegram || "-"}\n📍 ${patch.city || "-"}`
+            );
+          } catch (tgErr) {
+            console.warn("[Telegram Lead Details Alert] Failed:", tgErr);
+          }
         }
         return NextResponse.json({ success: true, updated: true, applicationId: existing.id }, { status: 200 });
       }
@@ -124,7 +128,7 @@ export async function POST(req: NextRequest) {
       data = fallback.data;
     }
 
-    // Trigger instant Telegram alert to founder
+    // Trigger instant Telegram alert to founder (must be awaited in Cloudflare Worker)
     const msg = `🚨 <b>NEW CREATOR APPLICATION!</b>\n\n` +
       `👤 <b>Name:</b> ${fullName.trim()}\n` +
       `📧 <b>Email:</b> ${email.trim()}\n` +
@@ -134,8 +138,12 @@ export async function POST(req: NextRequest) {
       `🔗 <b>Link:</b> ${link1.trim()}\n` +
       `📣 <b>Source:</b> ${source}\n` +
       `🎁 <b>Founding Offer:</b> ${claimOffer ? "YES (pending approval for 90% year-1 rate)" : "NO"}`;
-    
-    sendTelegramNotification(msg).catch(() => {});
+
+    try {
+      await sendTelegramNotification(msg);
+    } catch (tgErr) {
+      console.warn("[Telegram Alert] Failed to dispatch:", tgErr);
+    }
 
     const visitorLocale = typeof (rawBody as any)?.locale === "string" ? (rawBody as any).locale : "es";
 
