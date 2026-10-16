@@ -673,5 +673,15 @@
         "desc": "Register tax business name and TIN in settings for global DAC7/1099 compliance."
       }
     }
+  },
+  "chatTranslation": {
+    "autoTranslate": "Auto-Translate",
+    "autoTranslateTooltip": "Automatically translate incoming messages to your language",
+    "translate": "Translate",
+    "translating": "Translating...",
+    "original": "Show original",
+    "translatedBy": "Translated via Gemini AI",
+    "targetLanguage": "Target Language",
+    "error": "Translation failed. Try again."
   }
 }

@@ -677,5 +677,15 @@
         "desc": "Registra tu nombre legal y número de identificación fiscal para cumplimiento DAC7/1099."
       }
     }
+  },
+  "chatTranslation": {
+    "autoTranslate": "Auto-Traducir",
+    "autoTranslateTooltip": "Traducir automáticamente mensajes entrantes a tu idioma",
+    "translate": "Traducir",
+    "translating": "Traduciendo...",
+    "original": "Ver original",
+    "translatedBy": "Traducido con IA Gemini",
+    "targetLanguage": "Idioma Destino",
+    "error": "Error al traducir. Inténtalo de nuevo."
   }
 }
