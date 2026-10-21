@@ -42,7 +42,8 @@ Always use these files for any platform development or content requiring SECCION
 > **Unit & Stress Test Suite**: 26 / 26 files, 257 / 257 tests PASSING (`npm test` / `vitest run --globals`)  
 > **E2E Certification Suite**: 20 / 20 PASSING across 7 Stages (`npm run test:e2e`)  
 > **Scale Stability & Reliability Ratio**: **99.45% Target Verified [Production Certified]**  
-> **Primary Social Platform**: `@steveseccion` on X (Twitter) — Instagram `@seccionplatform` terminated (Sept 2026)
+> **Primary Social Platform**: `@steveseccion` on X (Twitter) — Instagram `@seccionplatform` terminated (Sept 2026)  
+> **Official Social Accounts**: Instagram `@seccion.ai` (keep strictly isolated from terminated `@seccionplatform`) | X `@steveseccion` | TikTok `steve.seccionplatform` | Facebook `seccion ai` (`https://www.facebook.com/profile.php?id=61588742763454`) | WhatsApp Concierge `+34 662 907 153` (`@seccionplatform`)
 
 ### 🏆 Audit Execution Scorecard
 
@@ -108,6 +109,7 @@ Always use these files for any platform development or content requiring SECCION
 - **[✓] C5 KYC Provider**: Live **DIDIT Zero-Knowledge Identity Gateway** (`verify.didit.me`) & Sightengine AI integrated
 - **[✓] Creator 1st Steps Guide & Onboarding Cockpit (Oct 2026)**: Interactive 5-step tour modal (`CreatorTourModal.tsx`), reactive completion checklist HUD (`CreatorOnboardingChecklist.tsx`), full Math-to-Magic EN/ES localization, Playwright E2E certified, deployed live to Cloudflare production (`721f0f1b-ed9d-4694-b405-c5864625937a`).
 - **[✓] Paid Ads & Social Platform Compliance Engine (Oct 2026)**: Established zero-ban targeting, copy, and OCR matrix for X Ads, Meta (Instagram/Facebook), and TikTok Ads (`AD_TARGETING_PLAYBOOK_INSTAGRAM_X.md`). Sanitized all paid ad creative OCR to B2B Creator Studio language (`Creator Business Tools`, `AI Community Copilot`, `Global S2S Translation`, `DRM Privacy Protection`), removing financial percentage triggers (`90%`, `80%`) and adult heuristics (`agencias`, `propinas`, `fans`). Deployed 9:16 vertical and 4:5 feed formats with UTM analytics tracking.
+- **[✓] Autonomous Stealth Creator Outreach Suite (Oct 20, 2026)**: Built & validated `/seccion-autonomous-outreach-suite` (`6/6` golden evals passing) with Dual-Mode Zero-Password Browser Control (CDP port `9222` attach + `storage_state.json`), 70/30 Portfolio Barbell + X New Adult Creator Fast-Track, 6-Stage Fake/Bot/OFM Agency Shield (`TreeSHAP` $\tau = 0.70$), and **Steve Seccion's Creator Account Assistant** native messaging across `EN`, `ES` (`Spain`/`Paisa`/`Rolo`/`Costeño`), `FR`, `PT-BR`, `DE`, `IT`, `PL`, `RO`, and `BG`.
 - **[⏳] Run cleanup_demo_accounts.sql**: Execute once in Supabase SQL Editor (service role) to purge existing ghost rows
 - **[⏳] Dynamic Founding Spots Counter**: Trigger display when creator applications hit 50 milestone
 - **[⏳] Company Web3 Wallet in NOWPayments**: Configure SECCION treasury wallet (USDT Polygon / TRC20) in NOWPayments payout settings
@@ -194,6 +196,25 @@ When introducing a new **Creator Intent, Content Synergy, or Specialization** (e
 3. **Filters & Feed Discovery**: Update `SHORT_TITLES` & `SHORT_TITLES_ES` in `SpecializationFilter.tsx` and add mock showcase archetypes in discovery.
 4. **Multilingual Sync**: Sync translation keys across `en.json` & `es.json` using Math-to-Magic tone.
 5. **Validation**: Verify type-safety with `npx tsc --noEmit`.
+
+---
+
+## 📢 Social Media Outreach & Paid Acquisition Guardrails (Learned Memory)
+
+> **Cross-System Obsidian Links**: `[[Outreach/Campaign-Postmortems-2026]]` · `[[Outreach/Eastern-Europe-S2S-Wedge]]` · `[[Outreach/Authority-First-Pull-Psychology]]` · `[[Compliance/Platform-Character-Limits]]`
+
+1. **Account Isolation & Anti-Spam Discipline**:
+   - Never link legacy/banned `@seccionplatform` emails, phone numbers, or Meta Accounts Center profiles to active assets (`@seccion.ai`, `@steveseccion`, `steve.seccionplatform`, `seccion ai` / `id=61588742763454`).
+   - Enforce a **14-day warmup**, hard cap of **18–22 outbound actions/day** per platform, 3-touch organic warmup (Story View + Like + Contextual Comment) before DMing, **zero raw URLs in cold DM #1**, and **Jaccard similarity $< 0.45$** across every rolling 20-message window via `/seccion-autonomous-outreach-suite`.
+2. **Paid Ads vs. Organic DM Compliance Boundary**:
+   - **Paid Ad Creatives & OCR (X / Meta / TikTok)**: Strictly use B2B Creator Studio framing (`Creator Business Tools`, `AI Community Copilot`, `Global S2S Translation`, `DRM Privacy Protection`). Never include `90%`/`80%` financial promises or adult/dating triggers (`OnlyFans`, `Fansly`, `Dating`, `Citas`, `agencias`, `propinas`, `fans`) in paid ad OCR or keyword targeting. Use Trojan Horse B2B look-alikes (`@OBSProject`, `@Streamlabs`, `@Patreon`, `@Twitch`, `@KickStreaming`).
+   - **TikTok Mandatory Upload Toggles**: Always switch **`AI-generated content` = ON** and **`Disclose post content` (`Your brand`) = ON** to prevent 0-view shadowbans. Never place URLs in TikTok captions or comments.
+   - **Geographic Ad-Set Isolation & Conversion Routing**: Never combine Tier-1 English (`US`/`UK`/`CA`) with Eastern Europe (`PL`/`RO`/`BG`) or LATAM (`CO`/`MX`/`AR`) in the same ad set. Prioritize **Meta/TikTok Native Instant Lead Forms** (`APPLICATION US-CA` benchmark: 100% completion rate) and **Click-to-WhatsApp Concierge (`+34 662 907 153`)** over cold mobile webviews (`96.7%` drop-off), and always anchor web destinations to `https://seccion.ai/become-creator#apply`.
+3. **Target Qualification & Multilingual Wedge (`Steve Seccion's Creator Account Assistant`)**:
+   - **70/30 Portfolio Barbell**: $70\%$ daily quota in $5\text{K}–50\text{K}$ unmanaged Fan-Drivers; $30\%$ in $1\text{K}–5\text{K}$ Rising Stars ($\ge 6.0\%$ ER).
+   - **X New Adult Creator Fast-Track**: On X (`@steveseccion`), newly created or sub-$5\text{K}$ profiles are qualified **only** if verified as independent explicit/adult content creators (skipping OFM chatter farms via `/seccion-autonomous-outreach-suite`).
+   - **Eastern European Wedge (`PL`, `RO`, `BG`)**: Polish, Romanian, and Bulgarian female creators are top-priority targets. Pitch **SECCION's Real-Time AI Voice & Text Translation (75+ languages) + 90% Founding Split + Free Year-1 AI Copilot** in their native language so they can monetize US/EU fans directly without predatory 50%-cut translation agencies.
+   - **Authority-First Value Delivery**: Overcome creator Status-Quo Bias (`PLFS +14`) by framing DM #1 as a zero-link peer observation from **Steve Seccion's Creator Account Assistant**, delivering the Medium founder editorial (`https://medium.com/@seccionadmin/i-built-a-creator-platform-that-pays-90-and-replaces-40-management-agencies-with-ai-heres-what-2170851fa9ef`), comparison benchmark (`https://seccion.ai/creator-hub/onlyfans-alternative`), or `#apply` link only in DM #2 after engagement.
 
 ---
 
