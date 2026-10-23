@@ -3,13 +3,13 @@
 import Script from "next/script";
 
 /**
- * Meta (Instagram) + TikTok pixels, consent-gated (GDPR / Spain).
- * Both start with consent held; they only collect after the visitor accepts the
- * cookie banner (localStorage `seccion_cookie_consent`). CookieConsentBanner
- * calls grant/revoke when the choice is made.
+ * Meta (Instagram) + TikTok + X (Twitter) pixels, consent-gated (GDPR / Spain).
+ * They only collect after the visitor accepts the cookie banner
+ * (localStorage `seccion_cookie_consent`). CookieConsentBanner calls grant/revoke.
  */
 const META_ID = process.env.NEXT_PUBLIC_META_PIXEL_ID || "4537170363228364";
 const TIKTOK_ID = process.env.NEXT_PUBLIC_TIKTOK_PIXEL_ID || "DB11RQRC77U5DCODBVT0";
+const X_PIXEL_ID = process.env.NEXT_PUBLIC_X_PIXEL_ID || "rfcrb";
 
 export default function AdPixels() {
   return (
@@ -26,6 +26,14 @@ ttq.holdConsent();
 var c=localStorage.getItem('seccion_cookie_consent');
 if(c==='accepted')ttq.grantConsent();else if(c==='rejected')ttq.revokeConsent();
 ttq.load('${TIKTOK_ID}');ttq.page();}(window,document,'ttq');`}</Script>
+      {X_PIXEL_ID && (
+        <Script id="x-pixel" strategy="afterInteractive">{`
+!function(e,t,n,s,u,a){e.twq||(s=e.twq=function(){s.exe?s.exe.apply(s,arguments):s.queue.push(arguments);
+},s.version='1.1',s.queue=[],u=t.createElement(n),u.async=!0,u.src='https://static.ads-twitter.com/uwt.js',
+a=t.getElementsByTagName(n)[0],a.parentNode.insertBefore(u,a))}(window,document,'script');
+twq('config','${X_PIXEL_ID}');
+twq('event','page_view');`}</Script>
+      )}
     </>
   );
 }
