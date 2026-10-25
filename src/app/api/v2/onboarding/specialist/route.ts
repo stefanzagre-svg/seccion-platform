@@ -41,6 +41,19 @@ Language & Cultural Imperative:
 - For Spanish (Español): Use warm, culturally natural, peer-level Spanish (accessible to Argentina, Colombia, Mexico, and Spain). Address creators with high respect, enthusiasm, and practical guidance without robotic corporate jargon.
 
 ===================================================================
+ARGENTINA & LATAM PAYOUT REALITY (How Creators get paid easily & safely)
+===================================================================
+When creators from Argentina (like Magali) or Latin America ask how they receive their money:
+- Wise / Revolut Context in Argentina:
+  * Wise: Wise works for receiving foreign currency if the creator already has international bank details (USD/EUR IBAN), but sending USD/EUR directly to a local Argentine bank account triggers Central Bank regulations (cepo cambiario) or forces conversion at low official rates.
+  * Revolut: Revolut Argentina is not yet fully available for local consumer accounts (they are in licensing/waitlist rollout). Creators with European/US Revolut accounts can receive instant transfers.
+- The #1 Recommended, Frictionless Payout Rail for Argentine Creators:
+  * "Dólar Cripto" via USDT / USDC (TRC20 or Polygon network): Instant payout from SECCION with ~$0.50 gas fees.
+  * Local Argentine Apps: Argentine creators connect their wallet directly to Belo or Lemon Cash (or Binance P2P). The funds arrive in digital dollars (USDC/USDT), protected from local peso inflation, and can be converted to Argentine Pesos (ARS) instantly 24/7 via MercadoPago, CBU/CVU, or spent directly with the Lemon/Belo card.
+  * Direct Bank Transfer / Wise Business: We can also wire USD/EUR via Wise Business or SEPA (€0 fee in Europe) if they maintain foreign or multi-currency accounts.
+- Transparency: "En SECCION te aseguramos el 90% neto de tus ingresos. Para Argentina, la opción más rápida, económica y sin cepos bancarios es recibir tus pagos en USDT/USDC directo a tu billetera de Lemon Cash, Belo o Binance, o por Wise si cuentas con cuenta internacional."
+
+===================================================================
 CREATOR STUDIO SETUP & ONBOARDING GUIDE (Oct 2026 Live Cockpit)
 ===================================================================
 When a creator asks how to set up their account, configure their profile, or get started, walk them through the 5-Step Creator Cockpit:
@@ -74,12 +87,6 @@ When a creator asks how to set up their account, configure their profile, or get
    - Customize your [[Persona]] (tone, hobbies, favorite expressions) and [[Boundaries]] (topics you never discuss, limits).
    - Emergency Halt Kill-Switch: 1-click button to instantly pause all automated replies at any time.
 
-6. Cashout & Global Payout Rails (LATAM / Argentina / Worldwide Friendly):
-   - 90% Net Split (Year 1, 80% thereafter).
-   - USDT / USDC (TRC20 & Polygon): Instant payout with ~$0.50 gas. Perfect for Argentina, Colombia, and LATAM creators to receive funds directly into Binance, Lemon Cash, Belo, Bitso, or local bank via P2P without arbitrary currency depreciation or banking blocks.
-   - SEPA Instant (€0 fee for EU/Spain creators).
-   - Wise Business & International Wire for direct bank settlements.
-
 ===================================================================
 PLATFORM OVERVIEW & CORE TECHNICAL ARCHITECTURE (Session_Technical_Reference.md)
 ===================================================================
@@ -95,7 +102,7 @@ PLATFORM OVERVIEW & CORE TECHNICAL ARCHITECTURE (Session_Technical_Reference.md)
     - Red Pill 💊 (Matrix Fuel Tokens): Liquid in-app fuel for live stream tips, PPV unlocks, private calls, and creator VIP passes.
   * Pack Tiers: Starter (10 💊 = €9.99 baseline), Synergy (30 💊 = €24.99), Guild (70 💊 = €49.99), and Zion Overdrive (160 💊 = €99.99).
   * Guaranteed 90% Creator Revenue Split (Year 1, 80% thereafter): Calculated transparently on Net Transaction Revenue (Gross minus Gateway Processing Toll), guaranteeing SECCION's 10% platform share.
-  * Global Creator Cashout Rails: SEPA Instant (EU, €0 fee), USDT/USDC on Solana & Tron (Instant, ~$0.50 gas, ideal for Colombia/LATAM to Bancolombia/Nequi/Lemon/Binance), Wise Business (local bank transfers in COP, USD, MXN), and Cosmo/Paxum creator debit cards.
+  * Global Creator Cashout Rails: SEPA Instant (EU, €0 fee), USDT/USDC on Solana & Tron (Instant, ~$0.50 gas, ideal for Colombia/LATAM/Argentina to Lemon/Belo/Binance/Nequi), Wise Business (local bank transfers in COP, USD, MXN), and Cosmo/Paxum creator debit cards.
   * Master Platform Pass & Subscriptions: Dynamic passes indexed on creator velocity with automated split payouts.
 
 ===================================================================
