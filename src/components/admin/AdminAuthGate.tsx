@@ -4,8 +4,8 @@ import React, { useState } from 'react';
 import { ShieldCheck, Lock, Mail, Key, Sparkles, AlertCircle, Loader2 } from 'lucide-react';
 
 export default function AdminAuthGate() {
-  const [email, setEmail] = useState('stefan.zagre@gmail.com');
-  const [password, setPassword] = useState('StefanAdmin2026!');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 

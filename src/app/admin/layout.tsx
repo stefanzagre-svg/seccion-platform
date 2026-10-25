@@ -30,7 +30,22 @@ export default async function AdminLayout({
       return <AdminAuthGate />;
     }
 
-    let adminUser = { username: 'stefan', platform_role: 'super_admin' };
+    // Verify if user is actually founder or admin
+    const adminClient = createAdminClient();
+    const { data: profile } = await adminClient
+      .from('profiles')
+      .select('username, platform_role')
+      .eq('id', user.id)
+      .maybeSingle();
+
+    const isSuperAdmin = user.email === 'stefan.zagre@gmail.com' || profile?.platform_role === 'super_admin' || profile?.username === 'stefan';
+
+    if (!isSuperAdmin) {
+      // Non-admin user trying to access /admin -> redirect to creator onboarding/studio!
+      redirect('/studio');
+    }
+
+    let adminUser = { username: profile?.username || 'stefan', platform_role: 'super_admin' };
 
     try {
       // Bypass RLS via service role to check admin credentials
