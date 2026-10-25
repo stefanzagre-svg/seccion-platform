@@ -112,7 +112,7 @@ export default function LoginPage() {
       }
 
       const searchParams = new URLSearchParams(window.location.search);
-      const nextTarget = searchParams.get('next') || json.redirectUrl || '/admin';
+      const nextTarget = searchParams.get('next') || (email.toLowerCase() === 'stefan.zagre@gmail.com' ? '/admin' : '/studio');
 
       // Hard navigation so browser sends fresh auth cookies to Cloudflare Worker
       window.location.href = nextTarget;

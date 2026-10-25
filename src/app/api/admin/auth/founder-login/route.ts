@@ -12,7 +12,8 @@ export async function POST(req: NextRequest) {
     }
 
     const cookieStore = await cookies();
-    const response = NextResponse.json({ success: true, redirectUrl: '/admin' });
+    const isFounder = email.toLowerCase().trim() === 'stefan.zagre@gmail.com';
+    const response = NextResponse.json({ success: true, redirectUrl: isFounder ? '/admin' : '/studio' });
 
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
