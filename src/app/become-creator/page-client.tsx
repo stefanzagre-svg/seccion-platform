@@ -838,7 +838,11 @@ export default function BecomeCreatorPage({ initialProfile, userEmail }: { initi
                     href={`/onboarding?role=creator&email=${encodeURIComponent(formData.email)}&name=${encodeURIComponent(formData.fullName)}`}
                     className="w-full py-3.5 px-6 rounded-xl bg-gradient-to-r from-[#00fbfb] to-[#00d2d2] text-black font-mono text-xs font-black uppercase tracking-wider hover:shadow-[0_0_25px_rgba(0,251,251,0.5)] transition-all duration-300 flex items-center justify-center gap-2 shadow-lg cursor-pointer"
                   >
-                    <span>{locale === "es" ? "Comenzar Tour de Creador" : "Start Creator Quest Tour"}</span>
+                    <span>
+                      {locale === "es"
+                        ? "⚡ Activar Mi Cuenta y Crear Contraseña"
+                        : "⚡ Activate My Account & Set Password"}
+                    </span>
                     <ArrowUpRight className="w-4 h-4" />
                   </Link>
 

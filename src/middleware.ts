@@ -29,6 +29,7 @@ const PUBLIC_API_ROUTES = [
   '/api/kyc/didit-webhook',
   '/api/webhooks/telegram',
   '/api/auth/callback',
+  '/api/v2/auth/register',
   '/api/v2/creator/apply',
   '/api/v2/waitlist/join',
   '/api/admin/auth/founder-login',
@@ -141,12 +142,15 @@ export async function middleware(request: NextRequest) {
     // The cookie is set by onboarding/step-2/page.tsx once lifestyle_habits is saved.
     // Fallback: if cookie is absent, query DB once (first login after onboarding, or cookie cleared).
     const onboardingCookie = request.cookies.get(ONBOARDING_DONE_COOKIE)?.value;
+    const roleCookie = request.cookies.get('sb_role')?.value;
+    let isCreatorRole =
+      roleCookie === 'creator' || user?.user_metadata?.role === 'creator';
     let onboardingCompleted = onboardingCookie === '1';
 
     // Purpose Eligibility Checker
     const checkPurposeEligibility = (profile: any) => {
       // Creators have their own Creator Extension studio onboarding and don't need member lifestyle habit quizzes
-      if (profile?.role === 'creator') return true;
+      if (profile?.role === 'creator' || isCreatorRole) return true;
 
       // Basic check from old logic + new purpose array
       if (!profile?.archetype || !profile?.lifestyle_habits) return false;
@@ -184,6 +188,9 @@ export async function middleware(request: NextRequest) {
 
       return true;
     };
+
+    const isOnAuthRoute = AUTH_ROUTES.some(route => pathname === route);
+
     if (!onboardingCompleted && supabaseClient) {
       // Cookie missing — do the DB check once and set the cookie for next time
       const { data: profile } = await supabaseClient
@@ -192,10 +199,14 @@ export async function middleware(request: NextRequest) {
         .eq('id', user.id)
         .single();
 
+      if (profile?.role === 'creator') {
+        isCreatorRole = true;
+      }
+
       onboardingCompleted = checkPurposeEligibility(profile);
 
-      // Backfill the cookie so subsequent requests skip this query
-      if (onboardingCompleted) {
+      // Backfill the cookie when accessing non-onboarding routes so subsequent requests skip this query
+      if (onboardingCompleted && !isOnAuthRoute) {
         supabaseResponse.cookies.set(ONBOARDING_DONE_COOKIE, '1', {
           path: '/',
           maxAge: 60 * 60 * 24 * 30, // 30 days
@@ -203,18 +214,33 @@ export async function middleware(request: NextRequest) {
           httpOnly: false, // Must be readable by client JS on step-2 completion
         });
       }
+      if (isCreatorRole) {
+        supabaseResponse.cookies.set('sb_role', 'creator', {
+          path: '/',
+          maxAge: 60 * 60 * 24 * 30,
+          sameSite: 'lax',
+          httpOnly: false,
+        });
+      }
     }
 
+    const hasExplicitOnboardingOverride =
+      request.nextUrl.searchParams.has('fresh') ||
+      request.nextUrl.searchParams.has('reset') ||
+      request.nextUrl.searchParams.has('tutorial') ||
+      request.nextUrl.searchParams.has('setup');
+
     if (onboardingCompleted) {
-      // Redirect fully onboarded authenticated users away from onboarding pages
-      if (AUTH_ROUTES.some(route => pathname === route)) {
+      // Redirect fully onboarded authenticated users away from onboarding pages only when cookie is explicitly set
+      if (isOnAuthRoute && onboardingCookie === '1' && !hasExplicitOnboardingOverride) {
         const url = request.nextUrl.clone();
-        url.pathname = '/dashboard';
+        url.pathname = isCreatorRole ? '/studio' : '/dashboard';
+        url.search = '';
         return NextResponse.redirect(url);
       }
     } else {
-      // Redirect users with incomplete profiles to onboarding if they try to access protected pages (exempting API routes)
-      if (!isPublicPage && !pathname.startsWith('/api/') && pathname !== '/') {
+      // Redirect users with incomplete profiles to onboarding if they try to access protected pages (exempting API routes and /studio)
+      if (!isPublicPage && !pathname.startsWith('/api/') && !pathname.startsWith('/studio') && pathname !== '/') {
         const url = request.nextUrl.clone();
         url.pathname = '/onboarding';
         return NextResponse.redirect(url);

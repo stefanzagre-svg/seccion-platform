@@ -1,13 +1,11 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { motion } from "framer-motion";
 import { createClient } from "@/lib/supabase/client";
-import { Loader2, Key, Mail, Lock, ArrowLeft, AlertCircle, ShieldAlert, Sparkles, Crown } from "lucide-react";
+import { Loader2, Key, Mail, Lock, ArrowLeft, AlertCircle, ShieldAlert, Sparkles } from "lucide-react";
 import PrelaunchModal from "@/components/PrelaunchModal";
-import AgeGateSplash from "@/components/onboarding/AgeGateSplash";
 import { useTranslation } from "@/context/LanguageContext";
 
 // Double bezel card wrapper
@@ -36,6 +34,20 @@ export default function LoginPage() {
   const [verifyingOtp, setVerifyingOtp] = useState(false);
   const [isPrelaunchModalOpen, setIsPrelaunchModalOpen] = useState(false);
 
+  // Auto-fill email from URL query parameters (?email=...)
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const emailParam = params.get("email");
+      if (emailParam) {
+        setEmail(emailParam.trim());
+      }
+      if (params.get("mode") === "code" || params.get("mode") === "magic") {
+        setUseMagicLink(true);
+      }
+    }
+  }, []);
+
   const handleVerifyOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!otpCode || !email) return;
@@ -44,13 +56,44 @@ export default function LoginPage() {
 
     const supabase = createClient();
     try {
-      const { error } = await supabase.auth.verifyOtp({
-        email,
+      const cleanEmail = email.toLowerCase().trim();
+      const { data, error } = await supabase.auth.verifyOtp({
+        email: cleanEmail,
         token: otpCode.trim(),
         type: 'email',
       });
       if (error) throw error;
-      router.push('/onboarding?fresh=true');
+
+      if (data?.user) {
+        const { data: existingProfile } = await supabase
+          .from('profiles')
+          .select('id, username, role')
+          .eq('id', data.user.id)
+          .maybeSingle();
+
+        const defaultUsername = (cleanEmail.split('@')[0] || 'creator')
+          .toLowerCase()
+          .replace(/[^a-z0-9_]/g, '');
+
+        if (!existingProfile) {
+          await supabase.from('profiles').upsert({
+            id: data.user.id,
+            username: defaultUsername,
+            display_name: defaultUsername,
+            role: 'creator',
+          });
+        }
+
+        document.cookie = "sb_ob=1; path=/; max-age=2592000; SameSite=Lax";
+        document.cookie = "sb_role=creator; path=/; max-age=2592000; SameSite=Lax";
+        if (typeof window !== "undefined") {
+          sessionStorage.setItem("_onboarding_creator_archive_choice", "creator");
+        }
+      }
+
+      const params = new URLSearchParams(window.location.search);
+      const nextTarget = params.get("next") || "/studio";
+      window.location.href = nextTarget;
     } catch (err: any) {
       console.error("OTP Verification Error:", err);
       setErrorMsg(err.message || "Invalid or expired code. Check your email for the 6-digit passcode.");
@@ -68,12 +111,13 @@ export default function LoginPage() {
     const supabase = createClient();
 
     try {
+      const cleanEmail = email.toLowerCase().trim();
       const options = mode === 'link' ? {
-        emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent('/onboarding?role=creator')}`,
+        emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent('/studio')}`,
       } : undefined;
 
       const { error } = await supabase.auth.signInWithOtp({
-        email,
+        email: cleanEmail,
         ...(options && { options }),
       });
       if (error) throw error;
@@ -99,11 +143,12 @@ export default function LoginPage() {
     const supabase = createClient();
 
     try {
-      // Call server-side auth route to guarantee HTTP cookies are set cleanly
+      const cleanEmail = email.toLowerCase().trim();
+      // Call server-side auth route to guarantee HTTP cookies are set cleanly and auto-provision approved creators on first login
       const res = await fetch('/api/admin/auth/founder-login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email: cleanEmail, password }),
       });
 
       const json = await res.json();
@@ -111,8 +156,18 @@ export default function LoginPage() {
         throw new Error(json.error || 'Failed to authenticate.');
       }
 
+      if (json.session?.access_token && json.session?.refresh_token) {
+        await supabase.auth.setSession({
+          access_token: json.session.access_token,
+          refresh_token: json.session.refresh_token,
+        });
+      }
+
       const searchParams = new URLSearchParams(window.location.search);
-      const nextTarget = searchParams.get('next') || (email.toLowerCase() === 'stefan.zagre@gmail.com' ? '/admin' : '/studio');
+      const nextTarget =
+        searchParams.get('next') ||
+        json.redirectUrl ||
+        (cleanEmail === 'stefan.zagre@gmail.com' ? '/admin' : '/studio');
 
       // Hard navigation so browser sends fresh auth cookies to Cloudflare Worker
       window.location.href = nextTarget;
@@ -316,10 +371,10 @@ export default function LoginPage() {
                     </span>
                   </div>
                 ) : (
-                  <div className="text-[10px] font-mono text-white/50 px-1">
+                  <div className="text-[10px] font-mono text-white/60 px-1 leading-relaxed">
                     {t(
                       "onboarding.prelaunchGates.loginReturningDesc",
-                      "Returning Creator with a saved password? Enter your credentials below."
+                      "Enter your approved email and password below. First time signing in? Enter a new password (min. 6 chars) to activate your Creator Studio immediately."
                     )}
                   </div>
                 )}
@@ -347,7 +402,7 @@ export default function LoginPage() {
                   <div className="space-y-1.5 animate-fade-in">
                     <div className="flex justify-between items-center">
                       <label className="block text-[8px] font-mono text-white/40 uppercase font-bold tracking-wider">
-                        {t("onboarding.prelaunchGates.passwordLabel", "Account Password")}
+                        {t("onboarding.prelaunchGates.passwordLabel", "Account Password (or create new password)")}
                       </label>
                     </div>
                     <div className="relative">
@@ -358,11 +413,12 @@ export default function LoginPage() {
                         onChange={(e) => setPassword(e.target.value)}
                         placeholder="••••••••"
                         required={!useMagicLink}
+                        minLength={6}
                         className="w-full bg-black/40 border border-white/10 focus:border-[#00fbfb]/50 rounded-xl py-2.5 pl-10 pr-4 text-xs outline-none transition text-white"
                       />
                     </div>
                     <div className="text-[10px] text-white/40 pt-1 flex justify-between items-center">
-                      <span>{t("onboarding.prelaunchGates.passwordHint", "No password yet?")}</span>
+                      <span>{t("onboarding.prelaunchGates.passwordHint", "Prefer a 6-digit code?")}</span>
                       <button
                         type="button"
                         onClick={() => setUseMagicLink(true)}
@@ -416,7 +472,7 @@ export default function LoginPage() {
                     ) : (
                       <>
                         <Key className="w-4 h-4" />
-                        <span>{locale === 'es' ? 'Ingresar con Contraseña' : 'Sign In with Password'}</span>
+                        <span>{locale === 'es' ? 'Ingresar / Activar Cuenta con Contraseña' : 'Sign In / Activate with Password'}</span>
                       </>
                     )}
                   </button>

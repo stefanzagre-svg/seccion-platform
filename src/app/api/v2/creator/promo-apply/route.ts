@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { sendTelegramNotification } from '@/lib/telegram';
 
 export async function POST(req: NextRequest) {
   try {
@@ -43,6 +44,19 @@ export async function POST(req: NextRequest) {
 
     if (updateError) {
       console.warn('[Promo Apply] Failed to write to profiles in DB, simulating success for sandbox:', updateError);
+    }
+
+    try {
+      const creatorHandle = profile.username || profile.display_name || user.email || 'Creator';
+      await sendTelegramNotification(
+        `⭐ <b>CREATOR PROMO APPLICATION!</b>\n\n` +
+        `👤 <b>Creator:</b> ${creatorHandle}\n` +
+        `📧 <b>Email:</b> ${user.email || 'N/A'}\n` +
+        `🔗 <b>External Profile:</b> ${externalCreatorLink.trim()}\n` +
+        `🎯 <b>Promo Status:</b> Pending Review`
+      );
+    } catch (tgErr) {
+      console.warn('[Telegram Promo Alert] Failed:', tgErr);
     }
 
     return NextResponse.json({

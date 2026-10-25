@@ -9,7 +9,9 @@ import {
   ExternalLink, 
   RefreshCw,
   FileText,
-  Users
+  Users,
+  Copy,
+  MessageCircle
 } from 'lucide-react';
 import DataTable, { Column } from '@/components/admin/DataTable';
 import { cn } from '@/lib/utils';
@@ -47,6 +49,21 @@ export default function CreatorApplicationsQueue() {
   // Local state for reviewer notes before saving
   const [notes, setNotes] = useState<Record<string, string>>({});
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  const buildCreatorSetupUrl = (app: CreatorApplication) => {
+    const base = typeof window !== 'undefined' ? window.location.origin : 'https://seccion.ai';
+    return `${base}/onboarding?role=creator&email=${encodeURIComponent(app.email)}&name=${encodeURIComponent(app.full_name || '')}`;
+  };
+
+  const buildWhatsAppApprovalUrl = (app: CreatorApplication) => {
+    const cleanPhone = (app.phone || '').replace(/[^0-9]/g, '');
+    const setupUrl = `https://seccion.ai/onboarding?role=creator&email=${encodeURIComponent(app.email)}&name=${encodeURIComponent(app.full_name || '')}`;
+    const message = `¡Hola ${app.full_name || ''}! 🎉 Tu perfil de Creadora Fundadora en SECCION (90% comisión neta + 1 Año de Copiloto IA Gratis) ha sido aprobado. Haz clic aquí para crear tu contraseña y entrar directamente a tu Creator Studio: ${setupUrl}`;
+    return cleanPhone
+      ? `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`
+      : `https://wa.me/?text=${encodeURIComponent(message)}`;
+  };
 
   const fetchApplications = useCallback(async () => {
     setLoading(true);
@@ -265,7 +282,7 @@ export default function CreatorApplicationsQueue() {
         const isLoading = actionLoading === row.id;
         
         return (
-          <div className="flex flex-col gap-3 min-w-[240px]">
+          <div className="flex flex-col gap-3 min-w-[260px]">
             <textarea
               value={currentNote}
               onChange={(e) => setNotes(prev => ({ ...prev, [row.id]: e.target.value }))}
@@ -277,7 +294,7 @@ export default function CreatorApplicationsQueue() {
               <button
                 onClick={() => handleAction(row.id, 'approve')}
                 disabled={isLoading}
-                className="flex-1 min-w-[70px] px-2 py-1.5 rounded-lg border border-success/30 bg-success/10 text-success hover:bg-success/20 active:scale-95 transition-all text-[10px] uppercase font-bold flex items-center justify-center gap-1 disabled:opacity-50"
+                className="flex-1 min-w-[70px] px-2 py-1.5 rounded-lg border border-success/30 bg-success/10 text-success hover:bg-success/20 active:scale-95 transition-all text-[10px] uppercase font-bold flex items-center justify-center gap-1 disabled:opacity-50 cursor-pointer"
               >
                 <Check className="w-3 h-3" /> Approve
               </button>
@@ -286,7 +303,7 @@ export default function CreatorApplicationsQueue() {
                 onClick={() => handleAction(row.id, 'waitlist')}
                 disabled={isLoading}
                 title="Your profile is being reviewed"
-                className="flex-1 min-w-[70px] px-2 py-1.5 rounded-lg border border-blue-500/30 bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 active:scale-95 transition-all text-[10px] uppercase font-bold flex items-center justify-center gap-1 disabled:opacity-50 group relative"
+                className="flex-1 min-w-[70px] px-2 py-1.5 rounded-lg border border-blue-500/30 bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 active:scale-95 transition-all text-[10px] uppercase font-bold flex items-center justify-center gap-1 disabled:opacity-50 group relative cursor-pointer"
               >
                 <Clock className="w-3 h-3" /> Waitlist
               </button>
@@ -294,10 +311,38 @@ export default function CreatorApplicationsQueue() {
               <button
                 onClick={() => handleAction(row.id, 'reject')}
                 disabled={isLoading}
-                className="flex-1 min-w-[70px] px-2 py-1.5 rounded-lg border border-red-500/30 bg-red-500/10 text-red-500 hover:bg-red-500/20 active:scale-95 transition-all text-[10px] uppercase font-bold flex items-center justify-center gap-1 disabled:opacity-50"
+                className="flex-1 min-w-[70px] px-2 py-1.5 rounded-lg border border-red-500/30 bg-red-500/10 text-red-500 hover:bg-red-500/20 active:scale-95 transition-all text-[10px] uppercase font-bold flex items-center justify-center gap-1 disabled:opacity-50 cursor-pointer"
               >
                 <X className="w-3 h-3" /> Reject
               </button>
+            </div>
+
+            {/* 1-Click Direct Creator Setup Link & WhatsApp Invite */}
+            <div className="flex items-center gap-2 pt-1 border-t border-white/5">
+              <button
+                type="button"
+                onClick={() => {
+                  navigator.clipboard.writeText(buildCreatorSetupUrl(row));
+                  setCopiedId(row.id);
+                  setTimeout(() => setCopiedId(null), 2000);
+                }}
+                className="flex-1 px-2 py-1.5 rounded-lg bg-[#00fbfb]/10 hover:bg-[#00fbfb]/20 border border-[#00fbfb]/30 text-[#00fbfb] text-[9px] font-mono font-bold uppercase tracking-wider flex items-center justify-center gap-1 transition cursor-pointer"
+                title="Copy pre-filled Creator Setup URL"
+              >
+                <Copy className="w-2.5 h-2.5" />
+                <span>{copiedId === row.id ? 'Copied!' : 'Copy Setup Link'}</span>
+              </button>
+
+              <a
+                href={buildWhatsAppApprovalUrl(row)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex-1 px-2 py-1.5 rounded-lg bg-[#25D366]/15 hover:bg-[#25D366]/25 border border-[#25D366]/40 text-[#25D366] text-[9px] font-mono font-bold uppercase tracking-wider flex items-center justify-center gap-1 transition cursor-pointer"
+                title="Send WhatsApp Approval & Setup Link"
+              >
+                <MessageCircle className="w-2.5 h-2.5" />
+                <span>WhatsApp Invite</span>
+              </a>
             </div>
           </div>
         );

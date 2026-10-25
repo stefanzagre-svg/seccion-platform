@@ -2,9 +2,39 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import Link from 'next/link';
+import { useTranslation } from '@/context/LanguageContext';
 
-export default function FoundersWelcome() {
+interface FoundersWelcomeProps {
+  isCreatorMode?: boolean;
+}
+
+export default function FoundersWelcome({ isCreatorMode = false }: FoundersWelcomeProps) {
+  const { t, locale } = useTranslation();
+
+  const resolveIsCreator = () => {
+    if (isCreatorMode) return true;
+    if (typeof window === 'undefined') return false;
+    const params = new URLSearchParams(window.location.search);
+    return (
+      params.get('role') === 'creator' ||
+      Boolean(sessionStorage.getItem('_onboarding_creator_archive_choice')) ||
+      localStorage.getItem('is_creator_signup') === 'true' ||
+      document.cookie.includes('sb_role=creator')
+    );
+  };
+
+  const isCreator = resolveIsCreator();
+
+  const handleEnter = () => {
+    document.cookie = "sb_ob=1; path=/; max-age=2592000; SameSite=Lax";
+    if (isCreator) {
+      document.cookie = "sb_role=creator; path=/; max-age=2592000; SameSite=Lax";
+      window.location.href = '/studio?welcome=true';
+    } else {
+      window.location.href = '/dashboard';
+    }
+  };
+
   return (
     <motion.div 
       initial={{ opacity: 0, scale: 0.95 }}
@@ -27,13 +57,22 @@ export default function FoundersWelcome() {
           </div>
 
           <h1 className="text-3xl font-bold text-white mb-6 flex items-center justify-center gap-2">
-            Welcome to <img src="/assets/logo/seccion-wordmark-light.png" alt="SECCION" className="h-7 object-contain inline-block" />.
+            {locale === 'es' ? 'Bienvenida a' : 'Welcome to'}{' '}
+            <img src="/assets/logo/seccion-wordmark-light.png" alt="SECCION" className="h-7 object-contain inline-block" />.
           </h1>
           
           <div className="relative">
             <span className="absolute -top-4 -left-2 text-4xl text-purple-400/30 font-serif">&quot;</span>
             <p className="text-lg text-gray-300 leading-relaxed relative z-10 px-4">
-              We built <img src="/assets/logo/seccion-wordmark-light.png" alt="SECCION" className="h-5 object-contain inline-block mx-1" /> because the world doesn&apos;t need another generic feed. We value real connection, authentic creativity, and true intentionality. Dive in, find your spark, and create magic.
+              {locale === 'es' ? (
+                <>
+                  Creamos <img src="/assets/logo/seccion-wordmark-light.png" alt="SECCION" className="h-5 object-contain inline-block mx-1" /> porque el mundo no necesita otro Feed genérico. Valoramos la conexión real, la creatividad auténtica y tu soberanía financiera. Entra, descubre tu chispa y crea magia.
+                </>
+              ) : (
+                <>
+                  We built <img src="/assets/logo/seccion-wordmark-light.png" alt="SECCION" className="h-5 object-contain inline-block mx-1" /> because the world doesn&apos;t need another generic feed. We value real connection, authentic creativity, and true intentionality. Dive in, find your spark, and create magic.
+                </>
+              )}
             </p>
             <span className="absolute -bottom-4 -right-2 text-4xl text-purple-400/30 font-serif">&quot;</span>
           </div>
@@ -44,12 +83,12 @@ export default function FoundersWelcome() {
 
           <button 
             type="button"
-            onClick={() => {
-              window.location.href = '/dashboard';
-            }}
+            onClick={handleEnter}
             className="w-full py-4 rounded-xl font-bold bg-[#00fbfb] text-black hover:bg-[#00fbfb]/80 transition-all transform hover:scale-[1.02] shadow-[0_0_20px_rgba(0,251,251,0.3)] flex items-center justify-center gap-2 cursor-pointer relative z-30"
           >
-            Enter Dashboard
+            {isCreator
+              ? t("onboarding.welcome.enterStudioBtn", "Enter Creator Studio →")
+              : t("onboarding.welcome.enterDashboardBtn", "Enter Dashboard")}
           </button>
         </motion.div>
       </div>

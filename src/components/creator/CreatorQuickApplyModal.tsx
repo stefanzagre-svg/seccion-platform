@@ -169,12 +169,20 @@ export default function CreatorQuickApplyModal({ isOpen, onClose }: CreatorQuick
                     : "Your spot for the 90% payout split and Year 1 AI Pack is locked in. We will reach out shortly to activate your Studio access."}
                 </p>
 
-                <div className="pt-2">
+                <div className="pt-2 space-y-2.5">
+                  <a
+                    href={`/onboarding?role=creator&email=${encodeURIComponent(email)}&name=${encodeURIComponent(fullName || handleOrLink.replace(/^@/, ""))}`}
+                    className="block w-full py-3.5 px-6 rounded-2xl bg-[#00fbfb] text-black font-mono font-bold text-xs uppercase tracking-wider hover:opacity-90 transition cursor-pointer"
+                  >
+                    {locale === "es"
+                      ? "⚡ Activar Cuenta y Crear Contraseña →"
+                      : "⚡ Activate Account & Set Password →"}
+                  </a>
                   <button
                     onClick={onClose}
-                    className="w-full py-3.5 px-6 rounded-2xl bg-[#00fbfb] text-black font-mono font-bold text-xs uppercase tracking-wider hover:opacity-90 transition"
+                    className="w-full py-2.5 px-6 rounded-2xl bg-white/5 hover:bg-white/10 text-white/70 hover:text-white font-mono font-bold text-[11px] uppercase tracking-wider transition cursor-pointer"
                   >
-                    {locale === "es" ? "Entendido / Continuar" : "Got it / Continue"}
+                    {locale === "es" ? "Cerrar ventana" : "Close window"}
                   </button>
                 </div>
               </motion.div>

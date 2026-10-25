@@ -436,6 +436,7 @@ export default function OnboardingFlow() {
 
             const pendingCreator =
               typeof window !== "undefined" && (
+                params.get("role") === "creator" ||
                 localStorage.getItem("is_creator_signup") === "true" ||
                 !!sessionStorage.getItem("_onboarding_creator_archive_choice") ||
                 profile.role === "creator"
@@ -446,16 +447,11 @@ export default function OnboardingFlow() {
               if (typeof window !== "undefined" && !sessionStorage.getItem("_onboarding_creator_archive_choice")) {
                 sessionStorage.setItem("_onboarding_creator_archive_choice", "creator");
               }
-              OnboardingLogger.log('init', 'step_enter', 'creator detected on return, routing to creator-checklist or purpose', authUser.id);
-              // Need to check if they finished member onboarding
-              if (hasPhoto && hasBio && hasPreferences) {
-                 setStep("creator-checklist");
-              } else if (!hasPurposes) {
-                 setStep("purpose");
-              } else if (!hasAge) {
-                 setStep("intent");
+              OnboardingLogger.log('init', 'step_enter', 'creator detected on return, routing to profile-checklist', authUser.id);
+              if (hasPhoto && (hasBio || !!profile.bio || !!profile.bio_prompt_answer)) {
+                setStep("welcome");
               } else {
-                 setStep("profile-checklist");
+                setStep("profile-checklist");
               }
             } else if (!hasPurposes) {
               OnboardingLogger.log('init', 'step_enter', 'no purposes, routing to purpose', authUser.id);
@@ -532,9 +528,15 @@ export default function OnboardingFlow() {
         if (error === "auth_callback_failed") {
           setFormError("Your magic link was opened in a different browser window or has expired. Please log in with your password or request a new 6-digit passcode.");
           setStep("registration");
-        } else if (params.get("role") === "creator" || params.get("tutorial") === "creator") {
+        } else if (params.get("tutorial") === "creator" || params.get("quest") === "true") {
           setIsCreatorMode(true);
           setStep("creator-quest");
+        } else if (params.get("role") === "creator" || params.get("invite") === "creator") {
+          setIsCreatorMode(true);
+          if (typeof window !== "undefined") {
+            sessionStorage.setItem("_onboarding_creator_archive_choice", "creator");
+          }
+          setStep("registration");
         } else if (params.get("bypass") === "true" || isFresh) {
           setStep("purpose");
         } else {
@@ -561,16 +563,27 @@ export default function OnboardingFlow() {
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
-      if (params.get('role') === 'creator') {
+      if (params.get('role') === 'creator' || params.get('invite') === 'creator') {
         setIsCreatorMode(true);
         if (!sessionStorage.getItem('_onboarding_creator_archive_choice')) {
           sessionStorage.setItem('_onboarding_creator_archive_choice', 'creator');
         }
-        // Only divert to creator-quest on initial mount if on registration/value-prop
+      }
+      if (params.get('tutorial') === 'creator' || params.get('quest') === 'true') {
+        setIsCreatorMode(true);
         setStep((prev) => (prev === 'registration' || prev === 'value-proposition') ? 'creator-quest' : prev);
       }
     }
   }, []);
+
+  const handleSkipToStudio = () => {
+    if (typeof window !== "undefined") {
+      document.cookie = "sb_ob=1; path=/; max-age=2592000; SameSite=Lax";
+      document.cookie = "sb_role=creator; path=/; max-age=2592000; SameSite=Lax";
+      sessionStorage.setItem("_onboarding_creator_archive_choice", "creator");
+      window.location.href = "/studio?welcome=true";
+    }
+  };
 
   useEffect(() => {
     // Read user details when step transitions to checklist
@@ -726,6 +739,57 @@ export default function OnboardingFlow() {
       if (effectiveAnswer.length < 10) { setFormError(t("onboarding.main.promptLengthErr", "Write a bit more so our AI can read your vibe properly (min 10 chars).")); return; }
       setFormError(null);
 
+      const isCreatorSignupBio =
+        tutorialRole === "creator" ||
+        isCreatorMode ||
+        (typeof window !== "undefined" && (
+          !!sessionStorage.getItem("_onboarding_creator_archive_choice") ||
+          localStorage.getItem("is_creator_signup") === "true"
+        ));
+
+      if (isCreatorSignupBio) {
+        // Creators only need 1 Bio response to launch into Creator Studio!
+        saveOnboardingState({ step: "welcome", activeItem: "bio", avatarUrl });
+        setChecklist((prev) => prev.map((item) => item.id === "bio" ? { ...item, completed: true } : item));
+        if (typeof window !== "undefined") {
+          document.cookie = "sb_ob=1; path=/; max-age=2592000; SameSite=Lax";
+          document.cookie = "sb_role=creator; path=/; max-age=2592000; SameSite=Lax";
+        }
+        setStep("welcome");
+
+        resolveUserId().then((uid) => {
+          if (!uid) return;
+          const creatorPayload = {
+            bio: effectiveAnswer,
+            bio_prompt_category: effectiveCategory,
+            bio_prompt_question: effectiveQuestion,
+            bio_prompt_answer: effectiveAnswer,
+            bio_prompt_category_2: effectiveCategory,
+            bio_prompt_question_2: effectiveQuestion,
+            bio_prompt_answer_2: effectiveAnswer,
+            role: "creator",
+            member_purposes: activePurposes.length > 0 ? activePurposes : ["creator", "lifestyle"],
+          };
+          supabase.from("profiles").update(creatorPayload).eq("id", uid).then(() => {});
+          supabase.from("creator_profiles").upsert({
+            id: uid,
+            creator_bio: effectiveAnswer,
+          }).then(() => {});
+          fetch("/api/v2/profile/analyze-prompt", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              promptCategory: effectiveCategory,
+              promptQuestion: effectiveQuestion,
+              promptAnswer: effectiveAnswer,
+              promptIndex: 1,
+              activePurposes,
+            }),
+          }).catch(() => {});
+        });
+        return;
+      }
+
       if (promptStep === 1) {
         // ── Step 1: advance to step 2 instantly ──
         console.log('[SECCION] bio step 1 → step 2 (instant)');
@@ -733,7 +797,7 @@ export default function OnboardingFlow() {
         const sourcePrompts = locale === "es" ? PURPOSE_PROMPTS_ES : PURPOSE_PROMPTS;
         const effectivePurposesInner = activePurposes.length > 0
           ? activePurposes
-          : (isCreatorMode || tutorialRole === "creator" ? ["creator", "lifestyle"] as MemberPurposeId[] : ["dating"] as MemberPurposeId[]);
+          : ["dating"] as MemberPurposeId[];
         const allPrompts = Object.entries(sourcePrompts)
           .filter(([p]) => effectivePurposesInner.includes(p as MemberPurposeId))
           .reduce((acc, [_, cats]) => ({ ...acc, ...cats }), {} as Record<string, any>);
@@ -760,22 +824,16 @@ export default function OnboardingFlow() {
         bio_prompt_category_2: effectiveCategory,
         bio_prompt_question_2: effectiveQuestion,
         bio_prompt_answer_2: effectiveAnswer,
-        member_purposes: activePurposes.length > 0 ? activePurposes : (isCreatorMode ? ["creator", "lifestyle"] : ["dating"]),
+        member_purposes: activePurposes.length > 0 ? activePurposes : ["dating"],
       };
 
       // Advance UI NOW (synchronous — no await)
       saveOnboardingState({ step: "profile-checklist", activeItem: "bio", avatarUrl });
       setChecklist((prev) => prev.map((item) => item.id === "bio" ? { ...item, completed: true } : item));
-      const isCreatorSignupBio = tutorialRole === "creator" || isCreatorMode || (typeof window !== "undefined" && (!!sessionStorage.getItem("_onboarding_creator_archive_choice") || localStorage.getItem("is_creator_signup") === "true"));
-      console.log('[SECCION] bio step 2 done — transitioning, isCreator:', isCreatorSignupBio);
-      if (isCreatorSignupBio) {
-        setStep("creator-checklist");
-      } else {
-        const updatedChecklist = checklist.map((item) => item.id === "bio" ? { ...item, completed: true } : item);
-        const nextIncomplete = updatedChecklist.find((item) => !item.completed);
-        if (nextIncomplete) setActiveItem(nextIncomplete.id as any);
-        else setStep("welcome");
-      }
+      const updatedChecklist = checklist.map((item) => item.id === "bio" ? { ...item, completed: true } : item);
+      const nextIncomplete = updatedChecklist.find((item) => !item.completed);
+      if (nextIncomplete) setActiveItem(nextIncomplete.id as any);
+      else setStep("welcome");
 
       // Background DB write — fire-and-forget, never blocks UI
       resolveUserId().then((uid) => {
@@ -1063,6 +1121,29 @@ export default function OnboardingFlow() {
 
               {/* Right Column: Form Panel */}
               <div className="col-span-12 md:col-span-7">
+                {/* Creator Fast-Track Banner: Let creators enter Studio immediately at any time */}
+                {(isCreatorMode || tutorialRole === "creator") && (
+                  <div className="mb-4 p-4 rounded-2xl bg-gradient-to-r from-[#00fbfb]/15 via-[#11111A] to-[#ffabf3]/15 border border-[#00fbfb]/40 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-[0_0_25px_rgba(0,251,251,0.12)]">
+                    <div className="space-y-0.5 text-left">
+                      <div className="flex items-center gap-1.5 text-[#00fbfb] font-mono text-[10px] font-black uppercase tracking-wider">
+                        <Sparkles className="w-3.5 h-3.5" />
+                        <span>{t("onboarding.creatorFastTrack.badge", "Founding Creator Fast-Track")}</span>
+                      </div>
+                      <p className="text-[11px] text-white/80 leading-snug">
+                        {t("onboarding.creatorFastTrack.desc", "Want to explore your Creator Studio first? You can upload your avatar and bio inside Studio Settings anytime.")}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleSkipToStudio}
+                      className="shrink-0 px-4 py-2.5 bg-[#00fbfb] hover:bg-[#00fbfb]/90 text-black font-mono text-[10px] font-black uppercase tracking-wider rounded-xl transition shadow-[0_0_15px_rgba(0,251,251,0.35)] flex items-center justify-center gap-1.5 cursor-pointer"
+                    >
+                      <span>{t("onboarding.creatorFastTrack.enterStudioBtn", "Enter Creator Studio Now")}</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                )}
+
                 {/* Mobile Tab Navigation */}
                 <div className="block md:hidden mb-6 bg-black/30 border border-white/5 rounded-2xl p-4 animate-fade-in">
                   <div className="flex items-center justify-between mb-3.5">
@@ -1474,6 +1555,30 @@ export default function OnboardingFlow() {
                                 <label className="text-[9px] uppercase tracking-widest font-black text-white/40 block">
                                   {t("onboarding.main.writeResponse", "3. Write Your Narrative Response")}
                                 </label>
+                                {/* 1-Tap Quick-Fill Vibe Chips */}
+                                <div className="flex flex-wrap gap-1.5 pb-1">
+                                  {(locale === "es"
+                                    ? [
+                                        "Contenido exclusivo detrás de cámaras, charlas directas y acceso VIP a mi mundo creativo ✨",
+                                        "Me apasiona crear experiencias auténticas, conectar sin filtros y compartir mi estilo de vida diario 🔥",
+                                        "Sesiones privadas, contenido personalizado y conexión real con mi comunidad más cercana 💎",
+                                      ]
+                                    : [
+                                        "Exclusive behind-the-scenes content, direct VIP chats, and unfiltered access to my creative world ✨",
+                                        "Passionate about authentic connection, daily lifestyle drops, and building an inner circle with real energy 🔥",
+                                        "Private sessions, custom requests, and high-vibe creative drops for my closest supporters 💎",
+                                      ]
+                                  ).map((chipText, idx) => (
+                                    <button
+                                      key={idx}
+                                      type="button"
+                                      onClick={() => setPromptAnswer(chipText)}
+                                      className="text-left px-2.5 py-1.5 rounded-lg bg-white/5 hover:bg-primary/15 border border-white/10 hover:border-primary/40 text-[10px] text-white/70 hover:text-white transition cursor-pointer"
+                                    >
+                                      ⚡ {chipText.slice(0, 52)}...
+                                    </button>
+                                  ))}
+                                </div>
                                 <textarea
                                   rows={3}
                                   placeholder={locale === "es" ? "Escribe tu respuesta detallada aquí (mínimo 10 caracteres)..." : "Write a detailed, thoughtful story in response to the prompt..."}
@@ -1640,6 +1745,27 @@ export default function OnboardingFlow() {
                        </div>
                        <span className={`text-[10px] font-bold tabular-nums ${creatorBio.length < 20 ? "text-white/30" : "text-primary"}`}>{creatorBio.length} / 500</span>
                      </div>
+                     <div className="flex flex-wrap gap-1.5 pb-1">
+                       {(locale === "es"
+                         ? [
+                             "Bienvenidos a mi Studio oficial en SECCION ✨ Contenido exclusivo, sesiones en vivo y trato directo VIP.",
+                             "Acceso sin filtros a mis sesiones privadas, fotos exclusivas y chat directo conmigo todos los días 🔥",
+                           ]
+                         : [
+                             "Welcome to my official SECCION Studio ✨ Exclusive drops, live sessions, and direct 1-on-1 VIP access.",
+                             "Unfiltered access to my private sets, custom requests, and daily direct chat with me 🔥",
+                           ]
+                       ).map((chipText, idx) => (
+                         <button
+                           key={idx}
+                           type="button"
+                           onClick={() => setCreatorBio(chipText)}
+                           className="text-left px-2.5 py-1.5 rounded-lg bg-white/5 hover:bg-primary/15 border border-white/10 hover:border-primary/40 text-[10px] text-white/70 hover:text-white transition cursor-pointer"
+                         >
+                           ⚡ {chipText.slice(0, 50)}...
+                         </button>
+                       ))}
+                     </div>
                      <textarea
                         rows={4}
                         placeholder={t("onboarding.creatorExt.bioPlaceholder", "Describe your premium content, VIP tiers, and what subscribers get...")}
@@ -1711,16 +1837,28 @@ export default function OnboardingFlow() {
                      resolveAndSave().catch((e) => console.warn('[SECCION] Publish DB write error:', e));
                    }}
                    disabled={creatorBio.trim().length < 20}
-                   className="w-full max-w-md bg-primary text-black font-black uppercase tracking-widest py-4 rounded-xl hover:shadow-[0_0_20px_rgba(102,252,241,0.4)] transition disabled:opacity-50 text-xs flex items-center justify-center gap-2"
+                   className="w-full max-w-md bg-primary text-black font-black uppercase tracking-widest py-4 rounded-xl hover:shadow-[0_0_20px_rgba(102,252,241,0.4)] transition disabled:opacity-50 text-xs flex items-center justify-center gap-2 cursor-pointer"
                  >
                    {t("onboarding.creatorExt.publishBtn", "Publish Creator Profile")}
+                 </button>
+                 <button
+                   type="button"
+                   onClick={handleSkipToStudio}
+                   className="w-full max-w-md py-2.5 px-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-[11px] font-mono font-bold text-white/60 hover:text-[#00fbfb] transition cursor-pointer"
+                 >
+                   {t("onboarding.creatorFastTrack.skipExtBtn", "Skip for Now & Enter Creator Studio →")}
                  </button>
                 {formError && <p className="text-red-500 text-xs mt-2">{formError}</p>}
               </div>
             </motion.div>
           )}
 
-          {step === "welcome" && <FoundersWelcome key="welcome" />}
+          {step === "welcome" && (
+            <FoundersWelcome
+              key="welcome"
+              isCreatorMode={isCreatorMode || tutorialRole === "creator"}
+            />
+          )}
         </AnimatePresence>
       </div>
 

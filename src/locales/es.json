@@ -371,7 +371,25 @@
       "loginNotAppliedNotice": "¿Eres un creador que aún no ha aplicado por el 90% de ingresos y 1 Año de Asistente IA Gratis?",
       "loginApplyNow": "APLICA AHORA",
       "loginMemberNotice": "¿Buscas acceso anticipado como miembro?",
-      "loginJoinWaitlist": "UNIRSE A LA LISTA DE ACCESO"
+      "loginJoinWaitlist": "UNIRSE A LA LISTA DE ACCESO",
+      "activateApprovedCreatorBtn": "Activar / Ingresar como Creador Aprobado"
+    },
+    "registration": {
+      "usernameLabel": "Usuario / Handle",
+      "emailLabel": "Correo Electrónico",
+      "createPasswordLabel": "Crear Contraseña (mín. 6 caracteres)",
+      "passwordLabel": "Contraseña",
+      "createAccountBtn": "Crear Cuenta y Continuar →"
+    },
+    "welcome": {
+      "enterStudioBtn": "Entrar al Creator Studio →",
+      "enterDashboardBtn": "Entrar al Dashboard"
+    },
+    "creatorFastTrack": {
+      "badge": "Vía Rápida Creador Fundador",
+      "desc": "¿Quieres explorar tu Creator Studio primero? Puedes subir tu foto y tu Bio desde Configuración del Studio en cualquier momento.",
+      "enterStudioBtn": "Entrar al Creator Studio Ahora",
+      "skipExtBtn": "Omitir por Ahora y Entrar al Creator Studio →"
     }
   },
   "sessionQuest": {
@@ -653,7 +671,8 @@
       "writeVault": "Editar Bóveda",
       "verify": "Verificar",
       "submitTax": "Datos Fiscales",
-      "askAi": "Consultar al Copilot sobre este paso"
+      "askAi": "Consultar al Copilot sobre este paso",
+      "setupProfile": "Editar Perfil"
     },
     "items": {
       "pricing": {
@@ -675,6 +694,10 @@
       "tax": {
         "title": "Perfil Fiscal & Billetera de Retiros",
         "desc": "Registra tu nombre legal y número de identificación fiscal para cumplimiento DAC7/1099."
+      },
+      "visuals": {
+        "title": "Añadir Foto de Perfil y Bio de Creador",
+        "desc": "Sube tu foto principal y escribe una breve Bio en Configuración del Studio para que los miembros te descubran."
       }
     }
   },

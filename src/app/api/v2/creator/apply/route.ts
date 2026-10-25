@@ -15,6 +15,14 @@ const normalizeLink = (val: unknown) => {
   return `https://instagram.com/${trimmed}`;
 };
 
+const escapeHtml = (str: string | null | undefined): string => {
+  if (!str) return "";
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+};
+
 const creatorApplySchema = z.object({
   fullName: z.string().min(2, "Full name must be at least 2 characters").max(100),
   email: z.string().email("Invalid email address format"),
@@ -64,7 +72,7 @@ export async function POST(req: NextRequest) {
           await supabaseAdmin.from("creator_applications").update(patch).eq("id", existing.id);
           try {
             await sendTelegramNotification(
-              `➕ <b>LEAD DETAILS ADDED</b>\n📧 ${email.trim()}\n📱 ${patch.phone || "-"}\n✈️ ${patch.telegram || "-"}\n📍 ${patch.city || "-"}`
+              `➕ <b>LEAD DETAILS ADDED</b>\n📧 ${escapeHtml(email.trim())}\n📱 ${escapeHtml(patch.phone) || "-"}\n✈️ ${escapeHtml(patch.telegram) || "-"}\n📍 ${escapeHtml(patch.city) || "-"}`
             );
           } catch (tgErr) {
             console.warn("[Telegram Lead Details Alert] Failed:", tgErr);
@@ -130,13 +138,13 @@ export async function POST(req: NextRequest) {
 
     // Trigger instant Telegram alert to founder (must be awaited in Cloudflare Worker)
     const msg = `🚨 <b>NEW CREATOR APPLICATION!</b>\n\n` +
-      `👤 <b>Name:</b> ${fullName.trim()}\n` +
-      `📧 <b>Email:</b> ${email.trim()}\n` +
-      `📱 <b>Phone:</b> ${phone?.trim() || "-"}\n` +
-      `✈️ <b>Telegram:</b> ${telegram?.trim() || "-"}\n` +
-      `📍 <b>City:</b> ${city || "Not specified"}\n` +
-      `🔗 <b>Link:</b> ${link1.trim()}\n` +
-      `📣 <b>Source:</b> ${source}\n` +
+      `👤 <b>Name:</b> ${escapeHtml(fullName.trim())}\n` +
+      `📧 <b>Email:</b> ${escapeHtml(email.trim())}\n` +
+      `📱 <b>Phone:</b> ${escapeHtml(phone?.trim()) || "-"}\n` +
+      `✈️ <b>Telegram:</b> ${escapeHtml(telegram?.trim()) || "-"}\n` +
+      `📍 <b>City:</b> ${escapeHtml(city) || "Not specified"}\n` +
+      `🔗 <b>Link:</b> ${escapeHtml(link1.trim())}\n` +
+      `📣 <b>Source:</b> ${escapeHtml(source)}\n` +
       `🎁 <b>Founding Offer:</b> ${claimOffer ? "YES (pending approval for 90% year-1 rate)" : "NO"}`;
 
     try {

@@ -175,6 +175,31 @@ export default function CreatorOnboardingChecklist({
             exit={{ opacity: 0, height: 0 }}
             className="mt-4 space-y-2.5 overflow-hidden"
           >
+            {!metrics.hasVisuals && (
+              <div className="p-3.5 rounded-2xl border border-[#ffabf3]/30 bg-gradient-to-r from-[#ffabf3]/10 via-black/40 to-[#00fbfb]/10 flex items-center justify-between gap-3">
+                <div className="flex items-start gap-3 min-w-0">
+                  <div className="mt-0.5 shrink-0">
+                    <ImageIcon className="w-4 h-4 text-[#ffabf3]" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs font-black uppercase tracking-wider text-white">
+                      {t('creatorChecklist.items.visuals.title', 'Add Profile Avatar & Creator Bio')}
+                    </p>
+                    <p className="text-[10px] text-white/60 leading-relaxed font-normal truncate sm:whitespace-normal">
+                      {t('creatorChecklist.items.visuals.desc', 'Upload your main cover photo and write a short bio in Studio Settings so members can discover you.')}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => onNavigateTab('settings')}
+                  className="px-3.5 py-1.5 rounded-xl bg-[#ffabf3] hover:bg-[#ffabf3]/90 text-black text-[10px] font-black uppercase tracking-wider transition flex items-center gap-1 shrink-0 cursor-pointer"
+                >
+                  <span>{t('creatorChecklist.actions.setupProfile', 'Edit Profile')}</span>
+                  <ArrowRight className="w-3 h-3" />
+                </button>
+              </div>
+            )}
+
             {checklistItems.map((item) => (
               <div
                 key={item.id}

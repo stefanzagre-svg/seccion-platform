@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin-client';
+import { sendCreatorApprovalEmail } from '@/lib/email';
 
 export async function GET(request: Request) {
   try {
@@ -81,6 +82,45 @@ export async function PATCH(request: Request) {
     if (error) {
       console.error('Supabase update error:', error);
       throw error;
+    }
+
+    // When approved: upgrade existing profile role to 'creator' if user already exists, and send approval email
+    if (action === 'approve' && data?.email) {
+      const cleanEmail = data.email.toLowerCase().trim();
+      try {
+        const { data: usersList } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 1000 });
+        const existingUser = usersList?.users?.find(
+          (u) => u.email?.toLowerCase().trim() === cleanEmail
+        );
+        if (existingUser) {
+          const baseUsername = (
+            data.primary_handle ||
+            existingUser.user_metadata?.username ||
+            cleanEmail.split('@')[0] ||
+            'creator'
+          )
+            .toLowerCase()
+            .replace(/[^a-z0-9_]/g, '')
+            .slice(0, 24);
+
+          await supabaseAdmin.from('profiles').upsert(
+            {
+              id: existingUser.id,
+              username: baseUsername,
+              display_name: data.full_name || existingUser.user_metadata?.full_name || baseUsername,
+              role: 'creator',
+            },
+            { onConflict: 'id' }
+          );
+        }
+      } catch (e) {
+        console.warn('[Admin Approve] Profile role sync notice:', e);
+      }
+
+      sendCreatorApprovalEmail({
+        email: cleanEmail,
+        fullName: data.full_name || cleanEmail.split('@')[0],
+      }).catch((e) => console.warn('[Admin Approve] Approval email notice:', e));
     }
 
     return NextResponse.json({ success: true, application: data });

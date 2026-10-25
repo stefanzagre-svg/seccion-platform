@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sparkles, X, Send, Bot, AlertCircle, Loader2, MessageSquare } from 'lucide-react';
+import { Sparkles, X, Send, Loader2, MessageSquare } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { useTranslation } from '@/context/LanguageContext';
@@ -21,13 +21,62 @@ export default function SeccionAgentBubble() {
   const [isOpen, setIsOpen] = useState(false);
   const [isMemberLoggedIn, setIsMemberLoggedIn] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
+  const [input, setInput] = useState('');
+  const [isTyping, setIsTyping] = useState(false);
+  const [errorText, setErrorText] = useState<string | null>(null);
+
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const sendQuestion = useCallback(
+    async (questionText: string) => {
+      const trimmed = questionText.trim();
+      if (!trimmed) return;
+
+      setErrorText(null);
+      const userMsg: Message = {
+        id: `user-${Date.now()}`,
+        sender: 'user',
+        text: trimmed,
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, userMsg]);
+      setIsTyping(true);
+
+      try {
+        const response = await fetch('/api/v2/onboarding/specialist', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: trimmed, locale }),
+        });
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || 'Connection error. Please try again.');
+        }
+
+        const agentMsg: Message = {
+          id: `agent-${Date.now()}`,
+          sender: 'agent',
+          text: data.reply || data.response || t('agent.fallback'),
+          timestamp: new Date(),
+        };
+        setMessages((prev) => [...prev, agentMsg]);
+      } catch (err: any) {
+        console.error(err);
+        setErrorText(err.message || 'Connecting error. Please try again.');
+      } finally {
+        setIsTyping(false);
+      }
+    },
+    [locale, t]
+  );
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const searchParams = new URLSearchParams(window.location.search);
       const isSegpayReviewer = searchParams.get('reviewer') === 'segpay';
-      const isCreatorGuide = 
-        searchParams.get('guide') === 'creator' || 
+      const isCreatorGuide =
+        searchParams.get('guide') === 'creator' ||
         searchParams.get('ref') === 'creator' ||
         (searchParams.get('role') === 'creator' && searchParams.get('help') === 'steve');
 
@@ -38,8 +87,8 @@ export default function SeccionAgentBubble() {
             id: 'segpay-welcome',
             sender: 'agent',
             text: "Hello Lauren & Segpay Underwriting Team! 👋 I'm Steve, SECCION's Onboarding & Compliance Specialist. Feel free to ask me anything regarding our platform mechanics, 18+ biometric KYC verification, 18 U.S.C. 2257 record-keeping, SFW vs. NSFW purchase gating, escrow protection, terms of service, or refund protocols.",
-            timestamp: new Date()
-          }
+            timestamp: new Date(),
+          },
         ]);
         return;
       }
@@ -50,11 +99,12 @@ export default function SeccionAgentBubble() {
           {
             id: 'creator-guide-welcome',
             sender: 'agent',
-            text: locale === 'es'
-              ? "¡Hola Creadora / Creador! 🌟 Soy Steve, tu Asesor de Onboarding y Monetización en SECCION. Estoy aquí para guiarte paso a paso: desde tu verificación KYC segura y configuración del Creator Studio, hasta cómo activar tus suscripciones VIP, pases Master (80% revenue pool), transmisiones en vivo y herramientas de IA. ¿Tienes alguna pregunta para empezar?"
-              : "Hey Creator! 🌟 I'm Steve, your dedicated Creator Onboarding & Monetization Coach on SECCION. I'm here to guide you through every step: from your private biometric KYC verification and Creator Studio setup, to activating VIP tiers, Master Platform Passes (80% pool redistribution), live broadcasts, and AI growth tools. What can I help you with first?",
-            timestamp: new Date()
-          }
+            text:
+              locale === 'es'
+                ? '¡Hola Creadora / Creador! 🌟 Soy Steve, tu Asesor de Onboarding y Monetización en SECCION. Estoy aquí para guiarte paso a paso: desde tu verificación KYC segura y configuración del Creator Studio, hasta cómo activar tus suscripciones VIP, pases Master (80% revenue pool), transmisiones en vivo y herramientas de IA. ¿Tienes alguna pregunta para empezar?'
+                : "Hey Creator! 🌟 I'm Steve, your dedicated Creator Onboarding & Monetization Coach on SECCION. I'm here to guide you through every step: from your private biometric KYC verification and Creator Studio setup, to activating VIP tiers, Master Platform Passes (80% pool redistribution), live broadcasts, and AI growth tools. What can I help you with first?",
+            timestamp: new Date(),
+          },
         ]);
         return;
       }
@@ -65,26 +115,38 @@ export default function SeccionAgentBubble() {
         id: 'welcome',
         sender: 'agent',
         text: t('agent.welcome'),
-        timestamp: new Date()
-      }
+        timestamp: new Date(),
+      },
     ]);
   }, [locale, t]);
 
-  const [input, setInput] = useState('');
-  const [isTyping, setIsTyping] = useState(false);
-  const [errorText, setErrorText] = useState<string | null>(null);
+  // Listen for custom "seccion:ask-steve" events from Creator Studio / Onboarding Checklist
+  useEffect(() => {
+    const handleAskSteve = (event: Event) => {
+      const customEvent = event as CustomEvent<{ question?: string }>;
+      setIsOpen(true);
+      if (customEvent.detail?.question) {
+        sendQuestion(customEvent.detail.question);
+      }
+    };
 
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+    window.addEventListener('seccion:ask-steve', handleAskSteve);
+    return () => {
+      window.removeEventListener('seccion:ask-steve', handleAskSteve);
+    };
+  }, [sendQuestion]);
 
   // Auto-scroll to bottom
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isTyping]);
 
-  // Check if a member is logged in — if a logged-in member is present, AIWingmanBubble takes over!
+  // Check if a member is logged in — if a logged-in member is present on member pages, AIWingmanBubble takes over!
   useEffect(() => {
     async function checkUser() {
-      const { data: { session } } = await supabase.auth.getSession();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
       if (session?.user) {
         const { data: profile } = await supabase
           .from('profiles')
@@ -93,15 +155,23 @@ export default function SeccionAgentBubble() {
           .single();
         if (profile?.role === 'member') {
           setIsMemberLoggedIn(true);
+        } else {
+          setIsMemberLoggedIn(false);
         }
       }
     }
     checkUser();
-  }, []);
+  }, [pathname]);
 
-  // Hide SECCION Agent if user is a logged-in member or on admin/auth routes
+  // Hide SECCION Agent if user is a logged-in member on non-studio/non-onboarding routes, or on admin/auth routes
+  const isCreatorOrOnboardingRoute =
+    pathname?.startsWith('/studio') ||
+    pathname?.startsWith('/onboarding') ||
+    pathname?.startsWith('/become-creator') ||
+    pathname?.startsWith('/login');
+
   if (
-    isMemberLoggedIn ||
+    (isMemberLoggedIn && !isCreatorOrOnboardingRoute) ||
     pathname?.startsWith('/admin') ||
     pathname?.startsWith('/auth')
   ) {
@@ -111,48 +181,23 @@ export default function SeccionAgentBubble() {
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() || isTyping) return;
-
-    const userMessageText = input.trim();
+    const text = input.trim();
     setInput('');
-    setErrorText(null);
-
-    // Add user message
-    const userMsg: Message = {
-      id: `user-${Date.now()}`,
-      sender: 'user',
-      text: userMessageText,
-      timestamp: new Date()
-    };
-    setMessages((prev) => [...prev, userMsg]);
-    setIsTyping(true);
-
-    try {
-      const response = await fetch('/api/v2/onboarding/specialist', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: userMessageText, locale }),
-      });
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Connection error. Please try again.');
-      }
-
-      const agentMsg: Message = {
-        id: `agent-${Date.now()}`,
-        sender: 'agent',
-        text: data.reply || data.response || t('agent.fallback'),
-        timestamp: new Date()
-      };
-      setMessages((prev) => [...prev, agentMsg]);
-
-    } catch (err: any) {
-      console.error(err);
-      setErrorText(err.message || 'Connecting error. Please try again.');
-    } finally {
-      setIsTyping(false);
-    }
+    await sendQuestion(text);
   };
+
+  const quickQuestions =
+    locale === 'es'
+      ? [
+          '¿Cómo activo mi cuenta de Creador y entro al Studio?',
+          '¿Cómo configuro mis tarifas VIP, PPV y retiros (90%)?',
+          '¿Cómo funciona la verificación KYC de 60 segundos?',
+        ]
+      : [
+          'How do I activate my Creator account and enter Studio?',
+          'How should I price my VIP pass, PPV & set up 90% payouts?',
+          'How does the 60-second private KYC verification work?',
+        ];
 
   return (
     <div className="fixed bottom-[calc(4.75rem+env(safe-area-inset-bottom,0px))] right-4 md:bottom-6 md:right-6 z-[9990] font-sans">
@@ -164,15 +209,15 @@ export default function SeccionAgentBubble() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 30, scale: 0.95 }}
             transition={{ type: 'spring', damping: 25, stiffness: 220 }}
-            className="fixed bottom-[calc(8.75rem+env(safe-area-inset-bottom,0px))] right-4 left-4 sm:left-auto sm:right-6 sm:bottom-24 z-[9995] w-auto sm:w-[370px] h-[460px] max-h-[65vh] bg-[#0A0A12]/95 border border-white/10 rounded-[2rem] shadow-[0_20px_60px_rgba(0,240,255,0.2)] flex flex-col overflow-hidden backdrop-blur-2xl"
+            className="fixed bottom-[calc(8.75rem+env(safe-area-inset-bottom,0px))] right-4 left-4 sm:left-auto sm:right-6 sm:bottom-24 z-[9995] w-auto sm:w-[370px] h-[480px] max-h-[70vh] bg-[#0A0A12]/95 border border-white/10 rounded-[2rem] shadow-[0_20px_60px_rgba(0,240,255,0.2)] flex flex-col overflow-hidden backdrop-blur-2xl"
           >
             {/* Header */}
             <header className="p-4 border-b border-white/10 bg-gradient-to-r from-[#00fbfb]/10 via-purple-950/20 to-[#ec4899]/10 flex items-center justify-between shrink-0">
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#00fbfb] to-[#ec4899] p-[1.5px] shadow-[0_0_15px_rgba(0,251,251,0.4)] overflow-hidden">
-                  <img 
-                    src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=150&h=150&q=80" 
-                    alt="Steve" 
+                  <img
+                    src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=150&h=150&q=80"
+                    alt="Steve"
                     className="w-full h-full object-cover rounded-full"
                   />
                 </div>
@@ -185,7 +230,7 @@ export default function SeccionAgentBubble() {
                   </span>
                 </div>
               </div>
-              <button 
+              <button
                 onClick={() => setIsOpen(false)}
                 className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-white/70 hover:text-white transition cursor-pointer"
               >
@@ -211,6 +256,24 @@ export default function SeccionAgentBubble() {
                   </div>
                 </div>
               ))}
+
+              {messages.length <= 1 && !isTyping && (
+                <div className="pt-2 space-y-1.5">
+                  <span className="text-[9px] font-mono uppercase tracking-wider text-white/40 block px-1">
+                    {locale === 'es' ? 'Preguntas frecuentes:' : 'Quick questions:'}
+                  </span>
+                  {quickQuestions.map((q, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => sendQuestion(q)}
+                      className="w-full text-left px-3 py-2 rounded-xl bg-white/[0.04] hover:bg-[#00fbfb]/15 border border-white/10 hover:border-[#00fbfb]/40 text-[11px] text-white/80 hover:text-white transition cursor-pointer"
+                    >
+                      💬 {q}
+                    </button>
+                  ))}
+                </div>
+              )}
 
               {isTyping && (
                 <div className="flex justify-start">

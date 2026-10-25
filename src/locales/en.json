@@ -367,7 +367,25 @@
       "loginNotAppliedNotice": "Are you a creator who hasn't applied for 90% revenue & 1-Year Free AI Assistant?",
       "loginApplyNow": "APPLY NOW",
       "loginMemberNotice": "Looking for early member access?",
-      "loginJoinWaitlist": "JOIN EARLY ACCESS LIST"
+      "loginJoinWaitlist": "JOIN EARLY ACCESS LIST",
+      "activateApprovedCreatorBtn": "Activate / Sign In as Approved Creator"
+    },
+    "registration": {
+      "usernameLabel": "Username / Handle",
+      "emailLabel": "Email Address",
+      "createPasswordLabel": "Create Password (min. 6 chars)",
+      "passwordLabel": "Password",
+      "createAccountBtn": "Create Account & Continue →"
+    },
+    "welcome": {
+      "enterStudioBtn": "Enter Creator Studio →",
+      "enterDashboardBtn": "Enter Dashboard"
+    },
+    "creatorFastTrack": {
+      "badge": "Founding Creator Fast-Track",
+      "desc": "Want to explore your Creator Studio first? You can upload your avatar and bio inside Studio Settings anytime.",
+      "enterStudioBtn": "Enter Creator Studio Now",
+      "skipExtBtn": "Skip for Now & Enter Creator Studio →"
     }
   },
   "sessionQuest": {
@@ -649,7 +667,8 @@
       "writeVault": "Edit Vault",
       "verify": "Verify",
       "submitTax": "Submit Tax",
-      "askAi": "Ask Copilot about this step"
+      "askAi": "Ask Copilot about this step",
+      "setupProfile": "Edit Profile"
     },
     "items": {
       "pricing": {
@@ -671,6 +690,10 @@
       "tax": {
         "title": "Tax Profile & Payout Destination",
         "desc": "Register tax business name and TIN in settings for global DAC7/1099 compliance."
+      },
+      "visuals": {
+        "title": "Add Profile Avatar & Creator Bio",
+        "desc": "Upload your main cover photo and write a short bio in Studio Settings so members can discover you."
       }
     }
   },

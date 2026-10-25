@@ -833,12 +833,50 @@ export default function CreatorStudio() {
         setIsLoadingSettings(true);
         const { data: { user } } = await supabase.auth.getUser();
         if (user) {
-          const { data: profileData } = await supabase
+          let { data: profileData } = await supabase
             .from('profiles')
             .select('*')
             .eq('id', user.id)
             .single();
-            
+
+          const isCreatorIntent =
+            user.user_metadata?.role === 'creator' ||
+            (typeof window !== 'undefined' && (
+              localStorage.getItem('is_creator_signup') === 'true' ||
+              Boolean(sessionStorage.getItem('_onboarding_creator_archive_choice')) ||
+              document.cookie.includes('sb_role=creator') ||
+              new URLSearchParams(window.location.search).get('welcome') === 'true'
+            ));
+
+          if (!profileData || (profileData.role !== 'creator' && isCreatorIntent)) {
+            const fallbackUsername = (
+              profileData?.username ||
+              user.user_metadata?.username ||
+              user.email?.split('@')[0] ||
+              `creator_${user.id.slice(0, 6)}`
+            )
+              .toLowerCase()
+              .replace(/[^a-z0-9_]/g, '');
+
+            const { data: provisioned } = await supabase
+              .from('profiles')
+              .upsert({
+                id: user.id,
+                username: fallbackUsername,
+                display_name:
+                  profileData?.display_name ||
+                  user.user_metadata?.full_name ||
+                  fallbackUsername,
+                role: 'creator',
+              })
+              .select('*')
+              .single();
+
+            if (provisioned) {
+              profileData = provisioned;
+            }
+          }
+
           if (profileData) {
             if (profileData.role !== 'creator') {
               router.push('/profile/member');
@@ -933,6 +971,11 @@ export default function CreatorStudio() {
     const tab = params.get('activeTab');
     if (tab && ['content', 'live', 'analytics', 'settings', 'goals', 'safety_ops', 'orders'].includes(tab)) {
       setActiveTab(tab as any);
+    }
+    if (params.get('welcome') === 'true' || params.get('tour') === 'true') {
+      if (!localStorage.getItem('seccion_creator_tour_seen')) {
+        setIsTourOpen(true);
+      }
     }
     const calConnected = params.get('calendarConnected');
     if (calConnected === 'true') {
@@ -1078,6 +1121,9 @@ export default function CreatorStudio() {
         const { error: updateError } = await supabase
         .from('profiles')
         .update({
+          display_name: (profile as any).display_name || undefined,
+          bio: (profile as any).bio || undefined,
+          avatar_url: (profile as any).avatar_url || undefined,
           base_subscription_price: baseSubscriptionPrice,
           privacy_settings: updatedPrivacy,
           ai_agent_active: aiAgentActive,
@@ -1450,14 +1496,21 @@ export default function CreatorStudio() {
           onOpenTour={() => setIsTourOpen(true)}
           onOpenKyc={() => router.push('/creator/kyc')}
           onAskCopilot={(question) => {
-            alert(`[AI Copilot Direct Assist]:\n\n${question}\n\nAsk this in the Copilot chat or AI Tools hub for immediate guidance.`);
+            if (typeof window !== 'undefined') {
+              window.dispatchEvent(new CustomEvent('seccion:ask-steve', { detail: { question } }));
+            }
           }}
         />
 
         {/* ── CREATOR TOUR MODAL ── */}
         <CreatorTourModal
           isOpen={isTourOpen}
-          onClose={() => setIsTourOpen(false)}
+          onClose={() => {
+            setIsTourOpen(false);
+            if (typeof window !== 'undefined') {
+              localStorage.setItem('seccion_creator_tour_seen', 'true');
+            }
+          }}
           onNavigateTab={(tabId) => setActiveTab(tabId as any)}
           onNavigateAiTools={() => router.push('/studio/ai-tools')}
         />
@@ -3201,6 +3254,78 @@ export default function CreatorStudio() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     {/* LEFT COLUMN: Pricing & Rates */}
                     <div className="space-y-6">
+                      {/* Public Creator Identity Card */}
+                      <div className="glass-card p-6 bg-white/2 border border-white/5 rounded-3xl space-y-5">
+                        <h3 className="text-xs font-black uppercase tracking-[0.2em] text-white/80 flex items-center gap-2 pb-3 border-b border-white/5">
+                          <Sparkles className="w-4 h-4 text-[#ffabf3]" /> Public Creator Profile
+                        </h3>
+
+                        <div className="flex items-center gap-4">
+                          <div className="w-16 h-16 rounded-2xl overflow-hidden bg-white/5 border border-white/10 shrink-0 flex items-center justify-center">
+                            {profile?.avatar_url ? (
+                              <img src={profile.avatar_url} alt={profile.display_name || 'Creator'} className="w-full h-full object-cover" />
+                            ) : (
+                              <Users className="w-6 h-6 text-white/30" />
+                            )}
+                          </div>
+                          <div className="flex-1 space-y-2">
+                            <label className="block text-[9px] font-black text-white/40 uppercase tracking-widest">
+                              Main Avatar Photo
+                            </label>
+                            <label className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/15 border border-white/10 text-[10px] font-black uppercase tracking-wider text-white cursor-pointer transition">
+                              <Upload className="w-3.5 h-3.5 text-[#00fbfb]" />
+                              <span>{profile?.avatar_url ? 'Change Avatar Photo' : 'Upload Avatar Photo'}</span>
+                              <input
+                                type="file"
+                                accept="image/*"
+                                className="hidden"
+                                onChange={(e) => {
+                                  const file = e.target.files?.[0];
+                                  if (!file) return;
+                                  const reader = new FileReader();
+                                  reader.onload = async (ev) => {
+                                    const dataUrl = ev.target?.result as string;
+                                    if (dataUrl) {
+                                      setProfile((prev: any) => ({ ...prev, avatar_url: dataUrl }));
+                                      if (profile?.id) {
+                                        await supabase.from('profiles').update({ avatar_url: dataUrl }).eq('id', profile.id);
+                                      }
+                                    }
+                                  };
+                                  reader.readAsDataURL(file);
+                                }}
+                              />
+                            </label>
+                          </div>
+                        </div>
+
+                        <div className="space-y-2">
+                          <label className="text-[9px] font-black text-white/40 uppercase tracking-widest block">
+                            Display Name
+                          </label>
+                          <input
+                            type="text"
+                            value={profile?.display_name || ''}
+                            onChange={(e) => setProfile((prev: any) => ({ ...prev, display_name: e.target.value }))}
+                            placeholder="Your Creator Display Name"
+                            className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-xs font-bold text-white outline-none focus:border-primary transition"
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <label className="text-[9px] font-black text-white/40 uppercase tracking-widest block">
+                            Creator Bio
+                          </label>
+                          <textarea
+                            rows={3}
+                            value={profile?.bio || ''}
+                            onChange={(e) => setProfile((prev: any) => ({ ...prev, bio: e.target.value }))}
+                            placeholder="Tell subscribers what exclusive content, VIP access, and sessions you offer..."
+                            className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-xs text-white outline-none focus:border-primary transition resize-none"
+                          />
+                        </div>
+                      </div>
+
                       <div className="glass-card p-6 bg-white/2 border border-white/5 rounded-3xl space-y-6">
                         <h3 className="text-xs font-black uppercase tracking-[0.2em] text-white/80 flex items-center gap-2 pb-3 border-b border-white/5">
                           <DollarSign className="w-4 h-4 text-primary" /> Earnings Settings
