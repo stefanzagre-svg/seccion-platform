@@ -32,7 +32,8 @@ const PUBLIC_API_ROUTES = [
   '/api/v2/creator/apply',
   '/api/v2/waitlist/join',
   '/api/admin/auth/founder-login',
-  '/api/media/blur'
+  '/api/media/blur',
+  '/api/v2/onboarding/specialist'
 ];
 
 // Routes that require authentication (explicitly excluded from PUBLIC_ROUTES)
