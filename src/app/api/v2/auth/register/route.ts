@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { createAdminClient } from '@/lib/supabase/admin-client';
+import { isReservedUsername } from '@/lib/reserved-usernames';
 
 export async function POST(req: NextRequest) {
   try {
@@ -178,6 +179,7 @@ export async function POST(req: NextRequest) {
     let finalUsername = existingProfile?.username || baseUsername;
 
     if (!existingProfile?.username) {
+      const isReserved = isReservedUsername(finalUsername);
       const { data: usernameTaken } = await adminClient
         .from('profiles')
         .select('id')
@@ -185,7 +187,7 @@ export async function POST(req: NextRequest) {
         .neq('id', userId)
         .maybeSingle();
 
-      if (usernameTaken) {
+      if (usernameTaken || isReserved) {
         finalUsername = `${baseUsername}_${Math.floor(100 + Math.random() * 900)}`;
       }
     }

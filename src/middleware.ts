@@ -114,6 +114,9 @@ export async function middleware(request: NextRequest) {
   const isPublicApi = PUBLIC_API_ROUTES.some(route => pathname === route || pathname.startsWith(route + '/'));
   const isExplicitlyProtected = PROTECTED_ROUTES.some(route => pathname === route || pathname.startsWith(route + '/'));
 
+  // Single-segment public creator vanity profile detection (e.g. /magali or /@magali)
+  const isPotentialVanityPath = /^\/(@)?[a-zA-Z0-9_.]{3,30}$/.test(pathname) && !isExplicitlyProtected;
+
   if (!user) {
     // 1. If hitting an unauthenticated private API route, return 401 Unauthorized
     if (pathname.startsWith('/api/') && !isPublicApi) {
@@ -130,8 +133,8 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(url);
     }
 
-    // 3. If accessing non-public site route (exempting API routes)
-    if (!isPublicPage && !pathname.startsWith('/api/') && pathname !== '/') {
+    // 3. If accessing non-public site route (exempting API routes and public creator vanity URLs)
+    if (!isPublicPage && !isPotentialVanityPath && !pathname.startsWith('/api/') && pathname !== '/') {
       const url = request.nextUrl.clone();
       url.pathname = '/onboarding';
       return NextResponse.redirect(url);

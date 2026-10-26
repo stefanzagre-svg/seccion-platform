@@ -8,7 +8,7 @@ import {
   Tv, Sparkles, MessageSquare, ListOrdered, ShieldCheck, 
   Volume2, Users, Compass, Activity, MapPin, Send, Check,
   SlidersHorizontal, Globe, DollarSign, Phone, Lock, Shield, Loader2, Calendar, Inbox,
-  Eye, EyeOff
+  Eye, EyeOff, Share2, Copy, ExternalLink
 } from 'lucide-react';
 import UploadSafetyNotice from '@/components/UploadSafetyNotice';
 import { calculateMatch, type UserProfile, type MatchResult, getTaxFormatForResidence } from '@/lib/match-engine';
@@ -288,12 +288,13 @@ class CreatorParticle {
 }
 
 export default function CreatorStudio() {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<'content' | 'live' | 'analytics' | 'settings' | 'goals' | 'safety_ops' | 'orders' | 'consent_inbox'>('content');
   const [customRequestPermission, setCustomRequestPermission] = useState<'anyone' | 'restricted'>('anyone');
   const [isUploading, setIsUploading] = useState(false);
   const [isTourOpen, setIsTourOpen] = useState(false);
+  const [copiedVanityLink, setCopiedVanityLink] = useState(false);
 
   // Registered Users lookup for co-performance tagging
   const REGISTERED_USERS = [
@@ -1480,6 +1481,57 @@ export default function CreatorStudio() {
             </button>
           </div>
         </div>
+
+        {/* ── PUBLIC CREATOR VANITY PROFILE BANNER ── */}
+        {profile?.username && (
+          <div className="rounded-2xl p-4 sm:p-5 bg-gradient-to-r from-[#00fbfb]/10 via-black/40 to-[#ffabf3]/10 border border-[#00fbfb]/30 shadow-lg flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-left">
+            <div className="flex items-center gap-3.5 min-w-0">
+              <div className="w-10 h-10 rounded-xl bg-[#00fbfb]/20 border border-[#00fbfb]/40 flex items-center justify-center text-[#00fbfb] shrink-0">
+                <Share2 className="w-5 h-5" />
+              </div>
+              <div className="min-w-0">
+                <div className="flex items-center gap-2">
+                  <p className="text-[11px] font-black uppercase tracking-wider text-white">
+                    {locale === 'es' ? 'Tu Enlace Público de Creador' : 'Your Shareable Creator Link'}
+                  </p>
+                  <span className="text-[9px] font-mono text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 px-2 py-0.5 rounded-full font-bold">
+                    {locale === 'es' ? 'Listo para Bio' : 'Ready for Social Bio'}
+                  </span>
+                </div>
+                <p className="font-mono text-xs sm:text-sm text-[#00fbfb] font-bold truncate mt-0.5">
+                  https://seccion.ai/{profile.username}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                onClick={() => {
+                  if (typeof navigator !== 'undefined' && navigator.clipboard) {
+                    navigator.clipboard.writeText(`https://seccion.ai/${profile.username}`);
+                    setCopiedVanityLink(true);
+                    setTimeout(() => setCopiedVanityLink(false), 2500);
+                  }
+                }}
+                className="px-4 py-2.5 rounded-xl bg-[#00fbfb] hover:bg-[#00fbfb]/90 text-black font-mono font-black text-xs uppercase tracking-wider transition flex items-center gap-1.5 cursor-pointer shadow-md"
+              >
+                {copiedVanityLink ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                <span>{copiedVanityLink ? (locale === 'es' ? '¡Copiado!' : 'Copied!') : (locale === 'es' ? 'Copiar Enlace' : 'Copy Link')}</span>
+              </button>
+
+              <a
+                href={`/${profile.username}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-3.5 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-white/80 hover:text-white border border-white/10 font-mono font-bold text-xs uppercase tracking-wider transition flex items-center gap-1.5 cursor-pointer"
+                title="View public profile"
+              >
+                <ExternalLink className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">{locale === 'es' ? 'Ver Perfil' : 'Preview'}</span>
+              </a>
+            </div>
+          </div>
+        )}
 
         {/* ── CREATOR 1ST STEPS GUIDE & ONBOARDING CHECKLIST ── */}
         <CreatorOnboardingChecklist
