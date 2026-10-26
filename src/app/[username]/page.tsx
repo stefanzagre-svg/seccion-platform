@@ -1,4 +1,4 @@
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import type { Metadata } from 'next';
 import { createAdminClient } from '@/lib/supabase/admin-client';
 import { normalizeUsername, isValidUsernameFormat, isReservedUsername } from '@/lib/reserved-usernames';
@@ -21,12 +21,31 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   }
 
   const supabase = createAdminClient();
-  const { data: creator } = await supabase
+  let { data: creator } = await supabase
     .from('profiles')
     .select('id, username, display_name, avatar_url, cover_url, bio, specialization, origins')
     .ilike('username', cleanUsername)
     .eq('role', 'creator')
     .maybeSingle();
+
+  // If not found under current username, check active 30-day forwarding aliases
+  if (!creator) {
+    const { data: previousCreator } = await supabase
+      .from('profiles')
+      .select('id, username, display_name, avatar_url, cover_url, bio, privacy_settings')
+      .eq('role', 'creator')
+      .filter('privacy_settings->previous_usernames', 'cs', JSON.stringify([{ username: cleanUsername }]))
+      .maybeSingle();
+
+    if (previousCreator) {
+      const list = previousCreator.privacy_settings?.previous_usernames;
+      const entry = Array.isArray(list) ? list.find((item: any) => item?.username?.toLowerCase() === cleanUsername) : null;
+      const isStillActive = entry?.expires_at ? new Date(entry.expires_at).getTime() > Date.now() : true;
+      if (isStillActive) {
+        creator = previousCreator;
+      }
+    }
+  }
 
   if (!creator) {
     return {
@@ -91,7 +110,24 @@ export default async function CreatorVanityPage({ params }: PageProps) {
     .eq('role', 'creator')
     .maybeSingle();
 
+  // If creator is not found under current username, check for an active 30-day redirect alias
   if (!creator) {
+    const { data: previousCreator } = await supabase
+      .from('profiles')
+      .select('id, username, privacy_settings')
+      .eq('role', 'creator')
+      .filter('privacy_settings->previous_usernames', 'cs', JSON.stringify([{ username: cleanUsername }]))
+      .maybeSingle();
+
+    if (previousCreator && previousCreator.username) {
+      const list = previousCreator.privacy_settings?.previous_usernames;
+      const entry = Array.isArray(list) ? list.find((item: any) => item?.username?.toLowerCase() === cleanUsername) : null;
+      const isStillActive = entry?.expires_at ? new Date(entry.expires_at).getTime() > Date.now() : true;
+      if (isStillActive) {
+        redirect(`/${previousCreator.username}`);
+      }
+    }
+
     notFound();
   }
 

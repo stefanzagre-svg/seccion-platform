@@ -517,7 +517,15 @@
     "totalViews": "Vistas Totales",
     "monthlyRevenue": "Ingresos Mensuales",
     "recentUploads": "Subidas Recientes",
-    "uploadNew": "Subir Nuevo Contenido"
+    "uploadNew": "Subir Nuevo Contenido",
+    "settings": {
+      "usernameLabel": "Usuario Público y Enlace de Creador",
+      "cooldownActive": "Bloqueado por {days}d",
+      "canChangeHandle": "Modificable",
+      "changeUsernameBtn": "Actualizar",
+      "usernameUnavailable": "Este usuario no está disponible.",
+      "usernameHelper": "El usuario puede actualizarse una vez cada 14 días. Si cambias de nombre, tu enlace anterior redirigirá automáticamente a tus fans a tu nuevo perfil durante 30 días."
+    }
   },
   "memberProfile": {
     "profileTitle": "Perfil de Miembro",

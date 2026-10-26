@@ -3,6 +3,9 @@ import {
   normalizeUsername, 
   isValidUsernameFormat, 
   isReservedUsername,
+  getUsernameCooldownStatus,
+  USERNAME_CHANGE_COOLDOWN_DAYS,
+  USERNAME_REDIRECT_GRACE_DAYS,
   RESERVED_USERNAMES 
 } from './reserved-usernames';
 
@@ -100,6 +103,56 @@ describe('Creator Vanity URL Engine & Security Guardrails', () => {
       expect(isReservedUsername('maguivogel18')).toBe(false);
       expect(isReservedUsername('valentina_ai')).toBe(false);
       expect(isReservedUsername('elena_official')).toBe(false);
+    });
+  });
+
+  describe('getUsernameCooldownStatus', () => {
+    const NOW = new Date('2026-10-26T12:00:00Z').getTime();
+    const ONE_DAY_MS = 24 * 60 * 60 * 1000;
+
+    it('allows immediate change when user has never changed username before (null / undefined)', () => {
+      expect(getUsernameCooldownStatus(null, 14, NOW).canChange).toBe(true);
+      expect(getUsernameCooldownStatus(undefined, 14, NOW).canChange).toBe(true);
+      expect(getUsernameCooldownStatus('', 14, NOW).canChange).toBe(true);
+    });
+
+    it('blocks change and reports accurate remaining days when within 14-day window', () => {
+      // Changed 4 days ago -> 10 days remaining
+      const changed4DaysAgo = new Date(NOW - 4 * ONE_DAY_MS).toISOString();
+      const status = getUsernameCooldownStatus(changed4DaysAgo, 14, NOW);
+
+      expect(status.canChange).toBe(false);
+      expect(status.daysRemaining).toBe(10);
+      expect(status.hoursRemaining).toBe(10 * 24);
+      expect(status.nextAvailableDate?.toISOString()).toBe(new Date(NOW + 10 * ONE_DAY_MS).toISOString());
+    });
+
+    it('blocks change when changed 13 days and 23 hours ago (1 day remaining)', () => {
+      const almostDone = new Date(NOW - (14 * ONE_DAY_MS - 3600 * 1000)).toISOString();
+      const status = getUsernameCooldownStatus(almostDone, 14, NOW);
+
+      expect(status.canChange).toBe(false);
+      expect(status.daysRemaining).toBe(1);
+      expect(status.hoursRemaining).toBe(1);
+    });
+
+    it('allows change once exactly 14 days or more have elapsed', () => {
+      // Changed exactly 14 days ago
+      const exactly14DaysAgo = new Date(NOW - 14 * ONE_DAY_MS).toISOString();
+      expect(getUsernameCooldownStatus(exactly14DaysAgo, 14, NOW).canChange).toBe(true);
+
+      // Changed 30 days ago
+      const changed30DaysAgo = new Date(NOW - 30 * ONE_DAY_MS).toISOString();
+      expect(getUsernameCooldownStatus(changed30DaysAgo, 14, NOW).canChange).toBe(true);
+    });
+
+    it('handles malformed date strings safely without throwing', () => {
+      expect(getUsernameCooldownStatus('invalid-date', 14, NOW).canChange).toBe(true);
+    });
+
+    it('verifies standard platform policy constants', () => {
+      expect(USERNAME_CHANGE_COOLDOWN_DAYS).toBe(14);
+      expect(USERNAME_REDIRECT_GRACE_DAYS).toBe(30);
     });
   });
 });

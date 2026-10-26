@@ -8,8 +8,9 @@ import {
   Tv, Sparkles, MessageSquare, ListOrdered, ShieldCheck, 
   Volume2, Users, Compass, Activity, MapPin, Send, Check,
   SlidersHorizontal, Globe, DollarSign, Phone, Lock, Shield, Loader2, Calendar, Inbox,
-  Eye, EyeOff, Share2, Copy, ExternalLink
+  Eye, EyeOff, Share2, Copy, ExternalLink, CheckCircle2, AlertCircle, Clock
 } from 'lucide-react';
+import { getUsernameCooldownStatus, USERNAME_CHANGE_COOLDOWN_DAYS } from '@/lib/reserved-usernames';
 import UploadSafetyNotice from '@/components/UploadSafetyNotice';
 import { calculateMatch, type UserProfile, type MatchResult, getTaxFormatForResidence } from '@/lib/match-engine';
 import { type ArchetypeId, type MoodId, type PassionId } from '@/lib/constants';
@@ -675,6 +676,14 @@ export default function CreatorStudio() {
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
 
+  // Public Username / Vanity URL Change State
+  const [newUsernameInput, setNewUsernameInput] = useState<string>('');
+  const [isCheckingUsername, setIsCheckingUsername] = useState<boolean>(false);
+  const [usernameAvailability, setUsernameAvailability] = useState<{ available: boolean; reason?: string } | null>(null);
+  const [isSavingUsername, setIsSavingUsername] = useState<boolean>(false);
+  const [usernameUpdateSuccess, setUsernameUpdateSuccess] = useState<string | null>(null);
+  const [usernameUpdateError, setUsernameUpdateError] = useState<string | null>(null);
+
   // Form Fields
   const [baseSubscriptionPrice, setBaseSubscriptionPrice] = useState<number>(0);
   const [ppvBaseRate, setPpvBaseRate] = useState<number>(0);
@@ -884,6 +893,7 @@ export default function CreatorStudio() {
               return;
             }
             setProfile(profileData);
+            setNewUsernameInput(profileData.username || '');
             setBaseSubscriptionPrice(Number(profileData.base_subscription_price || 0));
             setAiAgentActive(Boolean(profileData.ai_agent_active || false));
             setChatAutoEnabled(Boolean(profileData.chat_auto_enabled || false));
@@ -954,6 +964,7 @@ export default function CreatorStudio() {
             residence: 'ES'
           };
           setProfile(demoCreator);
+          setNewUsernameInput(demoCreator.username);
           setBaseSubscriptionPrice(19.99);
           setPpvBaseRate(4.99);
           setPrivateCallPrice(3.00);
@@ -1082,6 +1093,68 @@ export default function CreatorStudio() {
       console.error('[AI Toggle] Failed to save:', field, err);
     } finally {
       setIsAiToggleSaving(false);
+    }
+  };
+
+  // Real-time debounced availability check for public creator handle
+  useEffect(() => {
+    if (!newUsernameInput.trim() || !profile) {
+      setUsernameAvailability(null);
+      return;
+    }
+    const clean = newUsernameInput.trim().replace(/^@+/, '').toLowerCase();
+    if (clean === profile.username?.toLowerCase()) {
+      setUsernameAvailability(null);
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      setIsCheckingUsername(true);
+      try {
+        const res = await fetch(`/api/creator/check-username?username=${encodeURIComponent(clean)}`);
+        const data = await res.json();
+        setUsernameAvailability(data);
+      } catch {
+        setUsernameAvailability(null);
+      } finally {
+        setIsCheckingUsername(false);
+      }
+    }, 400);
+
+    return () => clearTimeout(timer);
+  }, [newUsernameInput, profile?.username]);
+
+  const handleChangeUsername = async () => {
+    if (!newUsernameInput.trim() || !profile) return;
+    setIsSavingUsername(true);
+    setUsernameUpdateError(null);
+    setUsernameUpdateSuccess(null);
+
+    try {
+      const res = await fetch('/api/creator/change-username', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ newUsername: newUsernameInput.trim() }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to update username.');
+      }
+
+      setProfile((prev: any) => ({
+        ...prev,
+        username: data.username,
+        privacy_settings: {
+          ...prev.privacy_settings,
+          username_last_changed_at: new Date().toISOString(),
+        },
+      }));
+      setUsernameUpdateSuccess(data.message || `Username successfully updated to @${data.username}!`);
+      setUsernameAvailability(null);
+    } catch (err: any) {
+      setUsernameUpdateError(err.message || 'Error updating username.');
+    } finally {
+      setIsSavingUsername(false);
     }
   };
 
@@ -3362,6 +3435,104 @@ export default function CreatorStudio() {
                             placeholder="Your Creator Display Name"
                             className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-xs font-bold text-white outline-none focus:border-primary transition"
                           />
+                        </div>
+
+                        {/* Public Handle & Vanity URL Cockpit */}
+                        <div className="space-y-3 pt-3 border-t border-white/5">
+                          <div className="flex items-center justify-between">
+                            <label className="text-[9px] font-black text-white/40 uppercase tracking-widest block">
+                              {t("creatorStudio.settings.usernameLabel", "Public Handle & Creator Link")}
+                            </label>
+                            {(() => {
+                              const cooldown = getUsernameCooldownStatus(profile?.privacy_settings?.username_last_changed_at, USERNAME_CHANGE_COOLDOWN_DAYS);
+                              return !cooldown.canChange ? (
+                                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-[9px] font-bold text-amber-400">
+                                  <Clock className="w-3 h-3" />
+                                  {t("creatorStudio.settings.cooldownActive", `Locked for ${cooldown.daysRemaining}d`)}
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[9px] font-bold text-emerald-400">
+                                  <Sparkles className="w-2.5 h-2.5" />
+                                  {t("creatorStudio.settings.canChangeHandle", "Editable")}
+                                </span>
+                              );
+                            })()}
+                          </div>
+
+                          <div className="flex items-center gap-2">
+                            <div className="relative flex-1">
+                              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40 font-mono text-xs font-black">@</span>
+                              <input
+                                type="text"
+                                value={newUsernameInput}
+                                disabled={!getUsernameCooldownStatus(profile?.privacy_settings?.username_last_changed_at, USERNAME_CHANGE_COOLDOWN_DAYS).canChange || isSavingUsername}
+                                onChange={(e) => {
+                                  setNewUsernameInput(e.target.value.toLowerCase().replace(/[^a-z0-9_.]/g, ''));
+                                  setUsernameUpdateError(null);
+                                  setUsernameUpdateSuccess(null);
+                                }}
+                                placeholder="your_handle"
+                                className={`w-full bg-white/5 border rounded-2xl pl-8 pr-10 py-3 text-xs font-bold text-white outline-none transition ${
+                                  !getUsernameCooldownStatus(profile?.privacy_settings?.username_last_changed_at, USERNAME_CHANGE_COOLDOWN_DAYS).canChange 
+                                    ? 'opacity-60 cursor-not-allowed border-white/5' 
+                                    : usernameAvailability?.available 
+                                      ? 'border-emerald-500/50 focus:border-emerald-500' 
+                                      : usernameAvailability?.available === false 
+                                        ? 'border-rose-500/50 focus:border-rose-500' 
+                                        : 'border-white/10 focus:border-primary'
+                                }`}
+                              />
+                              <div className="absolute right-3.5 top-1/2 -translate-y-1/2">
+                                {isCheckingUsername ? (
+                                  <Loader2 className="w-4 h-4 text-white/40 animate-spin" />
+                                ) : usernameAvailability?.available ? (
+                                  <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                                ) : usernameAvailability?.available === false ? (
+                                  <AlertCircle className="w-4 h-4 text-rose-400" />
+                                ) : null}
+                              </div>
+                            </div>
+
+                            {getUsernameCooldownStatus(profile?.privacy_settings?.username_last_changed_at, USERNAME_CHANGE_COOLDOWN_DAYS).canChange && 
+                             newUsernameInput.trim().replace(/^@+/, '').toLowerCase() !== profile?.username?.toLowerCase() && (
+                              <button
+                                type="button"
+                                disabled={isSavingUsername || !usernameAvailability?.available}
+                                onClick={handleChangeUsername}
+                                className="px-4 py-3 rounded-2xl bg-primary hover:bg-primary/90 text-white font-black text-xs uppercase tracking-wider disabled:opacity-40 disabled:cursor-not-allowed transition flex items-center gap-1.5 shrink-0 shadow-lg shadow-primary/20"
+                              >
+                                {isSavingUsername ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
+                                <span>{t("creatorStudio.settings.changeUsernameBtn", "Update")}</span>
+                              </button>
+                            )}
+                          </div>
+
+                          {/* Real-time status or error messages */}
+                          {usernameAvailability?.available === false && (
+                            <p className="text-[10px] text-rose-400 font-bold flex items-center gap-1.5">
+                              <AlertCircle className="w-3 h-3 shrink-0" />
+                              {usernameAvailability.reason || t("creatorStudio.settings.usernameUnavailable", "This handle is not available.")}
+                            </p>
+                          )}
+                          {usernameUpdateSuccess && (
+                            <p className="text-[10px] text-emerald-400 font-bold flex items-center gap-1.5">
+                              <CheckCircle2 className="w-3 h-3 shrink-0" />
+                              {usernameUpdateSuccess}
+                            </p>
+                          )}
+                          {usernameUpdateError && (
+                            <p className="text-[10px] text-rose-400 font-bold flex items-center gap-1.5">
+                              <AlertCircle className="w-3 h-3 shrink-0" />
+                              {usernameUpdateError}
+                            </p>
+                          )}
+
+                          <p className="text-[9px] text-white/30 leading-relaxed">
+                            {t(
+                              "creatorStudio.settings.usernameHelper",
+                              "Handles can be updated once every 14 days. If you re-brand, your previous link will automatically forward fans to your new profile for 30 days."
+                            )}
+                          </p>
                         </div>
 
                         <div className="space-y-2">

@@ -513,7 +513,15 @@
     "totalViews": "Total Views",
     "monthlyRevenue": "Monthly Revenue",
     "recentUploads": "Recent Uploads",
-    "uploadNew": "Upload New Content"
+    "uploadNew": "Upload New Content",
+    "settings": {
+      "usernameLabel": "Public Handle & Creator Link",
+      "cooldownActive": "Locked for {days}d",
+      "canChangeHandle": "Editable",
+      "changeUsernameBtn": "Update",
+      "usernameUnavailable": "This handle is not available.",
+      "usernameHelper": "Handles can be updated once every 14 days. If you re-brand, your previous link will automatically forward fans to your new profile for 30 days."
+    }
   },
   "memberProfile": {
     "profileTitle": "Member Profile",

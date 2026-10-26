@@ -125,3 +125,48 @@ export function isReservedUsername(username: string): boolean {
   const normalized = normalizeUsername(username);
   return RESERVED_USERNAMES.has(normalized);
 }
+
+// ── Cooldown & Redirect Policy Constants ──────────────────────────────
+export const USERNAME_CHANGE_COOLDOWN_DAYS = 14;
+export const USERNAME_REDIRECT_GRACE_DAYS = 30;
+
+export interface UsernameCooldownStatus {
+  canChange: boolean;
+  daysRemaining: number;
+  hoursRemaining: number;
+  nextAvailableDate: Date | null;
+}
+
+/**
+ * Calculates whether a creator is currently eligible to update their username
+ * or if they must wait out the 14-day anti-abuse cooldown.
+ */
+export function getUsernameCooldownStatus(
+  lastChangedAt: string | null | undefined,
+  cooldownDays: number = USERNAME_CHANGE_COOLDOWN_DAYS,
+  currentTimestamp: number = Date.now()
+): UsernameCooldownStatus {
+  if (!lastChangedAt) {
+    return { canChange: true, daysRemaining: 0, hoursRemaining: 0, nextAvailableDate: null };
+  }
+  const lastChange = new Date(lastChangedAt).getTime();
+  if (isNaN(lastChange)) {
+    return { canChange: true, daysRemaining: 0, hoursRemaining: 0, nextAvailableDate: null };
+  }
+  const cooldownMs = cooldownDays * 24 * 60 * 60 * 1000;
+  const elapsedMs = currentTimestamp - lastChange;
+  if (elapsedMs >= cooldownMs) {
+    return { canChange: true, daysRemaining: 0, hoursRemaining: 0, nextAvailableDate: null };
+  }
+  const remainingMs = cooldownMs - elapsedMs;
+  const daysRemaining = Math.max(1, Math.ceil(remainingMs / (24 * 60 * 60 * 1000)));
+  const hoursRemaining = Math.max(1, Math.ceil(remainingMs / (60 * 60 * 1000)));
+  const nextAvailableDate = new Date(lastChange + cooldownMs);
+  return {
+    canChange: false,
+    daysRemaining,
+    hoursRemaining,
+    nextAvailableDate,
+  };
+}
+
