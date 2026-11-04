@@ -35,15 +35,15 @@ Always use these files for any platform development or content requiring SECCION
 
 ## 🚀 Platform Architecture & Audit Ledger (Synced with Antigravity 2.0 & IDE)
 
-> **Last Synced**: 2026-10-26 (Morning Creator Username Change Engine & 30-Day Forwarding Sprint)
-> **Production Cloudflare Version ID**: 9303b002-a442-46e1-b334-b472c33b192a (Creator Studio Username Change & 30-Day Forwarding Live)  
+> **Last Synced**: 2026-11-04 (IPC-620 Class 3 Agent Harness Control Plane, RLS Migration Hardening & ES Math-to-Magic Fix)
+> **Production Cloudflare Version ID**: ec47a37a-ed72-477e-8baa-f8c05d0579c9 (IPC-620 Class 3 Harness Engineering Control Plane, RLS Migration Hardening & ES Math-to-Magic Fix Live)  
 > **Live Production URL**: `https://seccion.ai` & `https://www.seccion.ai`  
 > **Live Medium Editorial**: `https://medium.com/@seccionadmin/i-built-a-creator-platform-that-pays-90-and-replaces-40-management-agencies-with-ai-heres-what-2170851fa9ef`  
-> **Unit & Stress Test Suite**: 28 / 28 files, 282 / 282 tests PASSING (`npm test` / `vitest run --globals`)  
+> **Unit & Stress Test Suite**: 28 / 28 files, 289 / 289 tests PASSING (`npm test` / `vitest run --globals`)  
 > **E2E Certification Suite**: 20 / 20 PASSING across 7 Stages (`npm run test:e2e`)  
 > **Scale Stability & Reliability Ratio**: **99.45% Target Verified [Production Certified]**  
 > **Primary Social Platform**: `@steveseccion` on X (Twitter) — Instagram `@seccionplatform` terminated (Sept 2026)  
-> **Official Social Accounts**: Instagram `@seccion.ai` (keep strictly isolated from terminated `@seccionplatform`) | X `@steveseccion` | TikTok `steve.seccionplatform` | Facebook `seccion ai` (`https://www.facebook.com/profile.php?id=61588742763454`) | WhatsApp Concierge `+34 662 907 153` (`@seccionplatform`) | Telegram Concierge +34 662 907 153 (@seccionplatform) | VKontakte k.ru/feed
+> **Official Social Accounts**: Instagram `@seccion.ai` (keep strictly isolated from terminated `@seccionplatform`) | X `@steveseccion` | TikTok `steve.seccionplatform` | Facebook `seccion ai` (`https://www.facebook.com/profile.php?id=61588742763454`) | YouTube Seccion Platform (`@Seccion-Platform` / `https://www.youtube.com/@Seccion-Platform`) | WhatsApp Concierge `+34 662 907 153` (`@seccionplatform`) | Telegram Concierge +34 662 907 153 (@seccionplatform) | VKontakte Steve Seccion (https://vk.ru/id200006515840)
 
 ### 🏆 Audit Execution Scorecard
 
@@ -110,6 +110,7 @@ Always use these files for any platform development or content requiring SECCION
 - **[✓] Creator 1st Steps Guide & Onboarding Cockpit (Oct 2026)**: Interactive 5-step tour modal (`CreatorTourModal.tsx`), reactive completion checklist HUD (`CreatorOnboardingChecklist.tsx`), full Math-to-Magic EN/ES localization, Playwright E2E certified, deployed live to Cloudflare production (`721f0f1b-ed9d-4694-b405-c5864625937a`).
 - **[✓] Paid Ads & Social Platform Compliance Engine (Oct 2026)**: Established zero-ban targeting, copy, and OCR matrix for X Ads, Meta (Instagram/Facebook), and TikTok Ads (`AD_TARGETING_PLAYBOOK_INSTAGRAM_X.md`). Sanitized all paid ad creative OCR to B2B Creator Studio language (`Creator Business Tools`, `AI Community Copilot`, `Global S2S Translation`, `DRM Privacy Protection`), removing financial percentage triggers (`90%`, `80%`) and adult heuristics (`agencias`, `propinas`, `fans`). Deployed 9:16 vertical and 4:5 feed formats with UTM analytics tracking.
 - **[✓] Autonomous Stealth Creator Outreach Suite (Oct 20, 2026)**: Built & validated `/seccion-autonomous-outreach-suite` (`6/6` golden evals passing) with Dual-Mode Zero-Password Browser Control (CDP port `9222` attach + `storage_state.json`), 70/30 Portfolio Barbell + X New Adult Creator Fast-Track, 6-Stage Fake/Bot/OFM Agency Shield (`TreeSHAP` $\tau = 0.70$), and **Steve Seccion's Creator Account Assistant** native messaging across `EN`, `ES` (`Spain`/`Paisa`/`Rolo`/`Costeño`), `FR`, `PT-BR`, `DE`, `IT`, `PL`, `RO`, and `BG`.
+- **[✓] YouTube Outreach & Competitor Switcher Engine (Oct 2026)**: Integrated official channel `@Seccion-Platform` (`UCHvUnr0_82uDEASR9jzeUKw`) into autonomous suite (20 touches/day policy, 8:00–23:00 CET). Implemented multi-seed parser harvesting **300 qualified female creators** (sensual dance/heels, sensual yoga, bikini/lingerie try-on hauls, fitness aesthetic, and SWCEO/OnlyFans creator coaching commenters) with 100% external bio link extraction, 73 direct business emails in `.vault/creator_promotion_contacts.csv` (802 total vault leads), subtle-platform-anchored comments (`"— Steve & Team Seccion"`), and automated cross-platform priority routing (Priority A: direct DM via X/TikTok; Priority B: YouTube subscribe/like/comment warmup; Priority C: staged for Instagram DM post-Nov 10).
 - **[⏳] Run cleanup_demo_accounts.sql**: Execute once in Supabase SQL Editor (service role) to purge existing ghost rows
 - **[⏳] Dynamic Founding Spots Counter**: Trigger display when creator applications hit 50 milestone
 - **[⏳] Company Web3 Wallet in NOWPayments**: Configure SECCION treasury wallet (USDT Polygon / TRC20) in NOWPayments payout settings
@@ -224,3 +225,14 @@ When introducing a new **Creator Intent, Content Synergy, or Specialization** (e
 > 1. **Update Root & Sub-app Ledgers**: Sync `Production Cloudflare Version ID`, commit hash, test count, and deployment timestamp across `AGENTS.md`, `web/AGENTS.md`, and `PROJECT_STATUS.md`.
 > 2. **Session Chronology Entry**: Add a detailed session ledger entry into `PROJECT_STATUS.md` recording all features shipped, test metrics, and live URLs.
 > 3. **Verification**: Confirm Cloudflare cold-start metrics and verify HTTP 200 response on `https://seccion.ai`.
+
+
+---
+
+## ⚙️ Agent Harness Engineering Protocol (`../.harness/` — IPC-620 Class 3 Governance)
+
+Every AI agent and `/teamwork` subagent operating in `web/` MUST execute within the root `.harness/` control loop:
+1. **Contract & 12-Point Pre-Flight (`NO`-Count Reliability Scorer)**: `python ../.harness/harness_cli.py init-contract --goal "<goal>" --domain web_platform`
+2. **Policy Interception**: `python ../.harness/harness_cli.py check-policy --tool <TOOL> --args "<JSON>"`
+3. **Mechanical Sensor Suite (`max_retries = 3`)**: `python ../.harness/harness_cli.py verify`
+4. **Immutable Change Receipt**: `python ../.harness/harness_cli.py emit-receipt --artifact "<deliverable>"`

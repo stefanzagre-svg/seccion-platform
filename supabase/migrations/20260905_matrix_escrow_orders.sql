@@ -24,3 +24,11 @@ CREATE TABLE IF NOT EXISTS public.matrix_escrow_orders (
 CREATE INDEX IF NOT EXISTS idx_escrow_fan ON public.matrix_escrow_orders(fan_id);
 CREATE INDEX IF NOT EXISTS idx_escrow_creator ON public.matrix_escrow_orders(creator_id);
 CREATE INDEX IF NOT EXISTS idx_escrow_status ON public.matrix_escrow_orders(status);
+
+
+-- Zero-Trust Row-Level Security (RLS) Enforcement
+ALTER TABLE public.matrix_escrow_orders ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Fans and creators view own escrow orders" ON public.matrix_escrow_orders;
+CREATE POLICY "Fans and creators view own escrow orders" ON public.matrix_escrow_orders
+    FOR SELECT USING (auth.uid() = fan_id OR auth.uid() = creator_id);

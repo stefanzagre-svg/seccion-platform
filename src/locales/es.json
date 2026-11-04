@@ -76,7 +76,7 @@
     "memberFeature5Title": "Onboarding Quest de 3 Min",
     "memberFeature5Desc": "Selecciona tu arquetipo de personalidad para autocompletar 15 campos y empezar a vibrar con conexiones reales en menos de 3 minutos.",
     "memberFeature6Title": "Synergy Engine Gemini AI",
-    "memberFeature6Desc": "Analiza tu vibración entre 9 arquetipos, mood y momentum, ofreciendo una explicación visceral de tu Synergy Aura.",
+    "memberFeature6Desc": "Analiza tu vibra entre 9 arquetipos, mood y momentum, ofreciendo una explicación visceral de tu Synergy Aura.",
     "creatorFeature1Title": "Revenue Split 80/20",
     "creatorFeature1Desc": "Conserva el 80% de suscripciones y tips. El match mutuo es obligatorio para desbloquear suscripciones, reduciendo el churn.",
     "creatorFeature2Title": "AI Operations Assistant Gratis",
@@ -718,5 +718,23 @@
     "translatedBy": "Traducido con IA Gemini",
     "targetLanguage": "Idioma Destino",
     "error": "Error al traducir. Inténtalo de nuevo."
+  },
+  "smartOnboarding": {
+    "badge": "Configuración de Sinergia en 60 Segundos",
+    "step1Title": "Elige tu Arquetipo y Pasión Principal",
+    "step1Sub": "Con solo 2 toques autocalibramos tus 5 señales de Sinergia, hábitos de estilo de vida, intereses y avatar de arquetipo para conectar al instante.",
+    "step2Title": "Tu Perfil de Sinergia Autocompletado",
+    "step2Sub": "Pre-cargamos tus Vibe Pills, Intereses, Hábitos y Respuesta Rápida según tu arquetipo. Edita lo que quieras ahora mismo o entra directo.",
+    "profilePanelNoteTitle": "Tienes el control total:",
+    "profilePanelNoteDesc": "Todo lo autocompletado aquí (Vibe Pills, 10 Hábitos de Estilo de Vida, Intereses, Prompt y Avatar) puedes ajustarlo ahora o cambiarlo en cualquier momento desde tu Panel de Perfil de Miembro.",
+    "countryFastTrackBadge": "Acceso Rápido Activado",
+    "countryFastTrackDesc": "La verificación biométrica o ZKP NO es obligatoria al registrarte en tu país; solo se propondrá más adelante si agendas un Date Plan presencial o desbloqueas funciones +18.",
+    "strictAgeGateTitle": "Verificación de Edad e Identidad de Alta Confianza Requerida",
+    "strictAgeGateDesc": "Por seguridad de la comunidad, agendar una cita presencial (In-Person Date Plan) o activar niveles explícitos +18 requiere una verificación única Biométrica, ZKP o AgeChecker."
+  },
+  "creatorVanityMatch": {
+    "matchAndInteractBtn": "Hacer Match e Interactuar con @{username}",
+    "sparkSentBadge": "Chispa Enviada · Esperando que @{username} haga Match Back",
+    "matchBackBtn": "Hacer Match Back con @{username} Ahora"
   }
 }

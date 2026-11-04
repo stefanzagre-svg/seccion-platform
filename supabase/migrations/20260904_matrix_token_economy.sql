@@ -71,3 +71,22 @@ CREATE TABLE IF NOT EXISTS public.creator_earnings_ledger (
 CREATE INDEX IF NOT EXISTS idx_user_wallets_user ON public.user_wallets(user_id);
 CREATE INDEX IF NOT EXISTS idx_matrix_tx_user ON public.matrix_transactions(user_id);
 CREATE INDEX IF NOT EXISTS idx_creator_earnings_creator ON public.creator_earnings_ledger(creator_id);
+
+
+-- 5. Zero-Trust Row-Level Security (RLS) Enforcement
+ALTER TABLE public.user_wallets ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.matrix_transactions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.creator_payout_settings ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.creator_earnings_ledger ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Users view own wallet" ON public.user_wallets;
+CREATE POLICY "Users view own wallet" ON public.user_wallets FOR SELECT USING (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users view own matrix transactions" ON public.matrix_transactions;
+CREATE POLICY "Users view own matrix transactions" ON public.matrix_transactions FOR SELECT USING (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Creators manage own payout settings" ON public.creator_payout_settings;
+CREATE POLICY "Creators manage own payout settings" ON public.creator_payout_settings FOR ALL USING (auth.uid() = creator_id) WITH CHECK (auth.uid() = creator_id);
+
+DROP POLICY IF EXISTS "Creators view own earnings ledger" ON public.creator_earnings_ledger;
+CREATE POLICY "Creators view own earnings ledger" ON public.creator_earnings_ledger FOR SELECT USING (auth.uid() = creator_id);
