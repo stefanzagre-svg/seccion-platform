@@ -1,6 +1,33 @@
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin-client';
 import { sendCreatorApprovalEmail } from '@/lib/email';
+import crypto from 'crypto';
+
+function extractHandleFromLink(link?: string | null, email?: string): string {
+  if (link) {
+    const cleaned = link.replace(/^https?:\/\/[^\/]+\/@?/, '').replace(/\./g, '_').replace(/[^a-zA-Z0-9_]/g, '');
+    if (cleaned.length >= 3) return cleaned.slice(0, 24).toLowerCase();
+  }
+  if (email) {
+    const fromEmail = email.split('@')[0].replace(/\./g, '_').replace(/[^a-zA-Z0-9_]/g, '');
+    if (fromEmail.length >= 3) return fromEmail.slice(0, 24).toLowerCase();
+  }
+  return `creator_${Math.floor(1000 + Math.random() * 9000)}`;
+}
+
+async function findAuthUserByEmail(supabaseAdmin: any, email: string) {
+  let page = 1;
+  const perPage = 1000;
+  while (page <= 5) {
+    const { data } = await supabaseAdmin.auth.admin.listUsers({ page, perPage });
+    if (!data?.users || data.users.length === 0) break;
+    const match = data.users.find((u: any) => u.email?.toLowerCase().trim() === email);
+    if (match) return match;
+    if (data.users.length < perPage) break;
+    page++;
+  }
+  return null;
+}
 
 export async function GET(request: Request) {
   try {
@@ -84,42 +111,91 @@ export async function PATCH(request: Request) {
       throw error;
     }
 
-    // When approved: upgrade existing profile role to 'creator' if user already exists, and send approval email
+    // When approved: auto-create auth.users + profiles (role='creator') so creator needs zero password setup, and send 1-click magic link email
     if (action === 'approve' && data?.email) {
       const cleanEmail = data.email.toLowerCase().trim();
-      try {
-        const { data: usersList } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 1000 });
-        const existingUser = usersList?.users?.find(
-          (u) => u.email?.toLowerCase().trim() === cleanEmail
-        );
-        if (existingUser) {
-          const baseUsername = (
-            data.primary_handle ||
-            existingUser.user_metadata?.username ||
-            cleanEmail.split('@')[0] ||
-            'creator'
-          )
-            .toLowerCase()
-            .replace(/[^a-z0-9_]/g, '')
-            .slice(0, 24);
+      let magicLinkUrl: string | undefined;
 
+      try {
+        const existingUser = await findAuthUserByEmail(supabaseAdmin, cleanEmail);
+
+        const baseUsername = (
+          extractHandleFromLink(data.link1, cleanEmail) ||
+          existingUser?.user_metadata?.username ||
+          cleanEmail.split('@')[0] ||
+          'creator'
+        )
+          .toLowerCase()
+          .replace(/[^a-z0-9_]/g, '')
+          .slice(0, 24) || `creator_${Math.floor(1000 + Math.random() * 9000)}`;
+
+        const displayName =
+          data.full_name?.trim() ||
+          existingUser?.user_metadata?.full_name ||
+          cleanEmail.split('@')[0];
+
+        let targetUserId = existingUser?.id || null;
+
+        if (!targetUserId) {
+          const randomPassword = crypto.randomBytes(24).toString('base64url') + 'A1!';
+          const { data: created } = await supabaseAdmin.auth.admin.createUser({
+            email: cleanEmail,
+            password: randomPassword,
+            email_confirm: true,
+            user_metadata: {
+              username: baseUsername,
+              full_name: displayName,
+              role: 'creator',
+              email_verified: true,
+            },
+          });
+          targetUserId = created?.user?.id || null;
+        } else if (!existingUser?.email_confirmed_at) {
+          await supabaseAdmin.auth.admin.updateUserById(targetUserId, {
+            email_confirm: true,
+            user_metadata: {
+              ...existingUser?.user_metadata,
+              role: 'creator',
+              email_verified: true,
+            },
+          });
+        }
+
+        if (targetUserId) {
           await supabaseAdmin.from('profiles').upsert(
             {
-              id: existingUser.id,
+              id: targetUserId,
               username: baseUsername,
-              display_name: data.full_name || existingUser.user_metadata?.full_name || baseUsername,
+              display_name: displayName,
               role: 'creator',
             },
             { onConflict: 'id' }
           );
         }
+
+        const { data: linkData } = await supabaseAdmin.auth.admin.generateLink({
+          type: 'magiclink',
+          email: cleanEmail,
+          options: {
+            redirectTo: 'https://seccion.ai/auth/callback?next=/studio',
+          },
+        });
+
+        const hashedToken = linkData?.properties?.hashed_token;
+        if (hashedToken) {
+          // Construct direct query-param URL for rock-solid server-side callback verification (H1 fix)
+          magicLinkUrl = `https://seccion.ai/auth/callback?token_hash=${encodeURIComponent(hashedToken)}&type=magiclink&next=/studio`;
+        } else if (linkData?.properties?.action_link) {
+          magicLinkUrl = linkData.properties.action_link;
+        }
       } catch (e) {
-        console.warn('[Admin Approve] Profile role sync notice:', e);
+        console.warn('[Admin Approve] Profile auto-provision notice:', e);
       }
 
       sendCreatorApprovalEmail({
         email: cleanEmail,
         fullName: data.full_name || cleanEmail.split('@')[0],
+        magicLinkUrl,
       }).catch((e) => console.warn('[Admin Approve] Approval email notice:', e));
     }
 

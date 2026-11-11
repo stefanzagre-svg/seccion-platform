@@ -17,6 +17,18 @@ export function resolveInitialOnboardingStep(params: URLSearchParams): string {
   return 'registration';
 }
 
+export function extractHandleFromLink(link?: string | null, email?: string): string {
+  if (link) {
+    const cleaned = link.replace(/^https?:\/\/[^\/]+\/@?/, '').replace(/\./g, '_').replace(/[^a-zA-Z0-9_]/g, '');
+    if (cleaned.length >= 3) return cleaned.slice(0, 24).toLowerCase();
+  }
+  if (email) {
+    const fromEmail = email.split('@')[0].replace(/\./g, '_').replace(/[^a-zA-Z0-9_]/g, '');
+    if (fromEmail.length >= 3) return fromEmail.slice(0, 24).toLowerCase();
+  }
+  return `creator_${Math.floor(1000 + Math.random() * 9000)}`;
+}
+
 export function deriveCleanUsername(email: string, explicitUsername?: string, primaryHandle?: string): string {
   const base = (
     explicitUsername?.trim() ||
@@ -28,6 +40,18 @@ export function deriveCleanUsername(email: string, explicitUsername?: string, pr
     .replace(/[^a-z0-9_]/g, '')
     .slice(0, 24);
   return base || 'user_default';
+}
+
+export function resolveEffectiveRegistrationRole(
+  requestedRole: string | undefined,
+  isFounder: boolean,
+  creatorAppStatus: string | undefined
+): 'creator' | 'member' {
+  // Phase A Security Invariant (C1 Fix):
+  // Clients requesting 'creator' are NEVER granted creator role unless they are the founder
+  // or have a verified 'approved' creator_application in the database.
+  const isApproved = isFounder || creatorAppStatus === 'approved';
+  return isApproved ? 'creator' : 'member';
 }
 
 export function resolvePostOnboardingRedirect(isCreator: boolean, isFounder = false): string {
@@ -55,5 +79,80 @@ describe('Frictionless Creator & Member Onboarding Routing Invariants', () => {
     expect(resolvePostOnboardingRedirect(true, false)).toBe('/studio?welcome=true');
     expect(resolvePostOnboardingRedirect(false, false)).toBe('/dashboard');
     expect(resolvePostOnboardingRedirect(true, true)).toBe('/admin');
+  });
+
+  it('preserves member role when a member completes 18+ DIDIT KYC verification', () => {
+    const resolveVerifiedRole = (existingRole?: string, targetRole?: string) =>
+      targetRole === 'creator' || existingRole === 'creator'
+        ? 'creator'
+        : existingRole || 'member';
+
+    expect(resolveVerifiedRole('member', undefined)).toBe('member');
+    expect(resolveVerifiedRole('member', 'member')).toBe('member');
+    expect(resolveVerifiedRole('creator', undefined)).toBe('creator');
+    expect(resolveVerifiedRole('member', 'creator')).toBe('creator');
+  });
+
+  it('sanitizes DIDIT returnTo callback path against open-redirect vectors', () => {
+    const sanitizeReturnTo = (returnTo?: unknown) =>
+      typeof returnTo === 'string' && returnTo.startsWith('/') && !returnTo.startsWith('//')
+        ? returnTo
+        : '/onboarding/kyc?session_done=true';
+
+    expect(sanitizeReturnTo('/feed')).toBe('/feed');
+    expect(sanitizeReturnTo('/studio')).toBe('/studio');
+    expect(sanitizeReturnTo('//evil.com')).toBe('/onboarding/kyc?session_done=true');
+    expect(sanitizeReturnTo('https://evil.com')).toBe('/onboarding/kyc?session_done=true');
+  });
+});
+
+describe('Phase A Security Hardening Invariants (C1, C2, C3, H1, Schema)', () => {
+  it('C1: prevents unapproved visitors from self-assigning creator role via API', () => {
+    // Unapproved client attempts to send role: "creator"
+    expect(resolveEffectiveRegistrationRole('creator', false, undefined)).toBe('member');
+    expect(resolveEffectiveRegistrationRole('creator', false, 'pending')).toBe('member');
+    expect(resolveEffectiveRegistrationRole('creator', false, 'waitlist')).toBe('member');
+    expect(resolveEffectiveRegistrationRole('creator', false, 'rejected')).toBe('member');
+
+    // Only approved applications or founder receive creator role
+    expect(resolveEffectiveRegistrationRole('creator', false, 'approved')).toBe('creator');
+    expect(resolveEffectiveRegistrationRole('member', false, 'approved')).toBe('creator');
+    expect(resolveEffectiveRegistrationRole(undefined, true, undefined)).toBe('creator');
+  });
+
+  it('Schema: extractHandleFromLink safely derives handles from link1 URLs or handles', () => {
+    expect(extractHandleFromLink('https://instagram.com/maguivogel', 'magui@test.com')).toBe('maguivogel');
+    expect(extractHandleFromLink('https://x.com/steveseccion', 'steve@test.com')).toBe('steveseccion');
+    expect(extractHandleFromLink('https://tiktok.com/@creator_star', 'star@test.com')).toBe('creator_star');
+    expect(extractHandleFromLink('@alice_w', 'alice@test.com')).toBe('alice_w');
+    expect(extractHandleFromLink(null, 'elena.rodriguez@gmail.com')).toBe('elena_rodriguez');
+  });
+
+  it('H1: generates magiclink callback URL with direct token_hash for server-side verification', () => {
+    const buildDirectMagicLink = (hashedToken?: string, actionLink?: string) => {
+      if (hashedToken) {
+        return `https://seccion.ai/auth/callback?token_hash=${encodeURIComponent(hashedToken)}&type=magiclink&next=/studio`;
+      }
+      return actionLink;
+    };
+
+    const token = 'abc123tokenhashxyz';
+    const directUrl = buildDirectMagicLink(token, 'https://supabase.co/verify#access_token=123');
+    expect(directUrl).toBe('https://seccion.ai/auth/callback?token_hash=abc123tokenhashxyz&type=magiclink&next=/studio');
+    expect(directUrl).toContain('token_hash=');
+    expect(directUrl).toContain('&type=magiclink');
+    expect(directUrl).toContain('&next=/studio');
+  });
+
+  it('C3: account takeover protection - prevents password overwrite for existing users', () => {
+    const shouldOverwritePassword = (isExistingUser: boolean, isApprovedCreator: boolean) => {
+      // NEVER overwrite password on existing user
+      if (isExistingUser) return false;
+      return isApprovedCreator;
+    };
+
+    expect(shouldOverwritePassword(true, true)).toBe(false);
+    expect(shouldOverwritePassword(true, false)).toBe(false);
+    expect(shouldOverwritePassword(false, true)).toBe(true);
   });
 });

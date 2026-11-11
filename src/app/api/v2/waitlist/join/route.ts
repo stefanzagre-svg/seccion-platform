@@ -12,10 +12,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Malformed JSON payload" }, { status: 400 });
     }
     const { email, city } = body || {};
+    const effectiveCity =
+      typeof city === "string" && city.trim().length > 0
+        ? city.trim()
+        : req.headers.get("cf-ipcountry") || "Global";
 
-    if (!email || !city) {
+    if (!email) {
       return NextResponse.json(
-        { error: "Email and city are required" },
+        { error: "Email is required" },
         { status: 400 }
       );
     }
@@ -45,7 +49,7 @@ export async function POST(req: NextRequest) {
       .from("member_waitlist")
       .insert({
         email: email.toLowerCase().trim(),
-        city: city.trim(),
+        city: effectiveCity,
         founding_member: true,
       })
       .select()
@@ -67,7 +71,7 @@ export async function POST(req: NextRequest) {
     // Trigger instant Telegram alert to founder
     const msg = `🎉 <b>NEW MEMBER WAITLIST SIGNUP!</b>\n\n` +
       `📧 <b>Email:</b> ${email.toLowerCase().trim()}\n` +
-      `📍 <b>City:</b> ${city.trim()}\n` +
+      `📍 <b>City:</b> ${effectiveCity}\n` +
       `🔢 <b>Waitlist Position:</b> #${count || 1}`;
     
     sendTelegramNotification(msg).catch(() => {});

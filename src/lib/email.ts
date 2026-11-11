@@ -10,15 +10,15 @@ export async function sendCreatorWelcomeEmail(params: {
   const isEs = params.locale !== "en";
   const name = params.fullName?.trim() || (isEs ? "Creador/a" : "Creator");
   const subject = isEs
-    ? "⚡ Bienvenido/a a SECCION — Activa tu Cuenta y 90% de Ganancias"
-    : "⚡ Welcome to SECCION — Activate Your Account & 90% Payout";
+    ? "⚡ Solicitud Recibida en SECCION — Tu Plaza del 90% Está Reservada"
+    : "⚡ Application Received on SECCION — Your 90% Founding Spot is Reserved";
 
-  const setupUrl = `https://seccion.ai/onboarding?role=creator&email=${encodeURIComponent(params.email)}&name=${encodeURIComponent(name)}`;
+  const statusUrl = `https://seccion.ai/login?email=${encodeURIComponent(params.email)}`;
 
   const directWhatsAppLink = `https://wa.me/34662907153?text=${encodeURIComponent(
     isEs
-      ? `Hola Stefan, soy ${name} (${params.email}). Acabo de registrarme en SECCION para el 90% de ganancias.`
-      : `Hi Stefan, I'm ${name} (${params.email}). I just registered on SECCION for the 90% payout rate.`
+      ? `Hola Stefan, soy ${name} (${params.email}). Acabo de solicitar mi acceso como Creador Fundador (90% Split) en SECCION.`
+      : `Hi Stefan, I'm ${name} (${params.email}). I just applied for Founding Creator access (90% Split) on SECCION.`
   )}`;
 
   const html = `
@@ -46,14 +46,22 @@ export async function sendCreatorWelcomeEmail(params: {
           <p>
             ${
               isEs
-                ? "Hemos recibido tu registro como Creador Fundador en SECCION. Tu lugar prioritario y la tasa especial del <b>90% de ganancias netas + 1 año de Copiloto IA gratis</b> han quedado reservados para tu correo."
-                : "We received your application as a Founding Creator on SECCION. Your priority spot and the special <b>90% net payout rate + 1-Year Free AI Copilot</b> are reserved for your email."
+                ? "Hemos recibido tu solicitud como Creador Fundador en SECCION. Tu lugar prioritario y la tasa especial del <b>90% de ganancias netas + 1 año de Copiloto IA gratis</b> han quedado reservados para tu correo mientras nuestro equipo verifica tu perfil."
+                : "We received your application as a Founding Creator on SECCION. Your priority spot and the special <b>90% net payout rate + 1-Year Free AI Copilot</b> are reserved for your email while our team verifies your profile."
+            }
+          </p>
+
+          <p>
+            ${
+              isEs
+                ? "<b>Sin contraseñas complicadas:</b> En cuanto tu solicitud sea aprobada, recibirás un enlace de acceso directo de 1 clic (y código de 6 dígitos) para entrar directamente a tu Creator Studio."
+                : "<b>Zero password friction:</b> As soon as your application is approved, you will receive a 1-click direct access link (and 6-digit code) to enter your Creator Studio immediately."
             }
           </p>
 
           <p style="text-align: center;">
-            <a href="${setupUrl}" class="btn">
-              ⚡ ${isEs ? "Activar Mi Cuenta y Crear Contraseña →" : "Activate My Account & Set Password →"}
+            <a href="${directWhatsAppLink}" class="btn-wa">
+              💬 ${isEs ? "Acelerar Aprobación por WhatsApp (+34 662 907 153)" : "Fast-Track Approval on WhatsApp (+34 662 907 153)"}
             </a>
           </p>
 
@@ -63,17 +71,9 @@ export async function sendCreatorWelcomeEmail(params: {
             <div class="perk-item">🛡️ <b>${isEs ? "Bóveda DRM Anti-Piratería" : "DRM Anti-Piracy Vault"}</b> — ${isEs ? "Protección de contenido contra capturas y filtraciones" : "Zero leaks and screenshot protection"}</div>
           </div>
 
-          <p>
-            ${
-              isEs
-                ? "¿Necesitas ayuda personalizada o quieres confirmar tus enlaces al instante? Escríbenos directamente por WhatsApp:"
-                : "Need personal assistance or want to fast-track your link verification? Message our Creator Concierge on WhatsApp:"
-            }
-          </p>
-
           <p style="text-align: center;">
-            <a href="${directWhatsAppLink}" class="btn-wa">
-              💬 ${isEs ? "Concierge en WhatsApp (+34 662 907 153)" : "WhatsApp Concierge (+34 662 907 153)"}
+            <a href="${statusUrl}" class="btn">
+              ⚡ ${isEs ? "Consultar Estado / Acceso Creador →" : "Check Application Status / Creator Login →"}
             </a>
           </p>
 
@@ -132,6 +132,7 @@ export async function sendCreatorApprovalEmail(params: {
   email: string;
   fullName: string;
   locale?: string;
+  magicLinkUrl?: string;
 }) {
   const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey) return;
@@ -139,11 +140,11 @@ export async function sendCreatorApprovalEmail(params: {
   const isEs = params.locale !== "en";
   const name = params.fullName?.trim() || (isEs ? "Creador/a" : "Creator");
   const subject = isEs
-    ? "✅ ¡Aprobada! Tu Creator Studio en SECCION está listo (90% Split)"
-    : "✅ Approved! Your SECCION Creator Studio is Ready (90% Split)";
+    ? "✅ ¡Aprobada! Tu Creator Studio en SECCION está listo (Acceso 1-Clic)"
+    : "✅ Approved! Your SECCION Creator Studio is Ready (1-Click Access)";
 
-  const setupUrl = `https://seccion.ai/onboarding?role=creator&email=${encodeURIComponent(params.email)}&name=${encodeURIComponent(name)}`;
-  const loginUrl = `https://seccion.ai/login?email=${encodeURIComponent(params.email)}`;
+  const loginUrl = `https://seccion.ai/login?email=${encodeURIComponent(params.email)}&approved=true`;
+  const primaryAccessUrl = params.magicLinkUrl || loginUrl;
 
   const html = `
     <!DOCTYPE html>
@@ -168,20 +169,20 @@ export async function sendCreatorApprovalEmail(params: {
           <p>
             ${
               isEs
-                ? "Tu plaza oficial de <b>Creador Fundador (90% de comisión neta + 1 Año de Copiloto IA Gratis)</b> ya está activa. Haz clic en el botón de abajo para elegir tu contraseña y entrar directamente a tu Creator Studio:"
-                : "Your official <b>Founding Creator spot (90% net split + 1-Year Free AI Copilot)</b> is now active. Click below to set your password and enter your Creator Studio directly:"
+                ? "Tu plaza oficial de <b>Creador Fundador (90% de comisión neta + 1 Año de Copiloto IA Gratis)</b> ya está activa y tu cuenta ha sido creada automáticamente. Haz clic abajo para entrar directamente a tu Creator Studio sin necesidad de crear contraseña:"
+                : "Your official <b>Founding Creator spot (90% net split + 1-Year Free AI Copilot)</b> is now active and your account has been created automatically. Click below to enter your Creator Studio directly with zero password required:"
             }
           </p>
 
           <p style="text-align: center;">
-            <a href="${setupUrl}" class="btn">
-              🚀 ${isEs ? "Activar Cuenta y Entrar al Creator Studio →" : "Activate Account & Enter Creator Studio →"}
+            <a href="${primaryAccessUrl}" class="btn">
+              🚀 ${isEs ? "Entrar a mi Creator Studio (1-Clic) →" : "Enter My Creator Studio (1-Click) →"}
             </a>
           </p>
 
           <p style="text-align: center;">
             <a href="${loginUrl}" class="btn-sec">
-              🔑 ${isEs ? "Ir al Login Directo de Creadores" : "Go to Direct Creator Login"}
+              🔑 ${isEs ? "Entrar con Código de 6 Dígitos por Correo" : "Sign In with 6-Digit Email Code"}
             </a>
           </p>
 

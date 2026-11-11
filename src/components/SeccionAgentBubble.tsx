@@ -74,19 +74,19 @@ export default function SeccionAgentBubble() {
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const searchParams = new URLSearchParams(window.location.search);
-      const isSegpayReviewer = searchParams.get('reviewer') === 'segpay';
+      const isComplianceReviewer = searchParams.get('reviewer') === 'compliance' || searchParams.get('reviewer') === 'underwriting';
       const isCreatorGuide =
         searchParams.get('guide') === 'creator' ||
         searchParams.get('ref') === 'creator' ||
         (searchParams.get('role') === 'creator' && searchParams.get('help') === 'steve');
 
-      if (isSegpayReviewer) {
+      if (isComplianceReviewer) {
         setIsOpen(true);
         setMessages([
           {
-            id: 'segpay-welcome',
+            id: 'compliance-welcome',
             sender: 'agent',
-            text: "Hello Lauren & Segpay Underwriting Team! 👋 I'm Steve, SECCION's Onboarding & Compliance Specialist. Feel free to ask me anything regarding our platform mechanics, 18+ biometric KYC verification, 18 U.S.C. 2257 record-keeping, SFW vs. NSFW purchase gating, escrow protection, terms of service, or refund protocols.",
+            text: "Welcome Institutional Underwriting & Compliance Team! 👋 I'm Steve, SECCION's Onboarding & Compliance Specialist. Feel free to ask me anything regarding our Two-Stage SFW vs. NSFW Sightengine AI gate, DIDIT Zero-Knowledge KYC verification, 18 U.S.C. 2257 record-keeping, smart-contract escrow protection, terms of service, or refund protocols.",
             timestamp: new Date(),
           },
         ]);

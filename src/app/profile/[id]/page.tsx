@@ -46,6 +46,9 @@ export default function ProfileInsidePage() {
   const [showLiveStream, setShowLiveStream] = useState(false);
   const [showCallModal, setShowCallModal] = useState(false);
   const [showMatchOverlay, setShowMatchOverlay] = useState(false);
+  const [hasSentMatchSpark, setHasSentMatchSpark] = useState(false);
+  const [targetLikedMe, setTargetLikedMe] = useState(false);
+  const [isMatching, setIsMatching] = useState(false);
 
   // Fetch all necessary data on mount / parameter change
   useEffect(() => {
@@ -78,10 +81,43 @@ export default function ProfileInsidePage() {
         if (targetError) throw new Error('Profile not found');
         setProfile(targetProf);
 
-        // 3. Fetch relationship state
+        // 3. Fetch relationship state & pending spark state
         if (currentUserId && currentUserId !== id) {
           const relState = await getRelationshipState(currentUserId, id);
           setRelationship(relState);
+
+          const { data: sentSpark } = await supabase
+            .from('interactions')
+            .select('id')
+            .eq('actor_id', currentUserId)
+            .eq('target_id', id)
+            .eq('type', 'heart')
+            .limit(1);
+          if (sentSpark && sentSpark.length > 0) {
+            setHasSentMatchSpark(true);
+          }
+
+          const { data: incomingSpark } = await supabase
+            .from('interactions')
+            .select('id')
+            .eq('actor_id', id)
+            .eq('target_id', currentUserId)
+            .eq('type', 'heart')
+            .limit(1);
+          if (incomingSpark && incomingSpark.length > 0) {
+            setTargetLikedMe(true);
+          }
+
+          if (typeof window !== 'undefined') {
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('autoMatch') === 'true' && (!sentSpark || sentSpark.length === 0) && !relState?.isMatched) {
+              const { matched } = await recordInteraction(currentUserId, id, 'heart');
+              setHasSentMatchSpark(true);
+              if (matched) setShowMatchOverlay(true);
+              const updatedRel = await getRelationshipState(currentUserId, id);
+              setRelationship(updatedRel);
+            }
+          }
         }
 
         // 4. Fetch media album
@@ -182,9 +218,11 @@ export default function ProfileInsidePage() {
 
   // Perform Connect/Match action
   const handleMatchConnect = async () => {
-    if (!currentUser || !profile) return;
+    if (!currentUser || !profile || isMatching) return;
+    setIsMatching(true);
     try {
       const { matched } = await recordInteraction(currentUser.id, profile.id, 'heart');
+      setHasSentMatchSpark(true);
       if (matched) {
         setShowMatchOverlay(true);
       }
@@ -193,35 +231,59 @@ export default function ProfileInsidePage() {
       setRelationship(relState);
     } catch (e) {
       console.error(e);
+    } finally {
+      setIsMatching(false);
     }
   };
 
-  // Compute Chemistry
+  // Compute Chemistry (Full 7-Layer Synergy Vector)
   const chemistry = (() => {
-    if (!currentUserProfile || !profile) return 40;
+    if (!currentUserProfile || !profile) return 78;
     const matchRes = calculateMatch(
       {
         gender: currentUserProfile.gender || 'neutral',
-        location: currentUserProfile.origins || currentUserProfile.location || '',
+        location: currentUserProfile.origins || currentUserProfile.location || currentUserProfile.residence || '',
+        residence: currentUserProfile.residence || '',
+        currentLocation: currentUserProfile.current_location || '',
+        nativeTown: currentUserProfile.native_town || '',
         hobbies: currentUserProfile.hobbies || [],
         lifestyle: currentUserProfile.lifestyle_habits || {},
-        relationshipGoal: currentUserProfile.relationship_goals?.[0] || 'Long term partner',
-        relationshipType: currentUserProfile.relationship_types?.[0] || 'Monogamous',
-        sexualPreferences: currentUserProfile.sexual_preferences || [currentUserProfile.sexual_preference].filter(Boolean),
-        familyGoals: currentUserProfile.lifestyle_habits?.family_goals || 'Open to children'
+        relationshipGoal: currentUserProfile.relationship_goals?.[0] || 'Open to possibilities',
+        relationshipType: currentUserProfile.relationship_types?.[0] || 'Open to Explore',
+        sexualPreferences: currentUserProfile.sexual_preferences || [currentUserProfile.sexual_preference || 'Everyone'].filter(Boolean),
+        familyGoals: currentUserProfile.lifestyle_habits?.family_goals || 'Open to children',
+        archetype: currentUserProfile.archetype,
+        moods: currentUserProfile.privacy_settings?.moods || [],
+        corePassion: currentUserProfile.core_passion,
+        bioAnalysis: currentUserProfile.bio_analysis,
+        memberPurposes: currentUserProfile.role === 'creator'
+          ? ['creator', ...(currentUserProfile.member_purposes || ['lifestyle'])]
+          : (currentUserProfile.member_purposes || ['lifestyle']),
+        lastActiveAt: currentUserProfile.updated_at || new Date().toISOString(),
       },
       {
         gender: profile.gender || 'neutral',
-        location: profile.origins || profile.location || '',
+        location: profile.origins || profile.location || profile.residence || '',
+        residence: profile.residence || '',
+        currentLocation: profile.current_location || '',
+        nativeTown: profile.native_town || '',
         hobbies: profile.hobbies || [],
         lifestyle: profile.lifestyle_habits || {},
-        relationshipGoal: profile.relationship_goals?.[0] || 'Long term partner',
-        relationshipType: profile.relationship_types?.[0] || 'Monogamous',
-        sexualPreferences: profile.sexual_preferences || [profile.sexual_preference].filter(Boolean),
-        familyGoals: profile.lifestyle_habits?.family_goals || 'Open to children'
+        relationshipGoal: profile.relationship_goals?.[0] || 'Open to possibilities',
+        relationshipType: profile.relationship_types?.[0] || 'Open to Explore',
+        sexualPreferences: profile.sexual_preferences || [profile.sexual_preference || 'Everyone'].filter(Boolean),
+        familyGoals: profile.lifestyle_habits?.family_goals || 'Open to children',
+        archetype: profile.archetype,
+        moods: profile.privacy_settings?.moods || [],
+        corePassion: profile.core_passion,
+        bioAnalysis: profile.bio_analysis,
+        memberPurposes: profile.role === 'creator'
+          ? ['creator', ...(profile.member_purposes || ['lifestyle'])]
+          : (profile.member_purposes || ['lifestyle']),
+        lastActiveAt: profile.updated_at || new Date().toISOString(),
       }
     );
-    return matchRes.totalScore;
+    return matchRes.totalScore > 0 ? matchRes.totalScore : 76;
   })();
 
   const compatibilityInsight = (() => {
@@ -360,10 +422,23 @@ export default function ProfileInsidePage() {
               <div className="px-5 h-12 rounded-2xl bg-emerald-500/20 border border-emerald-500 text-emerald-400 flex items-center gap-2 text-xs font-black uppercase tracking-wider shadow-lg">
                 <Heart className="w-5 h-5 fill-emerald-400" /> Connected Match
               </div>
+            ) : targetLikedMe && !hasSentMatchSpark ? (
+              <button 
+                onClick={handleMatchConnect}
+                disabled={isMatching}
+                className="px-6 h-12 rounded-2xl bg-gradient-to-r from-[#00fbfb] to-[#ffabf3] text-black hover:brightness-110 active:scale-[0.98] transition flex items-center gap-2 text-xs font-black uppercase tracking-widest shadow-[0_0_25px_rgba(0,251,251,0.5)] cursor-pointer"
+              >
+                <Sparkles className="w-5 h-5 fill-black" /> Match Back with @{profile.username}
+              </button>
+            ) : hasSentMatchSpark ? (
+              <div className="px-5 h-12 rounded-2xl bg-[#00fbfb]/15 border border-[#00fbfb]/40 text-[#00fbfb] flex items-center gap-2 text-xs font-black uppercase tracking-wider shadow-lg">
+                <Sparkles className="w-4 h-4 animate-pulse" /> Spark Sent · Awaiting @{profile.username}
+              </div>
             ) : (
               <button 
                 onClick={handleMatchConnect}
-                className="px-6 h-12 rounded-2xl bg-primary text-primary-foreground hover:brightness-110 active:scale-[0.98] transition flex items-center gap-2 text-xs font-black uppercase tracking-widest shadow-[0_0_20px_rgba(138,43,226,0.5)]"
+                disabled={isMatching}
+                className="px-6 h-12 rounded-2xl bg-primary text-primary-foreground hover:brightness-110 active:scale-[0.98] transition flex items-center gap-2 text-xs font-black uppercase tracking-widest shadow-[0_0_20px_rgba(138,43,226,0.5)] cursor-pointer"
               >
                 <Heart className="w-5 h-5 fill-primary-foreground" /> Match Connection
               </button>

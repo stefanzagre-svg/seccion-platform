@@ -193,12 +193,11 @@ export default function CountryAgeVerification({ onVerified, isCreatorMode = fal
     }
 
     const birthDate = `${birthYear}-${birthMonth.padStart(2, '0')}-${birthDay.padStart(2, '0')}`;
-    const verificationTier = isCreatorMode ? 'kyc' : 'declared';
     
     onVerified({
       birthDate,
       countryCode,
-      verificationTier,
+      verificationTier: 'declared',
     });
   };
 
@@ -221,18 +220,13 @@ export default function CountryAgeVerification({ onVerified, isCreatorMode = fal
       key: apiKey,
       onSuccess: function (response: any) {
         setIsAgeCheckerLoading(false);
-        if (typeof window !== 'undefined') {
-          localStorage.setItem('seccion_age_verified', 'true');
-          document.cookie = 'seccion_age_verified=true; path=/; max-age=31536000; SameSite=Lax';
-        }
-
-        const dobString = response?.dob || `${currentYear - 21}-01-01`;
+        const dobString = typeof response?.dob === 'string' ? response.dob : '';
         const detectedCountry = response?.country || countryCode;
 
         onVerified({
           birthDate: dobString,
           countryCode: detectedCountry,
-          verificationTier: 'agechecker',
+          verificationTier: 'declared',
         });
       },
       onCancel: function () {
@@ -253,24 +247,23 @@ export default function CountryAgeVerification({ onVerified, isCreatorMode = fal
   const handleZkpVerify = async () => {
     setErrorMsg(null);
     setZkpStep('scanning');
-
-    // Simulate cryptographic zk-SNARK generation
-    await new Promise((r) => setTimeout(r, 1200));
-    setZkpStep('generating');
-    await new Promise((r) => setTimeout(r, 1400));
-
-    const simulatedProofHash = 'zkSNARK_0x' + Array.from({ length: 16 }, () => Math.floor(Math.random() * 16).toString(16)).join('');
-    setZkpProofHash(simulatedProofHash);
-    setZkpStep('verified');
-
-    await new Promise((r) => setTimeout(r, 800));
-
-    // Confirm verification
-    onVerified({
-      birthDate: `${currentYear - 21}-01-01`,
-      countryCode,
-      verificationTier: 'zkp',
-    });
+    try {
+      const res = await fetch('/api/kyc/didit-session', { method: 'POST' });
+      const data = await res.json();
+      if (data?.url && typeof window !== 'undefined') {
+        window.open(data.url, '_blank', 'noopener,noreferrer');
+      }
+    } catch {
+      if (typeof window !== 'undefined') {
+        window.open('https://verify.didit.me/u/bPzKX19JQiawBcuyL9kraw', '_blank', 'noopener,noreferrer');
+      }
+    }
+    setZkpStep('idle');
+    setErrorMsg(
+      locale === 'es'
+        ? 'Se abrió el portal oficial DIDIT Zero-Knowledge 18+. Una vez completado, el webhook seguro actualizará tu estado automáticamente.'
+        : 'Opened official DIDIT Zero-Knowledge 18+ gateway. Once completed, our secure webhook will update your verified status automatically.'
+    );
   };
 
   return (

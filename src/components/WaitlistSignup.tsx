@@ -11,22 +11,22 @@ export interface WaitlistSignupProps {
 }
 
 export function WaitlistSignup({ variant = 'inline' }: WaitlistSignupProps) {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const [email, setEmail] = useState('');
-  const [city, setCity] = useState('');
+  const [city, setCity] = useState('Global');
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'duplicate' | 'error'>('idle');
   const [position, setPosition] = useState<number | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email || !city) return;
+    if (!email) return;
     setStatus('loading');
     
     try {
       const res = await fetch('/api/v2/waitlist/join', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, city })
+        body: JSON.stringify({ email, city: city || 'Global' })
       });
       
       if (res.status === 409) {
@@ -115,18 +115,19 @@ export function WaitlistSignup({ variant = 'inline' }: WaitlistSignupProps) {
             </div>
 
             <div className={`flex-1 w-full ${isCard ? '' : ''}`}>
-              <label className="block text-xs font-mono text-gray-400 mb-1.5 uppercase tracking-wider">City</label>
+              <label className="block text-xs font-mono text-gray-400 mb-1.5 uppercase tracking-wider">
+                {locale === 'es' ? 'Ciudad (Opcional)' : 'City (Optional)'}
+              </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <MapPin className="h-5 w-5 text-gray-500" />
                 </div>
                 <select
-                  required
                   value={city}
                   onChange={(e) => setCity(e.target.value)}
                   className="w-full bg-black/40 border border-white/10 rounded-xl py-3 pl-10 pr-4 text-white focus:outline-none focus:border-[#00fbfb]/50 focus:ring-1 focus:ring-[#00fbfb]/50 transition-all font-mono text-sm appearance-none"
                 >
-                  <option value="" disabled>Select a city</option>
+                  <option value="Global">🌍 {locale === 'es' ? 'Global / Cualquier Ciudad' : 'Worldwide / Any City'}</option>
                   <optgroup label="Pre-Launch Cities">
                     <option value="Medellín">🥇 Medellín, Colombia</option>
                     <option value="Bogotá">🥈 Bogotá, Colombia</option>
@@ -152,13 +153,13 @@ export function WaitlistSignup({ variant = 'inline' }: WaitlistSignupProps) {
             <button
               type="submit"
               disabled={status === 'loading'}
-              className={`w-full ${isCard ? '' : 'md:w-auto'} h-[50px] bg-[#00fbfb] hover:bg-[#00fbfb]/80 text-black font-bold px-6 rounded-xl flex items-center justify-center gap-2 transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 font-outfit uppercase tracking-wider mt-4 md:mt-0`}
+              className={`w-full ${isCard ? '' : 'md:w-auto'} h-[50px] bg-[#00fbfb] hover:bg-[#00fbfb]/80 text-black font-bold px-6 rounded-xl flex items-center justify-center gap-2 transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 font-outfit uppercase tracking-wider mt-4 md:mt-0 cursor-pointer`}
             >
               {status === 'loading' ? (
                 <span className="w-5 h-5 border-2 border-black/20 border-t-black rounded-full animate-spin" />
               ) : (
                 <>
-                  Apply <ChevronRight className="w-5 h-5" />
+                  {locale === 'es' ? 'Reservar Acceso VIP' : 'Reserve VIP Spot'} <ChevronRight className="w-5 h-5" />
                 </>
               )}
             </button>
@@ -170,7 +171,7 @@ export function WaitlistSignup({ variant = 'inline' }: WaitlistSignupProps) {
       )}
 
       {/* Creator Pre-Launch Banner */}
-      <div className="mt-8 pt-6 border-t border-white/10">
+      <div className="mt-8 pt-6 border-t border-white/10 space-y-3">
         <div className="bg-gradient-to-r from-[#ffabf3]/10 to-transparent border border-[#ffabf3]/30 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-start gap-3.5 text-left">
             <div className="w-10 h-10 rounded-full bg-[#ffabf3]/20 border border-[#ffabf3]/40 flex items-center justify-center shrink-0 mt-0.5">
@@ -191,6 +192,16 @@ export function WaitlistSignup({ variant = 'inline' }: WaitlistSignupProps) {
             className="w-full sm:w-auto shrink-0 px-5 py-3 bg-[#ffabf3] hover:bg-[#ffabf3]/90 text-black font-mono text-xs font-black uppercase tracking-wider rounded-xl transition hover:shadow-[0_0_20px_rgba(255,171,243,0.5)] text-center flex items-center justify-center gap-1.5"
           >
             <span>{t("onboarding.prelaunchGates.creatorApplyBtn", "Apply as Creator →")}</span>
+          </Link>
+        </div>
+        <div className="text-center">
+          <Link
+            href="/login"
+            className="text-xs font-mono font-bold text-[#00fbfb] hover:underline"
+          >
+            {locale === 'es'
+              ? '¿Ya eres un Creador Aprobado? Entra directo a tu Creator Studio →'
+              : 'Already an Approved Creator? Enter Creator Studio Instantly →'}
           </Link>
         </div>
       </div>

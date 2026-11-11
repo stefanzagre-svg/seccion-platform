@@ -3,6 +3,32 @@ import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { createAdminClient } from '@/lib/supabase/admin-client';
 
+function extractHandleFromLink(link?: string | null, email?: string): string {
+  if (link) {
+    const cleaned = link.replace(/^https?:\/\/[^\/]+\/@?/, '').replace(/\./g, '_').replace(/[^a-zA-Z0-9_]/g, '');
+    if (cleaned.length >= 3) return cleaned.slice(0, 24).toLowerCase();
+  }
+  if (email) {
+    const fromEmail = email.split('@')[0].replace(/\./g, '_').replace(/[^a-zA-Z0-9_]/g, '');
+    if (fromEmail.length >= 3) return fromEmail.slice(0, 24).toLowerCase();
+  }
+  return `creator_${Math.floor(1000 + Math.random() * 9000)}`;
+}
+
+async function findAuthUserByEmail(adminClient: any, email: string) {
+  let page = 1;
+  const perPage = 1000;
+  while (page <= 5) {
+    const { data } = await adminClient.auth.admin.listUsers({ page, perPage });
+    if (!data?.users || data.users.length === 0) break;
+    const match = data.users.find((u: any) => u.email?.toLowerCase().trim() === email);
+    if (match) return match;
+    if (data.users.length < perPage) break;
+    page++;
+  }
+  return null;
+}
+
 export async function POST(req: NextRequest) {
   try {
     const { email, password } = await req.json();
@@ -36,12 +62,12 @@ export async function POST(req: NextRequest) {
 
     const adminClient = createAdminClient();
 
-    // Check if this email has a creator application
-    let creatorApp: { id: string; full_name?: string; primary_handle?: string; status?: string } | null = null;
+    // Check if this email has a creator application (link1 instead of non-existent primary_handle)
+    let creatorApp: { id: string; full_name?: string; link1?: string; status?: string } | null = null;
     try {
       const { data: appData } = await adminClient
         .from('creator_applications')
-        .select('id, full_name, primary_handle, status')
+        .select('id, full_name, link1, status')
         .eq('email', cleanEmail)
         .maybeSingle();
       if (appData) {
@@ -57,15 +83,15 @@ export async function POST(req: NextRequest) {
       password,
     });
 
-    // 2. If signInWithPassword failed, check if this is an approved/applied creator signing in for the first time
-    if ((error || !data.user) && (creatorApp || isFounder)) {
-      const { data: usersList } = await adminClient.auth.admin.listUsers({ page: 1, perPage: 1000 });
-      const existingAuthUser = usersList?.users?.find(
-        (u) => u.email?.toLowerCase().trim() === cleanEmail
-      );
+    const isApprovedCreator = isFounder || creatorApp?.status === 'approved';
+
+    // 2. If signInWithPassword failed, check if this is an approved creator signing in for the first time
+    // Only auto-provision NEW accounts for approved creators who do not yet have an auth.users record
+    if ((error || !data.user) && isApprovedCreator) {
+      const existingAuthUser = await findAuthUserByEmail(adminClient, cleanEmail);
 
       const fallbackUsername = (
-        creatorApp?.primary_handle ||
+        extractHandleFromLink(creatorApp?.link1, cleanEmail) ||
         cleanEmail.split('@')[0] ||
         'creator'
       )
@@ -77,7 +103,7 @@ export async function POST(req: NextRequest) {
         creatorApp?.full_name?.trim() || cleanEmail.split('@')[0];
 
       if (!existingAuthUser && password.length >= 6) {
-        // First-time Creator login after application approval: auto-provision their Auth user with the password they entered
+        // First-time Approved Creator login: auto-provision their Auth user with the password they provided
         const { data: created } = await adminClient.auth.admin.createUser({
           email: cleanEmail,
           password,
@@ -98,38 +124,8 @@ export async function POST(req: NextRequest) {
           data = retry.data;
           error = retry.error;
         }
-      } else if (existingAuthUser) {
-        // User exists in auth.users — check if their email wasn't confirmed yet or if they never finished profile setup
-        const { data: existingProf } = await adminClient
-          .from('profiles')
-          .select('id, bio, bio_prompt_answer')
-          .eq('id', existingAuthUser.id)
-          .maybeSingle();
-
-        const isFreshApplicant =
-          !existingAuthUser.email_confirmed_at ||
-          !existingProf ||
-          (!existingProf.bio && !existingProf.bio_prompt_answer);
-
-        if (isFreshApplicant && password.length >= 6) {
-          await adminClient.auth.admin.updateUserById(existingAuthUser.id, {
-            password,
-            email_confirm: true,
-            user_metadata: {
-              ...existingAuthUser.user_metadata,
-              role: 'creator',
-              email_verified: true,
-            },
-          });
-
-          const retry = await supabase.auth.signInWithPassword({
-            email: cleanEmail,
-            password,
-          });
-          data = retry.data;
-          error = retry.error;
-        }
       }
+      // Note: Never overwrite password for existingAuthUser to prevent account takeover (C3 fix)
     }
 
     if (error || !data.user) {
@@ -150,7 +146,7 @@ export async function POST(req: NextRequest) {
       isFounder ||
       profileRow?.role === 'creator' ||
       data.user.user_metadata?.role === 'creator' ||
-      Boolean(creatorApp);
+      creatorApp?.status === 'approved';
 
     const effectiveRole: 'creator' | 'member' = isCreator ? 'creator' : 'member';
 
@@ -166,7 +162,7 @@ export async function POST(req: NextRequest) {
     } else if (!profileRow || (isCreator && profileRow.role !== 'creator')) {
       const baseUsername = (
         profileRow?.username ||
-        creatorApp?.primary_handle ||
+        extractHandleFromLink(creatorApp?.link1, cleanEmail) ||
         data.user.user_metadata?.username ||
         cleanEmail.split('@')[0] ||
         'creator'

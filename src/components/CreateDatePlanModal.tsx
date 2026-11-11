@@ -25,6 +25,8 @@ export default function CreateDatePlanModal({
   const [checkingQuota, setCheckingQuota] = useState(true);
   const [quotaAllowed, setQuotaAllowed] = useState(false);
   const [quotaCount, setQuotaCount] = useState(0);
+  const [isHighTrustVerified, setIsHighTrustVerified] = useState(false);
+  const [launchingDidit, setLaunchingDidit] = useState(false);
 
   // Form states
   const [intentType, setIntentType] = useState<'Offer' | 'LookingFor'>('Offer');
@@ -42,15 +44,23 @@ export default function CreateDatePlanModal({
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
-  // Check quota on mount or open
+  // Check quota & high-trust verification status on mount or open
   useEffect(() => {
     if (!isOpen || !userId) return;
 
     const runQuotaCheck = async () => {
       setCheckingQuota(true);
-      const res = await checkUserQuota(userId, userRole);
+      const [res, profileRes] = await Promise.all([
+        checkUserQuota(userId, userRole),
+        supabase
+          .from('profiles')
+          .select('is_kyc_verified')
+          .eq('id', userId)
+          .maybeSingle(),
+      ]);
       setQuotaAllowed(res.allowed);
       setQuotaCount(res.count);
+      setIsHighTrustVerified(Boolean(profileRes.data?.is_kyc_verified));
       setCheckingQuota(false);
     };
 
@@ -95,6 +105,10 @@ export default function CreateDatePlanModal({
     setFormError(null);
 
     // Validation
+    if ((planScope === 'In-Person' || planScope === 'Hybrid') && !isHighTrustVerified) {
+      setFormError('For member safety, Real-Life (In-Person / Hybrid) Date Plans require Biometric Liveness, ZKP, or AgeChecker verification.');
+      return;
+    }
     if (!description.trim()) {
       setFormError('Please enter a description for the date plan.');
       return;
@@ -290,6 +304,51 @@ export default function CreateDatePlanModal({
                     })}
                   </div>
                 </div>
+
+                {/* High-Trust Safety Gate for Real-Life (In-Person / Hybrid) Date Plans */}
+                {(planScope === 'In-Person' || planScope === 'Hybrid') && !isHighTrustVerified && (
+                  <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 space-y-3">
+                    <div className="flex items-start gap-2.5">
+                      <ShieldCheck className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
+                      <div className="space-y-1">
+                        <p className="text-[10px] font-black uppercase tracking-wider text-amber-300">
+                          Real-Life Date Safety Verification Required
+                        </p>
+                        <p className="text-[10px] text-white/70 leading-relaxed">
+                          While signup in your country only required a 1-tap declaration, proposing or joining an In-Person / Hybrid Date Plan requires a 1-time server-verified DIDIT Zero-Knowledge 18+ or Biometric Liveness check.
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      disabled={launchingDidit}
+                      onClick={async () => {
+                        setLaunchingDidit(true);
+                        try {
+                          const res = await fetch('/api/kyc/didit-session', { method: 'POST' });
+                          const data = await res.json();
+                          if (data?.url) {
+                            window.location.href = data.url;
+                            return;
+                          }
+                        } catch {
+                          // fallback
+                        }
+                        window.location.href = '/onboarding/kyc';
+                      }}
+                      className="w-full py-2.5 px-4 rounded-xl bg-amber-400 text-black font-mono text-[10px] font-black uppercase tracking-wider cursor-pointer flex items-center justify-center gap-2 disabled:opacity-50"
+                    >
+                      {launchingDidit ? (
+                        <>
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          <span>Opening DIDIT Identity Shield...</span>
+                        </>
+                      ) : (
+                        <span>Verify via DIDIT 18+ Identity Shield →</span>
+                      )}
+                    </button>
+                  </div>
+                )}
 
                 {/* Description */}
                 <div className="space-y-1.5">

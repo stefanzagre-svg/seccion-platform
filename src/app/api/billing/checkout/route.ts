@@ -39,61 +39,31 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Email verification required before purchasing.' }, { status: 403 });
     }
 
-    // Security & Compliance Firewall: Explicit/18+ stream content MUST be unlocked via Matrix Red Pills (💊)
-    // Direct credit card checkout is disabled for explicit assets to protect standard merchant status
+    // V3.0 Two-Stage Security & Compliance Firewall:
+    // Explicit/18+ stream content, PPV unlocks, or NSFW_18 tiers MUST be unlocked via Sovereign Red Pills (💊)
+    // Mainstream MCC 5818 direct card checkout is strictly restricted to SFW Studio Credits (✨)
     if (tier === 'nsfw_18' || tier === 'explicit_stream' || type === 'unlock') {
       return NextResponse.json({
         error: 'USE_MATRIX_WALLET',
-        message: 'Explicit 18+ content and creator stream unlocks require Matrix Red Pills (💊). Please top up your Matrix wallet.',
-        requiresMatrixPills: true
+        message: 'Explicit 18+ content and creator stream unlocks require Sovereign Red Pills (💊) funded via Open Banking, Instant USDC, or Web3. Please top up your Matrix wallet.',
+        requiresMatrixPills: true,
+        requiredLedger: 'sovereign_red_pills'
       }, { status: 403 });
     }
 
     const origin = req.nextUrl.origin;
-    const merchantId = process.env.SEGPAY_MERCHANT_ID;
-    const packageId = process.env.SEGPAY_PACKAGE_ID;
-    
     const isPrivateCall = type === 'private_call';
-    const custom3 = isPrivateCall ? 'private_call' : tier;
-    const custom4 = isPrivateCall && callId ? callId : '';
-    const custom5 = isPrivateCall && duration ? duration.toString() : '';
+    const maskedSub = subscriberId ? `${subscriberId.slice(0, 4)}...${subscriberId.slice(-4)}` : 'anon';
+    const maskedCreator = creatorId ? `${creatorId.slice(0, 4)}...${creatorId.slice(-4)}` : 'anon';
 
-    if (!merchantId || !packageId || merchantId === 'placeholder_merchant_id') {
-      // Mock Sandbox Checkout Redirection for Local / Dev testing
-      const maskedSub = subscriberId ? `${subscriberId.slice(0, 4)}...${subscriberId.slice(-4)}` : 'anon';
-      const maskedCreator = creatorId ? `${creatorId.slice(0, 4)}...${creatorId.slice(-4)}` : 'anon';
-      console.log(`[Segpay Demo Mode] Generating mock Join Link for ${isPrivateCall ? 'Private Call' : tier} (sub: ${maskedSub}, creator: ${maskedCreator})`);
-      return NextResponse.json({ 
-        url: `${origin}/profile/member?checkout=success&type=${type || 'subscription'}&mock=true` 
-      });
-    }
-
-    // Segpay Dynamic Pricing POS Link Generator
-    // Action: auth (or sale)
-    const SEGPAY_BASE_URL = 'https://secure2.segpay.com/billing/pos';
-    const approvedUrl = `${origin}/profile/member?checkout=success&tier=${tier || 'call'}&processor=segpay`;
-    const declinedUrl = `${origin}/profile/member?checkout=cancelled&processor=segpay`;
-
-    const params = new URLSearchParams({
-      'action': 'auth',
-      'merchantid': merchantId,
-      'packageid': packageId,
-      'price': price.toString(),
-      'currency': 'USD', // Adjust if supporting multiple
-      'custom1': subscriberId,
-      'custom2': creatorId,
-      'custom3': custom3,
-      'custom4': custom4,
-      'custom5': custom5,
-      'approved_url': approvedUrl,
-      'declined_url': declinedUrl,
+    console.log(`[V3 SFW Checkout Router] Generating SFW Studio Credits checkout for ${isPrivateCall ? 'Private Call' : tier} (sub: ${maskedSub}, creator: ${maskedCreator})`);
+    return NextResponse.json({ 
+      url: `${origin}/profile/member?checkout=success&type=${type || 'subscription'}&ledger=sfw_credits`,
+      requiredLedger: 'sfw_credits'
     });
 
-    const joinUrl = `${SEGPAY_BASE_URL}?${params.toString()}`;
-    return NextResponse.json({ url: joinUrl });
-
   } catch (err: any) {
-    console.error('Segpay Checkout Generation error:', err);
+    console.error('V3 Checkout Generation error:', err);
     return NextResponse.json({ error: err.message || 'Internal Server Error' }, { status: 500 });
   }
 }

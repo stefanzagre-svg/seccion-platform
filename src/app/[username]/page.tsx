@@ -32,7 +32,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   if (!creator) {
     const { data: previousCreator } = await supabase
       .from('profiles')
-      .select('id, username, display_name, avatar_url, cover_url, bio, privacy_settings')
+      .select('id, username, display_name, avatar_url, cover_url, bio, specialization, origins, privacy_settings')
       .eq('role', 'creator')
       .filter('privacy_settings->previous_usernames', 'cs', JSON.stringify([{ username: cleanUsername }]))
       .maybeSingle();

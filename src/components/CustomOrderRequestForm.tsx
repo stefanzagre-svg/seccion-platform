@@ -2,8 +2,9 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { 
   Calendar, DollarSign, Send, FileText, Lock, Tag, Target, Users, ShieldAlert,
-  Upload, Paperclip, File, Image, Video, Music, Trash2, CheckCircle2
+  Upload, Paperclip, File, Image, Video, Music, Trash2, CheckCircle2, Sparkles
 } from 'lucide-react';
+import { classifyOrderIntent } from '@/lib/sightengine';
 
 interface CustomOrderRequestFormProps {
   creatorName: string;
@@ -159,6 +160,14 @@ export default function CustomOrderRequestForm({
     }
 
     try {
+      const qualification = classifyOrderIntent({
+        category,
+        title,
+        description,
+        primaryObjective,
+        explicitFlag: category === 'Explicit Content'
+      });
+
       await onSubmit({ 
         title, 
         description, 
@@ -168,6 +177,8 @@ export default function CustomOrderRequestForm({
         primaryObjective,
         secondaryObjective,
         isSimulateMatched,
+        contentRating: qualification.rating,
+        requiredLedger: qualification.requiredLedger,
         coPerformers: hasCoPerformers ? addedCoPerformers : [],
         attachments: attachments.map(({ name, size, type }) => ({ name, size, type }))
       });
@@ -281,22 +292,39 @@ export default function CustomOrderRequestForm({
                   ))}
                 </select>
 
-                {category === 'Explicit Content' && (
-                  <motion.div 
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: 'auto' }}
-                    className="p-3 mt-2 bg-red-950/40 border border-red-500/30 rounded-xl flex items-start gap-2 text-red-400"
-                  >
-                    <ShieldAlert className="w-4 h-4 shrink-0 mt-0.5" />
-                    <div>
-                      <p className="text-[9px] font-black uppercase tracking-wider mb-0.5">Explicit Content Guideline Warning</p>
-                      <p className="text-[8px] leading-relaxed text-red-200">
-                        Please ensure all requests comply with platform safety and consent guidelines.
-                        Strict moderation applies.
+                {(() => {
+                  const qualification = classifyOrderIntent({
+                    category,
+                    title,
+                    description,
+                    primaryObjective,
+                    explicitFlag: category === 'Explicit Content'
+                  });
+                  return qualification.rating === 'NSFW_18' ? (
+                    <motion.div 
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      className="p-3 mt-2 bg-red-950/40 border border-red-500/30 rounded-xl flex items-start gap-2 text-red-400"
+                    >
+                      <ShieldAlert className="w-4 h-4 shrink-0 mt-0.5" />
+                      <div>
+                        <p className="text-[9px] font-black uppercase tracking-wider mb-0.5">
+                          💊 18+ Sovereign Red Pills Escrow Required
+                        </p>
+                        <p className="text-[8px] leading-relaxed text-red-200">
+                          {qualification.reason} Delivered media is verified via Sightengine AI &amp; 18 U.S.C. § 2257 consent rules.
+                        </p>
+                      </div>
+                    </motion.div>
+                  ) : (
+                    <div className="p-2.5 mt-2 bg-emerald-950/30 border border-emerald-500/20 rounded-xl flex items-center gap-2 text-emerald-400">
+                      <Sparkles className="w-3.5 h-3.5 shrink-0" />
+                      <p className="text-[8px] font-bold uppercase tracking-wider leading-relaxed">
+                        ✨ SFW Mainstream Escrow • Eligible for SFW Studio Credits &amp; All Rails
                       </p>
                     </div>
-                  </motion.div>
-                )}
+                  );
+                })()}
               </div>
 
               {/* Title input */}

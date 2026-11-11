@@ -4,9 +4,10 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/lib/supabase';
-import { Loader2, AlertCircle, Sparkles, Key, Mail, User, Smartphone, ShieldCheck } from 'lucide-react';
+import { Loader2, AlertCircle, Sparkles, Key, Mail, User, Smartphone, ShieldCheck, Globe } from 'lucide-react';
 import { useTranslation } from '@/context/LanguageContext';
 import CountryAgeVerification from '@/components/onboarding/CountryAgeVerification';
+import { detectUserCountryCode, isCountryStrictAgeMandate } from '@/lib/constants';
 
 interface RegistrationGateProps {
   onComplete: () => void;
@@ -19,9 +20,10 @@ export default function RegistrationGate({ onComplete, initialError }: Registrat
   const [shakeTerms, setShakeTerms] = useState(false);
   const [acceptedPrivacy, setAcceptedPrivacy] = useState(false);
   const [shakePrivacy, setShakePrivacy] = useState(false);
+  const [userCountry, setUserCountry] = useState<string>('ES');
   const [showAgeVerification, setShowAgeVerification] = useState(false);
   const [ageVerificationData, setAgeVerificationData] = useState<{ birthDate: string; countryCode: string; verificationTier: string } | null>(null);
-  const [showEmailForm, setShowEmailForm] = useState(false);
+  const [showEmailForm, setShowEmailForm] = useState(true);
   const [showPhoneForm, setShowPhoneForm] = useState(false);
   const [showOtpScreen, setShowOtpScreen] = useState(false);
 
@@ -57,9 +59,24 @@ export default function RegistrationGate({ onComplete, initialError }: Registrat
     );
   };
 
-  // Auto-fill from URL parameters on mount
+  // Auto-fill from URL parameters & detect country on mount
   React.useEffect(() => {
     if (typeof window !== 'undefined') {
+      const detectedCountry = detectUserCountryCode();
+      setUserCountry(detectedCountry);
+      const strictMandate = isCountryStrictAgeMandate(detectedCountry);
+      if (!strictMandate) {
+        const defaultDeclared = {
+          birthDate: '',
+          countryCode: detectedCountry,
+          verificationTier: 'declared',
+        };
+        setAgeVerificationData(defaultDeclared);
+        sessionStorage.setItem('_user_age_verified', JSON.stringify(defaultDeclared));
+      } else {
+        setShowAgeVerification(true);
+      }
+
       const params = new URLSearchParams(window.location.search);
       const nameParam = params.get('name') || params.get('user') || params.get('creator');
       const emailParam = params.get('email');
@@ -76,8 +93,6 @@ export default function RegistrationGate({ onComplete, initialError }: Registrat
           setUsername(emailParam.split('@')[0].toLowerCase().replace(/[^a-z0-9_]/g, ''));
         }
         setShowEmailForm(true);
-        setAcceptedTerms(true);
-        setAcceptedPrivacy(true);
       }
       if (promoParam) {
         setInvitedPromo(promoParam);
@@ -89,8 +104,11 @@ export default function RegistrationGate({ onComplete, initialError }: Registrat
         setIsInvitedCreator(true);
         sessionStorage.setItem('_onboarding_creator_archive_choice', 'creator');
         setShowEmailForm(true);
-        setAcceptedTerms(true);
-        setAcceptedPrivacy(true);
+      } else if (roleParam === 'member') {
+        setIsInvitedCreator(false);
+        sessionStorage.removeItem('_onboarding_creator_archive_choice');
+        localStorage.removeItem('is_creator_signup');
+        setShowEmailForm(true);
       }
     }
   }, []);
@@ -110,11 +128,12 @@ export default function RegistrationGate({ onComplete, initialError }: Registrat
       setShowPhoneForm(true);
       setShowEmailForm(false);
     } else {
-      // Direct OAuth
+      // Direct OAuth — preserve Creator vs Member onboarding target
+      const nextTarget = resolveIsCreatorMode() ? '/onboarding?role=creator' : '/onboarding';
       supabase.auth.signInWithOAuth({
         provider: provider as import('@supabase/supabase-js').Provider,
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`
+          redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(nextTarget)}`
         }
       });
     }
@@ -122,7 +141,12 @@ export default function RegistrationGate({ onComplete, initialError }: Registrat
 
   const handleAuthSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!acceptedTerms || !acceptedPrivacy) return;
+    if (isSignUp && (!acceptedTerms || !acceptedPrivacy)) {
+      setError("Please accept both the terms and the privacy processing agreement to proceed.");
+      if (!acceptedTerms) setShakeTerms(true);
+      if (!acceptedPrivacy) setShakePrivacy(true);
+      return;
+    }
     setError(null);
     setSuccessMessage(null);
     setIsSubmitting(true);
@@ -151,6 +175,25 @@ export default function RegistrationGate({ onComplete, initialError }: Registrat
 
         const isCreatorMode = resolveIsCreatorMode();
         const userRole = isCreatorMode ? 'creator' : 'member';
+        const strictAgeRequired = isCountryStrictAgeMandate(userCountry);
+        if (strictAgeRequired && !ageVerificationData?.birthDate) {
+          setShowAgeVerification(true);
+          throw new Error(
+            locale === 'es'
+              ? `La legislación de tu jurisdicción (${userCountry}) exige verificación explícita de tu fecha de nacimiento antes de acceder.`
+              : `Your residence jurisdiction (${userCountry}) requires explicit date-of-birth age assurance before account activation.`
+          );
+        }
+
+        const effectiveAgeVerification = ageVerificationData || {
+          birthDate: '',
+          countryCode: userCountry,
+          verificationTier: 'declared',
+        };
+        if (typeof window !== 'undefined') {
+          sessionStorage.setItem('_user_age_verified', JSON.stringify(effectiveAgeVerification));
+        }
+
         const residenceChoice =
           isCreatorMode && typeof window !== 'undefined'
             ? sessionStorage.getItem('_onboarding_creator_residence') || ''
@@ -182,6 +225,8 @@ export default function RegistrationGate({ onComplete, initialError }: Registrat
               fullName: invitedName || username.trim() || effectiveUsername,
               role: userRole,
               isInvitedCreator: isCreatorMode,
+              ageVerification: effectiveAgeVerification,
+              locale,
             }),
           });
 
@@ -206,7 +251,7 @@ export default function RegistrationGate({ onComplete, initialError }: Registrat
                 id: resData.user.id,
                 username: resData.username || effectiveUsername,
                 display_name: resData.displayName || effectiveUsername,
-                role: resData.role || userRole,
+                role: resData.role || 'member',
                 residence: residenceChoice || undefined,
                 creator_purposes: creatorPurposes,
                 specialization: specialization,
@@ -236,11 +281,12 @@ export default function RegistrationGate({ onComplete, initialError }: Registrat
 
         if (!registeredViaServer) {
           // Fallback Path: Client-side Supabase Sign Up
+          const nextTarget = isCreatorMode ? '/onboarding?role=creator' : '/onboarding';
           const { data, error: signUpError } = await supabase.auth.signUp({
             email: cleanEmail,
             password,
             options: {
-              emailRedirectTo: `${window.location.origin}/auth/callback`,
+              emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(nextTarget)}`,
               data: {
                 username: effectiveUsername,
                 role: userRole,
@@ -255,7 +301,7 @@ export default function RegistrationGate({ onComplete, initialError }: Registrat
               id: data.user.id,
               username: effectiveUsername,
               display_name: username.trim() || effectiveUsername,
-              role: userRole,
+              role: 'member',
               residence: residenceChoice || undefined,
               creator_purposes: creatorPurposes,
               specialization: specialization,
@@ -490,6 +536,45 @@ export default function RegistrationGate({ onComplete, initialError }: Registrat
             <Sparkles className="w-5 h-5" />
           </div>
 
+          {/* Role Toggle Pill: Member vs Creator */}
+          {isSignUp && !isForgotPassword && (
+            <div className="grid grid-cols-2 gap-1.5 p-1 mb-4 rounded-2xl bg-black/50 border border-white/10">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsInvitedCreator(false);
+                  if (typeof window !== 'undefined') {
+                    sessionStorage.removeItem('_onboarding_creator_archive_choice');
+                    localStorage.removeItem('is_creator_signup');
+                  }
+                }}
+                className={`py-2 px-3 rounded-xl font-mono text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer ${
+                  !isInvitedCreator
+                    ? 'bg-[#00fbfb] text-black shadow-[0_0_15px_rgba(0,251,251,0.3)]'
+                    : 'text-white/50 hover:text-white'
+                }`}
+              >
+                {locale === 'es' ? '⚡ Miembro / Fan' : '⚡ Member / Fan'}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsInvitedCreator(true);
+                  if (typeof window !== 'undefined') {
+                    sessionStorage.setItem('_onboarding_creator_archive_choice', 'creator');
+                  }
+                }}
+                className={`py-2 px-3 rounded-xl font-mono text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer ${
+                  isInvitedCreator
+                    ? 'bg-[#ffabf3] text-black shadow-[0_0_15px_rgba(255,171,243,0.3)]'
+                    : 'text-white/50 hover:text-white'
+                }`}
+              >
+                {locale === 'es' ? '👑 Creator (90%)' : '👑 Creator (90%)'}
+              </button>
+            </div>
+          )}
+
           {/* Personalized VIP Invite Welcome */}
           {(invitedName || isInvitedCreator) ? (
             <motion.div
@@ -499,7 +584,7 @@ export default function RegistrationGate({ onComplete, initialError }: Registrat
             >
               <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#00fbfb]/20 text-[#00fbfb] font-mono text-[10px] font-bold uppercase tracking-wider">
                 <Sparkles className="w-3.5 h-3.5 animate-pulse" />
-                <span>{invitedName ? (locale === 'es' ? `¡Bienvenida ${invitedName}!` : `Welcome ${invitedName}!`) : (locale === 'es' ? 'INVITACIÓN VIP DE CREADOR' : 'VIP CREATOR INVITATION')}</span>
+                <span>{invitedName ? (locale === 'es' ? `¡Bienvenida ${invitedName}!` : `Welcome ${invitedName}!`) : (locale === 'es' ? 'ACCESO CREADOR FUNDADOR' : 'FOUNDING CREATOR ACCESS')}</span>
               </div>
               <p className="text-[11px] text-[#b9cac9] leading-relaxed">
                 {locale === 'es' ? (
@@ -510,16 +595,16 @@ export default function RegistrationGate({ onComplete, initialError }: Registrat
               </p>
             </motion.div>
           ) : (
-            /* Pre-Launch Lock Notice for general visitors */
-            <div className="mb-4 p-4 bg-[#00fbfb]/10 border border-[#00fbfb]/30 rounded-2xl text-center space-y-2">
+            /* Fast 60-Second Member Synergy Welcome */
+            <div className="mb-4 p-3.5 bg-[#00fbfb]/10 border border-[#00fbfb]/30 rounded-2xl text-center space-y-1.5">
               <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#00fbfb]/20 text-[#00fbfb] font-mono text-[9px] font-bold uppercase tracking-wider">
-                <span>{locale === 'es' ? 'FASE DE PRE-LANZAMIENTO ACTIVA' : 'PRE-LAUNCH PHASE ACTIVE'}</span>
+                <span>{locale === 'es' ? 'ACCESO RÁPIDO · SINERGIA 60s' : '60-SECOND SYNERGY ACCESS'}</span>
               </div>
               <p className="text-[11px] text-[#b9cac9] leading-relaxed">
                 {locale === 'es' ? (
-                  <>El auto-registro público está reservado para <strong className="text-white">Creadores Aprobados</strong> y <strong className="text-white">Miembros Fundadores</strong> durante esta fase de pre-lanzamiento.</>
+                  <>Conecta y apoya a tus <strong className="text-white">Creators</strong> favoritos al instante. Sin formularios largos ni escaneo biométrico en el registro.</>
                 ) : (
-                  <>Public self-registration is reserved for <strong className="text-white">Approved Creators</strong> and <strong className="text-white">Founding Members</strong> during this pre-launch phase.</>
+                  <>Match, interact, and support your favorite <strong className="text-white">Creators</strong> in 60 seconds. No long forms or biometric scans required at signup.</>
                 )}
               </p>
             </div>
@@ -868,6 +953,7 @@ export default function RegistrationGate({ onComplete, initialError }: Registrat
             <CountryAgeVerification
               onVerified={(data) => {
                 setAgeVerificationData(data);
+                setUserCountry(data.countryCode);
                 setAcceptedTerms(true);
                 setAcceptedPrivacy(true);
                 setShowAgeVerification(false);
@@ -878,6 +964,62 @@ export default function RegistrationGate({ onComplete, initialError }: Registrat
           </div>
         ) : (
           <div className="flex flex-col gap-2.5 mt-6 pt-4 border-t border-white/5">
+            {/* Country-Adaptive Entry Policy Indicator */}
+            <div className="p-2.5 rounded-xl bg-white/[0.03] border border-white/10 flex flex-col gap-1.5">
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-1.5 text-[10px] font-mono text-primary font-bold">
+                  <Globe className="w-3.5 h-3.5" />
+                  <span>
+                    {locale === 'es' ? 'Jurisdicción:' : 'Jurisdiction:'} {userCountry}
+                  </span>
+                </div>
+                <select
+                  value={userCountry}
+                  onChange={(e) => {
+                    const nextCountry = e.target.value;
+                    setUserCountry(nextCountry);
+                    if (isCountryStrictAgeMandate(nextCountry)) {
+                      setShowAgeVerification(true);
+                    } else {
+                      const declared = {
+                        birthDate: ageVerificationData?.birthDate || '',
+                        countryCode: nextCountry,
+                        verificationTier: 'declared',
+                      };
+                      setAgeVerificationData(declared);
+                      sessionStorage.setItem('_user_age_verified', JSON.stringify(declared));
+                    }
+                  }}
+                  aria-label="Select Residence Country"
+                  className="bg-black/60 border border-white/15 rounded-lg px-2 py-0.5 text-[9px] font-mono text-white focus:border-primary focus:outline-none"
+                >
+                  <option value="ES">🇪🇸 Spain (ES)</option>
+                  <option value="FR">🇫🇷 France (FR)</option>
+                  <option value="DE">🇩🇪 Germany (DE)</option>
+                  <option value="IT">🇮🇹 Italy (IT)</option>
+                  <option value="PL">🇵🇱 Poland (PL)</option>
+                  <option value="RO">🇷🇴 Romania (RO)</option>
+                  <option value="BG">🇧🇬 Bulgaria (BG)</option>
+                  <option value="CO">🇨🇴 Colombia (CO)</option>
+                  <option value="MX">🇲🇽 Mexico (MX)</option>
+                  <option value="AR">🇦🇷 Argentina (AR)</option>
+                  <option value="BR">🇧🇷 Brazil (BR)</option>
+                  <option value="GB">🇬🇧 UK (Strict ZKP)</option>
+                  <option value="US">🇺🇸 USA (Strict Age)</option>
+                  <option value="GLOBAL">🌍 Worldwide</option>
+                </select>
+              </div>
+              <p className="text-[9px] text-white/50 leading-relaxed">
+                {isCountryStrictAgeMandate(userCountry)
+                  ? locale === 'es'
+                    ? `⚠️ Tu país (${userCountry}) exige verificación ZKP / Biométrica antes de entrar.`
+                    : `⚠️ Your country (${userCountry}) mandates ZKP / Biometric age assurance at entry.`
+                  : locale === 'es'
+                  ? '✓ Acceso rápido sin DNI ni biometría en el registro. La verificación biométrica/ZKP solo se solicita al reservar Citas Reales o desbloquear niveles +18.'
+                  : '✓ Fast entry: no ID or biometric scan required to sign up. Biometric/ZKP verification is only requested later for Real-Life Date Plans or +18 Explicit unlocks.'}
+              </p>
+            </div>
+
             <div className="flex items-start gap-3">
               <motion.button 
                 onClick={() => {
@@ -943,10 +1085,16 @@ export default function RegistrationGate({ onComplete, initialError }: Registrat
             <button
               type="button"
               onClick={() => setShowAgeVerification(true)}
-              className="text-[9px] font-mono text-primary/80 hover:text-primary transition flex items-center gap-1.5 justify-end"
+              className="text-[9px] font-mono text-primary/80 hover:text-primary transition flex items-center gap-1.5 justify-end cursor-pointer"
             >
               <ShieldCheck className="w-3 h-3 text-primary" />
-              <span>Customize Country Age Compliance ({ageVerificationData?.countryCode || 'Auto-Detect'})</span>
+              <span>
+                {ageVerificationData?.verificationTier && ageVerificationData.verificationTier !== 'declared'
+                  ? `✓ Age Verified (${ageVerificationData.verificationTier.toUpperCase()})`
+                  : locale === 'es'
+                  ? `Opcional: Verificar Edad con ZKP / Biometría ahora (${userCountry})`
+                  : `Optional: Verify Age via ZKP / Biometric now (${userCountry})`}
+              </span>
             </button>
           </div>
         )}

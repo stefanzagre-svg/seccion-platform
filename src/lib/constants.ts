@@ -1074,3 +1074,555 @@ export function resolveProfileIntentTheme(profile: any): SwipecardIntentTheme {
 }
 
 
+
+// ─── 60-Second Synergy Calibration & Country-Adaptive Compliance Helpers ───────
+
+export const STRICT_AGE_ENTRY_COUNTRIES = new Set(['GB', 'UK', 'US']);
+
+/**
+ * Auto-detects the user's residence country code from their browser timezone/locale.
+ * Returns ISO-2 country code (e.g., 'ES', 'FR', 'DE', 'GB', 'US', 'CO', 'MX', 'AR', 'BR', 'PL', 'RO', 'BG').
+ */
+export function detectUserCountryCode(): string {
+  if (typeof window === 'undefined') return 'ES';
+  try {
+    const userTz = Intl.DateTimeFormat().resolvedOptions().timeZone || '';
+    if (userTz.includes('Madrid') || userTz.includes('Canary')) return 'ES';
+    if (userTz.includes('Paris')) return 'FR';
+    if (userTz.includes('Berlin')) return 'DE';
+    if (userTz.includes('Rome')) return 'IT';
+    if (userTz.includes('Warsaw')) return 'PL';
+    if (userTz.includes('Bucharest')) return 'RO';
+    if (userTz.includes('Sofia')) return 'BG';
+    if (userTz.includes('London') || userTz.includes('Belfast')) return 'GB';
+    if (
+      userTz.includes('New_York') ||
+      userTz.includes('Los_Angeles') ||
+      userTz.includes('Chicago') ||
+      userTz.includes('Denver') ||
+      userTz.includes('Phoenix') ||
+      userTz.includes('Detroit')
+    ) {
+      return 'US';
+    }
+    if (userTz.includes('Bogota')) return 'CO';
+    if (userTz.includes('Mexico')) return 'MX';
+    if (userTz.includes('Buenos_Aires') || userTz.includes('Argentina')) return 'AR';
+    if (userTz.includes('Sao_Paulo')) return 'BR';
+    return 'ES';
+  } catch {
+    return 'ES';
+  }
+}
+
+/**
+ * Returns true ONLY if the user's country legally mandates strict age assurance
+ * (ZKP / Biometric Age Scan / AgeChecker) at initial platform entry (e.g. UK OSA, US State Mandates).
+ * For EU/ES/LATAM/Global, returns false so members skip the biometric/ZKP screen at signup
+ * and only verify at critical interactions (Real Date Plan, Public Dating, or +18 Explicit).
+ */
+export function isCountryStrictAgeMandate(countryCode?: string | null): boolean {
+  if (!countryCode) return false;
+  return STRICT_AGE_ENTRY_COUNTRIES.has(countryCode.toUpperCase().trim());
+}
+
+const ARCHETYPE_ALIAS_MAP: Record<string, ArchetypeId> = {
+  intellectual: 'visionary',
+  sage: 'visionary',
+  maverick: 'rebel',
+  mystic: 'alchemist',
+  stoic: 'protector',
+  lover: 'hedonist',
+};
+
+/**
+ * Normalizes any archetype string ("The Dreamer", "DREAMER", "maverick", "intellectual", "mystic", "stoic")
+ * to a canonical lowercase ArchetypeId in ARCHETYPE_PROFILES.
+ */
+export function normalizeArchetypeId(raw?: string | null): ArchetypeId {
+  if (!raw) return 'explorer';
+  const cleaned = raw.toLowerCase().trim().replace(/^the\s+/, '');
+  if (cleaned in ARCHETYPE_PROFILES) {
+    return cleaned as ArchetypeId;
+  }
+  if (cleaned in ARCHETYPE_ALIAS_MAP) {
+    return ARCHETYPE_ALIAS_MAP[cleaned];
+  }
+  return 'explorer';
+}
+
+/**
+ * Normalizes any UI core passion string ("ai_tech", "culinary", "dating", "wellness", "creative", "adult")
+ * to a canonical PassionId ('travel' | 'art' | 'music' | 'fitness' | 'career').
+ */
+export function normalizePassionId(
+  rawPassion?: string | null,
+  fallbackArchetype?: ArchetypeId | string | null
+): PassionId {
+  const validPassions: PassionId[] = ['travel', 'art', 'music', 'fitness', 'career'];
+  const p = (rawPassion || '').toLowerCase().trim();
+  if (validPassions.includes(p as PassionId)) return p as PassionId;
+  if (p.includes('travel') || p.includes('explor')) return 'travel';
+  if (p.includes('art') || p.includes('creat') || p.includes('culin') || p.includes('fashion')) return 'art';
+  if (p.includes('music') || p.includes('adult') || p.includes('dating') || p.includes('romance')) return 'music';
+  if (p.includes('fit') || p.includes('well')) return 'fitness';
+  if (p.includes('career') || p.includes('ai') || p.includes('tech')) return 'career';
+
+  const arch = normalizeArchetypeId(fallbackArchetype);
+  return arch === 'explorer' || arch === 'rebel'
+    ? 'travel'
+    : arch === 'dreamer' || arch === 'creator'
+    ? 'art'
+    : arch === 'alchemist' || arch === 'protector'
+    ? 'fitness'
+    : 'career';
+}
+
+function makeCyberAvatarSvg(bgHex: string, accentHex: string, label: string): string {
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" width="240" height="240"><defs><radialGradient id="g" cx="50%" cy="35%" r="65%"><stop offset="0%" stop-color="${accentHex}" stop-opacity="0.45"/><stop offset="100%" stop-color="${bgHex}" stop-opacity="1"/></radialGradient></defs><rect width="240" height="240" rx="48" fill="url(#g)"/><circle cx="120" cy="95" r="42" fill="none" stroke="${accentHex}" stroke-width="5" opacity="0.9"/><path d="M56 198 C66 154, 174 154, 184 198" fill="none" stroke="${accentHex}" stroke-width="5" stroke-linecap="round" opacity="0.85"/><text x="120" y="106" text-anchor="middle" fill="#ffffff" font-family="monospace" font-weight="900" font-size="26">${label}</text></svg>`;
+  return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
+}
+
+export const ARCHETYPE_AVATARS: Record<ArchetypeId, string> = {
+  caregiver: makeCyberAvatarSvg('#140c1c', '#F472B6', 'CG'),
+  rebel: makeCyberAvatarSvg('#1c0f0a', '#F97316', 'RB'),
+  dreamer: makeCyberAvatarSvg('#0b1324', '#93C5FD', 'DR'),
+  visionary: makeCyberAvatarSvg('#130d26', '#8B5CF6', 'VS'),
+  protector: makeCyberAvatarSvg('#081c17', '#10B981', 'PR'),
+  explorer: makeCyberAvatarSvg('#071a21', '#00fbfb', 'EX'),
+  creator: makeCyberAvatarSvg('#1f1506', '#F59E0B', 'CR'),
+  alchemist: makeCyberAvatarSvg('#170b24', '#A855F7', 'AL'),
+  hedonist: makeCyberAvatarSvg('#210912', '#E11D48', 'HD'),
+};
+
+export const ARCHETYPE_FULL_HABITS: Record<ArchetypeId, Record<string, string>> = {
+  caregiver: {
+    workout: 'Often',
+    traveling: 'Monthly',
+    partying: 'Sometimes',
+    'healthy eating': 'Most Days',
+    socializing: 'Every Day',
+    reading: 'Weekly',
+    sleep: '8+ Hours',
+    smoking: 'Non-Smoker',
+    drinking: 'Socially',
+    'morning/night': 'Early Bird',
+    'creative flow': 'Often',
+    'adventure seek': 'Moderate',
+  },
+  rebel: {
+    workout: 'Often',
+    traveling: 'Every Week',
+    partying: 'Often',
+    'healthy eating': 'Sometimes',
+    socializing: 'Every Day',
+    reading: 'Monthly',
+    sleep: '6-7 Hours',
+    smoking: 'Non-Smoker',
+    drinking: 'Socially',
+    'morning/night': 'Night Owl',
+    'creative flow': 'Often',
+    'adventure seek': 'High Adrenaline',
+  },
+  dreamer: {
+    workout: 'Sometimes',
+    traveling: 'Monthly',
+    partying: 'Sometimes',
+    'healthy eating': 'Most Days',
+    socializing: 'Often',
+    reading: 'Daily',
+    sleep: '8+ Hours',
+    smoking: 'Non-Smoker',
+    drinking: 'Socially',
+    'morning/night': 'Night Owl',
+    'creative flow': 'Every Day',
+    'adventure seek': 'Moderate',
+  },
+  visionary: {
+    workout: 'Every Day',
+    traveling: 'Monthly',
+    partying: 'Sometimes',
+    'healthy eating': 'Most Days',
+    socializing: 'Often',
+    reading: 'Daily',
+    sleep: '6-7 Hours',
+    smoking: 'Non-Smoker',
+    drinking: 'Socially',
+    'morning/night': 'Early Bird',
+    'creative flow': 'Every Day',
+    'adventure seek': 'High Adrenaline',
+  },
+  protector: {
+    workout: 'Often',
+    traveling: 'Monthly',
+    partying: 'Sometimes',
+    'healthy eating': 'Most Days',
+    socializing: 'Often',
+    reading: 'Weekly',
+    sleep: '8+ Hours',
+    smoking: 'Non-Smoker',
+    drinking: 'Socially',
+    'morning/night': 'Balanced',
+    'creative flow': 'Sometimes',
+    'adventure seek': 'Moderate',
+  },
+  explorer: {
+    workout: 'Often',
+    traveling: 'Every Week',
+    partying: 'Often',
+    'healthy eating': 'Most Days',
+    socializing: 'Often',
+    reading: 'Weekly',
+    sleep: '6-7 Hours',
+    smoking: 'Non-Smoker',
+    drinking: 'Socially',
+    'morning/night': 'Balanced',
+    'creative flow': 'Often',
+    'adventure seek': 'High Adrenaline',
+  },
+  creator: {
+    workout: 'Often',
+    traveling: 'Monthly',
+    partying: 'Often',
+    'healthy eating': 'Most Days',
+    socializing: 'Every Day',
+    reading: 'Weekly',
+    sleep: '6-7 Hours',
+    smoking: 'Non-Smoker',
+    drinking: 'Socially',
+    'morning/night': 'Night Owl',
+    'creative flow': 'Every Day',
+    'adventure seek': 'High Adrenaline',
+  },
+  alchemist: {
+    workout: 'Every Day',
+    traveling: 'Monthly',
+    partying: 'Sometimes',
+    'healthy eating': 'Every Day',
+    socializing: 'Often',
+    reading: 'Daily',
+    sleep: '8+ Hours',
+    smoking: 'Non-Smoker',
+    drinking: 'Socially',
+    'morning/night': 'Early Bird',
+    'creative flow': 'Every Day',
+    'adventure seek': 'Moderate',
+  },
+  hedonist: {
+    workout: 'Often',
+    traveling: 'Every Week',
+    partying: 'Often',
+    'healthy eating': 'Most Days',
+    socializing: 'Every Day',
+    reading: 'Weekly',
+    sleep: '8+ Hours',
+    smoking: 'Non-Smoker',
+    drinking: 'Socially',
+    'morning/night': 'Night Owl',
+    'creative flow': 'Often',
+    'adventure seek': 'High Adrenaline',
+  },
+};
+
+export const ARCHETYPE_DEFAULT_MOODS: Record<ArchetypeId, MoodId[]> = {
+  caregiver: ['cultural_exchange', 'dinner_date', 'zen_alignment'],
+  rebel: ['flirty_playful', 'adrenaline_junkie', 'late_night_drive'],
+  dreamer: ['art_aesthetics', 'late_night_drive', 'creative_showcase'],
+  visionary: ['career_finance', 'late_night_brainstorm', 'vip_lifestyle'],
+  protector: ['dinner_date', 'skill_learning', 'zen_alignment'],
+  explorer: ['cultural_exchange', 'adrenaline_junkie', 'vip_lifestyle'],
+  creator: ['creative_showcase', 'flirty_playful', 'art_aesthetics'],
+  alchemist: ['zen_alignment', 'skill_learning', 'late_night_brainstorm'],
+  hedonist: ['vip_lifestyle', 'dinner_date', 'flirty_playful'],
+};
+
+export const ARCHETYPE_DEFAULT_HOBBIES: Record<ArchetypeId, string[]> = {
+  caregiver: ['Gourmet Cooking', 'Reading & Books', 'Yoga & Wellness', 'Pet Care & Animals', 'World Travel', 'Coffee & Tea Culture'],
+  rebel: ['World Travel', 'Dancing & Nightlife', 'Cars & Motorsports', 'Live Music & Concerts', 'Fitness & Gym', 'Mixology & Wine Tasting'],
+  dreamer: ['Fine Art & Museums', 'Live Music & Concerts', 'Photography', 'Film & Cinema', 'Reading & Books', 'World Travel'],
+  visionary: ['Tech & AI', 'Entrepreneurship & Startups', 'Investments & Crypto', 'Fitness & Gym', 'Mentorship & Coaching', 'World Travel'],
+  protector: ['Fitness & Gym', 'Outdoors & Hiking', 'Gourmet Cooking', 'Pet Care & Animals', 'Mentorship & Coaching', 'Reading & Books'],
+  explorer: ['World Travel', 'Outdoors & Hiking', 'Language Exchange', 'Photography', 'Live Music & Concerts', 'Gourmet Cooking'],
+  creator: ['Podcasting & Streaming', 'Photography', 'Fashion & Styling', 'Live Music & Concerts', 'Fine Art & Museums', 'Dancing & Nightlife'],
+  alchemist: ['Yoga & Wellness', 'Meditation & Mindfulness', 'Fitness & Gym', 'Reading & Books', 'Tech & AI', 'Outdoors & Hiking'],
+  hedonist: ['Gourmet Cooking', 'Mixology & Wine Tasting', 'World Travel', 'Fashion & Styling', 'Live Music & Concerts', 'Dancing & Nightlife'],
+};
+
+export interface MemberVibeChipItem {
+  archetype: ArchetypeId;
+  category: string;
+  question: string;
+  answer: string;
+}
+
+export const MEMBER_VIBE_CHIPS: MemberVibeChipItem[] = [
+  {
+    archetype: 'caregiver',
+    category: 'lifestyle',
+    question: 'What kind of energy and connection are you here to experience on SECCION?',
+    answer: 'Drawn to authentic conversations, warm energy, and supporting creators whose world feels genuine ✨',
+  },
+  {
+    archetype: 'rebel',
+    category: 'lifestyle',
+    question: 'What kind of energy and connection are you here to experience on SECCION?',
+    answer: 'High-energy, unfiltered vibes, and spontaneous late-night conversations with bold creators 🔥',
+  },
+  {
+    archetype: 'dreamer',
+    category: 'lifestyle',
+    question: 'What kind of energy and connection are you here to experience on SECCION?',
+    answer: 'Captivated by art, music, late-night talks, and creators who put real soul into their craft 🌙',
+  },
+  {
+    archetype: 'visionary',
+    category: 'lifestyle',
+    question: 'What kind of energy and connection are you here to experience on SECCION?',
+    answer: 'Ambitious mindset—I love connecting with driven creators, exchanging ideas, and backing excellence 🚀',
+  },
+  {
+    archetype: 'protector',
+    category: 'lifestyle',
+    question: 'What kind of energy and connection are you here to experience on SECCION?',
+    answer: 'Loyal, grounded, and genuine—here to build trusted connections and back my favorite creators 🛡️',
+  },
+  {
+    archetype: 'explorer',
+    category: 'lifestyle',
+    question: 'What kind of energy and connection are you here to experience on SECCION?',
+    answer: 'Always chasing new perspectives, global cultures, and magnetic chemistry across borders 🌍',
+  },
+  {
+    archetype: 'creator',
+    category: 'lifestyle',
+    question: 'What kind of energy and connection are you here to experience on SECCION?',
+    answer: 'Passionate about creative production, behind-the-scenes artistry, and high-vibe collaboration 🎬',
+  },
+  {
+    archetype: 'alchemist',
+    category: 'lifestyle',
+    question: 'What kind of energy and connection are you here to experience on SECCION?',
+    answer: 'Focused on mindfulness, vitality, and high-frequency connections that elevate both sides 🧪',
+  },
+  {
+    archetype: 'hedonist',
+    category: 'lifestyle',
+    question: 'What kind of energy and connection are you here to experience on SECCION?',
+    answer: 'Appreciating fine aesthetics, sensual energy, and VIP experiences with zero compromises 🥂',
+  },
+];
+
+export const MEMBER_VIBE_CHIPS_ES: MemberVibeChipItem[] = [
+  {
+    archetype: 'caregiver',
+    category: 'lifestyle',
+    question: '¿Qué tipo de energía y conexión buscas vivir en SECCION?',
+    answer: 'Me atraen las charlas auténticas, la buena vibra y apoyar a creadores con energía real ✨',
+  },
+  {
+    archetype: 'rebel',
+    category: 'lifestyle',
+    question: '¿Qué tipo de energía y conexión buscas vivir en SECCION?',
+    answer: 'Energía alta, sin filtros y charlas nocturnas espontáneas con creadores audaces 🔥',
+  },
+  {
+    archetype: 'dreamer',
+    category: 'lifestyle',
+    question: '¿Qué tipo de energía y conexión buscas vivir en SECCION?',
+    answer: 'Conectado con el arte, la música, las charlas profundas y creadores que ponen el alma 🌙',
+  },
+  {
+    archetype: 'visionary',
+    category: 'lifestyle',
+    question: '¿Qué tipo de energía y conexión buscas vivir en SECCION?',
+    answer: 'Mentalidad ambiciosa—me encanta conectar con mentes brillantes y apoyar la excelencia 🚀',
+  },
+  {
+    archetype: 'protector',
+    category: 'lifestyle',
+    question: '¿Qué tipo de energía y conexión buscas vivir en SECCION?',
+    answer: 'Leal, directo y auténtico—aquí para crear conexiones de confianza y apoyar a mis favoritos 🛡️',
+  },
+  {
+    archetype: 'explorer',
+    category: 'lifestyle',
+    question: '¿Qué tipo de energía y conexión buscas vivir en SECCION?',
+    answer: 'Siempre buscando nuevas culturas, perspectivas globales y química sin fronteras 🌍',
+  },
+  {
+    archetype: 'creator',
+    category: 'lifestyle',
+    question: '¿Qué tipo de energía y conexión buscas vivir en SECCION?',
+    answer: 'Apasionado por el mundo creativo, el detrás de cámaras y las colaboraciones con estilo 🎬',
+  },
+  {
+    archetype: 'alchemist',
+    category: 'lifestyle',
+    question: '¿Qué tipo de energía y conexión buscas vivir en SECCION?',
+    answer: 'Enfocado en bienestar, vitalidad y conexiones de alta frecuencia que suman de verdad 🧪',
+  },
+  {
+    archetype: 'hedonist',
+    category: 'lifestyle',
+    question: '¿Qué tipo de energía y conexión buscas vivir en SECCION?',
+    answer: 'Amante de la buena estética, la energía sensual y las experiencias VIP sin límites 🥂',
+  },
+];
+
+export interface SynergyCalibrationBundle {
+  archetype: ArchetypeId;
+  core_passion: PassionId;
+  corePassion: PassionId;
+  moods: MoodId[];
+  hobbies: string[];
+  lifestyle_habits: Record<string, string>;
+  lifestyleHabits: Record<string, string>;
+  bio_prompt_category: string;
+  bio_prompt_question: string;
+  bioPromptQuestion: string;
+  bio_prompt_answer: string;
+  bioPromptAnswer: string;
+  bio_prompt_category_2: string;
+  bio_prompt_question_2: string;
+  bio_prompt_answer_2: string;
+  bio_analysis: {
+    Emotional_Vector: {
+      Vulnerability_Score: number;
+      Defensive_Score: number;
+      Idealization_Bias: number;
+    };
+    Interaction_Style: {
+      Directness: string;
+      Witty: string;
+      Introspective: string;
+    };
+    Behavioral_Pattern: {
+      Investment_Driver: string[];
+      Red_Flags: string[];
+    };
+  };
+  bioAnalysis: {
+    Emotional_Vector: {
+      Vulnerability_Score: number;
+      Defensive_Score: number;
+      Idealization_Bias: number;
+    };
+    Interaction_Style: {
+      Directness: string;
+      Witty: string;
+      Introspective: string;
+    };
+    Behavioral_Pattern: {
+      Investment_Driver: string[];
+      Red_Flags: string[];
+    };
+  };
+  avatar_url: string;
+  avatarUrl: string;
+  member_purposes: MemberPurposeId[];
+  memberPurposes: MemberPurposeId[];
+  relationship_goals: string[];
+  relationship_types: string[];
+  sexual_preferences: string[];
+  sexual_preference: string;
+  favorite_languages: string[];
+  connection_points: number;
+}
+
+/**
+ * Generates a 100% populated Match Engine vector from a 1-Tap Archetype + Passion choice,
+ * while respecting any inline overrides made by the member during onboarding.
+ */
+export function buildArchetypeSynergyDefaults(
+  rawArchetype?: string | null,
+  rawPassion?: string | null,
+  overridesOrLocale?:
+    | 'en'
+    | 'es'
+    | {
+        moods?: MoodId[];
+        hobbies?: string[];
+        lifestyle_habits?: Record<string, string>;
+        bio_prompt_answer?: string;
+        avatar_url?: string;
+        member_purposes?: MemberPurposeId[];
+        locale?: 'en' | 'es';
+      }
+): SynergyCalibrationBundle {
+  const overrides =
+    typeof overridesOrLocale === 'string'
+      ? { locale: overridesOrLocale }
+      : overridesOrLocale;
+  const archetype = normalizeArchetypeId(rawArchetype);
+  const mappedPassion = normalizePassionId(rawPassion, archetype);
+
+  const lang = overrides?.locale === 'es' ? 'es' : 'en';
+  const chipsList = lang === 'es' ? MEMBER_VIBE_CHIPS_ES : MEMBER_VIBE_CHIPS;
+  const matchedChip = chipsList.find((c) => c.archetype === archetype) || chipsList[0];
+  const defaultChip = matchedChip.answer;
+  const promptAnswer = overrides?.bio_prompt_answer?.trim() || defaultChip;
+  const promptQuestion =
+    lang === 'es'
+      ? '¿Qué tipo de energía y conexión buscas vivir en SECCION?'
+      : 'What kind of energy and connection are you here to experience on SECCION?';
+
+  const resolvedMoods =
+    overrides?.moods && overrides.moods.length > 0 ? overrides.moods : ARCHETYPE_DEFAULT_MOODS[archetype];
+  const resolvedHobbies =
+    overrides?.hobbies && overrides.hobbies.length > 0 ? overrides.hobbies : ARCHETYPE_DEFAULT_HOBBIES[archetype];
+  const resolvedHabits = {
+    ...ARCHETYPE_FULL_HABITS[archetype],
+    ...(overrides?.lifestyle_habits || {}),
+  };
+  const resolvedAvatar = overrides?.avatar_url?.trim() || ARCHETYPE_AVATARS[archetype];
+  const resolvedPurposes =
+    overrides?.member_purposes && overrides.member_purposes.length > 0
+      ? overrides.member_purposes
+      : (['lifestyle'] as MemberPurposeId[]);
+  const bioAnalysisObj = {
+    Emotional_Vector: {
+      Vulnerability_Score: 0.78,
+      Defensive_Score: 0.18,
+      Idealization_Bias: 0.35,
+    },
+    Interaction_Style: {
+      Directness: 'High',
+      Witty: 'High',
+      Introspective: 'High',
+    },
+    Behavioral_Pattern: {
+      Investment_Driver: ['Authentic Connection', 'Creative Synergy', 'VIP Support'],
+      Red_Flags: [] as string[],
+    },
+  };
+
+  return {
+    archetype,
+    core_passion: mappedPassion,
+    corePassion: mappedPassion,
+    moods: resolvedMoods,
+    hobbies: resolvedHobbies,
+    lifestyle_habits: resolvedHabits,
+    lifestyleHabits: resolvedHabits,
+    bio_prompt_category: 'lifestyle',
+    bio_prompt_question: promptQuestion,
+    bioPromptQuestion: promptQuestion,
+    bio_prompt_answer: promptAnswer,
+    bioPromptAnswer: promptAnswer,
+    bio_prompt_category_2: 'lifestyle',
+    bio_prompt_question_2: promptQuestion,
+    bio_prompt_answer_2: promptAnswer,
+    bio_analysis: bioAnalysisObj,
+    bioAnalysis: bioAnalysisObj,
+    avatar_url: resolvedAvatar,
+    avatarUrl: resolvedAvatar,
+    member_purposes: resolvedPurposes,
+    memberPurposes: resolvedPurposes,
+    relationship_goals: ['Open to possibilities', 'Social & Economical Support'],
+    relationship_types: ['Open to Explore', 'Digital Relationship'],
+    sexual_preferences: ['Everyone'],
+    sexual_preference: 'Everyone',
+    favorite_languages: lang === 'es' ? ['Spanish', 'English'] : ['English'],
+    connection_points: 100,
+  };
+}

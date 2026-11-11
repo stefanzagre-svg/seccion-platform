@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { z } from 'zod';
+import { classifyOrderIntent, qualifyDeliveredMedia, type ContentSafetyRating } from '@/lib/sightengine';
 
 const deliverSchema = z.object({
   orderId: z.string().uuid(),
@@ -42,6 +43,21 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: `Cannot deliver order in status: ${order.status}` }, { status: 400 });
     }
 
+    // STAGE 2 GATE: Verify delivered media against the order's Stage 1 Content Safety Rating
+    const orderRating: ContentSafetyRating =
+      (order as any).content_rating ||
+      classifyOrderIntent({ title: order.title, description: order.description }).rating;
+
+    const mediaVerdict = await qualifyDeliveredMedia(mediaUrl, orderRating);
+
+    if (mediaVerdict.isBlockedForSfwLedger) {
+      return NextResponse.json({
+        error: 'CONTENT_RATING_MISMATCH',
+        message: mediaVerdict.reason,
+        mediaQualification: mediaVerdict
+      }, { status: 422 });
+    }
+
     // Set status to delivered and trigger 48-hour auto-release countdown
     const autoReleaseAt = new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString();
 
@@ -64,7 +80,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       success: true,
       message: 'Milestone delivered. Fan has 48 hours to accept before auto-release.',
-      order: updatedOrder
+      order: updatedOrder,
+      mediaQualification: mediaVerdict
     });
   } catch (err: any) {
     console.error('Deliver escrow error:', err);

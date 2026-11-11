@@ -109,32 +109,66 @@ export async function POST(req: NextRequest) {
 
       switch (status) {
         case 'Approved': {
-          // Update profile to KYC Verified & Active Creator
+          // 1. Fetch existing profile first so we NEVER overwrite a Member's role to 'creator'
+          //    when a Member completes 18+ DIDIT verification for Date Plans / Explicit filters.
+          const { data: existingProfile } = await adminDb
+            .from('profiles')
+            .select('id, username, email, role, connection_points, privacy_settings')
+            .eq('id', vendorData)
+            .maybeSingle();
+
+          const requestedTargetRole = payload.metadata?.target_role;
+          const resolvedRole =
+            requestedTargetRole === 'creator' || existingProfile?.role === 'creator'
+              ? 'creator'
+              : existingProfile?.role || 'member';
+
+          const existingPrivacy =
+            existingProfile?.privacy_settings && typeof existingProfile.privacy_settings === 'object'
+              ? (existingProfile.privacy_settings as Record<string, unknown>)
+              : {};
+          const existingAgeVerification =
+            existingPrivacy.age_verification && typeof existingPrivacy.age_verification === 'object'
+              ? (existingPrivacy.age_verification as Record<string, unknown>)
+              : {};
+
+          const updatedPrivacySettings = {
+            ...existingPrivacy,
+            age_verification: {
+              ...existingAgeVerification,
+              verified: true,
+              verificationTier: 'kyc',
+              method: 'didit_kyc',
+              sessionId: payload.session_id || null,
+              verifiedAt: new Date().toISOString(),
+            },
+          };
+
+          const currentXp = existingProfile?.connection_points || 0;
+
+          // 2. Update profile via service_role (permitted by trg_protect_profile_trust_columns)
           const { data: profile } = await adminDb
             .from('profiles')
             .update({
               is_kyc_verified: true,
-              role: 'creator',
+              role: resolvedRole,
+              privacy_settings: updatedPrivacySettings,
+              connection_points: currentXp + 500,
               updated_at: new Date().toISOString(),
             })
             .eq('id', vendorData)
             .select()
             .single();
 
-          // Award KYC Completion XP (+500 XP)
-          const currentXp = profile?.connection_points || 0;
-          await adminDb
-            .from('profiles')
-            .update({ connection_points: currentXp + 500 })
-            .eq('id', vendorData);
-
-          // Telegram Alert
+          // 3. Role-accurate Telegram Alert
+          const isCreatorVerified = resolvedRole === 'creator';
           const msg =
-            `🛡️ *CREATOR KYC VERIFIED (DIDIT)*\n\n` +
-            `👤 *User:* @${profile?.username || 'Creator'} (${profile?.email || vendorData})\n` +
+            `🛡️ *${isCreatorVerified ? 'CREATOR' : 'MEMBER 18+'} KYC VERIFIED (DIDIT)*\n\n` +
+            `👤 *User:* @${profile?.username || existingProfile?.username || 'User'} (${profile?.email || existingProfile?.email || vendorData})\n` +
+            `🎭 *Role:* ${resolvedRole.toUpperCase()}\n` +
             `✅ *Decision:* Approved\n` +
             `🆔 *Session:* ${payload.session_id || 'N/A'}\n` +
-            `🎁 *XP Awarded:* +500 XP (Creator Studio Unlocked)`;
+            `🎁 *XP Awarded:* +500 XP (${isCreatorVerified ? 'Creator Studio Unlocked' : '18+ Date Plans & Explicit Verified'})`;
 
           sendTelegramNotification(msg).catch((err) => console.warn(err));
           break;

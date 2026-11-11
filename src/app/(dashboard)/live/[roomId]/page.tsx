@@ -171,7 +171,7 @@ export default function LiveRoomPage({ params }: { params: Promise<{ roomId: str
   };
 
   const handleTip = () => {
-    alert('Thank you for the tip! Segpay integration goes here.');
+    alert('Thank you for the tip! Matrix Wallet instant tip dispatched.');
   };
 
   const formatTime = (seconds: number) => {

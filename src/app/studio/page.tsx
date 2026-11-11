@@ -764,7 +764,7 @@ export default function CreatorStudio() {
   const [isScheduling, setIsScheduling] = useState(false);
 
   // Suggestions for country blocking
-  const SUGGESTED_COUNTRIES = ['US', 'FR', 'GB', 'CA', 'DE', 'CN', 'RU', 'IR'];
+  const SUGGESTED_COUNTRIES = ['MA', 'US', 'FR', 'GB', 'CA', 'DE', 'CN', 'RU', 'IR'];
 
   const loadGoalsData = async (userId: string) => {
     try {

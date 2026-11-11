@@ -4,7 +4,20 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { Loader2, Key, Mail, Lock, ArrowLeft, AlertCircle, ShieldAlert, Sparkles } from "lucide-react";
+import {
+  Loader2,
+  Key,
+  Mail,
+  Lock,
+  ArrowLeft,
+  AlertCircle,
+  ShieldAlert,
+  Sparkles,
+  CheckCircle2,
+  Clock,
+  Crown,
+  MessageCircle,
+} from "lucide-react";
 import PrelaunchModal from "@/components/PrelaunchModal";
 import { useTranslation } from "@/context/LanguageContext";
 
@@ -20,13 +33,16 @@ function DoubleBezelCard({ children, className = "" }: { children: React.ReactNo
   );
 }
 
+type PrelaunchStatusState = "idle" | "pending_creator" | "unregistered" | "waitlist_joined";
+
 export default function LoginPage() {
   const router = useRouter();
   const { t, locale } = useTranslation();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [useMagicLink, setUseMagicLink] = useState(false);
-  const [sentMode, setSentMode] = useState<'code' | 'link'>('code');
+  // Default to Passwordless (Option 1: Zero-Password Approval & Instant Studio Access)
+  const [useMagicLink, setUseMagicLink] = useState(true);
+  const [sentMode, setSentMode] = useState<"code" | "link">("code");
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [magicLinkSent, setMagicLinkSent] = useState(false);
@@ -34,7 +50,12 @@ export default function LoginPage() {
   const [verifyingOtp, setVerifyingOtp] = useState(false);
   const [isPrelaunchModalOpen, setIsPrelaunchModalOpen] = useState(false);
 
-  // Auto-fill email from URL query parameters (?email=...)
+  // Pre-launch status states for non-approved or member visitors
+  const [prelaunchState, setPrelaunchState] = useState<PrelaunchStatusState>("idle");
+  const [waitlistPosition, setWaitlistPosition] = useState<number | null>(null);
+  const [joiningWaitlist, setJoiningWaitlist] = useState(false);
+
+  // Auto-fill email from URL query parameters (?email=...) and listen for auth callbacks
   useEffect(() => {
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
@@ -42,11 +63,69 @@ export default function LoginPage() {
       if (emailParam) {
         setEmail(emailParam.trim());
       }
-      if (params.get("mode") === "code" || params.get("mode") === "magic") {
+      if (params.get("mode") === "password") {
+        setUseMagicLink(false);
+      } else {
         setUseMagicLink(true);
       }
+      if (params.get("error") === "auth_callback_failed") {
+        setErrorMsg(
+          locale === "es"
+            ? "El enlace de acceso directo expiró o se abrió en otro navegador. Introduce tu correo para recibir un código de 6 dígitos instantáneo."
+            : "The 1-click access link expired or was opened in another browser. Enter your email below to receive an instant 6-digit passcode."
+        );
+      }
+
+      // Catch any URL hash fragments (#access_token=...) from legacy email links
+      const supabase = createClient();
+      const {
+        data: { subscription },
+      } = supabase.auth.onAuthStateChange(async (event, session) => {
+        if (session?.user && (event === "SIGNED_IN" || event === "TOKEN_REFRESHED")) {
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("role")
+            .eq("id", session.user.id)
+            .maybeSingle();
+
+          const role = profile?.role || session.user.user_metadata?.role || "creator";
+          document.cookie = `sb_role=${role}; path=/; max-age=2592000; SameSite=Lax`;
+          document.cookie = "sb_ob=1; path=/; max-age=2592000; SameSite=Lax";
+          const explicitNext = params.get("next");
+          const destination = explicitNext || (role === "creator" ? "/studio" : "/early-access");
+          window.location.href = destination;
+        }
+      });
+
+      return () => {
+        subscription.unsubscribe();
+      };
     }
-  }, []);
+  }, [locale]);
+
+  const handleOneClickWaitlist = async () => {
+    if (!email) return;
+    setJoiningWaitlist(true);
+    setErrorMsg(null);
+    try {
+      const res = await fetch("/api/v2/waitlist/join", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email.toLowerCase().trim(), city: "Global" }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok || res.status === 409) {
+        setWaitlistPosition(data.position || null);
+        setPrelaunchState("waitlist_joined");
+      } else {
+        setErrorMsg(data.error || "Could not join waitlist. Please try again.");
+      }
+    } catch {
+      setErrorMsg("Network error while joining waitlist.");
+    } finally {
+      setJoiningWaitlist(false);
+    }
+  };
 
   const handleVerifyOtp = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -60,61 +139,117 @@ export default function LoginPage() {
       const { data, error } = await supabase.auth.verifyOtp({
         email: cleanEmail,
         token: otpCode.trim(),
-        type: 'email',
+        type: "email",
       });
       if (error) throw error;
 
+      const params = new URLSearchParams(window.location.search);
+      let resolvedRole: "creator" | "member" = "creator";
+
       if (data?.user) {
         const { data: existingProfile } = await supabase
-          .from('profiles')
-          .select('id, username, role')
-          .eq('id', data.user.id)
+          .from("profiles")
+          .select("id, username, role")
+          .eq("id", data.user.id)
           .maybeSingle();
 
-        const defaultUsername = (cleanEmail.split('@')[0] || 'creator')
+        const defaultUsername = (cleanEmail.split("@")[0] || "creator")
           .toLowerCase()
-          .replace(/[^a-z0-9_]/g, '');
+          .replace(/[^a-z0-9_]/g, "");
 
         if (!existingProfile) {
-          await supabase.from('profiles').upsert({
+          const isApprovedCreatorMeta = data.user.user_metadata?.role === "creator";
+          resolvedRole = isApprovedCreatorMeta ? "creator" : "member";
+          await supabase.from("profiles").upsert({
             id: data.user.id,
             username: defaultUsername,
             display_name: defaultUsername,
-            role: 'creator',
+            role: resolvedRole,
           });
+        } else {
+          resolvedRole =
+            existingProfile.role === "creator" || existingProfile.role === "admin"
+              ? "creator"
+              : "member";
         }
 
         document.cookie = "sb_ob=1; path=/; max-age=2592000; SameSite=Lax";
-        document.cookie = "sb_role=creator; path=/; max-age=2592000; SameSite=Lax";
+        document.cookie = `sb_role=${resolvedRole}; path=/; max-age=2592000; SameSite=Lax`;
+        document.cookie = "sb_onboarding_completed=true; path=/; max-age=2592000; SameSite=Lax";
         if (typeof window !== "undefined") {
-          sessionStorage.setItem("_onboarding_creator_archive_choice", "creator");
+          if (resolvedRole === "creator") {
+            sessionStorage.setItem("_onboarding_creator_archive_choice", "creator");
+          } else {
+            sessionStorage.removeItem("_onboarding_creator_archive_choice");
+          }
         }
       }
 
-      const params = new URLSearchParams(window.location.search);
-      const nextTarget = params.get("next") || "/studio";
+      const explicitNext = params.get("next");
+      // Option 1 + A2: Approved Creators skip /onboarding and land directly in /studio
+      const defaultDestination = resolvedRole === "creator" ? "/studio" : "/early-access";
+      const nextTarget = explicitNext || defaultDestination;
       window.location.href = nextTarget;
     } catch (err: any) {
       console.error("OTP Verification Error:", err);
-      setErrorMsg(err.message || "Invalid or expired code. Check your email for the 6-digit passcode.");
+      setErrorMsg(
+        err.message ||
+          (locale === "es"
+            ? "Código inválido o expirado. Revisa tu correo e inténtalo de nuevo."
+            : "Invalid or expired code. Check your email for the 6-digit passcode.")
+      );
     } finally {
       setVerifyingOtp(false);
     }
   };
 
-  const handleMagicOtp = async (mode: 'code' | 'link') => {
+  const handleMagicOtp = async (mode: "code" | "link") => {
     if (!email) return;
     setLoading(true);
     setErrorMsg(null);
+    setPrelaunchState("idle");
     setSentMode(mode);
 
     const supabase = createClient();
 
     try {
       const cleanEmail = email.toLowerCase().trim();
-      const options = mode === 'link' ? {
-        emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent('/studio')}`,
-      } : undefined;
+
+      // Step 1: Check pre-launch status & auto-provision approved creators so they never hit password/signup errors
+      const checkRes = await fetch("/api/v2/auth/prelaunch-access", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: cleanEmail }),
+      });
+
+      if (checkRes.ok) {
+        const checkData = await checkRes.json();
+        if (checkData.status === "pending_creator") {
+          setPrelaunchState("pending_creator");
+          setLoading(false);
+          return;
+        }
+        if (checkData.status === "unregistered") {
+          if (checkData.alreadyOnWaitlist) {
+            setPrelaunchState("waitlist_joined");
+          } else {
+            setPrelaunchState("unregistered");
+          }
+          setLoading(false);
+          return;
+        }
+      }
+
+      // Step 2: Approved Creator -> Send 6-Digit Code or 1-Click Magic Link straight to /studio
+      const params = new URLSearchParams(window.location.search);
+      const explicitNext = params.get("next") || "/studio";
+      const callbackUrl = `${window.location.origin}/auth/callback?next=${encodeURIComponent(explicitNext)}`;
+      const options =
+        mode === "link"
+          ? {
+              emailRedirectTo: callbackUrl,
+            }
+          : undefined;
 
       const { error } = await supabase.auth.signInWithOtp({
         email: cleanEmail,
@@ -124,7 +259,7 @@ export default function LoginPage() {
       setMagicLinkSent(true);
     } catch (err: any) {
       console.error("Magic link error:", err);
-      setErrorMsg(err.message || "Failed to send magic authentication.");
+      setErrorMsg(err.message || "Failed to send access code. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -140,20 +275,20 @@ export default function LoginPage() {
 
     setLoading(true);
     setErrorMsg(null);
+    setPrelaunchState("idle");
     const supabase = createClient();
 
     try {
       const cleanEmail = email.toLowerCase().trim();
-      // Call server-side auth route to guarantee HTTP cookies are set cleanly and auto-provision approved creators on first login
-      const res = await fetch('/api/admin/auth/founder-login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const res = await fetch("/api/admin/auth/founder-login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: cleanEmail, password }),
       });
 
       const json = await res.json();
       if (!res.ok) {
-        throw new Error(json.error || 'Failed to authenticate.');
+        throw new Error(json.error || "Failed to authenticate.");
       }
 
       if (json.session?.access_token && json.session?.refresh_token) {
@@ -165,19 +300,27 @@ export default function LoginPage() {
 
       const searchParams = new URLSearchParams(window.location.search);
       const nextTarget =
-        searchParams.get('next') ||
+        searchParams.get("next") ||
         json.redirectUrl ||
-        (cleanEmail === 'stefan.zagre@gmail.com' ? '/admin' : '/studio');
+        (cleanEmail === "stefan.zagre@gmail.com" ? "/admin" : "/studio");
 
-      // Hard navigation so browser sends fresh auth cookies to Cloudflare Worker
       window.location.href = nextTarget;
     } catch (err: any) {
       console.error("Login error:", err);
-      setErrorMsg(err.message || "Failed to authenticate. Only approved creators & founders have active pre-launch accounts.");
+      setErrorMsg(
+        err.message ||
+          "Failed to authenticate. Try Passwordless 6-Digit Code if you haven't set a password."
+      );
     } finally {
       setLoading(false);
     }
   };
+
+  const directWhatsAppLink = `https://wa.me/34662907153?text=${encodeURIComponent(
+    locale === "es"
+      ? `Hola Stefan, mi correo es ${email}. Quiero confirmar mi aprobación como Creador Fundador en SECCION.`
+      : `Hi Stefan, my email is ${email}. I'd like to fast-track my Founding Creator approval on SECCION.`
+  )}`;
 
   return (
     <div className="min-h-screen bg-transparent text-white flex flex-col justify-center items-center p-4 relative">
@@ -196,84 +339,54 @@ export default function LoginPage() {
       </div>
 
       <div className="w-full max-w-[440px] relative z-10">
-        
         {/* Back Link */}
-        <Link href="/" className="inline-flex items-center gap-2 text-xs font-mono font-bold text-white/40 hover:text-[#00fbfb] transition mb-6 group">
+        <Link
+          href="/"
+          className="inline-flex items-center gap-2 text-xs font-mono font-bold text-white/40 hover:text-[#00fbfb] transition mb-6 group"
+        >
           <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-          <span>{locale === 'es' ? 'Volver al Inicio' : 'Back to Home'}</span>
+          <span>{locale === "es" ? "Volver al Inicio" : "Back to Home"}</span>
         </Link>
 
         {/* Pre-Launch Locked Banner */}
         <div className="mb-4 p-3.5 bg-[#00fbfb]/10 border border-[#00fbfb]/30 rounded-2xl flex items-center justify-between text-xs">
           <div className="flex items-center gap-2 text-[#00fbfb] font-mono font-bold text-[11px] uppercase">
             <ShieldAlert className="w-4 h-4 shrink-0" />
-            <span>{locale === 'es' ? 'Solo Acceso de Pre-Lanzamiento' : 'Pre-Launch Access Only'}</span>
+            <span>
+              {locale === "es" ? "Acceso Creadores Pre-Lanzamiento" : "Creator Pre-Launch Access"}
+            </span>
           </div>
           <button
             onClick={() => setIsPrelaunchModalOpen(true)}
             className="text-[10px] font-mono font-bold text-[#ffabf3] underline hover:text-white transition cursor-pointer"
           >
-            {locale === 'es' ? 'Saber Más' : 'Learn Why'}
+            {locale === "es" ? "Saber Más" : "Learn Why"}
           </button>
         </div>
 
         <DoubleBezelCard>
           <div className="space-y-6 text-left">
             <div className="text-center space-y-2">
-              <img 
-                src="/assets/logo/logo-wordmark.png" 
-                alt="SECCION" 
+              <img
+                src="/assets/logo/logo-wordmark.png"
+                alt="SECCION"
                 className="h-8 mx-auto object-contain drop-shadow-[0_0_20px_rgba(0,251,251,0.4)]"
               />
-              <p className="text-[10px] font-mono font-bold text-[#ffabf3] uppercase tracking-widest">
-                {locale === 'es' ? 'Acceso de Creador Aprobado' : 'Approved Creator Access'}
+              <p className="text-[10px] font-mono font-bold text-[#00fbfb] uppercase tracking-widest">
+                {locale === "es"
+                  ? "Acceso Directo al Creator Studio (Sin Contraseña)"
+                  : "Instant Creator Studio Access (Passwordless)"}
               </p>
             </div>
 
-            {/* Explanatory Info Card */}
-            <div className="p-3.5 bg-white/5 border border-white/10 rounded-2xl text-[11px] text-[#b9cac9] leading-relaxed text-center space-y-2">
-              <p>
-                {t(
-                  "onboarding.prelaunchGates.loginApprovedExplanation",
-                  "Pre-launch access is reserved for approved creators and the founding team."
-                )}
-              </p>
-              <div className="pt-1.5 border-t border-white/5 flex flex-col items-center justify-center gap-1 text-[10px]">
-                <div className="flex items-center gap-1.5">
-                  <span className="text-white/40">
-                    {t("onboarding.prelaunchGates.notApprovedYet", "Haven't applied or waiting for approval?")}
-                  </span>
-                  <Link
-                    href="/become-creator#apply"
-                    className="text-[#00fbfb] hover:underline font-mono font-bold uppercase tracking-wider"
-                  >
-                    {t("onboarding.prelaunchGates.loginApplyNow", "APPLY NOW")} →
-                  </Link>
-                </div>
-              </div>
-            </div>
-
-            {/* Mode Switcher Tabs */}
+            {/* Mode Switcher Tabs — Passwordless First */}
             <div className="grid grid-cols-2 p-1 bg-black/60 border border-white/10 rounded-xl text-xs font-mono font-bold">
-              <button
-                type="button"
-                onClick={() => {
-                  setUseMagicLink(false);
-                  setErrorMsg(null);
-                }}
-                className={`py-2 px-3 rounded-lg text-center transition-all cursor-pointer ${
-                  !useMagicLink
-                    ? "bg-white/15 text-[#00fbfb] shadow-[0_0_10px_rgba(0,251,251,0.2)]"
-                    : "text-white/40 hover:text-white"
-                }`}
-              >
-                {t("onboarding.prelaunchGates.tabPassword", "Sign in with Password")}
-              </button>
               <button
                 type="button"
                 onClick={() => {
                   setUseMagicLink(true);
                   setErrorMsg(null);
+                  setPrelaunchState("idle");
                 }}
                 className={`py-2 px-3 rounded-lg text-center transition-all cursor-pointer ${
                   useMagicLink
@@ -281,7 +394,22 @@ export default function LoginPage() {
                     : "text-[#ffabf3] hover:text-white"
                 }`}
               >
-                {t("onboarding.prelaunchGates.tabPasswordless", "✨ First-Time / Passwordless")}
+                {t("onboarding.prelaunchGates.tabPasswordless", "✨ Instant Code / Link")}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setUseMagicLink(false);
+                  setErrorMsg(null);
+                  setPrelaunchState("idle");
+                }}
+                className={`py-2 px-3 rounded-lg text-center transition-all cursor-pointer ${
+                  !useMagicLink
+                    ? "bg-white/15 text-[#00fbfb] shadow-[0_0_10px_rgba(0,251,251,0.2)]"
+                    : "text-white/40 hover:text-white"
+                }`}
+              >
+                {t("onboarding.prelaunchGates.tabPassword", "Use Password")}
               </button>
             </div>
 
@@ -292,22 +420,176 @@ export default function LoginPage() {
               </div>
             )}
 
-            {magicLinkSent ? (
+            {/* Case B: Pending Creator Application Status Screen */}
+            {prelaunchState === "pending_creator" ? (
+              <div className="p-5 bg-[#ffabf3]/10 border border-[#ffabf3]/30 rounded-2xl space-y-4 text-center">
+                <div className="w-12 h-12 rounded-full bg-[#ffabf3]/20 border border-[#ffabf3]/40 flex items-center justify-center mx-auto">
+                  <Clock className="w-6 h-6 text-[#ffabf3]" />
+                </div>
+                <div className="space-y-1.5">
+                  <h3 className="text-sm font-bold uppercase tracking-wider text-white">
+                    {locale === "es"
+                      ? "Tu Solicitud de Creador Está en Revisión"
+                      : "Your Creator Application is Under Review"}
+                  </h3>
+                  <p className="text-xs text-[#b9cac9] leading-relaxed">
+                    {locale === "es" ? (
+                      <>
+                        Recibimos la solicitud para <strong className="text-white">{email}</strong>. En
+                        cuanto sea aprobada recibirás acceso directo a tu Creator Studio (90% Split).
+                      </>
+                    ) : (
+                      <>
+                        We received the application for <strong className="text-white">{email}</strong>.
+                        As soon as it is approved, your email will unlock direct access to Creator Studio
+                        (90% Split).
+                      </>
+                    )}
+                  </p>
+                </div>
+                <a
+                  href={directWhatsAppLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full py-3 px-4 bg-[#25D366] hover:bg-[#25D366]/90 text-black font-mono text-xs font-black uppercase tracking-wider rounded-xl transition flex items-center justify-center gap-2"
+                >
+                  <MessageCircle className="w-4 h-4" />
+                  <span>
+                    {locale === "es"
+                      ? "Acelerar Aprobación por WhatsApp →"
+                      : "Fast-Track Approval on WhatsApp →"}
+                  </span>
+                </a>
+                <button
+                  type="button"
+                  onClick={() => setPrelaunchState("idle")}
+                  className="text-[10px] font-mono text-white/50 hover:text-white underline uppercase cursor-pointer"
+                >
+                  {locale === "es" ? "← Probar con otro correo" : "← Try another email"}
+                </button>
+              </div>
+            ) : prelaunchState === "unregistered" ? (
+              /* Case C: Unregistered Email -> 1-Click Creator Apply OR 1-Click Member VIP Waitlist */
+              <div className="p-5 bg-white/5 border border-white/15 rounded-2xl space-y-4 text-center">
+                <div className="space-y-1.5">
+                  <span className="inline-block text-[10px] font-mono font-bold uppercase px-2.5 py-0.5 rounded-full bg-[#00fbfb]/15 text-[#00fbfb]">
+                    {locale === "es" ? "Fase Pre-Lanzamiento" : "Pre-Launch Access Gate"}
+                  </span>
+                  <h3 className="text-sm font-bold uppercase tracking-wider text-white">
+                    {locale === "es"
+                      ? "¿Cómo quieres unirte a SECCION?"
+                      : "How would you like to join SECCION?"}
+                  </h3>
+                  <p className="text-xs text-[#b9cac9] leading-relaxed">
+                    {locale === "es" ? (
+                      <>
+                        El correo <strong className="text-white">{email}</strong> aún no tiene una
+                        cuenta activa de Creador Aprobado. Elige tu acceso en 1 clic:
+                      </>
+                    ) : (
+                      <>
+                        <strong className="text-white">{email}</strong> does not have an approved
+                        Creator account yet. Choose your pre-launch path in 1 click:
+                      </>
+                    )}
+                  </p>
+                </div>
+
+                <div className="space-y-2.5">
+                  <Link
+                    href={`/become-creator?email=${encodeURIComponent(email)}#apply`}
+                    className="w-full py-3.5 px-4 bg-[#ffabf3] hover:bg-[#ffabf3]/90 text-black font-mono text-xs font-black uppercase tracking-wider rounded-xl transition flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(255,171,243,0.35)]"
+                  >
+                    <Crown className="w-4 h-4" />
+                    <span>
+                      {locale === "es"
+                        ? "Soy Creador/a — Solicitar 90% Split →"
+                        : "I'm a Creator — Apply for 90% Split →"}
+                    </span>
+                  </Link>
+
+                  <button
+                    type="button"
+                    onClick={handleOneClickWaitlist}
+                    disabled={joiningWaitlist}
+                    className="w-full py-3 px-4 bg-[#00fbfb]/15 hover:bg-[#00fbfb]/25 border border-[#00fbfb]/40 text-[#00fbfb] font-mono text-xs font-bold uppercase tracking-wider rounded-xl transition flex items-center justify-center gap-2 cursor-pointer"
+                  >
+                    {joiningWaitlist ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <>
+                        <Sparkles className="w-4 h-4" />
+                        <span>
+                          {locale === "es"
+                            ? "Soy Miembro — Unirme a la Lista VIP (1-Clic)"
+                            : "I'm a Member — Join VIP Waitlist (1-Click)"}
+                        </span>
+                      </>
+                    )}
+                  </button>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setPrelaunchState("idle")}
+                  className="text-[10px] font-mono text-white/50 hover:text-white underline uppercase cursor-pointer"
+                >
+                  {locale === "es" ? "← Volver" : "← Back"}
+                </button>
+              </div>
+            ) : prelaunchState === "waitlist_joined" ? (
+              <div className="p-5 bg-[#00fbfb]/10 border border-[#00fbfb]/30 rounded-2xl space-y-3 text-center">
+                <CheckCircle2 className="w-10 h-10 text-[#00fbfb] mx-auto" />
+                <h3 className="text-base font-bold text-white">
+                  {locale === "es"
+                    ? "¡Estás en la Lista VIP de Miembros! 🎉"
+                    : "You're on the Founding Member VIP List! 🎉"}
+                </h3>
+                <p className="text-xs text-[#b9cac9] leading-relaxed">
+                  {locale === "es" ? (
+                    <>
+                      Reservamos el acceso prioritario para <strong className="text-white">{email}</strong>
+                      {waitlistPosition ? ` (Posición #${waitlistPosition})` : ""}. Te avisaremos por
+                      correo en cuanto abramos el acceso a Miembros.
+                    </>
+                  ) : (
+                    <>
+                      We reserved priority member access for{" "}
+                      <strong className="text-white">{email}</strong>
+                      {waitlistPosition ? ` (Position #${waitlistPosition})` : ""}. We will notify you as
+                      soon as Member access opens.
+                    </>
+                  )}
+                </p>
+                <Link
+                  href="/become-creator#apply"
+                  className="inline-block text-[11px] font-mono font-bold text-[#ffabf3] hover:underline pt-1"
+                >
+                  {locale === "es"
+                    ? "¿Eres Creador/a? Solicita tu 90% Split aquí →"
+                    : "Are you a Creator instead? Apply for 90% Split here →"}
+                </Link>
+              </div>
+            ) : magicLinkSent ? (
               <div className="space-y-4">
-                {sentMode === 'code' ? (
+                {sentMode === "code" ? (
                   <>
                     <div className="p-4 bg-[#00fbfb]/5 border border-[#00fbfb]/20 text-[#00fbfb] text-xs rounded-xl space-y-1.5 text-center">
                       <h4 className="font-bold uppercase tracking-wider text-white">
-                        {locale === 'es' ? '¡Código de Acceso Enviado!' : 'Magic Passcode Sent!'}
+                        {locale === "es" ? "¡Código de 6 Dígitos Enviado!" : "6-Digit Access Code Sent!"}
                       </h4>
                       <p className="text-[10px] text-[#b9cac9] leading-relaxed">
-                        {locale === 'es' ? 'Enviamos un código a ' : 'We sent a passcode to '}<strong className="text-white">{email}</strong>.
+                        {locale === "es" ? "Enviamos tu código a " : "We sent your code to "}
+                        <strong className="text-white">{email}</strong>.
                       </p>
                     </div>
 
-                    <form onSubmit={handleVerifyOtp} className="space-y-3 p-4 bg-white/5 border border-white/10 rounded-2xl">
+                    <form
+                      onSubmit={handleVerifyOtp}
+                      className="space-y-3 p-4 bg-white/5 border border-white/10 rounded-2xl"
+                    >
                       <label className="block text-[10px] font-mono text-[#00fbfb] uppercase font-bold tracking-wider text-center">
-                        {locale === 'es' ? 'Ingresa el Código:' : 'Enter Passcode:'}
+                        {locale === "es" ? "Ingresa el Código de 6 Dígitos:" : "Enter 6-Digit Code:"}
                       </label>
                       <input
                         type="text"
@@ -324,8 +606,10 @@ export default function LoginPage() {
                       >
                         {verifyingOtp ? (
                           <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : locale === "es" ? (
+                          "Entrar Directo al Creator Studio →"
                         ) : (
-                          locale === 'es' ? 'Verificar Código e Ingresar →' : 'Verify Code & Enter App →'
+                          "Enter Creator Studio Directly →"
                         )}
                       </button>
                     </form>
@@ -333,12 +617,20 @@ export default function LoginPage() {
                 ) : (
                   <div className="p-4 bg-emerald-500/5 border border-emerald-500/20 text-emerald-400 text-xs rounded-xl space-y-2 text-center">
                     <h4 className="font-bold uppercase tracking-wider">
-                      {locale === 'es' ? '¡Enlace Mágico Enviado!' : 'Magic Link Sent!'}
+                      {locale === "es" ? "¡Enlace de 1-Clic Enviado!" : "1-Click Magic Link Sent!"}
                     </h4>
                     <p className="text-[10px] text-[#b9cac9] leading-relaxed">
-                      {locale === 'es' 
-                        ? <>Enviamos un enlace de acceso a <strong className="text-white">{email}</strong>. Abre tu correo y haz clic para ingresar.</>
-                        : <>We sent a secure magic link to <strong className="text-white">{email}</strong>. Open your email on this browser and click the link to sign in instantly.</>}
+                      {locale === "es" ? (
+                        <>
+                          Enviamos tu enlace directo a <strong className="text-white">{email}</strong>.
+                          Haz clic en el enlace desde tu correo para entrar directo a tu Creator Studio.
+                        </>
+                      ) : (
+                        <>
+                          We sent your 1-click link to <strong className="text-white">{email}</strong>.
+                          Click the link in your email to enter your Creator Studio directly.
+                        </>
+                      )}
                     </p>
                   </div>
                 )}
@@ -352,47 +644,48 @@ export default function LoginPage() {
                     }}
                     className="text-[10px] font-mono text-white/40 hover:text-white underline uppercase cursor-pointer"
                   >
-                    {locale === 'es' ? '← Intentar con otro correo o método' : '← Try another email or method'}
+                    {locale === "es"
+                      ? "← Intentar con otro correo o método"
+                      : "← Try another email or method"}
                   </button>
                 </div>
               </div>
             ) : (
               <form onSubmit={handleLogin} className="space-y-4">
-                
-                {/* Contextual Banner for Selected Mode */}
                 {useMagicLink ? (
                   <div className="p-3 bg-[#00fbfb]/10 border border-[#00fbfb]/30 rounded-xl text-[11px] text-[#b9cac9] leading-relaxed flex items-start gap-2">
                     <Sparkles className="w-4 h-4 text-[#00fbfb] shrink-0 mt-0.5" />
                     <span>
-                      {t(
-                        "onboarding.prelaunchGates.firstTimeBadge",
-                        "Recommended for newly approved creators without a password yet. Enter your approved email to receive an instant 6-digit access code."
-                      )}
+                      {locale === "es"
+                        ? "Sin contraseñas: ingresa tu correo de Creador Aprobado para recibir un código instantáneo de 6 dígitos y entrar directo a tu Creator Studio."
+                        : "Zero passwords needed: enter your Approved Creator email to receive an instant 6-digit code and enter your Creator Studio directly."}
                     </span>
                   </div>
                 ) : (
                   <div className="text-[10px] font-mono text-white/60 px-1 leading-relaxed">
-                    {t(
-                      "onboarding.prelaunchGates.loginReturningDesc",
-                      "Enter your approved email and password below. First time signing in? Enter a new password (min. 6 chars) to activate your Creator Studio immediately."
-                    )}
+                    {locale === "es"
+                      ? "Ingresa tu correo y contraseña si ya configuraste una anteriormente."
+                      : "Enter your email and password if you already configured one."}
                   </div>
                 )}
 
                 {/* Email Input */}
                 <div className="space-y-1.5">
-                  <label className="block text-[8px] font-mono text-white/40 uppercase font-bold tracking-wider">
-                    {locale === 'es' ? 'Correo Electrónico Aprobado' : 'Approved Email Address'}
+                  <label className="block text-[9px] font-mono text-white/50 uppercase font-bold tracking-wider">
+                    {locale === "es" ? "Tu Correo Electrónico" : "Your Email Address"}
                   </label>
                   <div className="relative">
                     <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
-                    <input 
-                      type="email" 
+                    <input
+                      type="email"
                       value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="creador.aprobado@ejemplo.com"
+                      onChange={(e) => {
+                        setEmail(e.target.value);
+                        if (prelaunchState !== "idle") setPrelaunchState("idle");
+                      }}
+                      placeholder={locale === "es" ? "tu@correo.com" : "you@email.com"}
                       required
-                      className="w-full bg-black/40 border border-white/10 focus:border-[#00fbfb]/50 rounded-xl py-2.5 pl-10 pr-4 text-xs outline-none transition text-white"
+                      className="w-full bg-black/40 border border-white/10 focus:border-[#00fbfb]/50 rounded-xl py-3 pl-10 pr-4 text-xs outline-none transition text-white"
                     />
                   </div>
                 </div>
@@ -400,32 +693,20 @@ export default function LoginPage() {
                 {/* Password Input (Only in Password mode) */}
                 {!useMagicLink && (
                   <div className="space-y-1.5 animate-fade-in">
-                    <div className="flex justify-between items-center">
-                      <label className="block text-[8px] font-mono text-white/40 uppercase font-bold tracking-wider">
-                        {t("onboarding.prelaunchGates.passwordLabel", "Account Password (or create new password)")}
-                      </label>
-                    </div>
+                    <label className="block text-[9px] font-mono text-white/50 uppercase font-bold tracking-wider">
+                      {locale === "es" ? "Contraseña" : "Password"}
+                    </label>
                     <div className="relative">
                       <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
-                      <input 
-                        type="password" 
+                      <input
+                        type="password"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         placeholder="••••••••"
                         required={!useMagicLink}
                         minLength={6}
-                        className="w-full bg-black/40 border border-white/10 focus:border-[#00fbfb]/50 rounded-xl py-2.5 pl-10 pr-4 text-xs outline-none transition text-white"
+                        className="w-full bg-black/40 border border-white/10 focus:border-[#00fbfb]/50 rounded-xl py-3 pl-10 pr-4 text-xs outline-none transition text-white"
                       />
-                    </div>
-                    <div className="text-[10px] text-white/40 pt-1 flex justify-between items-center">
-                      <span>{t("onboarding.prelaunchGates.passwordHint", "Prefer a 6-digit code?")}</span>
-                      <button
-                        type="button"
-                        onClick={() => setUseMagicLink(true)}
-                        className="text-[#ffabf3] hover:underline font-mono font-bold cursor-pointer"
-                      >
-                        {locale === 'es' ? 'Usar Acceso Sin Contraseña →' : 'Use Passwordless Sign-In →'}
-                      </button>
                     </div>
                   </div>
                 )}
@@ -435,29 +716,37 @@ export default function LoginPage() {
                   <div className="space-y-2 pt-1">
                     <button
                       type="button"
-                      onClick={() => handleMagicOtp('code')}
-                      disabled={loading}
-                      className="w-full py-3 bg-[#00fbfb] text-black font-mono text-xs font-black uppercase tracking-wider rounded-xl hover:shadow-[0_0_15px_rgba(0,251,251,0.5)] transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-40"
+                      onClick={() => handleMagicOtp("code")}
+                      disabled={loading || !email}
+                      className="w-full py-3.5 bg-[#00fbfb] text-black font-mono text-xs font-black uppercase tracking-wider rounded-xl hover:shadow-[0_0_15px_rgba(0,251,251,0.5)] transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-40"
                     >
-                      {loading && sentMode === 'code' ? (
+                      {loading && sentMode === "code" ? (
                         <Loader2 className="w-4 h-4 animate-spin" />
                       ) : (
                         <>
                           <Key className="w-4 h-4" />
-                          <span>{locale === 'es' ? '📱 Tengo la App (Enviar Código 6 Dígitos)' : '📱 I have the App (Send 6-Digit Code)'}</span>
+                          <span>
+                            {locale === "es"
+                              ? "Enviar Código de 6 Dígitos →"
+                              : "Send 6-Digit Access Code →"}
+                          </span>
                         </>
                       )}
                     </button>
                     <button
                       type="button"
-                      onClick={() => handleMagicOtp('link')}
-                      disabled={loading}
+                      onClick={() => handleMagicOtp("link")}
+                      disabled={loading || !email}
                       className="w-full py-2.5 bg-white/5 border border-white/10 text-white font-mono text-[10px] font-bold uppercase tracking-wider rounded-xl hover:bg-white/10 transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-40"
                     >
-                      {loading && sentMode === 'link' ? (
+                      {loading && sentMode === "link" ? (
                         <Loader2 className="w-4 h-4 animate-spin" />
                       ) : (
-                        <span>{locale === 'es' ? '🌐 No tengo la App (Enviar Magic Link al Correo)' : '🌐 I don\'t have the App (Send Magic Link to Email)'}</span>
+                        <span>
+                          {locale === "es"
+                            ? "✉️ Enviar Enlace de 1-Clic al Correo"
+                            : "✉️ Send 1-Click Magic Link to Email"}
+                        </span>
                       )}
                     </button>
                   </div>
@@ -465,31 +754,20 @@ export default function LoginPage() {
                   <button
                     type="submit"
                     disabled={loading}
-                    className="w-full py-3 bg-[#00fbfb] text-black font-mono text-xs font-black uppercase tracking-wider rounded-xl hover:shadow-[0_0_15px_rgba(0,251,251,0.5)] transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-40"
+                    className="w-full py-3.5 bg-[#00fbfb] text-black font-mono text-xs font-black uppercase tracking-wider rounded-xl hover:shadow-[0_0_15px_rgba(0,251,251,0.5)] transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-40"
                   >
                     {loading ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
                     ) : (
                       <>
                         <Key className="w-4 h-4" />
-                        <span>{locale === 'es' ? 'Ingresar / Activar Cuenta con Contraseña' : 'Sign In / Activate with Password'}</span>
+                        <span>
+                          {locale === "es" ? "Entrar con Contraseña →" : "Sign In with Password →"}
+                        </span>
                       </>
                     )}
                   </button>
                 )}
-
-                {/* Direct First-Time Onboarding CTA */}
-                <div className="pt-2">
-                  <Link
-                    href={`/onboarding?role=creator${email ? `&email=${encodeURIComponent(email)}` : ''}`}
-                    className="block w-full py-2 px-3 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-[#00fbfb]/30 rounded-xl text-center text-[10px] font-mono font-bold text-[#ffabf3] hover:text-[#00fbfb] transition"
-                  >
-                    {t(
-                      "onboarding.prelaunchGates.completeSetupBtn",
-                      "First-time approved creator? Complete Setup & Set Password →"
-                    )}
-                  </Link>
-                </div>
               </form>
             )}
 
@@ -499,20 +777,25 @@ export default function LoginPage() {
                   "onboarding.prelaunchGates.loginNotAppliedNotice",
                   "Are you a creator that has not applied for 90% revenue & 1-Year Free AI Assistant? "
                 )}{" "}
-                <Link href="/become-creator#apply" className="text-[#00fbfb] hover:underline font-bold font-mono uppercase tracking-wide">
+                <Link
+                  href="/become-creator#apply"
+                  className="text-[#00fbfb] hover:underline font-bold font-mono uppercase tracking-wide"
+                >
                   {t("onboarding.prelaunchGates.loginApplyNow", "APPLY NOW")}
                 </Link>
               </p>
               <p className="text-[10px] text-[#b9cac9]">
                 {t("onboarding.prelaunchGates.loginMemberNotice", "Looking for early member access? ")}{" "}
-                <Link href="/early-access" className="text-[#ffabf3] hover:underline font-bold font-mono uppercase tracking-wide">
+                <Link
+                  href="/early-access"
+                  className="text-[#ffabf3] hover:underline font-bold font-mono uppercase tracking-wide"
+                >
                   {t("onboarding.prelaunchGates.loginJoinWaitlist", "JOIN EARLY ACCESS LIST")}
                 </Link>
               </p>
             </div>
           </div>
         </DoubleBezelCard>
-
       </div>
     </div>
   );

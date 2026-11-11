@@ -5,13 +5,14 @@ import { ShieldCheck, Lock, CreditCard, Loader2, Landmark, Zap, Sparkles, ArrowR
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from '@/context/LanguageContext';
 
-export type PaymentMethodType = 'bank' | 'crypto' | 'card';
+export type PaymentMethodType = 'bank' | 'crypto' | 'card' | 'voucher';
 
 interface UnifiedPaymentGateProps {
   amount: number;
   tier: 'VIP' | 'MASTER' | 'TIP' | 'CUSTOM_ORDER';
   creatorName: string;
   creatorId?: string;
+  contentRating?: 'SFW' | 'NSFW_18';
   onSuccess?: () => void;
 }
 
@@ -20,6 +21,7 @@ export default function UnifiedPaymentGate({
   tier, 
   creatorName, 
   creatorId,
+  contentRating = 'SFW',
   onSuccess 
 }: UnifiedPaymentGateProps) {
   const { locale } = useTranslation();
@@ -51,7 +53,7 @@ export default function UnifiedPaymentGate({
         }
       }
 
-      // Simulated Bank SCA or Segpay card redirect for other methods
+      // Simulated Bank SCA or V3 Card / Voucher redirect for other methods
       setTimeout(() => {
         setIsProcessing(false);
         if (onSuccess) onSuccess();
@@ -163,7 +165,7 @@ export default function UnifiedPaymentGate({
           </div>
         </div>
 
-        {/* 3. Credit / Debit Card (Segpay / Visa / Mastercard) */}
+        {/* 3. Credit / Debit Card & Apple Pay (Coinflow / Wert / Nuvei 50-50 Split) */}
         <div 
           onClick={() => setSelectedMethod('card')}
           className={`p-3.5 rounded-2xl border cursor-pointer transition-all duration-300 relative ${
@@ -179,14 +181,43 @@ export default function UnifiedPaymentGate({
               </div>
               <div>
                 <p className="text-xs font-bold text-white flex items-center gap-1.5">
-                  {locale === 'es' ? 'Tarjeta de Crédito / Débito' : 'Credit / Debit Card'}
+                  {locale === 'es' ? 'Apple Pay / Google Pay / Tarjeta' : 'Apple Pay / Google Pay / Card'}
                 </p>
-                <span className="text-[9px] text-white/40 font-mono block mt-0.5">
-                  {locale === 'es' ? 'Procesamiento Estándar Segpay (4.5% tarifa bancaria)' : 'Standard Segpay processing (4.5% bank fee)'}
+                <span className="text-[9px] text-white/50 font-mono block mt-0.5">
+                  {contentRating === 'NSFW_18'
+                    ? (locale === 'es' ? 'Liquidación USDC Instantánea (1.5% tarifa compartida • 0% Contracargos)' : 'Instant USDC Settlement (1.5% split fee • 100% Chargeback Protected)')
+                    : (locale === 'es' ? 'Créditos SFW Studio ✨ (1.25% tarifa compartida)' : 'SFW Studio Credits ✨ (1.25% split fee)')}
                 </span>
               </div>
             </div>
             {selectedMethod === 'card' && <Check className="w-4 h-4 text-white" />}
+          </div>
+        </div>
+
+        {/* 4. E-Voucher (PayPal / Klarna / Paysafecard via Rewarble) */}
+        <div 
+          onClick={() => setSelectedMethod('voucher')}
+          className={`p-3.5 rounded-2xl border cursor-pointer transition-all duration-300 relative ${
+            selectedMethod === 'voucher'
+              ? 'bg-emerald-500/10 border-emerald-400 shadow-[0_0_20px_rgba(16,185,129,0.15)]'
+              : 'bg-white/[0.02] border-white/5 hover:border-white/15'
+          }`}
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${selectedMethod === 'voucher' ? 'bg-emerald-400 text-black' : 'bg-white/5 text-white/60'}`}>
+                <Sparkles className="w-4 h-4" />
+              </div>
+              <div>
+                <p className="text-xs font-bold text-white flex items-center gap-1.5">
+                  {locale === 'es' ? 'E-Voucher (PayPal / Klarna / Discreto)' : 'E-Voucher (PayPal / Klarna / Anonymous)'}
+                </p>
+                <span className="text-[9px] text-emerald-400 font-mono font-bold block mt-0.5">
+                  🔒 {locale === 'es' ? '100% Privado en tu Extracto Bancario' : '100% Private on Your Bank Statement'}
+                </span>
+              </div>
+            </div>
+            {selectedMethod === 'voucher' && <Check className="w-4 h-4 text-emerald-400" />}
           </div>
         </div>
       </div>

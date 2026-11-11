@@ -13,26 +13,32 @@
  * Score range: 0–100
  */
 
-import { FREQUENCY_LEVELS, ARCHETYPE_PROFILES, type ArchetypeId } from './constants';
+import { FREQUENCY_LEVELS, ARCHETYPE_PROFILES, normalizeArchetypeId, normalizePassionId, type ArchetypeId } from './constants';
 import type { MoodId, PassionId } from './constants';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 export interface UserProfile {
-  gender: string;
-  location: string;
-  hobbies: string[];
-  lifestyle: Record<string, string>;
-  relationshipGoal: string;
-  relationshipType: string;
-  sexualPreferences: string[];
-  familyGoals: string;
+  id?: string;
+  name?: string;
+  languages?: string[];
+  gender?: string;
+  location?: string;
+  hobbies?: string[];
+  lifestyle?: Record<string, string>;
+  lifestyleHabits?: Record<string, string>;
+  relationshipGoal?: string;
+  relationshipGoals?: string[];
+  relationshipType?: string;
+  sexualPreferences?: string[];
+  sexualPreference?: string;
+  familyGoals?: string;
   /** Archetype from onboarding Stage 2 */
-  archetype?: ArchetypeId;
+  archetype?: ArchetypeId | string;
   /** Selected moods from onboarding Stage 1 vibe check */
-  moods?: MoodId[];
+  moods?: (MoodId | string)[];
   /** Core passion from onboarding Stage 1 */
-  corePassion?: PassionId;
+  corePassion?: PassionId | string;
   /** User's age (for future age-range filtering) */
   age?: number;
   /** City/region origin string */
@@ -308,11 +314,12 @@ function isHabitOpposed(habitA: string, habitB: string, category: string): boole
 }
 
 function checkHardBlockers(userA: UserProfile, userB: UserProfile): string | null {
-  // 0. Purpose Overlap Gate
-  const purposesA = userA.memberPurposes || ['lifestyle']; // default to lifestyle if missing
-  const purposesB = userB.memberPurposes || ['lifestyle'];
+  // 0. Purpose Overlap Gate (Creators are universally compatible with Members of all purposes)
+  const purposesA = userA.memberPurposes && userA.memberPurposes.length > 0 ? userA.memberPurposes : ['lifestyle'];
+  const purposesB = userB.memberPurposes && userB.memberPurposes.length > 0 ? userB.memberPurposes : ['lifestyle'];
   
-  const hasSharedPurpose = purposesA.some(p => purposesB.includes(p));
+  const isCreatorMatch = purposesA.includes('creator') || purposesB.includes('creator');
+  const hasSharedPurpose = isCreatorMatch || purposesA.some(p => purposesB.includes(p));
   if (!hasSharedPurpose) {
     return 'purpose_mismatch';
   }
@@ -376,11 +383,13 @@ function checkHardBlockers(userA: UserProfile, userB: UserProfile): string | nul
   }
 
   // 5. Smoking / Drinking Opposition (Applies to all purposes)
+  const rawLifestyleA = userA.lifestyle || userA.lifestyleHabits || {};
+  const rawLifestyleB = userB.lifestyle || userB.lifestyleHabits || {};
   const lifestyleA = Object.fromEntries(
-    Object.entries(userA.lifestyle || {}).map(([k, v]) => [k.toLowerCase(), v])
+    Object.entries(rawLifestyleA).map(([k, v]) => [k.toLowerCase(), v])
   );
   const lifestyleB = Object.fromEntries(
-    Object.entries(userB.lifestyle || {}).map(([k, v]) => [k.toLowerCase(), v])
+    Object.entries(rawLifestyleB).map(([k, v]) => [k.toLowerCase(), v])
   );
 
   if (isHabitOpposed(lifestyleA['smoking'], lifestyleB['smoking'], 'smoking')) {
@@ -399,10 +408,22 @@ function checkHardBlockers(userA: UserProfile, userB: UserProfile): string | nul
  * Layer 1: Archetype Chemistry (0–100)
  * Uses the 6×6 matrix. Falls back to 50 if either archetype is unknown.
  */
-function scoreArchetypeChemistry(userA: UserProfile, userB: UserProfile): number {
-  if (!userA.archetype || !userB.archetype) return 50; // neutral fallback
+function normalizeArchetypeKey(raw?: string): ArchetypeId | undefined {
+  if (!raw) return undefined;
+  const normalized = normalizeArchetypeId(raw);
+  return (normalized in ARCHETYPE_CHEMISTRY) ? normalized : undefined;
+}
 
-  const chemistry = ARCHETYPE_CHEMISTRY[userA.archetype]?.[userB.archetype];
+const LOWERCASE_FREQUENCY_LEVELS: Record<string, number> = Object.fromEntries(
+  Object.entries(FREQUENCY_LEVELS).map(([k, v]) => [k.toLowerCase(), v])
+);
+
+function scoreArchetypeChemistry(userA: UserProfile, userB: UserProfile): number {
+  const archA = normalizeArchetypeKey(userA.archetype);
+  const archB = normalizeArchetypeKey(userB.archetype);
+  if (!archA || !archB) return 50; // neutral fallback
+
+  const chemistry = ARCHETYPE_CHEMISTRY[archA]?.[archB];
   if (chemistry === undefined) return 50;
 
   return Math.round(chemistry * 100);
@@ -413,11 +434,13 @@ function scoreArchetypeChemistry(userA: UserProfile, userB: UserProfile): number
  * Compares habit frequency levels with normalized distance scoring.
  */
 function scoreLifestyleSync(userA: UserProfile, userB: UserProfile): number {
+  const rawLifestyleA = userA.lifestyle || userA.lifestyleHabits || {};
+  const rawLifestyleB = userB.lifestyle || userB.lifestyleHabits || {};
   const lifestyleA = Object.fromEntries(
-    Object.entries(userA.lifestyle || {}).map(([k, v]) => [k.toLowerCase(), v])
+    Object.entries(rawLifestyleA).map(([k, v]) => [k.toLowerCase(), v])
   );
   const lifestyleB = Object.fromEntries(
-    Object.entries(userB.lifestyle || {}).map(([k, v]) => [k.toLowerCase(), v])
+    Object.entries(rawLifestyleB).map(([k, v]) => [k.toLowerCase(), v])
   );
 
   const allCategories = Array.from(
@@ -430,8 +453,10 @@ function scoreLifestyleSync(userA: UserProfile, userB: UserProfile): number {
   for (const cat of allCategories) {
     if (lifestyleA[cat] && lifestyleB[cat]) {
       categoryCount++;
-      const levelA = FREQUENCY_LEVELS[lifestyleA[cat]] ?? 0;
-      const levelB = FREQUENCY_LEVELS[lifestyleB[cat]] ?? 0;
+      const valA = String(lifestyleA[cat]);
+      const valB = String(lifestyleB[cat]);
+      const levelA = FREQUENCY_LEVELS[valA] ?? LOWERCASE_FREQUENCY_LEVELS[valA.toLowerCase()] ?? 0;
+      const levelB = FREQUENCY_LEVELS[valB] ?? LOWERCASE_FREQUENCY_LEVELS[valB.toLowerCase()] ?? 0;
       const diff = Math.abs(levelA - levelB);
       // Max diff is 3 — normalize to 0–1, invert so close = high
       totalScore += Math.max(0, (3 - diff) / 3);
@@ -478,10 +503,12 @@ function scoreMoodResonance(userA: UserProfile, userB: UserProfile): number {
     score += (intersection.length / union.size) * 100;
   }
 
-  // Core passion match (exact = 100, different = 30, missing = neutral 50)
+  // Core passion match (exact or canonical normalized = 100, different = 30, missing = neutral 50)
   if (userA.corePassion && userB.corePassion) {
     signals++;
-    score += userA.corePassion === userB.corePassion ? 100 : 30;
+    const passionA = normalizePassionId(userA.corePassion, userA.archetype);
+    const passionB = normalizePassionId(userB.corePassion, userB.archetype);
+    score += userA.corePassion === userB.corePassion || passionA === passionB ? 100 : 30;
   }
 
   if (signals === 0) return 45; // neutral fallback
@@ -710,7 +737,7 @@ export function calculateMatch(userA: UserProfile, userB: UserProfile): MatchRes
       factor: 'Archetype Chemistry',
       score: breakdown.archetypeChemistry,
       impact: breakdown.archetypeChemistry >= 75 ? 'positive' : breakdown.archetypeChemistry < 50 ? 'negative' : 'neutral',
-      description: getChemistryNarrative(userA.archetype, userB.archetype)
+      description: getChemistryNarrative(normalizeArchetypeKey(userA.archetype), normalizeArchetypeKey(userB.archetype))
     },
     {
       factor: 'Lifestyle Sync',

@@ -165,18 +165,18 @@ export default function CreatorQuickApplyModal({ isOpen, onClose }: CreatorQuick
 
                 <p className="text-sm text-[#b9cac9] leading-relaxed max-w-sm mx-auto">
                   {locale === "es" 
-                    ? "Tu puesto para el 90% de ganancias y Pack de IA del 1er Año está reservado. Te contactaremos en breve para darte acceso al Studio."
-                    : "Your spot for the 90% payout split and Year 1 AI Pack is locked in. We will reach out shortly to activate your Studio access."}
+                    ? "Tu puesto para el 90% de ganancias y Pack de IA del 1er Año está reservado. En cuanto sea aprobado recibirás un enlace de 1 clic (sin necesidad de crear contraseña) para entrar directo a tu Creator Studio."
+                    : "Your spot for the 90% payout split and Year 1 AI Pack is locked in. As soon as approved, you will receive a 1-click link (zero password required) to enter your Creator Studio directly."}
                 </p>
 
                 <div className="pt-2 space-y-2.5">
                   <a
-                    href={`/onboarding?role=creator&email=${encodeURIComponent(email)}&name=${encodeURIComponent(fullName || handleOrLink.replace(/^@/, ""))}`}
+                    href={`/login?email=${encodeURIComponent(email)}`}
                     className="block w-full py-3.5 px-6 rounded-2xl bg-[#00fbfb] text-black font-mono font-bold text-xs uppercase tracking-wider hover:opacity-90 transition cursor-pointer"
                   >
                     {locale === "es"
-                      ? "⚡ Activar Cuenta y Crear Contraseña →"
-                      : "⚡ Activate Account & Set Password →"}
+                      ? "⚡ Consultar Estado / Acceso Creador (Sin Contraseña) →"
+                      : "⚡ Check Status / Creator Login (Passwordless) →"}
                   </a>
                   <button
                     onClick={onClose}

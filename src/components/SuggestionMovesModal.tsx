@@ -100,19 +100,21 @@ export default function SuggestionMovesModal({
   const handleVerification = async () => {
     setIsVerifying(true);
     try {
-      const res = await fetch('/api/kyc/verify', {
+      const returnPath = typeof window !== 'undefined' ? window.location.pathname : '/feed';
+      const res = await fetch('/api/kyc/didit-session', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: userId || 'mock-user-id' })
+        body: JSON.stringify({ returnTo: returnPath }),
       });
-      if (res.ok) {
-        setSessionKycVerified(true);
-        if (onKycSuccess) {
-          onKycSuccess();
-        }
+      const data = await res.json().catch(() => null);
+      if (data?.url) {
+        window.location.href = data.url;
+        return;
       }
+      window.location.href = '/onboarding/kyc';
     } catch (e) {
       console.error('KYC Verification Failed', e);
+      window.location.href = '/onboarding/kyc';
     } finally {
       setIsVerifying(false);
     }

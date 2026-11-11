@@ -1,11 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { z } from 'zod';
+import { classifyOrderIntent } from '@/lib/sightengine';
 
 const createEscrowSchema = z.object({
   creatorId: z.string().uuid(),
   title: z.string().min(3).max(150),
   description: z.string().min(10).max(2000),
+  category: z.string().optional(),
+  primaryObjective: z.string().optional(),
+  explicitFlag: z.boolean().optional(),
   redPillsAmount: z.number().int().min(10, 'Minimum order is 10 Red Pills (💊)'),
   daysToDeliver: z.number().int().min(1).max(30).default(7)
 });
@@ -26,13 +30,31 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Invalid parameters', details: parsed.error.format() }, { status: 400 });
     }
 
-    const { creatorId, title, description, redPillsAmount, daysToDeliver } = parsed.data;
+    const {
+      creatorId,
+      title,
+      description,
+      category,
+      primaryObjective,
+      explicitFlag,
+      redPillsAmount,
+      daysToDeliver
+    } = parsed.data;
 
     if (user.id === creatorId) {
       return NextResponse.json({ error: 'Cannot order from yourself' }, { status: 400 });
     }
 
-    // 1. Check fan's Red Pill wallet balance
+    // STAGE 1 GATE: Classify SFW vs. NSFW_18 Order Intent & Required Wallet Ledger
+    const qualification = classifyOrderIntent({
+      category,
+      title,
+      description,
+      primaryObjective,
+      explicitFlag
+    });
+
+    // 1. Check fan's wallet balance
     const { data: wallet } = await supabase
       .from('user_wallets')
       .select('red_pills_balance, blue_pills_xp')
@@ -44,9 +66,13 @@ export async function POST(req: NextRequest) {
     if (currentRedPills < redPillsAmount) {
       return NextResponse.json({
         error: 'INSUFFICIENT_RED_PILLS',
-        message: 'You need more Red Pills (💊) to place this escrow order.',
+        message:
+          qualification.rating === 'NSFW_18'
+            ? '18+ Explicit Escrow orders strictly require Sovereign Red Pills (💊) funded via Open Banking, Instant USDC, or Web3.'
+            : 'You need more Red Pills (💊) or SFW Studio Credits (✨) to place this escrow order.',
         required: redPillsAmount,
-        currentBalance: currentRedPills
+        currentBalance: currentRedPills,
+        qualification
       }, { status: 402 });
     }
 
@@ -78,7 +104,7 @@ export async function POST(req: NextRequest) {
 
     if (orderErr) throw orderErr;
 
-    // 4. Log transaction
+    // 4. Log transaction with Stage 1 Content Qualification Metadata
     await supabase.from('matrix_transactions').insert({
       user_id: user.id,
       transaction_type: 'escrow_lock',
@@ -86,12 +112,21 @@ export async function POST(req: NextRequest) {
       fiat_amount: Number((redPillsAmount * 1.00).toFixed(2)),
       payment_method: 'internal_balance',
       status: 'pending',
-      metadata: { orderId: order.id, creatorId, type: 'custom_order_escrow' }
+      metadata: {
+        orderId: order.id,
+        creatorId,
+        type: 'custom_order_escrow',
+        category: category || 'General',
+        contentRating: qualification.rating,
+        requiredLedger: qualification.requiredLedger,
+        detectedBy: qualification.detectedBy
+      }
     });
 
     return NextResponse.json({
       success: true,
       order,
+      qualification,
       lockedRedPills: redPillsAmount,
       remainingBalance: currentRedPills - redPillsAmount
     });

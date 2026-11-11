@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, AlertCircle, Camera, CheckCircle2, ShieldAlert } from 'lucide-react';
+import { X, AlertCircle, Camera, CheckCircle2, ShieldAlert, ShieldCheck, Loader2 } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
 
 export interface MissingRequirement {
   id: string;
@@ -34,8 +35,39 @@ export default function RequirementGateModal({
   onConfirmAdultConsent
 }: RequirementGateModalProps) {
   const [localConsent, setLocalConsent] = useState(false);
+  const [isHighTrustVerified, setIsHighTrustVerified] = useState(true);
+  const [launchingDidit, setLaunchingDidit] = useState(false);
 
+  const needsHighTrust = purposeId === 'dating' || purposeId === 'explicit' || Boolean(requiresAdultConsent);
   const hasMissingDeps = missingRequirements.some(req => !req.met);
+
+  useEffect(() => {
+    if (!isOpen || !needsHighTrust) return;
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (!session?.user?.id) return;
+      const { data: prof } = await supabase
+        .from('profiles')
+        .select('is_kyc_verified')
+        .eq('id', session.user.id)
+        .maybeSingle();
+      setIsHighTrustVerified(Boolean(prof?.is_kyc_verified));
+    });
+  }, [isOpen, needsHighTrust]);
+
+  const handleStartServerKyc = async () => {
+    setLaunchingDidit(true);
+    try {
+      const res = await fetch('/api/kyc/didit-session', { method: 'POST' });
+      const data = await res.json();
+      if (data?.url) {
+        window.location.href = data.url;
+        return;
+      }
+    } catch {
+      // fallback to internal KYC cockpit
+    }
+    window.location.href = '/onboarding/kyc';
+  };
 
   if (!isOpen) return null;
 
@@ -99,6 +131,37 @@ export default function RequirementGateModal({
               </>
             )}
 
+            {needsHighTrust && !isHighTrustVerified && (
+              <div className="p-4 rounded-2xl bg-[#00fbfb]/10 border border-[#00fbfb]/30 space-y-3">
+                <div className="flex items-start gap-2.5">
+                  <ShieldCheck className="w-5 h-5 text-[#00fbfb] shrink-0 mt-0.5" />
+                  <div className="space-y-1">
+                    <p className="text-xs font-black uppercase tracking-wider text-[#00fbfb]">
+                      Zero-Knowledge 18+ Identity Shield Required
+                    </p>
+                    <p className="text-[11px] text-white/75 leading-relaxed">
+                      Because you joined via fast country entry, unlocking <strong>{purposeLabel}</strong> requires a 1-time server-verified DIDIT Zero-Knowledge 18+ or Biometric Liveness check.
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  disabled={launchingDidit}
+                  onClick={handleStartServerKyc}
+                  className="w-full py-2.5 px-4 rounded-xl bg-[#00fbfb] text-black font-mono text-[10px] font-black uppercase tracking-wider cursor-pointer flex items-center justify-center gap-2 disabled:opacity-50"
+                >
+                  {launchingDidit ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      <span>Opening DIDIT Identity Shield...</span>
+                    </>
+                  ) : (
+                    <span>Verify via DIDIT 18+ Identity Shield →</span>
+                  )}
+                </button>
+              </div>
+            )}
+
             {requiresAdultConsent && !hasMissingDeps && (
               <div className="space-y-4">
                 <div className="flex items-start gap-3 p-4 rounded-xl bg-red-500/10 border border-red-500/20">
@@ -142,11 +205,11 @@ export default function RequirementGateModal({
             ) : requiresAdultConsent ? (
               <button 
                 onClick={() => {
-                  if (localConsent && onConfirmAdultConsent) {
+                  if (localConsent && isHighTrustVerified && onConfirmAdultConsent) {
                     onConfirmAdultConsent();
                   }
                 }}
-                disabled={!localConsent}
+                disabled={!localConsent || !isHighTrustVerified}
                 className="w-full py-3.5 bg-red-500 hover:bg-red-400 disabled:bg-white/5 disabled:text-white/30 disabled:border-white/10 disabled:cursor-not-allowed text-black border border-red-500 rounded-xl text-xs font-black uppercase tracking-widest transition flex items-center justify-center"
               >
                 Confirm & Enable

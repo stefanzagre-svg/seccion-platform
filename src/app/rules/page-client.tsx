@@ -75,6 +75,22 @@ export default function RulesPage() {
               : "Master contractual framework, in-app token conditions, community standards, anti-fraud policies, and statutory dispute resolution of SECCION."}
           </p>
 
+          {/* Durable Medium / PDF Contract Export Button (EU Directive 2011/83/EU & Spanish LSSI-CE) */}
+          <div className="pt-1 print:hidden">
+            <button
+              type="button"
+              onClick={() => typeof window !== "undefined" && window.print()}
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#00fbfb]/10 hover:bg-[#00fbfb]/20 border border-[#00fbfb]/30 text-[#00fbfb] text-xs font-bold transition shadow-[0_0_20px_rgba(0,251,251,0.1)]"
+            >
+              <FileText className="w-4 h-4" />
+              <span>
+                {isEs
+                  ? "Descargar / Imprimir Contrato Oficial en PDF (Soporte Duradero — Directiva UE 2011/83/UE)"
+                  : "Download / Print Official Contract PDF (Durable Medium — EU Directive 2011/83/EU)"}
+              </span>
+            </button>
+          </div>
+
           {/* Legal Entity & Descriptor Badge */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2">
             <div className="p-4 bg-white/[0.03] border border-white/10 rounded-2xl text-left text-[11px] text-[#b9cac9] font-mono space-y-1.5">

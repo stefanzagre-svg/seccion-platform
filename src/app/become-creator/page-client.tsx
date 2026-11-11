@@ -102,12 +102,17 @@ export default function BecomeCreatorPage({ initialProfile, userEmail }: { initi
   });
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
-  // Load from localStorage on mount
+  // Load from URL query params or localStorage on mount
   React.useEffect(() => {
     if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const emailParam = params.get("email");
+      if (emailParam) {
+        setFormData(prev => ({ ...prev, email: emailParam.trim() }));
+      }
       const isApplied = localStorage.getItem("seccion_creator_applied");
       const savedData = localStorage.getItem("seccion_creator_data");
-      if (isApplied === "true" && savedData) {
+      if (isApplied === "true" && savedData && !emailParam) {
         try {
           const parsed = JSON.parse(savedData);
           setFormData(prev => ({ ...prev, ...parsed }));
@@ -835,23 +840,15 @@ export default function BecomeCreatorPage({ initialProfile, userEmail }: { initi
                   </div>
 
                   <Link
-                    href={`/onboarding?role=creator&email=${encodeURIComponent(formData.email)}&name=${encodeURIComponent(formData.fullName)}`}
+                    href={`/login?email=${encodeURIComponent(formData.email)}`}
                     className="w-full py-3.5 px-6 rounded-xl bg-gradient-to-r from-[#00fbfb] to-[#00d2d2] text-black font-mono text-xs font-black uppercase tracking-wider hover:shadow-[0_0_25px_rgba(0,251,251,0.5)] transition-all duration-300 flex items-center justify-center gap-2 shadow-lg cursor-pointer"
                   >
                     <span>
                       {locale === "es"
-                        ? "⚡ Activar Mi Cuenta y Crear Contraseña"
-                        : "⚡ Activate My Account & Set Password"}
+                        ? "⚡ Consultar Estado / Acceso Creator Studio (Sin Contraseña)"
+                        : "⚡ Check Status / Creator Studio Login (Passwordless)"}
                     </span>
                     <ArrowUpRight className="w-4 h-4" />
-                  </Link>
-
-                  <Link
-                    href={`/login?email=${encodeURIComponent(formData.email)}`}
-                    className="w-full py-2.5 px-6 rounded-xl bg-white/5 hover:bg-white/10 text-white font-mono text-xs font-medium transition flex items-center justify-center gap-2 border border-white/10"
-                  >
-                    <span>{locale === "es" ? "Ir al Login de Creadores" : "Go to Creator Login"}</span>
-                    <ArrowUpRight className="w-3.5 h-3.5" />
                   </Link>
                 </div>
 
@@ -1213,8 +1210,8 @@ export default function BecomeCreatorPage({ initialProfile, userEmail }: { initi
               </h4>
               <p className="text-xs text-[#b9cac9] leading-relaxed pl-6">
                 {locale === "es"
-                  ? "Los creadores fundadores reciben el 90% de los Ingresos Netos durante su período de campaña (y el 80% estándar posteriormente) en todas las suscripciones, propinas, streams y pedidos personalizados. Los Ingresos Netos son el Valor Bruto del Cliente menos las comisiones de procesamiento bancario de terceros (tarifas de tarjeta Segpay / CCBill). Cero comisiones de agencia o intermediarios abusivos."
-                  : "Founding creators receive 90% of Net Revenue during their campaign period (and 80% standard afterwards) across all subscriptions, tips, streams, and custom orders. Net Revenue is Gross Customer Value minus third-party payment processing fees (Segpay / CCBill credit card fees). Zero agency cuts or exploitative markups."}
+                  ? "Los creadores fundadores reciben el 90% de los Ingresos Netos durante su período de campaña (y el 80% estándar posteriormente) en todas las suscripciones, propinas, streams y pedidos personalizados. Los Ingresos Netos son el Valor Bruto del Cliente menos las tarifas compartidas de pasarela bancaria o liquidación instantánea. Cero comisiones de agencia o intermediarios abusivos."
+                  : "Founding creators receive 90% of Net Revenue during their campaign period (and 80% standard afterwards) across all subscriptions, tips, streams, and custom orders. Net Revenue is Gross Customer Value minus shared payment gateway & instant settlement fees. Zero agency cuts or exploitative markups."}
               </p>
             </div>
 

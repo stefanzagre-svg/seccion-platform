@@ -30,6 +30,7 @@ const PUBLIC_API_ROUTES = [
   '/api/webhooks/telegram',
   '/api/auth/callback',
   '/api/v2/auth/register',
+  '/api/v2/auth/prelaunch-access',
   '/api/v2/creator/apply',
   '/api/v2/waitlist/join',
   '/api/admin/auth/founder-login',
@@ -151,46 +152,18 @@ export async function middleware(request: NextRequest) {
       roleCookie === 'creator' || user?.user_metadata?.role === 'creator';
     let onboardingCompleted = onboardingCookie === '1';
 
-    // Purpose Eligibility Checker
+    // Purpose Eligibility Checker (60-Second Synergy Calibration Compatible)
+    // Note: Progressive gates for Dating (2 Album Photos + City + Biometric/ZKP) and +18 Explicit
+    // are enforced in-app via RequirementGateModal & CreateDatePlanModal, never via full-site redirect traps.
     const checkPurposeEligibility = (profile: any) => {
-      // Creators have their own Creator Extension studio onboarding and don't need member lifestyle habit quizzes
       if (profile?.role === 'creator' || isCreatorRole) return true;
+      if (!profile) return false;
 
-      // Basic check from old logic + new purpose array
-      if (!profile?.archetype || !profile?.lifestyle_habits) return false;
-      if (!profile?.active_purposes || profile.active_purposes.length === 0) return false;
+      const hasArchetype = Boolean(profile.archetype);
+      const hasHabits = Boolean(profile.lifestyle_habits && Object.keys(profile.lifestyle_habits).length > 0);
+      const hasBioPrompt = Boolean(profile.bio_prompt_answer || profile.bio);
 
-      const hasVisible = (array: any[], hiddenKey: string) => {
-        if (!array || array.length === 0) return false;
-        const hiddenValues = profile.privacy_settings?.[hiddenKey] || [];
-        return array.filter((v: any) => !hiddenValues.includes(v)).length > 0;
-      };
-
-      const isDating = profile.active_purposes.includes('dating');
-      const isGrowth = profile.active_purposes.includes('growth');
-      const isExplicit = profile.active_purposes.includes('explicit');
-
-      if (isDating) {
-        if (!hasVisible(profile.sexual_preferences, 'sexual_preferences_hidden')) return false;
-        if (!hasVisible(profile.relationship_goals, 'relationship_goals_hidden')) return false;
-        if (!hasVisible(profile.relationship_types, 'relationship_types_hidden')) return false;
-        if (!profile.current_location) return false;
-        if (profile.privacy_settings?.current_location_hidden) return false;
-      }
-
-      if (isGrowth) {
-        if (!profile.career || !profile.education_level || !profile.income_bracket) return false;
-        if (Object.keys(profile.lifestyle_habits || {}).length < 10) return false;
-        if ((profile.hobbies || []).length < 10) return false;
-      }
-
-      if (isExplicit) {
-        if (!hasVisible(profile.sexual_preferences, 'sexual_preferences_hidden')) return false;
-        if (!hasVisible(profile.relationship_types, 'relationship_types_hidden')) return false;
-        if (!profile.nsfw_boundaries || profile.nsfw_boundaries.length < 1) return false;
-      }
-
-      return true;
+      return hasArchetype || hasHabits || hasBioPrompt;
     };
 
     const isOnAuthRoute = AUTH_ROUTES.some(route => pathname === route);
@@ -199,7 +172,7 @@ export async function middleware(request: NextRequest) {
       // Cookie missing — do the DB check once and set the cookie for next time
       const { data: profile } = await supabaseClient
         .from('profiles')
-        .select('role, archetype, lifestyle_habits, active_purposes, privacy_settings, sexual_preferences, relationship_goals, relationship_types, current_location, career, education_level, hobbies, income_bracket, nsfw_boundaries')
+        .select('role, archetype, lifestyle_habits, bio, bio_prompt_answer, member_purposes')
         .eq('id', user.id)
         .single();
 

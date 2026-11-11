@@ -14,7 +14,7 @@ export interface CreatorPayoutItem {
   period: string;
   grossAmount: number;
   netPayout: number;
-  channel: 'NOWPayments (USDT/BTC)' | 'Segpay Card';
+  channel: 'NOWPayments (USDT/BTC)' | 'Open Banking / SEPA' | 'Paxum / Instant USDC';
   status: 'released' | 'escrow_pending' | 'processing';
   releasedAt?: string;
 }
@@ -148,7 +148,7 @@ export default function StudioAnalyticsTab({
           </div>
         ) : (
           <div className="p-6 rounded-2xl bg-black/30 border border-white/5 text-center text-[#b9cac9] text-xs">
-            {locale === 'es' ? 'Las liquidaciones se ejecutan automáticamente cada ciclo de facturación vía NOWPayments USDT / Segpay.' : 'Payout settlements process automatically every billing cycle via NOWPayments USDT / Segpay.'}
+            {locale === 'es' ? 'Las liquidaciones se ejecutan automáticamente vía NOWPayments USDT/USDC, SEPA Instant o Paxum.' : 'Payout settlements process automatically via NOWPayments USDT/USDC, SEPA Instant, or Paxum.'}
           </div>
         )}
       </div>

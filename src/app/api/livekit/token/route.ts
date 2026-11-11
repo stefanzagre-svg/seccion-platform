@@ -40,15 +40,27 @@ export async function POST(req: NextRequest) {
       // Broadcast rooms (live_*): Only verified room owner (creator) can publish video/audio.
       const roomIdentifier = roomName.replace(/^live_/, '');
 
-      // Check if current user has creator profile
+      // Check if current user has creator profile (supports both legacy creator_profiles table and canonical profiles.role = 'creator')
       const { data: creatorProf } = await supabase
         .from('creator_profiles')
         .select('id')
         .eq('id', user.id)
         .single();
 
+      let hasValidCreatorProfile = Boolean(creatorProf);
+      if (!hasValidCreatorProfile) {
+        const { data: mainProf } = await supabase
+          .from('profiles')
+          .select('id, role')
+          .eq('id', user.id)
+          .single();
+        if (mainProf && mainProf.role === 'creator') {
+          hasValidCreatorProfile = true;
+        }
+      }
+
       if (isCreator) {
-        if (!creatorProf) {
+        if (!hasValidCreatorProfile) {
           return NextResponse.json({ error: 'Forbidden: Creator profile required to publish' }, { status: 403 });
         }
 

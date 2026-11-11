@@ -44,6 +44,9 @@ export default function CreatorKycPage() {
   useEffect(() => {
     async function checkAuth() {
       try {
+        const params = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+        const sessionDone = params?.get('session_done') === 'true';
+
         const { data: { session } } = await supabase.auth.getSession();
         if (session?.user) {
           setUserId(session.user.id);
@@ -54,9 +57,13 @@ export default function CreatorKycPage() {
             .single();
           if (profile) {
             setUserProfile(profile);
-            // If they are already verified and roles are set to creator, skip this page
-            if (profile.role === 'creator' && profile.is_kyc_verified) {
-              router.push('/studio');
+            // If they are already verified or returning from DIDIT session, show success or redirect
+            if (profile.is_kyc_verified || sessionDone) {
+              if (sessionDone) {
+                setStep('success');
+                return;
+              }
+              router.push(profile.role === 'creator' ? '/studio' : '/feed');
               return;
             }
           }
@@ -174,23 +181,36 @@ export default function CreatorKycPage() {
     setError(null);
 
     try {
-      // 1. Mock file upload (normally would upload to Supabase storage)
-      // Since it is a prelaunch mockup, we simulate successful upload
-      await new Promise((r) => setTimeout(r, 2000));
+      // Determine whether this user is verifying as a Creator or as a Member (18+ Date Plan / Explicit gate)
+      const isCreatorIntent =
+        userProfile?.role === 'creator' ||
+        (typeof window !== 'undefined' && (
+          localStorage.getItem('is_creator_signup') === 'true' ||
+          new URLSearchParams(window.location.search).get('role') === 'creator'
+        ));
+      const targetRole = isCreatorIntent ? 'creator' : 'member';
 
-      // 2. Update user profile details in Supabase
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update({
-          role: 'creator',
-          is_kyc_verified: true,
-          display_name: userProfile?.display_name || legalName.trim()
-        })
-        .eq('id', userId);
+      // Submit verification credentials to server-side /api/kyc/verify (uses service_role to update trust columns)
+      const res = await fetch('/api/kyc/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId,
+          legalName: legalName.trim(),
+          livenessVerified: true,
+          acceptedTerms: true,
+          idFileName,
+          selfieFileName,
+          targetRole,
+        }),
+      });
 
-      if (updateError) throw updateError;
+      const data = await res.json().catch(() => null);
+      if (!res.ok) {
+        throw new Error(data?.error || 'Failed to verify KYC credentials.');
+      }
 
-      // 3. Clear prelaunch creator signup flag in localStorage
+      // Clear prelaunch creator signup flag in localStorage
       localStorage.removeItem('is_creator_signup');
 
       setStep('success');
@@ -553,10 +573,15 @@ export default function CreatorKycPage() {
               </div>
 
               <button
-                onClick={() => router.push('/studio')}
+                onClick={() => {
+                  const isCreator =
+                    userProfile?.role === 'creator' ||
+                    (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('role') === 'creator');
+                  router.push(isCreator ? '/studio' : '/feed');
+                }}
                 className="w-full py-5 bg-gradient-to-r from-primary to-purple-500 text-black font-black uppercase tracking-[0.3em] rounded-2xl hover:shadow-[0_0_30px_rgba(0,251,251,0.4)] transition-all duration-300 flex items-center justify-center gap-2 text-xs"
               >
-                Enter Creator Studio
+                {userProfile?.role === 'member' ? 'Return to Platform Feed' : 'Enter Creator Studio'}
                 <Sparkles className="w-4 h-4" />
               </button>
             </motion.div>

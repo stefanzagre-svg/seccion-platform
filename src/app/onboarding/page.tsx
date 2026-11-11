@@ -28,6 +28,11 @@ import {
   LANGUAGES,
   PURPOSE_PROMPTS,
   PURPOSE_PROMPTS_ES,
+  ARCHETYPE_AVATARS,
+  MEMBER_VIBE_CHIPS,
+  MEMBER_VIBE_CHIPS_ES,
+  normalizeArchetypeId,
+  normalizePassionId,
   type MemberPurposeId
 } from "@/lib/constants";
 import ProfilePreviewModal from "@/components/ProfilePreviewModal";
@@ -95,8 +100,7 @@ export default function OnboardingFlow() {
         let updatePayload: any = {
           favorite_languages: ["English"],
           connection_points: 100,
-          sexual_preference: "Everyone",
-          role: isCreator ? "creator" : "member"
+          sexual_preference: "Everyone"
         };
 
         if (storedArchetype) {
@@ -185,7 +189,13 @@ export default function OnboardingFlow() {
     }
     
     if (isCreator) {
-      OnboardingLogger.log('registration', 'step_enter', 'routing creator to profile-checklist', currentUserId);
+      OnboardingLogger.log('registration', 'step_enter', 'routing creator directly to studio', currentUserId);
+      if (typeof window !== "undefined") {
+        document.cookie = "sb_ob=1; path=/; max-age=2592000; SameSite=Lax";
+        document.cookie = "sb_role=creator; path=/; max-age=2592000; SameSite=Lax";
+        window.location.href = "/studio";
+        return;
+      }
       setStep("profile-checklist");
     } else {
       OnboardingLogger.log('registration', 'step_enter', 'routing to purpose (member flow)', currentUserId);
@@ -425,34 +435,75 @@ export default function OnboardingFlow() {
           
         if (profile) {
           const hasPhoto = !!profile.avatar_url;
-          const hasBio = !!profile.bio_prompt_answer && !!profile.bio_prompt_answer_2;
-          const hasPreferences = !!profile.sexual_preference;
+          const hasBio = !!(profile.bio_prompt_answer || profile.bio);
+          const hasPreferences = !!(profile.archetype || profile.sexual_preference);
+          const pendingCreator =
+            typeof window !== "undefined" && (
+              params.get("role") === "creator" ||
+              localStorage.getItem("is_creator_signup") === "true" ||
+              !!sessionStorage.getItem("_onboarding_creator_archive_choice") ||
+              profile.role === "creator"
+            );
+
+          if (profile.avatar_url) {
+            setAvatarUrl((prev) => prev || profile.avatar_url);
+          }
+          if (Array.isArray(profile.album_photos) && profile.album_photos.length > 0) {
+            setAlbumPhotos((prev) => (prev.length > 0 ? prev : profile.album_photos));
+          }
+
+          setChecklist((prev) =>
+            prev.map((item) => {
+              if (item.id === "photo") return { ...item, completed: item.completed || hasPhoto };
+              if (item.id === "bio") return { ...item, completed: item.completed || hasBio };
+              if (item.id === "preferences") return { ...item, completed: item.completed || hasPreferences || pendingCreator };
+              return item;
+            })
+          );
+
+          if (!hasPhoto) {
+            setActiveItem("photo");
+          } else if (!hasBio) {
+            setActiveItem("bio");
+          } else if (!hasPreferences && !pendingCreator) {
+            setActiveItem("preferences");
+          }
           
-          if (hasPhoto && hasBio && hasPreferences) {
+          if (hasPhoto && hasBio && (hasPreferences || pendingCreator)) {
+            if (typeof window !== "undefined") {
+              document.cookie = "sb_ob=1; path=/; max-age=2592000; SameSite=Lax";
+            }
+            if (pendingCreator) {
+              setIsCreatorMode(true);
+            }
             setStep("welcome");
           } else {
             const hasPurposes = Array.isArray(profile.member_purposes) && profile.member_purposes.length > 0;
             const hasAge = !!profile.privacy_settings?.display_age;
 
-            const pendingCreator =
-              typeof window !== "undefined" && (
-                params.get("role") === "creator" ||
-                localStorage.getItem("is_creator_signup") === "true" ||
-                !!sessionStorage.getItem("_onboarding_creator_archive_choice") ||
-                profile.role === "creator"
-              );
+            const hasExplicitOnboardingParam =
+              params.has("setup") ||
+              params.has("tutorial") ||
+              params.has("quest") ||
+              params.has("reset") ||
+              params.has("fresh") ||
+              params.has("bypass");
 
             if (pendingCreator) {
               setIsCreatorMode(true);
-              if (typeof window !== "undefined" && !sessionStorage.getItem("_onboarding_creator_archive_choice")) {
-                sessionStorage.setItem("_onboarding_creator_archive_choice", "creator");
+              if (typeof window !== "undefined") {
+                document.cookie = "sb_ob=1; path=/; max-age=2592000; SameSite=Lax";
+                document.cookie = "sb_role=creator; path=/; max-age=2592000; SameSite=Lax";
+                if (!sessionStorage.getItem("_onboarding_creator_archive_choice")) {
+                  sessionStorage.setItem("_onboarding_creator_archive_choice", "creator");
+                }
+                if (!hasExplicitOnboardingParam) {
+                  window.location.href = "/studio";
+                  return;
+                }
               }
               OnboardingLogger.log('init', 'step_enter', 'creator detected on return, routing to profile-checklist', authUser.id);
-              if (hasPhoto && (hasBio || !!profile.bio || !!profile.bio_prompt_answer)) {
-                setStep("welcome");
-              } else {
-                setStep("profile-checklist");
-              }
+              setStep("profile-checklist");
             } else if (!hasPurposes) {
               OnboardingLogger.log('init', 'step_enter', 'no purposes, routing to purpose', authUser.id);
               setStep("purpose");
@@ -504,7 +555,7 @@ export default function OnboardingFlow() {
                 id: authUser.id,
                 username: (authUser.user_metadata?.username || authUser.email?.split('@')[0] || 'user_' + Math.floor(Math.random() * 10000)).toLowerCase(),
                 display_name: authUser.user_metadata?.full_name || authUser.email?.split('@')[0] || 'User',
-                role: isCreatorSignup ? 'creator' : 'member'
+                role: authUser.user_metadata?.role === 'creator' ? 'creator' : 'member'
               }),
             null,
             4000
@@ -512,9 +563,25 @@ export default function OnboardingFlow() {
 
           if (isCreatorSignup) {
             setIsCreatorMode(true);
+            setChecklist((prev) =>
+              prev.map((item) => (item.id === "preferences" ? { ...item, completed: true } : item))
+            );
+            const hasExplicitOnboardingParam =
+              params.has("setup") ||
+              params.has("tutorial") ||
+              params.has("quest") ||
+              params.has("reset") ||
+              params.has("fresh") ||
+              params.has("bypass");
             if (typeof window !== "undefined") {
+              document.cookie = "sb_ob=1; path=/; max-age=2592000; SameSite=Lax";
+              document.cookie = "sb_role=creator; path=/; max-age=2592000; SameSite=Lax";
               sessionStorage.setItem("_onboarding_creator_archive_choice", "creator");
               localStorage.removeItem("is_creator_signup");
+              if (!hasExplicitOnboardingParam) {
+                window.location.href = "/studio";
+                return;
+              }
             }
             OnboardingLogger.log('init', 'step_enter', 'approved creator profile provisioned, routing to profile-checklist', authUser.id);
             setStep("profile-checklist");
@@ -525,12 +592,18 @@ export default function OnboardingFlow() {
         }
       } else {
         const error = params.get("error");
+        const emailParam = params.get("email");
         if (error === "auth_callback_failed") {
           setFormError("Your magic link was opened in a different browser window or has expired. Please log in with your password or request a new 6-digit passcode.");
           setStep("registration");
         } else if (params.get("tutorial") === "creator" || params.get("quest") === "true") {
           setIsCreatorMode(true);
           setStep("creator-quest");
+        } else if ((params.get("role") === "creator" || params.get("invite") === "creator") && emailParam) {
+          if (typeof window !== "undefined") {
+            window.location.href = `/login?email=${encodeURIComponent(emailParam)}&approved=true`;
+            return;
+          }
         } else if (params.get("role") === "creator" || params.get("invite") === "creator") {
           setIsCreatorMode(true);
           if (typeof window !== "undefined") {
@@ -669,13 +742,17 @@ export default function OnboardingFlow() {
                 } catch {}
               }
               if (resolvedPurposes.length === 0) {
-                // Default by role: creator gets creator+lifestyle, members get dating
+                // Default by role: creator gets creator+lifestyle, members get lifestyle (zero mandatory city/album gate)
                 resolvedPurposes = (profile.role === "creator" || isCreatorMode || tutorialRole === "creator")
                   ? ["creator", "lifestyle"]
-                  : ["dating"];
+                  : ["lifestyle"];
               }
               setActivePurposes(resolvedPurposes);
               saveOnboardingState({ activePurposes: resolvedPurposes });
+            }
+
+            if (Array.isArray(profile.album_photos) && profile.album_photos.length > 0) {
+              setAlbumPhotos(profile.album_photos);
             }
 
             if (profile.sexual_preferences?.length > 0)
@@ -696,9 +773,9 @@ export default function OnboardingFlow() {
                 if (item.id === "photo")
                   return { ...item, completed: !!profile.avatar_url };
                 if (item.id === "bio")
-                  return { ...item, completed: p1Done && p2Done };
+                  return { ...item, completed: p1Done };
                 if (item.id === "preferences")
-                  return { ...item, completed: !!profile.sexual_preference && !!(profile.favorite_languages && profile.favorite_languages.length > 0) };
+                  return { ...item, completed: !!(profile.archetype || profile.sexual_preference) };
                 return item;
               }),
             );
@@ -748,14 +825,27 @@ export default function OnboardingFlow() {
         ));
 
       if (isCreatorSignupBio) {
-        // Creators only need 1 Bio response to launch into Creator Studio!
-        saveOnboardingState({ step: "welcome", activeItem: "bio", avatarUrl });
-        setChecklist((prev) => prev.map((item) => item.id === "bio" ? { ...item, completed: true } : item));
+        // Creators only need 1 Bio response + Avatar Photo to launch into Creator Studio!
+        const updatedCreatorChecklist = checklist.map((item) =>
+          item.id === "bio" || item.id === "preferences" ? { ...item, completed: true } : item
+        );
+        setChecklist(updatedCreatorChecklist);
+        const nextCreatorItem = updatedCreatorChecklist
+          .filter((item) => item.id !== "preferences")
+          .find((item) => !item.completed);
+
         if (typeof window !== "undefined") {
           document.cookie = "sb_ob=1; path=/; max-age=2592000; SameSite=Lax";
           document.cookie = "sb_role=creator; path=/; max-age=2592000; SameSite=Lax";
         }
-        setStep("welcome");
+
+        if (nextCreatorItem) {
+          saveOnboardingState({ step: "profile-checklist", activeItem: nextCreatorItem.id as any, avatarUrl });
+          setActiveItem(nextCreatorItem.id as any);
+        } else {
+          saveOnboardingState({ step: "welcome", activeItem: "bio", avatarUrl });
+          setStep("welcome");
+        }
 
         resolveUserId().then((uid) => {
           if (!uid) return;
@@ -767,14 +857,9 @@ export default function OnboardingFlow() {
             bio_prompt_category_2: effectiveCategory,
             bio_prompt_question_2: effectiveQuestion,
             bio_prompt_answer_2: effectiveAnswer,
-            role: "creator",
             member_purposes: activePurposes.length > 0 ? activePurposes : ["creator", "lifestyle"],
           };
           supabase.from("profiles").update(creatorPayload).eq("id", uid).then(() => {});
-          supabase.from("creator_profiles").upsert({
-            id: uid,
-            creator_bio: effectiveAnswer,
-          }).then(() => {});
           fetch("/api/v2/profile/analyze-prompt", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -790,42 +875,22 @@ export default function OnboardingFlow() {
         return;
       }
 
-      if (promptStep === 1) {
-        // ── Step 1: advance to step 2 instantly ──
-        console.log('[SECCION] bio step 1 → step 2 (instant)');
-        setCompletedPrompt1({ category: effectiveCategory, question: effectiveQuestion, answer: effectiveAnswer });
-        const sourcePrompts = locale === "es" ? PURPOSE_PROMPTS_ES : PURPOSE_PROMPTS;
-        const effectivePurposesInner = activePurposes.length > 0
-          ? activePurposes
-          : ["dating"] as MemberPurposeId[];
-        const allPrompts = Object.entries(sourcePrompts)
-          .filter(([p]) => effectivePurposesInner.includes(p as MemberPurposeId))
-          .reduce((acc, [_, cats]) => ({ ...acc, ...cats }), {} as Record<string, any>);
-        const allEntries = Object.entries(allPrompts);
-        const nextCatKey = allEntries.find(([k]) => k !== effectiveCategory)?.[0] || allEntries[0]?.[0] || "lifestyle";
-        const nextQ = allPrompts[nextCatKey]?.prompts?.[0] || "What is your biggest aspiration?";
-        setPromptCategory(nextCatKey);
-        setPromptQuestion(nextQ);
-        setPromptAnswer("");
-        setPromptStep(2);
-        console.log('[SECCION] bio step 1 done — now at step 2, nextCatKey:', nextCatKey);
-        // Background: fire-and-forget vectorization
-        fetch("/api/v2/profile/analyze-prompt", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ promptCategory: effectiveCategory, promptQuestion: effectiveQuestion, promptAnswer: effectiveAnswer, promptIndex: 1, activePurposes }) }).catch(() => {});
-        return;
-      }
-
-      // ── Step 2: advance UI immediately, then save to DB in background ──
-      console.log('[SECCION] bio step 2 → advancing UI (instant)');
-      const p1 = completedPrompt1;
+      // ── Fast 1-Prompt Completion for Members (saves Prompt 1 and mirrors to Prompt 2 if not yet set) ──
+      setCompletedPrompt1({ category: effectiveCategory, question: effectiveQuestion, answer: effectiveAnswer });
       const dbPayload = {
-        bio_prompt_category: p1?.category || "lifestyle",
-        bio_prompt_question: p1?.question || "",
-        bio_prompt_answer: p1?.answer || "",
+        bio: effectiveAnswer,
+        bio_prompt_category: effectiveCategory,
+        bio_prompt_question: effectiveQuestion,
+        bio_prompt_answer: effectiveAnswer,
         bio_prompt_category_2: effectiveCategory,
         bio_prompt_question_2: effectiveQuestion,
         bio_prompt_answer_2: effectiveAnswer,
-        member_purposes: activePurposes.length > 0 ? activePurposes : ["dating"],
+        member_purposes: activePurposes.length > 0 ? activePurposes : ["lifestyle"],
       };
+
+      if (typeof window !== "undefined") {
+        document.cookie = "sb_ob=1; path=/; max-age=2592000; SameSite=Lax";
+      }
 
       // Advance UI NOW (synchronous — no await)
       saveOnboardingState({ step: "profile-checklist", activeItem: "bio", avatarUrl });
@@ -837,28 +902,65 @@ export default function OnboardingFlow() {
 
       // Background DB write — fire-and-forget, never blocks UI
       resolveUserId().then((uid) => {
-        if (!uid) { console.warn('[SECCION] bio step 2: no userId — DB write skipped (not authenticated)'); return; }
+        if (!uid) { console.warn('[SECCION] bio save: no userId — DB write skipped (not authenticated)'); return; }
         const writePromise = supabase.from("profiles").update(dbPayload).eq("id", uid);
         const timeout = new Promise<void>((resolve) => setTimeout(resolve, 5000));
-        Promise.race([writePromise, timeout]).catch((err) => console.warn('[SECCION] bio step 2 DB write error:', err));
-        fetch("/api/v2/profile/analyze-prompt", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ promptCategory: effectiveCategory, promptQuestion: effectiveQuestion, promptAnswer: effectiveAnswer, promptIndex: 2, activePurposes }) }).catch(() => {});
+        Promise.race([writePromise, timeout]).catch((err) => console.warn('[SECCION] bio DB write error:', err));
+        fetch("/api/v2/profile/analyze-prompt", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ promptCategory: effectiveCategory, promptQuestion: effectiveQuestion, promptAnswer: effectiveAnswer, promptIndex: 1, activePurposes }) }).catch(() => {});
       });
       return;
     }
 
-    // ─── PHOTO: validate → advance UI instantly → save DB in background ───
+    // ─── PHOTO: validate → advance UI instantly → save DB in background (including album_photos & profile_media!) ───
     if (type === "photo") {
       if (!avatarUrl) { setFormError(t("onboarding.main.selectAvatarErr", "Please select or input an avatar photo.")); return; }
       setFormError(null);
       console.log('[SECCION] photo save fast-path: advancing UI');
-      saveOnboardingState({ step: "profile-checklist", activeItem: "photo", avatarUrl });
+      const isCreatorSignup =
+        tutorialRole === "creator" ||
+        isCreatorMode ||
+        (typeof window !== "undefined" && !!sessionStorage.getItem("_onboarding_creator_archive_choice"));
+      saveOnboardingState({ step: "profile-checklist", activeItem: "photo", avatarUrl, albumPhotos });
       setChecklist((prev) => prev.map((item) => item.id === "photo" ? { ...item, completed: true } : item));
-      setActiveItem("bio");
+      const updatedChecklist = checklist.map((item) => item.id === "photo" ? { ...item, completed: true } : item);
+      const visibleChecklist = updatedChecklist.filter((item) => !(item.id === "preferences" && isCreatorSignup));
+      const nextIncomplete = visibleChecklist.find((item) => !item.completed);
+      if (nextIncomplete) setActiveItem(nextIncomplete.id as any);
+      else setStep(isCreatorSignup ? "creator-checklist" : "welcome");
       // Background DB write — never blocks UI
-      resolveUserId().then((uid) => {
+      resolveUserId().then(async (uid) => {
         if (!uid) { console.warn('[SECCION] photo: no userId — DB write skipped'); return; }
-        supabase.from("profiles").update({ avatar_url: avatarUrl }).eq("id", uid)
-          .then(({ error }) => { if (error) console.warn('[SECCION] photo DB write error:', error.message); });
+        const photoPayload: Record<string, any> = { avatar_url: avatarUrl };
+        if (albumPhotos.length > 0) {
+          photoPayload.album_photos = albumPhotos;
+        }
+        const { error } = await supabase.from("profiles").update(photoPayload).eq("id", uid);
+        if (error) console.warn('[SECCION] photo DB write error:', error.message);
+
+        // Sync public album photos into profile_media so checkPublicPhotoRequirement() passes
+        if (albumPhotos.length > 0) {
+          try {
+            const { data: existingMedia } = await supabase
+              .from("profile_media")
+              .select("media_url")
+              .eq("user_id", uid)
+              .eq("visibility", "public");
+            const existingUrls = new Set((existingMedia || []).map((m: any) => m.media_url));
+            const newMediaRows = albumPhotos
+              .filter((url) => url && !existingUrls.has(url))
+              .map((url) => ({
+                user_id: uid,
+                media_url: url,
+                media_type: "image",
+                visibility: "public",
+              }));
+            if (newMediaRows.length > 0) {
+              await supabase.from("profile_media").insert(newMediaRows);
+            }
+          } catch (mediaErr) {
+            console.warn('[SECCION] profile_media sync warning:', mediaErr);
+          }
+        }
       });
       return;
     }
@@ -992,6 +1094,14 @@ export default function OnboardingFlow() {
                 onContinue={(purposes, isCreator) => {
                   setActivePurposes(purposes);
                   setIsCreatorMode(isCreator);
+                  if (typeof window !== "undefined") {
+                    if (isCreator) {
+                      sessionStorage.setItem("_onboarding_creator_archive_choice", "creator");
+                      document.cookie = "sb_role=creator; path=/; max-age=2592000; SameSite=Lax";
+                    } else {
+                      sessionStorage.removeItem("_onboarding_creator_archive_choice");
+                    }
+                  }
                   
                   // Initial prompt category based on first active purpose
                   const availablePrompts = Object.entries(PURPOSE_PROMPTS)
@@ -1017,14 +1127,38 @@ export default function OnboardingFlow() {
             >
               <IntentSelector
                 activePurposes={activePurposes}
-                onContinue={async (selected, chosenAge, corePassion) => {
+                onContinue={async (selected, chosenAge, corePassion, calibratedSynergy) => {
                   setIntents(selected);
                   setDisplayAge(chosenAge);
+                  if (calibratedSynergy) {
+                    if (!avatarUrl && calibratedSynergy.avatarUrl) {
+                      setAvatarUrl(calibratedSynergy.avatarUrl);
+                    }
+                    setPromptCategory(calibratedSynergy.bioPromptCategory);
+                    setPromptQuestion(calibratedSynergy.bioPromptQuestion);
+                    setPromptAnswer(calibratedSynergy.bioPromptAnswer);
+                    setCompletedPrompt1({
+                      category: calibratedSynergy.bioPromptCategory,
+                      question: calibratedSynergy.bioPromptQuestion,
+                      answer: calibratedSynergy.bioPromptAnswer,
+                    });
+                    setChecklist([
+                      { id: "photo", label: "Profile Avatar Ready (Custom photos optional)", completed: Boolean(avatarUrl || calibratedSynergy.avatarUrl) },
+                      { id: "bio", label: "Answer Relational Prompt", completed: Boolean(calibratedSynergy.bioPromptAnswer) },
+                      { id: "preferences", label: "Discover your Archetype", completed: Boolean(calibratedSynergy.archetype || isCreatorMode) },
+                    ]);
+                  }
                   
+                  const canonicalArch = calibratedSynergy?.archetype
+                    ? normalizeArchetypeId(calibratedSynergy.archetype)
+                    : undefined;
+                  const canonicalPassion = normalizePassionId(corePassion, canonicalArch);
+
                   saveOnboardingState({
                     intents: selected,
                     displayAge: chosenAge,
-                    corePassion,
+                    corePassion: canonicalPassion,
+                    avatarUrl: avatarUrl || calibratedSynergy?.avatarUrl || "",
                     step: "profile-checklist"
                   });
 
@@ -1048,20 +1182,45 @@ export default function OnboardingFlow() {
                       const dbQueryPromise = (async () => {
                         const { data } = await supabase
                           .from("profiles")
-                          .select("privacy_settings")
+                          .select("privacy_settings, avatar_url")
                           .eq("id", currentUserId)
                           .single();
                         const settings = data?.privacy_settings || {};
-                        await supabase
+                        const updatePayload: Record<string, any> = {
+                          core_passion: canonicalPassion,
+                          privacy_settings: {
+                            ...settings,
+                            display_age: chosenAge,
+                          },
+                        };
+                        if (calibratedSynergy && canonicalArch) {
+                          updatePayload.archetype = canonicalArch;
+                          updatePayload.moods = calibratedSynergy.moods;
+                          updatePayload.hobbies = calibratedSynergy.hobbies;
+                          updatePayload.lifestyle_habits = calibratedSynergy.lifestyleHabits;
+                          updatePayload.bio = calibratedSynergy.bioPromptAnswer;
+                          updatePayload.bio_prompt_category = calibratedSynergy.bioPromptCategory;
+                          updatePayload.bio_prompt_question = calibratedSynergy.bioPromptQuestion;
+                          updatePayload.bio_prompt_answer = calibratedSynergy.bioPromptAnswer;
+                          updatePayload.bio_prompt_category_2 = calibratedSynergy.bioPromptCategory;
+                          updatePayload.bio_prompt_question_2 = calibratedSynergy.bioPromptQuestion;
+                          updatePayload.bio_prompt_answer_2 = calibratedSynergy.bioPromptAnswer;
+                          updatePayload.sexual_preference = "Everyone";
+                          updatePayload.member_purposes = activePurposes.length > 0 ? activePurposes : ["lifestyle"];
+                          if (!data?.avatar_url && calibratedSynergy.avatarUrl) {
+                            updatePayload.avatar_url = calibratedSynergy.avatarUrl;
+                          }
+                        }
+                        const { error: upErr } = await supabase
                           .from("profiles")
-                          .update({
-                            core_passion: corePassion,
-                            privacy_settings: {
-                              ...settings,
-                              display_age: chosenAge,
-                            },
-                          })
+                          .update(updatePayload)
                           .eq("id", currentUserId);
+                        if (!upErr && typeof window !== "undefined") {
+                          document.cookie = "sb_ob=1; path=/; max-age=2592000; SameSite=Lax";
+                          if (isCreatorMode) {
+                            document.cookie = "sb_role=creator; path=/; max-age=2592000; SameSite=Lax";
+                          }
+                        }
                       })();
 
                       const timeoutPromise = new Promise((r) => setTimeout(r, 3000));
@@ -1122,7 +1281,7 @@ export default function OnboardingFlow() {
               {/* Right Column: Form Panel */}
               <div className="col-span-12 md:col-span-7">
                 {/* Creator Fast-Track Banner: Let creators enter Studio immediately at any time */}
-                {(isCreatorMode || tutorialRole === "creator") && (
+                {(isCreatorMode || tutorialRole === "creator") ? (
                   <div className="mb-4 p-4 rounded-2xl bg-gradient-to-r from-[#00fbfb]/15 via-[#11111A] to-[#ffabf3]/15 border border-[#00fbfb]/40 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-[0_0_25px_rgba(0,251,251,0.12)]">
                     <div className="space-y-0.5 text-left">
                       <div className="flex items-center gap-1.5 text-[#00fbfb] font-mono text-[10px] font-black uppercase tracking-wider">
@@ -1139,6 +1298,33 @@ export default function OnboardingFlow() {
                       className="shrink-0 px-4 py-2.5 bg-[#00fbfb] hover:bg-[#00fbfb]/90 text-black font-mono text-[10px] font-black uppercase tracking-wider rounded-xl transition shadow-[0_0_15px_rgba(0,251,251,0.35)] flex items-center justify-center gap-1.5 cursor-pointer"
                     >
                       <span>{t("onboarding.creatorFastTrack.enterStudioBtn", "Enter Creator Studio Now")}</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="mb-4 p-4 rounded-2xl bg-gradient-to-r from-[#00fbfb]/15 via-[#11111A] to-emerald-500/15 border border-[#00fbfb]/40 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-[0_0_25px_rgba(0,251,251,0.12)]">
+                    <div className="space-y-0.5 text-left">
+                      <div className="flex items-center gap-1.5 text-[#00fbfb] font-mono text-[10px] font-black uppercase tracking-wider">
+                        <Sparkles className="w-3.5 h-3.5" />
+                        <span>{locale === "es" ? "Sinergia Calibrada · Acceso Inmediato" : "Synergy Calibrated · Instant Access"}</span>
+                      </div>
+                      <p className="text-[11px] text-white/80 leading-snug">
+                        {locale === "es"
+                          ? "Tu perfil de sinergia y avatar estilizado están listos. Puedes subir fotos propias aquí o ajustar todo cuando quieras desde tu Panel de Perfil de Miembro."
+                          : "Your synergy profile and stylized avatar are ready. Upload custom photos below or adjust anything anytime from your Member Profile Panel."}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (typeof window !== "undefined") {
+                          document.cookie = "sb_ob=1; path=/; max-age=2592000; SameSite=Lax";
+                        }
+                        setStep("welcome");
+                      }}
+                      className="shrink-0 px-4 py-2.5 bg-[#00fbfb] hover:bg-[#00fbfb]/90 text-black font-mono text-[10px] font-black uppercase tracking-wider rounded-xl transition shadow-[0_0_15px_rgba(0,251,251,0.35)] flex items-center justify-center gap-1.5 cursor-pointer"
+                    >
+                      <span>{locale === "es" ? "Entrar a SECCION Ahora" : "Enter SECCION Now"}</span>
                       <ArrowRight className="w-3.5 h-3.5" />
                     </button>
                   </div>
@@ -1221,6 +1407,42 @@ export default function OnboardingFlow() {
                               </span>
                             </div>
                           </div>
+
+                          {/* 1-Tap Stylized Cyber-Glass Archetype Avatars for Members */}
+                          {!(isCreatorMode || tutorialRole === "creator") && (
+                            <div className="p-3.5 rounded-2xl bg-white/5 border border-white/10 space-y-2.5 text-left">
+                              <div className="flex items-center justify-between">
+                                <span className="text-[10px] font-mono uppercase tracking-widest text-primary font-bold">
+                                  {locale === "es"
+                                    ? "⚡ Opción A: Avatar Estilizado 1-Tap (Privacidad Día 1)"
+                                    : "⚡ Option A: 1-Tap Stylized Archetype Avatar (Day-1 Privacy)"}
+                                </span>
+                              </div>
+                              <div className="grid grid-cols-5 sm:grid-cols-9 gap-2">
+                                {Object.entries(ARCHETYPE_AVATARS).map(([archKey, svgUri]) => {
+                                  const isSelected = avatarUrl === svgUri;
+                                  return (
+                                    <button
+                                      key={archKey}
+                                      type="button"
+                                      onClick={() => {
+                                        setAvatarUrl(svgUri);
+                                        saveOnboardingState({ avatarUrl: svgUri, step: "profile-checklist", activeItem: "photo" });
+                                      }}
+                                      title={archKey}
+                                      className={`relative aspect-square rounded-xl overflow-hidden border-2 transition cursor-pointer ${
+                                        isSelected
+                                          ? "border-[#00fbfb] shadow-[0_0_12px_rgba(0,251,251,0.5)] scale-105"
+                                          : "border-white/10 hover:border-white/30 opacity-75 hover:opacity-100"
+                                      }`}
+                                    >
+                                      <img src={svgUri} alt={archKey} className="w-full h-full object-cover" />
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          )}
 
                           {/* Main Avatar Explainer */}
                           <div className="p-4 rounded-2xl bg-gradient-to-r from-primary/10 to-accent/5 border border-primary/30 text-white space-y-1.5 text-left">
@@ -1535,13 +1757,27 @@ export default function OnboardingFlow() {
                             const sourcePrompts = locale === "es" ? PURPOSE_PROMPTS_ES : PURPOSE_PROMPTS;
                             const effectivePurposes3 = activePurposes.length > 0
                               ? activePurposes
-                              : (isCreatorMode || tutorialRole === "creator" ? ["creator", "lifestyle"] as MemberPurposeId[] : ["dating"] as MemberPurposeId[]);
+                              : (isCreatorMode || tutorialRole === "creator" ? ["creator", "lifestyle"] as MemberPurposeId[] : ["lifestyle"] as MemberPurposeId[]);
                             const availablePrompts = Object.entries(sourcePrompts)
                               .filter(([p]) => effectivePurposes3.includes(p as MemberPurposeId))
                               .reduce((acc, [_, cats]) => ({ ...acc, ...cats }), {} as Record<string, any>);
                             const entries = Object.entries(availablePrompts);
                             const currentCatKey = promptCategory || entries[0]?.[0] || "skills";
                             const activeQuestion = promptQuestion || availablePrompts[currentCatKey]?.prompts?.[0] || "What skill are you currently obsessed with mastering?";
+
+                            const memberChips = (locale === "es" ? MEMBER_VIBE_CHIPS_ES : MEMBER_VIBE_CHIPS).map((c) => c.answer);
+                            const creatorChips = locale === "es"
+                              ? [
+                                  "Contenido exclusivo detrás de cámaras, charlas directas y acceso VIP a mi mundo creativo ✨",
+                                  "Me apasiona crear experiencias auténticas, conectar sin filtros y compartir mi estilo de vida diario 🔥",
+                                  "Sesiones privadas, contenido personalizado y conexión real con mi comunidad más cercana 💎",
+                                ]
+                              : [
+                                  "Exclusive behind-the-scenes content, direct VIP chats, and unfiltered access to my creative world ✨",
+                                  "Passionate about authentic connection, daily lifestyle drops, and building an inner circle with real energy 🔥",
+                                  "Private sessions, custom requests, and high-vibe creative drops for my closest supporters 💎",
+                                ];
+                            const activeChips = (isCreatorMode || tutorialRole === "creator") ? creatorChips : memberChips.slice(0, 3);
 
                             return (
                               <div className="space-y-2 animate-fadeIn">
@@ -1557,18 +1793,7 @@ export default function OnboardingFlow() {
                                 </label>
                                 {/* 1-Tap Quick-Fill Vibe Chips */}
                                 <div className="flex flex-wrap gap-1.5 pb-1">
-                                  {(locale === "es"
-                                    ? [
-                                        "Contenido exclusivo detrás de cámaras, charlas directas y acceso VIP a mi mundo creativo ✨",
-                                        "Me apasiona crear experiencias auténticas, conectar sin filtros y compartir mi estilo de vida diario 🔥",
-                                        "Sesiones privadas, contenido personalizado y conexión real con mi comunidad más cercana 💎",
-                                      ]
-                                    : [
-                                        "Exclusive behind-the-scenes content, direct VIP chats, and unfiltered access to my creative world ✨",
-                                        "Passionate about authentic connection, daily lifestyle drops, and building an inner circle with real energy 🔥",
-                                        "Private sessions, custom requests, and high-vibe creative drops for my closest supporters 💎",
-                                      ]
-                                  ).map((chipText, idx) => (
+                                  {activeChips.map((chipText, idx) => (
                                     <button
                                       key={idx}
                                       type="button"
@@ -1608,7 +1833,7 @@ export default function OnboardingFlow() {
                               const sourcePrompts = locale === "es" ? PURPOSE_PROMPTS_ES : PURPOSE_PROMPTS;
                               const effectivePurposesBtn = activePurposes.length > 0
                                 ? activePurposes
-                                : (isCreatorMode || tutorialRole === "creator" ? ["creator", "lifestyle"] as MemberPurposeId[] : ["dating"] as MemberPurposeId[]);
+                                : (isCreatorMode || tutorialRole === "creator" ? ["creator", "lifestyle"] as MemberPurposeId[] : ["lifestyle"] as MemberPurposeId[]);
                               const availablePrompts = Object.entries(sourcePrompts)
                                 .filter(([p]) => effectivePurposesBtn.includes(p as MemberPurposeId))
                                 .reduce((acc, [_, cats]) => ({ ...acc, ...cats }), {} as Record<string, any>);
@@ -1661,17 +1886,12 @@ export default function OnboardingFlow() {
                                 hobbies: data.hobbies,
                                 lifestyle_habits: data.lifestyle_habits,
                                 connection_points: 100,
-                                favorite_languages: ["English"]
+                                favorite_languages: ["English"],
+                                sexual_preference: "Everyone",
                               };
 
                               if (isDating) {
                                 updatePayload.relationship_goals = data.relationship_goals;
-                                updatePayload.sexual_preference = "Everyone";
-                              } else {
-                                updatePayload.relationship_goals = null;
-                                updatePayload.sexual_preference = null;
-                                updatePayload.sexual_preferences = null;
-                                updatePayload.family_goals = null;
                               }
                               
                               const { error } = await supabase
@@ -1686,6 +1906,9 @@ export default function OnboardingFlow() {
                             }
                           }}
                           onProceed={() => {
+                            if (typeof window !== "undefined") {
+                              document.cookie = "sb_ob=1; path=/; max-age=2592000; SameSite=Lax";
+                            }
                             setChecklist((prev) =>
                               prev.map((item) =>
                                 item.id === "preferences" ? { ...item, completed: true } : item
@@ -1802,10 +2025,15 @@ export default function OnboardingFlow() {
                      const relationshipType = sessionStorage.getItem("_onboarding_creator_relationship_type");
                      const isAdult = sessionStorage.getItem("_onboarding_creator_is_adult");
 
+                     if (typeof window !== "undefined") {
+                       document.cookie = "sb_ob=1; path=/; max-age=2592000; SameSite=Lax";
+                       document.cookie = "sb_role=creator; path=/; max-age=2592000; SameSite=Lax";
+                     }
+
                      // Advance UI immediately — no await
                      setStep("welcome");
 
-                     // Background DB write — fire-and-forget, never blocks UI
+                     // Background DB write to canonical public.profiles table — fire-and-forget, never blocks UI
                      const resolveAndSave = async () => {
                        let uid = userId;
                        if (!uid) {
@@ -1815,22 +2043,23 @@ export default function OnboardingFlow() {
                          } catch {}
                        }
                        if (!uid) { console.warn('[SECCION] Publish: no userId — DB write skipped'); return; }
-                       const payload = {
-                         id: uid,
-                         creator_archetype: vibe || null,
+                       const parsedPurposes = purposesStr ? JSON.parse(purposesStr) : [];
+                       const payload: Record<string, any> = {
+                         archetype: vibe || null,
                          specialization: specialization || null,
-                         creator_purposes: purposesStr ? JSON.parse(purposesStr) : [],
+                         member_purposes: Array.isArray(parsedPurposes) && parsedPurposes.length > 0 ? parsedPurposes : ["creator", "lifestyle"],
+                         active_purposes: Array.isArray(parsedPurposes) && parsedPurposes.length > 0 ? parsedPurposes : ["creator", "lifestyle"],
                          video_presentation_url: videoPresentationUrl || null,
-                         creator_bio: creatorBio,
-                         tier_price: tierPrice ? parseFloat(tierPrice) : null,
-                         face_blur_active: faceBlur === "true",
-                         tax_residence: residence || null,
+                         bio: creatorBio,
+                         base_subscription_price: tierPrice ? parseFloat(tierPrice) : 14.99,
                          sexual_preference: sexualPreference || null,
                          relationship_goals: relationshipGoal ? [relationshipGoal] : [],
                          relationship_types: relationshipType ? [relationshipType] : [],
-                         is_adult_content: isAdult === "true"
+                         is_adult_content: isAdult === "true",
+                         origins: residence || undefined,
+                         residence: residence || undefined,
                        };
-                       const dbPromise = supabase.from("creator_profiles").upsert(payload);
+                       const dbPromise = supabase.from("profiles").update(payload).eq("id", uid);
                        const timeout = new Promise<void>((resolve) => setTimeout(resolve, 5000));
                        await Promise.race([dbPromise, timeout]);
                      };

@@ -25,8 +25,20 @@ export async function POST(req: NextRequest) {
       });
     }
 
+    const rawBody = await req.json().catch(() => ({}));
+    const requestedReturnTo =
+      typeof rawBody?.returnTo === 'string' &&
+      rawBody.returnTo.startsWith('/') &&
+      !rawBody.returnTo.startsWith('//')
+        ? rawBody.returnTo
+        : '/onboarding/kyc?session_done=true';
+    const targetRole =
+      rawBody?.targetRole === 'creator' || rawBody?.targetRole === 'member'
+        ? rawBody.targetRole
+        : undefined;
+
     const origin = req.headers.get('origin') || 'https://seccion.ai';
-    const callbackUrl = `${origin}/onboarding/kyc?session_done=true`;
+    const callbackUrl = `${origin}${requestedReturnTo}`;
 
     const res = await fetch('https://verification.didit.me/v3/session/', {
       method: 'POST',
@@ -44,6 +56,7 @@ export async function POST(req: NextRequest) {
         metadata: {
           user_id: user.id,
           platform: 'SECCION',
+          ...(targetRole ? { target_role: targetRole } : {}),
         },
       }),
     });

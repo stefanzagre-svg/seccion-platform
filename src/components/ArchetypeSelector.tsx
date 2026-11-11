@@ -20,7 +20,7 @@ export const ARCHETYPES = [
     color: 'from-[#93C5FD]/20 to-purple-500/20 border-[#93C5FD]/30 shadow-[#93C5FD]/10',
     accentColor: '#93C5FD',
     hobbies: ['Art', 'Music', 'Photography', 'Writing', 'Astrology'],
-    lifestyle: { drinking: 'socially', smoking: 'never', nightlife: 'rarely' },
+    lifestyle: { drinking: 'Socially', smoking: 'Non-Smoker', partying: 'Sometimes', 'creative flow': 'Every Day', reading: 'Daily' },
     relationship_goals: ['Long-term romance', 'Deep emotional connection']
   },
   {
@@ -31,8 +31,8 @@ export const ARCHETYPES = [
     color: 'from-[#F97316]/20 to-red-500/20 border-[#F97316]/30 shadow-[#F97316]/10',
     accentColor: '#F97316',
     hobbies: ['Travel', 'Dancing', 'Nightclubs', 'Extreme Sports', 'Festivals'],
-    lifestyle: { drinking: 'regularly', smoking: 'socially', nightlife: 'frequently' },
-    relationship_goals: ['Casual fun', 'Open to exploring']
+    lifestyle: { drinking: 'Socially', smoking: 'Non-Smoker', partying: 'Often', traveling: 'Every Week', 'adventure seek': 'High Adrenaline' },
+    relationship_goals: ['Open to possibilities', 'Open to exploring']
   },
   {
     id: 'caregiver',
@@ -42,7 +42,7 @@ export const ARCHETYPES = [
     color: 'from-[#F472B6]/20 to-emerald-500/20 border-[#F472B6]/30 shadow-[#F472B6]/10',
     accentColor: '#F472B6',
     hobbies: ['Cooking', 'Reading', 'Gardening', 'Volunteering', 'Nesting'],
-    lifestyle: { drinking: 'never', smoking: 'never', nightlife: 'never' },
+    lifestyle: { drinking: 'Socially', smoking: 'Non-Smoker', partying: 'Sometimes', socializing: 'Every Day', 'healthy eating': 'Most Days' },
     relationship_goals: ['Committed relationship', 'Family-oriented']
   },
   {
@@ -126,9 +126,23 @@ export default function ArchetypeSelector({ onSelect, onProceed }: ArchetypeSele
     const arc = ARCHETYPES.find(a => a.id === selected);
     if (arc) {
       const data = {
-        archetype: arc.title,
+        archetype: arc.id,
         hobbies: arc.hobbies,
-        lifestyle_habits: arc.lifestyle,
+        lifestyle_habits: {
+          workout: 'Often',
+          traveling: 'Monthly',
+          partying: 'Sometimes',
+          'healthy eating': 'Most Days',
+          socializing: 'Often',
+          reading: 'Weekly',
+          sleep: '8+ Hours',
+          smoking: 'Non-Smoker',
+          drinking: 'Socially',
+          'morning/night': 'Balanced',
+          'creative flow': 'Often',
+          'adventure seek': 'Moderate',
+          ...arc.lifestyle,
+        },
         relationship_goals: arc.relationship_goals,
         quest_stage: 2,
         connection_points: 100
