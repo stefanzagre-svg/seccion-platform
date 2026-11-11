@@ -1,46 +1,12 @@
 "use client";
 
+import React, { useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import PublicNavbar from "../PublicNavbar";
 import PublicFooter from "@/components/PublicFooter";
-import React, { useRef, useState } from 'react';
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { motion, AnimatePresence } from 'framer-motion';
-import PublicNavbar from '../PublicNavbar';
-import { useTranslation } from '@/context/LanguageContext';
-import { ArrowRight, Heart, Flame, Compass, Cpu, Zap, EyeOff, UserCheck, ShieldCheck, Landmark, Sparkles } from 'lucide-react';
-import SeccionWordmark from '@/components/ui/SeccionWordmark';
-
-// Custom Hook for Mouse Tracking on Glass Cards
-function useMouseTracking() {
-  const cardRef = useRef<HTMLDivElement>(null);
-
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!cardRef.current) return;
-    const rect = cardRef.current.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    cardRef.current.style.setProperty('--mouse-x', `${x}px`);
-    cardRef.current.style.setProperty('--mouse-y', `${y}px`);
-  };
-
-  return { cardRef, handleMouseMove };
-}
-
-// Reusable Glass Card Component
-function GlassCard({ children, className = "", style = {} }: { children: React.ReactNode, className?: string, style?: React.CSSProperties }) {
-  const { cardRef, handleMouseMove } = useMouseTracking();
-  
-  return (
-    <div 
-      ref={cardRef}
-      onMouseMove={handleMouseMove}
-      className={`bg-[rgba(255,255,255,0.03)] backdrop-blur-md border border-[rgba(255,255,255,0.08)] rounded-xl relative ${className}`}
-      style={style}
-    >
-      {children}
-    </div>
-  );
-}
+import { useTranslation } from "@/context/LanguageContext";
+import { supabase } from "@/lib/supabase";
 
 const LaserLinesSVG = () => (
   <svg
@@ -70,336 +36,780 @@ const LaserLinesSVG = () => (
     </defs>
     <g>
       {/* Line 1 — Cyan Main */}
-      <g style={{ animation: 'float-laser 10s ease-in-out infinite' }}>
-        <path d="M 1100, 100 C 500,-100 300,400 800,500 C 1300,600 1100,1100 500,900" fill="none" stroke="#00fbfb" strokeWidth="3" filter="url(#g-laser-glow)" opacity="0.5" />
-        <path d="M 1100, 100 C 500,-100 300,400 800,500 C 1300,600 1100,1100 500,900" fill="none" stroke="#ffffff" strokeWidth="4" strokeLinecap="round" filter="url(#g-electric-glow)" style={{ strokeDasharray: '250 3000', strokeDashoffset: 3250, animation: 'electric-pulse 3.5s linear infinite 0s' }} />
+      <g style={{ animation: "float-laser 10s ease-in-out infinite" }}>
+        <path
+          d="M 1100, 100 C 500,-100 300,400 800,500 C 1300,600 1100,1100 500,900"
+          fill="none"
+          stroke="#00fbfb"
+          strokeWidth="3"
+          filter="url(#g-laser-glow)"
+          opacity="0.5"
+        />
+        <path
+          d="M 1100, 100 C 500,-100 300,400 800,500 C 1300,600 1100,1100 500,900"
+          fill="none"
+          stroke="#ffffff"
+          strokeWidth="4"
+          strokeLinecap="round"
+          filter="url(#g-electric-glow)"
+          style={{
+            strokeDasharray: "250 3000",
+            strokeDashoffset: 3250,
+            animation: "electric-pulse 3.5s linear infinite 0s",
+          }}
+        />
       </g>
       {/* Line 2 — Pink Inner */}
-      <g style={{ animation: 'float-laser 12s ease-in-out infinite reverse' }}>
-        <path d="M 1050, 150 C 450,-50 250,450 750,550 C 1250,650 1050,1150 450,950" fill="none" stroke="#ffabf3" strokeWidth="1.5" filter="url(#g-laser-glow)" opacity="0.6" />
-        <path d="M 1050, 150 C 450,-50 250,450 750,550 C 1250,650 1050,1150 450,950" fill="none" stroke="#ffffff" strokeWidth="3" strokeLinecap="round" filter="url(#g-electric-glow)" style={{ strokeDasharray: '150 2500', strokeDashoffset: 2650, animation: 'electric-pulse 4.2s linear infinite 1.2s' }} />
+      <g style={{ animation: "float-laser 12s ease-in-out infinite reverse" }}>
+        <path
+          d="M 1050, 150 C 450,-50 250,450 750,550 C 1250,650 1050,1150 450,950"
+          fill="none"
+          stroke="#ffabf3"
+          strokeWidth="1.5"
+          filter="url(#g-laser-glow)"
+          opacity="0.6"
+        />
+        <path
+          d="M 1050, 150 C 450,-50 250,450 750,550 C 1250,650 1050,1150 450,950"
+          fill="none"
+          stroke="#ffffff"
+          strokeWidth="3"
+          strokeLinecap="round"
+          filter="url(#g-electric-glow)"
+          style={{
+            strokeDasharray: "150 2500",
+            strokeDashoffset: 2650,
+            animation: "electric-pulse 4.2s linear infinite 1.2s",
+          }}
+        />
       </g>
       {/* Line 3 — Deep Purple Outer */}
-      <g style={{ animation: 'float-laser 15s ease-in-out infinite' }}>
-        <path d="M 1150, 50 C 550,-150 350,350 850,450 C 1350,550 1150,1050 550,850" fill="none" stroke="#fe00fe" strokeWidth="2.5" filter="url(#g-laser-glow)" opacity="0.5" />
-        <path d="M 1150, 50 C 550,-150 350,350 850,450 C 1350,550 1150,1050 550,850" fill="none" stroke="#ffabf3" strokeWidth="4" strokeLinecap="round" filter="url(#g-electric-glow)" style={{ strokeDasharray: '300 3500', strokeDashoffset: 3800, animation: 'electric-pulse 5.5s linear infinite 0.5s' }} />
-      </g>
-      {/* Line 4 — Cyan Bright Accent */}
-      <g style={{ animation: 'float-laser 8s ease-in-out infinite reverse' }}>
-        <path d="M 1000, 200 C 400,0 200,500 700,600 C 1200,700 1000,1200 400,1000" fill="none" stroke="#00fbfb" strokeWidth="1" filter="url(#g-laser-glow)" opacity="0.8" />
-        <path d="M 1000, 200 C 400,0 200,500 700,600 C 1200,700 1000,1200 400,1000" fill="none" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" filter="url(#g-electric-glow)" style={{ strokeDasharray: '100 2000', strokeDashoffset: 2100, animation: 'electric-pulse 2.8s linear infinite 2s' }} />
-      </g>
-      {/* Line 5 — Magenta Cross Thread */}
-      <g style={{ animation: 'float-laser 18s ease-in-out infinite' }}>
-        <path d="M 1120, 80 C 480,-80 320,420 820,520 C 1320,620 1120,1120 520,920" fill="none" stroke="#fe00fe" strokeWidth="2" filter="url(#g-laser-glow)" opacity="0.5" />
-        <path d="M 1120, 80 C 480,-80 320,420 820,520 C 1320,620 1120,1120 520,920" fill="none" stroke="#ffffff" strokeWidth="3" strokeLinecap="round" filter="url(#g-electric-glow)" style={{ strokeDasharray: '200 4000', strokeDashoffset: 4200, animation: 'electric-pulse 6s linear infinite 3.5s' }} />
+      <g style={{ animation: "float-laser 15s ease-in-out infinite" }}>
+        <path
+          d="M 1150, 50 C 550,-150 350,350 850,450 C 1350,550 1150,1050 550,850"
+          fill="none"
+          stroke="#fe00fe"
+          strokeWidth="2.5"
+          filter="url(#g-laser-glow)"
+          opacity="0.5"
+        />
+        <path
+          d="M 1150, 50 C 550,-150 350,350 850,450 C 1350,550 1150,1050 550,850"
+          fill="none"
+          stroke="#ffabf3"
+          strokeWidth="4"
+          strokeLinecap="round"
+          filter="url(#g-electric-glow)"
+          style={{
+            strokeDasharray: "300 3500",
+            strokeDashoffset: 3800,
+            animation: "electric-pulse 5.5s linear infinite 0.5s",
+          }}
+        />
       </g>
     </g>
   </svg>
 );
 
-export default function LandingPageHook({ onAccept, onBecomeCreator }: { onAccept: () => void, onBecomeCreator: () => void }) {
-  const [activeTab, setActiveTab] = useState<'members' | 'creators'>('members');
-  const pathname = usePathname();
-  const { t } = useTranslation();
-  const isAlreadyOnboarding = pathname === "/onboarding";
+type InterestKey =
+  | "education"
+  | "romance"
+  | "entertainment"
+  | "culinary"
+  | "fitness"
+  | "aitech";
+
+const PORTRAITS = {
+  liam: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=400&q=80",
+  elena: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&crop=faces&w=400&h=500&q=80",
+  marco: "https://images.unsplash.com/photo-1577219491135-ce391730fb2c?w=400&q=80",
+  sofia: "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=500&q=80",
+  kai: "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=400&q=80",
+  valeria: "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=500&q=80",
+  david: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&q=80",
+  sarah: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&q=80",
+};
+
+interface ConnectPreviewData {
+  leftImg: string;
+  rightImg: string;
+  pairTitle: string;
+  leftPillEn: string;
+  leftPillEs: string;
+  rightPillEn: string;
+  rightPillEs: string;
+  subEn: string;
+  subEs: string;
+}
+
+const INTEREST_CONNECT_MAP: Record<InterestKey, ConnectPreviewData> = {
+  education: {
+    leftImg: PORTRAITS.kai,
+    rightImg: PORTRAITS.elena,
+    pairTitle: "Kai & Elena",
+    leftPillEn: "💻 AI Tech",
+    leftPillEs: "💻 IA Tech",
+    rightPillEn: "🎓 Student · Tech",
+    rightPillEs: "🎓 Interés Tech",
+    subEn: "💻 AI Tech ↔ 🎓 Student Interested in Tech",
+    subEs: "💻 IA Tech ↔ 🎓 Estudiante Interesada en Tech",
+  },
+  romance: {
+    leftImg: PORTRAITS.liam,
+    rightImg: PORTRAITS.elena,
+    pairTitle: "Liam & Elena",
+    leftPillEn: "🎸 Acoustic",
+    leftPillEs: "🎸 Acústico",
+    rightPillEn: "🎵 Music Fan",
+    rightPillEs: "🎵 Música",
+    subEn: "🎸 Acoustic Guitar ↔ 🎵 Live Music & Travel",
+    subEs: "🎸 Guitarra Acústica ↔ 🎵 Música y Viajes",
+  },
+  entertainment: {
+    leftImg: PORTRAITS.david,
+    rightImg: PORTRAITS.sarah,
+    pairTitle: "David & Sarah",
+    leftPillEn: "🎹 Live Host",
+    leftPillEs: "🎹 Host Live",
+    rightPillEn: "🎬 Streamer",
+    rightPillEs: "🎬 Streamer",
+    subEn: "🎹 Lounge Host ↔ 🎬 Co-Stream & Nightlife",
+    subEs: "🎹 Host en Vivo ↔ 🎬 Co-Stream y Noche",
+  },
+  culinary: {
+    leftImg: PORTRAITS.marco,
+    rightImg: PORTRAITS.elena,
+    pairTitle: "Marco & Elena",
+    leftPillEn: "👨‍🍳 Italian Chef",
+    leftPillEs: "👨‍🍳 Chef Italiano",
+    rightPillEn: "🍝 Foodie",
+    rightPillEs: "🍝 Foodie",
+    subEn: "👨‍🍳 Italian Chef ↔ 🍝 Learning Pasta & Wine",
+    subEs: "👨‍🍳 Chef Italiano ↔ 🍝 Aprender Pasta y Vino",
+  },
+  fitness: {
+    leftImg: PORTRAITS.liam,
+    rightImg: PORTRAITS.sarah,
+    pairTitle: "Liam & Sarah",
+    leftPillEn: "🏋️ Coach",
+    leftPillEs: "🏋️ Coach",
+    rightPillEn: "🔥 Into Fitness",
+    rightPillEs: "🔥 Interés Fitness",
+    subEn: "🏋️ Fitness Coach ↔ 🔥 Member in Fitness",
+    subEs: "🏋️ Coach Fitness ↔ 🔥 Miembro Fitness",
+  },
+  aitech: {
+    leftImg: PORTRAITS.kai,
+    rightImg: PORTRAITS.elena,
+    pairTitle: "Kai & Elena",
+    leftPillEn: "💻 AI Tech",
+    leftPillEs: "💻 IA Tech",
+    rightPillEn: "🎓 Student · Tech",
+    rightPillEs: "🎓 Interés Tech",
+    subEn: "💻 AI Tech ↔ 🎓 Student Interested in Tech",
+    subEs: "💻 IA Tech ↔ 🎓 Estudiante Interesada en Tech",
+  },
+};
+
+const EXTRA_INTERESTS: Array<{ labelEn: string; labelEs: string; key: InterestKey }> = [
+  { labelEn: "🎵 Live Music & Acoustic", labelEs: "🎵 Música en Vivo y Acústico", key: "entertainment" },
+  { labelEn: "✈️ World Travel & Adventure", labelEs: "✈️ Viajes y Aventura", key: "romance" },
+  { labelEn: "🗣️ Language Exchange", labelEs: "🗣️ Intercambio de Idiomas", key: "education" },
+  { labelEn: "🌿 Breathwork & Mindset", labelEs: "🌿 Breathwork y Mindfulness", key: "fitness" },
+  { labelEn: "👗 Fashion & Fit Checks", labelEs: "👗 Moda y Fit Checks", key: "entertainment" },
+  { labelEn: "💄 Makeup & Skincare", labelEs: "💄 Maquillaje y Skincare", key: "entertainment" },
+  { labelEn: "💰 Economy & Wealth", labelEs: "💰 Economía y Patrimonio", key: "aitech" },
+  { labelEn: "🎮 Co-Op Gaming & Esports", labelEs: "🎮 Gaming Co-Op y Esports", key: "entertainment" },
+  { labelEn: "🎨 Visual Art & Photography", labelEs: "🎨 Arte Visual y Fotografía", key: "education" },
+  { labelEn: "🥂 Nightlife & Dancing", labelEs: "🥂 Vida Nocturna y Baile", key: "romance" },
+  { labelEn: "🚀 Startups & Networking", labelEs: "🚀 Startups y Networking", key: "aitech" },
+  { labelEn: "🔞 18+ Sensual & VIP", labelEs: "🔞 18+ Sensual y VIP", key: "romance" },
+];
+
+export default function LandingPageHook({
+  onAccept,
+}: {
+  onAccept: () => void;
+  onBecomeCreator: () => void;
+}) {
+  const router = useRouter();
+  const { t, locale } = useTranslation();
+
+  // 1st position is Learn / Teach Skills ('education'); 2nd position is Romance & Chemistry ('romance')
+  const [selectedInterest, setSelectedInterest] = useState<InterestKey>("education");
+  const [showDiscoverText, setShowDiscoverText] = useState(false);
+  const [studioBlurred, setStudioBlurred] = useState(false);
+
+  // Registration Role Toggle: 'member' vs 'creator'
+  const [regRole, setRegRole] = useState<"member" | "creator">("member");
+  const [emailInput, setEmailInput] = useState("");
+  const [isOAuthLoading, setIsOAuthLoading] = useState<"google" | "twitter" | null>(null);
+
+  const activeConnect = INTEREST_CONNECT_MAP[selectedInterest] || INTEREST_CONNECT_MAP.education;
+  const isCreatorRole = regRole === "creator";
+
+  const persistRoleSelection = (role: "member" | "creator") => {
+    if (typeof window === "undefined") return;
+    if (role === "creator") {
+      sessionStorage.setItem("_onboarding_creator_archive_choice", "creator");
+      localStorage.setItem("is_creator_signup", "true");
+    } else {
+      sessionStorage.removeItem("_onboarding_creator_archive_choice");
+      localStorage.removeItem("is_creator_signup");
+    }
+  };
+
+  const handleRoleToggle = (role: "member" | "creator") => {
+    setRegRole(role);
+    persistRoleSelection(role);
+  };
+
+  const handleOAuthRegister = async (provider: "google" | "twitter") => {
+    try {
+      setIsOAuthLoading(provider);
+      persistRoleSelection(regRole);
+      const nextTarget = regRole === "creator" ? "/onboarding?role=creator" : "/onboarding?role=member";
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider,
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(nextTarget)}`,
+        },
+      });
+      if (error) {
+        router.push(nextTarget);
+      }
+    } catch {
+      router.push(regRole === "creator" ? "/onboarding?role=creator" : "/onboarding?role=member");
+    } finally {
+      setIsOAuthLoading(null);
+    }
+  };
+
+  const handleEmailRegister = (e: React.FormEvent) => {
+    e.preventDefault();
+    persistRoleSelection(regRole);
+    const cleanEmail = emailInput.trim();
+    const base = regRole === "creator" ? "/onboarding?role=creator" : "/onboarding?role=member";
+    const target = cleanEmail ? `${base}&email=${encodeURIComponent(cleanEmail)}` : base;
+    router.push(target);
+  };
+
+  const primaryInterests: Array<{ key: InterestKey; label: string }> = [
+    { key: "education", label: t("landing.interestEducation", "🎓 Learn / Teach Skills") },
+    { key: "romance", label: t("landing.interestRomance", "🩷 Romance & Chemistry") },
+    { key: "entertainment", label: t("landing.interestEntertainment", "🎬 Entertainment & Live") },
+    { key: "culinary", label: t("landing.interestCulinary", "👨‍🍳 Culinary & Wine") },
+    { key: "fitness", label: t("landing.interestFitness", "🏋️ Fitness & Vitality") },
+    { key: "aitech", label: t("landing.interestAiTech", "💻 AI, Tech & Business") },
+  ];
+
+  const storiesList: Array<{
+    name: string;
+    img: string;
+    tag: string;
+    isLive?: boolean;
+    interestKey: InterestKey;
+  }> = [
+    { name: "Liam · 28", img: PORTRAITS.liam, tag: "🏋️ Fitness", interestKey: "fitness" },
+    {
+      name: "Elena · 25",
+      img: PORTRAITS.elena,
+      tag: locale === "es" ? "🎓 Interés Tech" : "🎓 Into Tech",
+      interestKey: "aitech",
+    },
+    { name: "Marco · 31", img: PORTRAITS.marco, tag: "👨‍🍳 Chef", interestKey: "culinary" },
+    {
+      name: "Sofia · 24",
+      img: PORTRAITS.sofia,
+      tag: locale === "es" ? "● EN VIVO" : "● LIVE",
+      isLive: true,
+      interestKey: "entertainment",
+    },
+    {
+      name: "Kai · 29",
+      img: PORTRAITS.kai,
+      tag: locale === "es" ? "💻 IA Tech" : "💻 AI Tech",
+      interestKey: "aitech",
+    },
+    { name: "Valeria · 25", img: PORTRAITS.valeria, tag: "💎 Studio", interestKey: "education" },
+    {
+      name: "David · 30",
+      img: PORTRAITS.david,
+      tag: locale === "es" ? "💼 Negocios" : "💼 Business",
+      interestKey: "aitech",
+    },
+    { name: "Sarah · 26", img: PORTRAITS.sarah, tag: "🔥 Fitness", interestKey: "fitness" },
+  ];
 
   return (
-    <div className="w-full min-h-screen text-[#e2e2e2] overflow-x-hidden font-['Hanken_Grotesk'] relative" 
-         style={{ 
-           backgroundColor: 'transparent',
-           backgroundImage: 'radial-gradient(circle at 15% 50%, rgba(255, 171, 243, 0.05), transparent 25%), radial-gradient(circle at 85% 30%, rgba(0, 251, 251, 0.05), transparent 25%)'
-         }}>
-      
-      {/* Foreground Laser Lines (z-[35]: Above typography and cards, below TopNavBar) */}
-      <div className="hidden md:block absolute inset-0 overflow-hidden pointer-events-none z-[35]">
+    <div
+      className="w-full min-h-screen text-[#f8fafc] overflow-x-hidden font-['Hanken_Grotesk'] relative flex flex-col"
+      style={{
+        backgroundColor: "transparent",
+        backgroundImage:
+          "radial-gradient(circle at 18% 12%, rgba(255, 32, 78, 0.12), transparent 40%), radial-gradient(circle at 82% 18%, rgba(0, 251, 251, 0.12), transparent 42%), radial-gradient(circle at 50% 60%, rgba(255, 171, 243, 0.07), transparent 50%)",
+      }}
+    >
+      {/* Foreground Laser Lines (Desktop Ambient Effect) */}
+      <div className="hidden md:block absolute inset-0 overflow-hidden pointer-events-none z-[1]">
         <LaserLinesSVG />
       </div>
-      
-      {/* TopNavBar */}
+
+      {/* Untouched PublicNavbar with Official SECCION Wordmark & Mobile Menu */}
       <PublicNavbar onSignUp={onAccept} />
 
-      {/* Main Content Canvas */}
-      <main className="relative pt-20 sm:pt-32 pb-16 sm:pb-36 px-4 sm:px-6 md:px-12 lg:px-20 max-w-[1440px] mx-auto min-h-[calc(100vh-70px)] flex items-center">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-12 items-center w-full z-40 relative">
-          
-          {/* Left Column: Hero H1 + Swipe to Sign Up */}
-          <div className="col-span-12 lg:col-span-6 space-y-5 sm:space-y-8 flex flex-col justify-center relative z-40">
-            <div className="space-y-2 sm:space-y-3">
-              {/* Eyebrow Pill */}
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#00fbfb]/10 border border-[#00fbfb]/30 backdrop-blur-xl mb-1 shadow-[0_0_15px_rgba(0,251,251,0.15)] self-start">
-                <span className="w-2 h-2 rounded-full bg-[#00fbfb] animate-pulse" />
-                <span className="text-[10px] font-black uppercase tracking-[0.22em] text-[#00fbfb]">NEXT-GEN FUSION PLATFORM</span>
-              </div>
-
-              <h1 className="font-['Plus_Jakarta_Sans'] font-black leading-[1.02] tracking-[-0.04em] text-left">
-                <span className="block text-white text-4xl xs:text-5xl sm:text-7xl lg:text-8xl tracking-tight bg-gradient-to-r from-white via-slate-100 to-white/80 bg-clip-text text-transparent mb-1.5">
-                  {t("landing.fusionTitle", "Fusion Platform")}
-                </span>
-                <span className="block text-[#00fbfb] drop-shadow-[0_0_25px_rgba(0,251,251,0.45)] text-3xl xs:text-4xl sm:text-6xl lg:text-7xl font-black bg-gradient-to-r from-[#00fbfb] via-[#66fcf1] to-[#38bdf8] bg-clip-text text-transparent mt-1">
-                  {t("landing.dating", "Dating")}
-                </span>
-                <span className="block text-[#00fbfb] drop-shadow-[0_0_25px_rgba(0,251,251,0.45)] text-3xl xs:text-4xl sm:text-6xl lg:text-7xl font-black bg-gradient-to-r from-[#38bdf8] via-[#00fbfb] to-[#818cf8] bg-clip-text text-transparent mt-1">
-                  {t("landing.liveStreaming", "Live Streaming")}
-                </span>
-                <span className="block text-[#ffabf3] drop-shadow-[0_0_25px_rgba(255,171,243,0.5)] text-3xl xs:text-4xl sm:text-6xl lg:text-7xl font-black bg-gradient-to-r from-[#ffabf3] via-[#f472b6] to-[#ec4899] bg-clip-text text-transparent mt-1">
-                  {t("landing.contentCreators", "Content Creators")}
-                </span>
-              </h1>
-            </div>
-
-            {/* Dual Hero Decision CTAs */}
-            <div className="space-y-3.5 w-full">
-              {/* Primary Creator CTA (Pre-Launch Priority) */}
-              <Link
-                href="/become-creator"
-                className="w-full bg-gradient-to-r from-[#ffabf3]/20 via-[#00fbfb]/15 to-[#ffabf3]/20 hover:from-[#ffabf3]/30 hover:to-[#00fbfb]/30 backdrop-blur-xl border border-[#ffabf3]/50 hover:border-[#00fbfb] p-4 sm:p-5 rounded-2xl transition-all duration-300 hover:scale-[1.01] active:scale-[0.99] group shadow-[0_10px_30px_rgba(255,171,243,0.15)] flex items-center justify-between gap-4 block text-left"
-              >
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm sm:text-base font-['Plus_Jakarta_Sans'] font-extrabold text-white tracking-wide">
-                      {t("landing.heroLaunchCreator", "I'm a Creator — Keep 90%")}
-                    </span>
-                    <span className="px-2 py-0.5 rounded-full bg-[#ffabf3]/20 text-[#ffabf3] font-mono text-[9px] font-bold uppercase tracking-wider border border-[#ffabf3]/40">
-                      Founding Pass
-                    </span>
-                  </div>
-                  <p className="text-[11px] text-[#b9cac9] font-['Hanken_Grotesk'] leading-tight">
-                    {t("landing.heroLaunchCreatorSub", "Apply for pre-launch founding pass & free AI")}
-                  </p>
-                </div>
-                <div className="w-10 h-10 rounded-xl bg-[#ffabf3]/20 border border-[#ffabf3]/40 flex items-center justify-center shrink-0 group-hover:bg-[#ffabf3] group-hover:text-black transition-colors text-[#ffabf3]">
-                  <ArrowRight className="w-5 h-5" />
-                </div>
-              </Link>
-
-              {/* Secondary Member Waitlist CTA */}
-              <Link
-                href="/early-access"
-                className="w-full bg-white/[0.03] hover:bg-white/[0.06] backdrop-blur-xl border border-white/10 hover:border-[#00fbfb]/60 p-4 sm:p-5 rounded-2xl transition-all duration-300 hover:scale-[1.01] active:scale-[0.99] group flex items-center justify-between gap-4 block text-left"
-              >
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs sm:text-sm font-['Plus_Jakarta_Sans'] font-bold text-white tracking-wide">
-                      {t("landing.heroConnectMembers", "I want to connect New People and Creators")}
-                    </span>
-                  </div>
-                  <p className="text-[10px] text-[#b9cac9]/80 font-['Hanken_Grotesk'] leading-tight">
-                    {t("landing.heroConnectMembersSub", "Join the Founding Members waitlist by city")}
-                  </p>
-                </div>
-                <div className="w-8 h-8 rounded-lg bg-[#00fbfb]/10 border border-[#00fbfb]/30 flex items-center justify-center shrink-0 text-[#00fbfb] group-hover:bg-[#00fbfb] group-hover:text-black transition-colors">
-                  <ArrowRight className="w-4 h-4" />
-                </div>
-              </Link>
-            </div>
+      {/* Main Mobile-First Option 2 Canvas */}
+      <main className="relative z-10 flex-1 pt-28 sm:pt-32 pb-10 sm:pb-16 px-3.5 sm:px-6 md:px-12 lg:px-16 max-w-[1200px] w-full mx-auto flex flex-col justify-center">
+        {/* Top Hero Header: Eyebrow + Headline + Non-Exhaustive Subtitle */}
+        <div className="text-center max-w-3xl mx-auto mb-3 sm:mb-5">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-gradient-to-r from-[#00fbfb]/15 to-[#ffabf3]/15 border border-[#00fbfb]/40 mb-2.5 shadow-[0_0_16px_rgba(0,251,251,0.15)]">
+            <span className="w-2 h-2 rounded-full bg-[#00fbfb] shadow-[0_0_8px_#00fbfb] animate-pulse" />
+            <span className="text-[10px] sm:text-[11px] font-black uppercase tracking-[0.14em] text-white">
+              {t("landing.eyebrowBadge", "MATCH PEOPLE WITH A NEXTGEN PLATFORM")}
+            </span>
           </div>
 
-          {/* Right Column: Tabbed Key Points Switcher Card */}
-          <div className="col-span-12 lg:col-span-6 flex flex-col justify-center">
-            <div className={`w-full bg-white/[0.02] border rounded-[2rem] p-1.5 shadow-[0_25px_50px_rgba(0,0,0,0.5)] backdrop-blur-xl relative z-30 transition-all duration-500 ${activeTab === 'members' ? 'border-white/10 shadow-[#00fbfb]/5' : 'border-[#ffabf3]/20 shadow-[#ffabf3]/5'}`}>
-              <div className="bg-black/40 rounded-[calc(2rem-0.375rem)] p-6 md:p-8 border border-white/5">
-                
-                {/* Tab Selector Buttons */}
-                <div className="flex bg-white/5 border border-white/5 p-1 rounded-full mb-6 relative">
-                  <button
-                    onClick={() => setActiveTab('members')}
-                    className={`flex-grow basis-0 py-2.5 text-center text-[10px] font-['JetBrains_Mono'] uppercase tracking-wider font-bold rounded-full relative z-10 transition-colors duration-300 ${activeTab === 'members' ? 'text-black' : 'text-[#b9cac9] hover:text-[#00fbfb]'}`}
-                  >
-                    {t("landing.memberQuestTab", "Member Quest (Vibe Check)")}
-                  </button>
-                  <button
-                    onClick={() => setActiveTab('creators')}
-                    className={`flex-grow basis-0 py-2.5 text-center text-[10px] font-['JetBrains_Mono'] uppercase tracking-wider font-bold rounded-full relative z-10 transition-colors duration-300 ${activeTab === 'creators' ? 'text-black' : 'text-[#b9cac9] hover:text-[#ffabf3]'}`}
-                  >
-                    {t("landing.creatorFusionTab", "Creator Fusion (Biz-in-a-Box)")}
-                  </button>
-                  
-                  {/* Active Indicator Slider */}
-                  <motion.div
-                    className="absolute top-1 bottom-1 rounded-full"
-                    layoutId="activeTabSlider"
-                    transition={{ type: "spring", stiffness: 380, damping: 30 }}
-                    style={{
-                      left: activeTab === 'members' ? '4px' : 'calc(50% + 2px)',
-                      width: 'calc(50% - 6px)',
-                      backgroundColor: activeTab === 'members' ? '#00fbfb' : '#ffabf3',
-                      boxShadow: activeTab === 'members' ? '0 0 15px #00fbfb' : '0 0 15px #ffabf3',
-                    }}
+          <h1 className="font-['Plus_Jakarta_Sans'] font-black text-[22px] xs:text-[25px] sm:text-4xl lg:text-[42px] leading-[1.14] tracking-[-0.02em] text-white mb-2">
+            {t(
+              "landing.heroTitleLead",
+              "Connect by Shared Interests, Enlarge Your Circle & "
+            )}
+            <span className="bg-gradient-to-r from-[#00fbfb] via-[#ffabf3] to-[#fde68a] bg-clip-text text-transparent">
+              {t("landing.heroTitleHighlight", "Learn or Teach Skills.")}
+            </span>
+          </h1>
+
+          {/* Collapsible Discover + More Button for First-Sight Clarity */}
+          <div className="flex flex-col items-center">
+            <button
+              type="button"
+              onClick={() => setShowDiscoverText((prev) => !prev)}
+              className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-white/[0.05] border border-white/15 hover:border-[#00fbfb] text-xs font-extrabold text-slate-200 hover:text-white transition cursor-pointer"
+            >
+              <span>{t("landing.discoverShortLabel", "✨ Discover")}</span>
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-[#00fbfb]/15 text-[#00fbfb] border border-[#00fbfb]/40">
+                {showDiscoverText
+                  ? t("landing.discoverLessBtn", "Less ▴")
+                  : t("landing.discoverMoreBtn", "More ▾")}
+              </span>
+            </button>
+
+            {showDiscoverText && (
+              <p className="mt-2 text-[12px] sm:text-[14px] leading-[1.45] text-slate-300 max-w-2xl mx-auto">
+                {t(
+                  "landing.heroSubtitle",
+                  "Discover—with our integrated AI matchmaking assistant—real people who fit you best across 30+ passions & spheres (e.g., Romance, Entertainment, Lifestyle, Fitness, Culinary, Art, Education, Business & more)."
+                )}
+              </p>
+            )}
+          </div>
+        </div>
+
+        {/* Horizontally Scrollable Passions & Spheres Strip */}
+        <div className="w-full mb-3.5 sm:mb-5">
+          <div
+            onWheel={(e) => {
+              if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+                e.currentTarget.scrollLeft += e.deltaY;
+              }
+            }}
+            className="flex flex-nowrap items-center justify-start gap-1.5 sm:gap-2 overflow-x-auto overflow-y-hidden py-2 px-1.5"
+            style={{
+              scrollbarWidth: "thin",
+              scrollbarColor: "rgba(0, 251, 251, 0.45) rgba(255, 255, 255, 0.04)",
+            }}
+          >
+            {primaryInterests.map((item) => {
+              const isActive = selectedInterest === item.key;
+              return (
+                <button
+                  key={item.key}
+                  type="button"
+                  onClick={() => setSelectedInterest(item.key)}
+                  className={`shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] sm:text-xs font-bold leading-snug transition-all cursor-pointer select-none border-[1.5px] ${
+                    isActive
+                      ? "bg-[#00fbfb]/15 border-[#00fbfb] text-white shadow-[0_0_12px_rgba(0,251,251,0.25)]"
+                      : "bg-white/[0.05] border-white/15 text-slate-200 hover:bg-[#00fbfb]/10 hover:border-[#00fbfb]/60 hover:text-white"
+                  }`}
+                >
+                  {item.label}
+                </button>
+              );
+            })}
+            {EXTRA_INTERESTS.map((extra, idx) => (
+              <button
+                key={`extra-${idx}`}
+                type="button"
+                onClick={() => setSelectedInterest(extra.key)}
+                className="shrink-0 inline-flex items-center px-3 py-1.5 rounded-full text-[11px] sm:text-xs font-bold leading-snug bg-white/[0.05] border-[1.5px] border-white/15 text-slate-200 hover:bg-[#00fbfb]/15 hover:border-[#00fbfb] hover:text-white transition cursor-pointer select-none"
+              >
+                {locale === "es" ? extra.labelEs : extra.labelEn}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Option 2 Grid: Left = Horizontally Scrollable Social Stories & 4 Photo Cards | Right = Registration Card */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-7 items-center w-full">
+          {/* Left Column (7 cols on Desktop): Horizontally Scrollable Stories Ring Bar + 4 Visual Photo Cards */}
+          <div className="lg:col-span-7 flex flex-col gap-2.5">
+            {/* Horizontally Scrollable Live Human Stories Ring Bar */}
+            <div
+              onWheel={(e) => {
+                if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+                  e.currentTarget.scrollLeft += e.deltaY;
+                }
+              }}
+              className="flex flex-nowrap items-center justify-start gap-3 sm:gap-4 overflow-x-auto overflow-y-hidden py-1.5 px-1"
+              style={{
+                scrollbarWidth: "thin",
+                scrollbarColor: "rgba(0, 251, 251, 0.45) rgba(255, 255, 255, 0.04)",
+              }}
+            >
+              {storiesList.map((st, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => setSelectedInterest(st.interestKey)}
+                  className="flex flex-col items-center gap-1 shrink-0 cursor-pointer group"
+                >
+                  <div className="relative w-14 h-14 sm:w-16 sm:h-16 rounded-full p-[2px] bg-gradient-to-tr from-[#ff204e] via-[#ffabf3] to-[#00fbfb] group-hover:scale-105 transition-transform">
+                    <img
+                      src={st.img}
+                      alt={st.name}
+                      className="w-full h-full rounded-full object-cover border-2 border-[#07070F]"
+                    />
+                    <span
+                      className={`absolute -bottom-1 left-1/2 -translate-x-1/2 px-1.5 py-[1px] rounded-full text-[8px] font-black whitespace-nowrap bg-[#0f172a] border ${
+                        st.isLive
+                          ? "text-[#ffabf3] border-[#ffabf3]/50"
+                          : "text-[#00fbfb] border-[#00fbfb]/45"
+                      }`}
+                    >
+                      {st.tag}
+                    </span>
+                  </div>
+                  <span className="text-[10px] font-bold text-slate-200 mt-0.5">
+                    {st.name}
+                  </span>
+                </button>
+              ))}
+            </div>
+
+            {/* 4 Visual Photo Cards in a 2x2 Grid (Pills at the Very Bottom Edge to Leave Max Photo Visual) */}
+            <div className="grid grid-cols-2 gap-2.5 sm:gap-3">
+              {/* Card 1: Connect #1 (AI Tech + Student Interested in Tech — Closely Linked in One Card) */}
+              <div
+                onClick={() =>
+                  setSelectedInterest(
+                    selectedInterest === "education" ? "romance" : "education"
+                  )
+                }
+                className="relative col-span-1 h-40 sm:h-48 rounded-2xl overflow-hidden border border-[#00fbfb] shadow-[0_8px_24px_rgba(0,251,251,0.18)] cursor-pointer group transition-transform hover:-translate-y-0.5"
+              >
+                <div className="w-full h-full grid grid-cols-2">
+                  <img
+                    src={activeConnect.leftImg}
+                    alt="Connect Person 1"
+                    className="w-full h-full object-cover object-[center_18%] border-r border-[#00fbfb]/50"
+                  />
+                  <img
+                    src={activeConnect.rightImg}
+                    alt="Connect Person 2"
+                    className="w-full h-full object-cover object-[center_18%]"
                   />
                 </div>
-
-                {/* Tab Content with Framer Motion AnimatePresence */}
-                <div className="min-h-[300px] flex items-center relative">
-                  <AnimatePresence mode="wait">
-                    {activeTab === 'members' ? (
-                      <motion.div
-                        key="members"
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -10 }}
-                        transition={{ duration: 0.3, ease: [0.32, 0.72, 0, 1] }}
-                        className="space-y-6 w-full text-left"
-                      >
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                          
-                          <div className="flex gap-3.5 items-start">
-                            <div className="w-9 h-9 rounded-xl bg-[#00fbfb]/10 border border-[#00fbfb]/20 flex items-center justify-center shrink-0">
-                              <Heart className="w-5 h-5 text-[#00fbfb]" />
-                            </div>
-                            <div>
-                              <h4 className="text-[14px] font-['Plus_Jakarta_Sans'] font-bold text-white mb-0.5">{t("landing.memberFeature1Title", "100% Free Synergy Sync")}</h4>
-                              <p className="text-[11px] font-['Hanken_Grotesk'] text-[#b9cac9] leading-relaxed">{t("landing.memberFeature1Desc", "No paywalls to connect. Swiping and matching is completely free, funded by our creator ecosystem.")}</p>
-                            </div>
-                          </div>
-
-                          <div className="flex gap-3.5 items-start">
-                            <div className="w-9 h-9 rounded-xl bg-[#00fbfb]/10 border border-[#00fbfb]/20 flex items-center justify-center shrink-0">
-                              <Flame className="w-5 h-5 text-[#00fbfb]" />
-                            </div>
-                            <div>
-                              <h4 className="text-[14px] font-['Plus_Jakarta_Sans'] font-bold text-white mb-0.5">{t("landing.memberFeature2Title", "The Chemistry Meter")}</h4>
-                              <p className="text-[11px] font-['Hanken_Grotesk'] text-[#b9cac9] leading-relaxed">{t("landing.memberFeature2Desc", "An 8-level RPG-style synergy tracker showing exactly where you stand. Skip the situationship limbo.")}</p>
-                            </div>
-                          </div>
-
-                          <div className="flex gap-3.5 items-start">
-                            <div className="w-9 h-9 rounded-xl bg-[#00fbfb]/10 border border-[#00fbfb]/20 flex items-center justify-center shrink-0">
-                              <Compass className="w-5 h-5 text-[#00fbfb]" />
-                            </div>
-                            <div>
-                              <h4 className="text-[14px] font-['Plus_Jakarta_Sans'] font-bold text-white mb-0.5">{t("landing.memberFeature3Title", "Relationship Skill Tree")}</h4>
-                              <p className="text-[11px] font-['Hanken_Grotesk'] text-[#b9cac9] leading-relaxed">{t("landing.memberFeature3Desc", "Unlock 60+ suggestion moves—from Level 2 Digital Pokes, to Level 4 Coffee Quests, up to Level 6 trips.")}</p>
-                            </div>
-                          </div>
-
-                          <div className="flex gap-3.5 items-start">
-                            <div className="w-9 h-9 rounded-xl bg-[#00fbfb]/10 border border-[#00fbfb]/20 flex items-center justify-center shrink-0">
-                              <Cpu className="w-5 h-5 text-[#00fbfb]" />
-                            </div>
-                            <div>
-                              <h4 className="text-[14px] font-['Plus_Jakarta_Sans'] font-bold text-white mb-0.5">{t("landing.memberFeature4Title", "AI Wingman Coach")}</h4>
-                              <p className="text-[11px] font-['Hanken_Grotesk'] text-[#b9cac9] leading-relaxed">{t("landing.memberFeature4Desc", "Tracks Conversation Gravity in real-time, feeding you custom prompts and icebreakers when chats run dry.")}</p>
-                            </div>
-                          </div>
-
-                          <div className="flex gap-3.5 items-start">
-                            <div className="w-9 h-9 rounded-xl bg-[#00fbfb]/10 border border-[#00fbfb]/20 flex items-center justify-center shrink-0">
-                              <Sparkles className="w-5 h-5 text-[#00fbfb]" />
-                            </div>
-                            <div>
-                              <h4 className="text-[14px] font-['Plus_Jakarta_Sans'] font-bold text-white mb-0.5">{t("landing.memberFeature5Title", "3-Min Onboarding Quest")}</h4>
-                              <p className="text-[11px] font-['Hanken_Grotesk'] text-[#b9cac9] leading-relaxed">{t("landing.memberFeature5Desc", "Select your core personality archetype to auto-populate 15 fields and start vibing with real connections in under 3 minutes.")}</p>
-                            </div>
-                          </div>
-
-                          <div className="flex gap-3.5 items-start">
-                            <div className="w-9 h-9 rounded-xl bg-[#00fbfb]/10 border border-[#00fbfb]/20 flex items-center justify-center shrink-0">
-                              <Compass className="w-5 h-5 text-[#00fbfb]" />
-                            </div>
-                            <div>
-                              <h4 className="text-[14px] font-['Plus_Jakarta_Sans'] font-bold text-white mb-0.5">{t("landing.memberFeature6Title", "Gemini AI Synergy Engine")}</h4>
-                              <p className="text-[11px] font-['Hanken_Grotesk'] text-[#b9cac9] leading-relaxed">{t("landing.memberFeature6Desc", "Reads your vibe across 9 archetypes, mood, and momentum, giving a visceral Synergy Aura explanation.")}</p>
-                            </div>
-                          </div>
-
-                        </div>
-                      </motion.div>
-                    ) : (
-                      <motion.div
-                        key="creators"
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -10 }}
-                        transition={{ duration: 0.3, ease: [0.32, 0.72, 0, 1] }}
-                        className="space-y-6 w-full text-left"
-                      >
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                          
-                          <div className="flex gap-3.5 items-start">
-                            <div className="w-9 h-9 rounded-xl bg-[#ffabf3]/10 border border-[#ffabf3]/20 flex items-center justify-center shrink-0">
-                              <Zap className="w-5 h-5 text-[#ffabf3]" />
-                            </div>
-                            <div>
-                              <h4 className="text-[14px] font-['Plus_Jakarta_Sans'] font-bold text-white mb-0.5">{t("landing.creatorFeature1Title", "80/20 Revenue Split")}</h4>
-                              <p className="text-[11px] font-['Hanken_Grotesk'] text-[#b9cac9] leading-relaxed">{t("landing.creatorFeature1Desc", "Keep 80% of subscription and tip coin. Mutual match is required to unlock subscriptions—slashing churn.")}</p>
-                            </div>
-                          </div>
-
-                          <div className="flex gap-3.5 items-start">
-                            <div className="w-9 h-9 rounded-xl bg-[#ffabf3]/10 border border-[#ffabf3]/20 flex items-center justify-center shrink-0">
-                              <Cpu className="w-5 h-5 text-[#ffabf3]" />
-                            </div>
-                            <div>
-                              <h4 className="text-[14px] font-['Plus_Jakarta_Sans'] font-bold text-white mb-0.5">{t("landing.creatorFeature2Title", "Free AI Operations Agent")}</h4>
-                              <p className="text-[11px] font-['Hanken_Grotesk'] text-[#b9cac9] leading-relaxed">{t("landing.creatorFeature2Desc", "Free Year 1. Replaces MCNs: runs 24/7 chat in your voice, forecasts taxes, and schedules multi-platform promos.")}</p>
-                            </div>
-                          </div>
-
-                          <div className="flex gap-3.5 items-start">
-                            <div className="w-9 h-9 rounded-xl bg-[#ffabf3]/10 border border-[#ffabf3]/20 flex items-center justify-center shrink-0">
-                              <EyeOff className="w-5 h-5 text-[#ffabf3]" />
-                            </div>
-                            <div>
-                              <h4 className="text-[14px] font-['Plus_Jakarta_Sans'] font-bold text-white mb-0.5">{t("landing.creatorFeature3Title", "Face Blur Encryption")}</h4>
-                              <p className="text-[11px] font-['Hanken_Grotesk'] text-[#b9cac9] leading-relaxed">{t("landing.creatorFeature3Desc", "Obscures your face on public feeds, lifting only for Master Subscribers or Chemistry Level 4+ connections.")}</p>
-                            </div>
-                          </div>
-
-                          <div className="flex gap-3.5 items-start">
-                            <div className="w-9 h-9 rounded-xl bg-[#ffabf3]/10 border border-[#ffabf3]/20 flex items-center justify-center shrink-0">
-                              <UserCheck className="w-5 h-5 text-[#ffabf3]" />
-                            </div>
-                            <div>
-                              <h4 className="text-[14px] font-['Plus_Jakarta_Sans'] font-bold text-white mb-0.5">{t("landing.creatorFeature4Title", "Broadcasting Match HUD")}</h4>
-                              <p className="text-[11px] font-['Hanken_Grotesk'] text-[#b9cac9] leading-relaxed">{t("landing.creatorFeature4Desc", "Broadcasting cockpit featuring a live Audience Match HUD to see viewers' Synergy Sync levels in real-time.")}</p>
-                            </div>
-                          </div>
-
-                          <div className="flex gap-3.5 items-start">
-                            <div className="w-9 h-9 rounded-xl bg-[#ffabf3]/10 border border-[#ffabf3]/20 flex items-center justify-center shrink-0">
-                              <ShieldCheck className="w-5 h-5 text-[#ffabf3]" />
-                            </div>
-                            <div>
-                              <h4 className="text-[14px] font-['Plus_Jakarta_Sans'] font-bold text-white mb-0.5">{t("landing.creatorFeature5Title", "DRM Web Sweeper")}</h4>
-                              <p className="text-[11px] font-['Hanken_Grotesk'] text-[#b9cac9] leading-relaxed">{t("landing.creatorFeature5Desc", "Hunts down leaks across the web and auto-fires takedowns so your content stays yours.")}</p>
-                            </div>
-                          </div>
-
-                          <div className="flex gap-3.5 items-start">
-                            <div className="w-9 h-9 rounded-xl bg-[#ffabf3]/10 border border-[#ffabf3]/20 flex items-center justify-center shrink-0">
-                              <Landmark className="w-5 h-5 text-[#ffabf3]" />
-                            </div>
-                            <div>
-                              <h4 className="text-[14px] font-['Plus_Jakarta_Sans'] font-bold text-white mb-0.5">{t("landing.creatorFeature6Title", "NLP Contract Scanner")}</h4>
-                              <p className="text-[11px] font-['Hanken_Grotesk'] text-[#b9cac9] leading-relaxed">{t("landing.creatorFeature6Desc", "Scans your brand contracts in seconds — flags shady sunset commissions and unauthorized likeness grabs before you sign.")}</p>
-                            </div>
-                          </div>
-
-                        </div>
-                        {/* Direct CTA Inside Creator Tab */}
-                        <div className="pt-4">
-                          <Link
-                            href="/become-creator"
-                            className="w-full py-3.5 px-5 rounded-xl bg-gradient-to-r from-[#ffabf3] to-[#00fbfb] text-black font-mono text-xs font-black uppercase tracking-wider hover:shadow-[0_0_20px_rgba(255,171,243,0.4)] transition flex items-center justify-center gap-2 cursor-pointer shadow-lg"
-                          >
-                            <span>{t("landing.tabApplyCreatorBtn", "Claim 90% Founding Creator Pass")}</span>
-                            <ArrowRight className="w-4 h-4" />
-                          </Link>
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
+                <div className="absolute inset-0 bg-gradient-to-b from-black/25 via-transparent to-[#05050c]/90 p-2 sm:p-2.5 flex flex-col justify-between">
+                  <span className="self-start text-[8px] sm:text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-[#00fbfb]/25 text-[#00fbfb] border border-[#00fbfb]">
+                    {t("landing.reelConnectTechChip", "Connect · Tech")}
+                  </span>
+                  <div className="text-left">
+                    <div className="text-[11px] sm:text-xs font-black text-white leading-tight mb-1 drop-shadow-[0_2px_6px_rgba(0,0,0,0.95)]">
+                      {activeConnect.pairTitle}
+                    </div>
+                    <div className="flex items-center justify-between gap-1">
+                      <span className="text-[7.5px] sm:text-[8.5px] font-extrabold px-1.5 py-0.5 rounded-full bg-[#07070F]/90 border border-[#00fbfb]/45 text-slate-100 whitespace-nowrap">
+                        {locale === "es" ? activeConnect.leftPillEs : activeConnect.leftPillEn}
+                      </span>
+                      <span className="text-[7.5px] sm:text-[8.5px] font-extrabold px-1.5 py-0.5 rounded-full bg-[#07070F]/90 border border-[#ffabf3]/55 text-slate-100 whitespace-nowrap">
+                        {locale === "es" ? activeConnect.rightPillEs : activeConnect.rightPillEn}
+                      </span>
+                    </div>
+                  </div>
                 </div>
+              </div>
 
+              {/* Card 2: Connect #2 (Male Fitness Coach + Female Member Interested in Fitness — Closely Linked in One Card) */}
+              <div
+                onClick={() => setSelectedInterest("fitness")}
+                className="relative col-span-1 h-40 sm:h-48 rounded-2xl overflow-hidden border border-emerald-400/60 shadow-[0_8px_20px_rgba(16,185,129,0.14)] cursor-pointer group transition-transform hover:-translate-y-0.5"
+              >
+                <div className="w-full h-full grid grid-cols-2">
+                  <img
+                    src={PORTRAITS.liam}
+                    alt="Liam Fitness Coach"
+                    className="w-full h-full object-cover object-[center_18%] border-r border-emerald-400/50"
+                  />
+                  <img
+                    src={PORTRAITS.sarah}
+                    alt="Sarah Fitness Member"
+                    className="w-full h-full object-cover object-[center_18%]"
+                  />
+                </div>
+                <div className="absolute inset-0 bg-gradient-to-b from-black/25 via-transparent to-[#05050c]/90 p-2 sm:p-2.5 flex flex-col justify-between">
+                  <span className="self-start text-[8px] sm:text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/25 text-emerald-300 border border-emerald-400">
+                    {t("landing.reelConnectFitnessChip", "Connect · Fitness")}
+                  </span>
+                  <div className="text-left">
+                    <div className="text-[11px] sm:text-xs font-black text-white leading-tight mb-1 drop-shadow-[0_2px_6px_rgba(0,0,0,0.95)]">
+                      Liam & Sarah
+                    </div>
+                    <div className="flex items-center justify-between gap-1">
+                      <span className="text-[7.5px] sm:text-[8.5px] font-extrabold px-1.5 py-0.5 rounded-full bg-[#07070F]/90 border border-emerald-400/55 text-slate-100 whitespace-nowrap">
+                        {t("landing.reelFitnessLeftPill", "🏋️ Coach")}
+                      </span>
+                      <span className="text-[7.5px] sm:text-[8.5px] font-extrabold px-1.5 py-0.5 rounded-full bg-[#07070F]/90 border border-[#ffabf3]/55 text-slate-100 whitespace-nowrap">
+                        {t("landing.reelFitnessRightPill", "🔥 Into Fitness")}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Card 3: Stream (Live Stream Portrait) */}
+              <Link
+                href="/now-streaming"
+                className="relative col-span-1 h-40 sm:h-48 rounded-2xl overflow-hidden border border-white/15 hover:border-[#00fbfb] cursor-pointer group transition-all hover:-translate-y-0.5 block"
+              >
+                <img
+                  src={PORTRAITS.sofia}
+                  alt="Sofia Live Stream"
+                  className="w-full h-full object-cover object-[center_18%]"
+                />
+                <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-[#05050c]/95 p-2 sm:p-2.5 flex flex-col justify-between">
+                  <span className="self-start text-[8px] sm:text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-red-500/90 text-white shadow-[0_0_10px_rgba(239,68,68,0.5)]">
+                    {t("landing.reelStreamChip", "● Stream")}
+                  </span>
+                  <div className="text-left">
+                    <div className="text-[11px] sm:text-xs font-black text-white leading-tight">
+                      {t("landing.reelStreamTitle", "Sofia Live")}
+                    </div>
+                    <div className="text-[8.5px] sm:text-[10px] text-slate-200 leading-snug mt-0.5 font-semibold">
+                      {t(
+                        "landing.reelStreamSub",
+                        "🌐 75+ Lang Voice AI · Interactive Rooms"
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </Link>
+
+              {/* Card 4: Studio (Creator Portrait with Interactive Face-Blur Toggle) */}
+              <div
+                onClick={() => setStudioBlurred((prev) => !prev)}
+                title="Tap to preview SECCION Smart Face-Blur"
+                className="relative col-span-1 h-40 sm:h-48 rounded-2xl overflow-hidden border border-white/15 hover:border-[#ffabf3] cursor-pointer group transition-all hover:-translate-y-0.5"
+              >
+                <img
+                  src={PORTRAITS.valeria}
+                  alt="Creator Studio"
+                  className={`w-full h-full object-cover object-[center_18%] transition-all duration-300 ${
+                    studioBlurred ? "blur-md scale-105" : ""
+                  }`}
+                />
+                <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-[#05050c]/95 p-2 sm:p-2.5 flex flex-col justify-between">
+                  <span className="self-start text-[8px] sm:text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-[#ffabf3]/25 text-[#ffabf3] border border-[#ffabf3]">
+                    {t("landing.reelStudioChip", "Studio")}
+                  </span>
+                  <div className="text-left">
+                    <div className="text-[11px] sm:text-xs font-black text-white leading-tight">
+                      {t("landing.reelStudioTitle", "Creator Studio")}
+                    </div>
+                    <div className="text-[8.5px] sm:text-[10px] text-slate-200 leading-snug mt-0.5 font-semibold">
+                      {t(
+                        "landing.reelStudioSub",
+                        "🛡️ Face-Blur Privacy · Custom Skill Orders"
+                      )}
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
 
+          {/* Right Column (5 cols on Desktop): Registration Card with Member vs. Creator Role Toggle */}
+          <div className="lg:col-span-5">
+            <div
+              className={`rounded-[24px] p-4 sm:p-5 bg-gradient-to-b from-[#131324]/95 to-[#0A0A14]/98 backdrop-blur-2xl border-[1.5px] transition-all duration-300 ${
+                isCreatorRole
+                  ? "border-[#ffabf3]/55 shadow-[0_16px_40px_rgba(0,0,0,0.75),0_0_28px_rgba(255,171,243,0.15)]"
+                  : "border-[#00fbfb]/45 shadow-[0_16px_40px_rgba(0,0,0,0.75),0_0_28px_rgba(0,251,251,0.12)]"
+              }`}
+            >
+              {/* Role Toggle Bar: Member vs Creator */}
+              <div className="grid grid-cols-2 gap-1.5 p-1 rounded-xl bg-black/50 border border-white/10 mb-3">
+                <button
+                  type="button"
+                  onClick={() => handleRoleToggle("member")}
+                  className={`py-2 px-2.5 rounded-lg text-[10.5px] sm:text-[11px] font-black uppercase tracking-wider transition-all cursor-pointer ${
+                    !isCreatorRole
+                      ? "bg-[#00fbfb] text-[#05050c] shadow-[0_0_14px_rgba(0,251,251,0.35)]"
+                      : "text-white/55 hover:text-white"
+                  }`}
+                >
+                  {t("landing.roleToggleMember", "⚡ Join as Member")}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleRoleToggle("creator")}
+                  className={`py-2 px-2.5 rounded-lg text-[10.5px] sm:text-[11px] font-black uppercase tracking-wider transition-all cursor-pointer ${
+                    isCreatorRole
+                      ? "bg-[#ffabf3] text-[#05050c] shadow-[0_0_14px_rgba(255,171,243,0.38)]"
+                      : "text-white/55 hover:text-white"
+                  }`}
+                >
+                  {t("landing.roleToggleCreator", "👑 Join as Creator")}
+                </button>
+              </div>
+
+              {/* Registration Header */}
+              <div className="flex items-center justify-between gap-2 mb-3">
+                <div className="flex items-center">
+                  <div className="flex items-center">
+                    <img
+                      src={PORTRAITS.liam}
+                      alt="Member 1"
+                      className="w-6 h-6 rounded-full object-cover border-[1.5px] border-[#090914] -mr-1.5"
+                    />
+                    <img
+                      src={PORTRAITS.sofia}
+                      alt="Member 2"
+                      className="w-6 h-6 rounded-full object-cover border-[1.5px] border-[#090914] -mr-1.5"
+                    />
+                    <img
+                      src={PORTRAITS.marco}
+                      alt="Member 3"
+                      className="w-6 h-6 rounded-full object-cover border-[1.5px] border-[#090914]"
+                    />
+                  </div>
+                  <span className="text-[11px] sm:text-xs font-extrabold text-slate-100 ml-2.5">
+                    {isCreatorRole
+                      ? t("landing.regTitleCreator", "Launch Your Creator Studio")
+                      : t("landing.regTitleMember", "Meet Real People on SECCION")}
+                  </span>
+                </div>
+
+                <span
+                  className={`shrink-0 text-[9px] font-black px-2 py-0.5 rounded-full border ${
+                    isCreatorRole
+                      ? "bg-[#ffabf3]/15 text-[#ffabf3] border-[#ffabf3]/45"
+                      : "bg-emerald-500/15 text-emerald-400 border-emerald-500/35"
+                  }`}
+                >
+                  {isCreatorRole
+                    ? t("landing.regBadgeCreator", "KEEP 90% · FREE AI")
+                    : t("landing.regBadgeMember", "100% FREE MATCHING")}
+                </span>
+              </div>
+
+              {/* OAuth Row: Google + Continue with X */}
+              <div className="grid grid-cols-2 gap-2 mb-2.5">
+                <button
+                  type="button"
+                  disabled={isOAuthLoading !== null}
+                  onClick={() => handleOAuthRegister("google")}
+                  className="w-full py-2.5 px-3 rounded-xl bg-white text-slate-900 font-extrabold text-xs flex items-center justify-center gap-2 hover:-translate-y-0.5 transition cursor-pointer disabled:opacity-60"
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24">
+                    <path
+                      fill="#EA4335"
+                      d="M12 5c1.6 0 3 .6 4.1 1.7l3.1-3.1C17.3 1.8 14.8 1 12 1 7.4 1 3.5 3.6 1.6 7.4l3.7 2.8C6.2 7.2 8.9 5 12 5z"
+                    />
+                    <path
+                      fill="#4285F4"
+                      d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.5h6.5c-.3 1.5-1.1 2.8-2.4 3.6l3.7 2.9c2.2-2 3.7-5 3.7-8.7z"
+                    />
+                    <path
+                      fill="#FBBC05"
+                      d="M5.3 14.2c-.2-.7-.4-1.4-.4-2.2s.2-1.5.4-2.2L1.6 7.4C.6 9.4 0 11.6 0 12s.6 2.6 1.6 4.6l3.7-2.4z"
+                    />
+                    <path
+                      fill="#34A853"
+                      d="M12 23c3.2 0 6-1.1 8-3l-3.7-2.9c-1.1.7-2.5 1.2-4.3 1.2-3.1 0-5.8-2.1-6.7-5l-3.7 2.8C3.5 19.9 7.4 23 12 23z"
+                    />
+                  </svg>
+                  <span>{t("landing.oauthGoogle", "Google")}</span>
+                </button>
+
+                <button
+                  type="button"
+                  disabled={isOAuthLoading !== null}
+                  onClick={() => handleOAuthRegister("twitter")}
+                  className="w-full py-2.5 px-3 rounded-xl bg-[#09090f] text-white border border-white/20 hover:border-[#00fbfb] font-extrabold text-xs flex items-center justify-center gap-2 hover:-translate-y-0.5 transition cursor-pointer disabled:opacity-60"
+                >
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="#ffffff">
+                    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                  </svg>
+                  <span>{t("landing.oauthX", "Continue with X")}</span>
+                </button>
+              </div>
+
+              {/* Direct Email Registration Form */}
+              <form onSubmit={handleEmailRegister} className="flex gap-2">
+                <input
+                  type="email"
+                  value={emailInput}
+                  onChange={(e) => setEmailInput(e.target.value)}
+                  placeholder={t("landing.emailPlaceholder", "Or enter your email...")}
+                  className="flex-1 min-w-0 bg-white/[0.06] border border-white/15 focus:border-[#00fbfb] rounded-xl px-3 py-2.5 text-xs text-white placeholder-slate-400 outline-none transition"
+                />
+                <button
+                  type="submit"
+                  className="shrink-0 px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#00fbfb] to-[#ffabf3] text-[#05050c] font-black text-xs whitespace-nowrap shadow-[0_4px_16px_rgba(0,251,251,0.3)] hover:opacity-95 transition cursor-pointer"
+                >
+                  {isCreatorRole
+                    ? t("landing.submitCreatorBtn", "Join as Creator →")
+                    : t("landing.submitMemberBtn", "Join as Member →")}
+                </button>
+              </form>
+
+              {/* Micro Footer Note & Quick Switch / Details Link */}
+              <div className="mt-2.5 flex items-center justify-between gap-2 text-[10px] text-slate-400">
+                <span className="truncate">
+                  {isCreatorRole
+                    ? t(
+                        "landing.microNoteCreator",
+                        "👑 90% Founding Split · Free Year-1 AI Assistant · Face-Blur"
+                      )
+                    : t(
+                        "landing.microNoteMember",
+                        "✨ 30+ Spheres: Skills, Romance, Entertainment & more"
+                      )}
+                </span>
+
+                {isCreatorRole ? (
+                  <Link
+                    href="/become-creator"
+                    className="shrink-0 text-[#ffabf3] hover:underline font-extrabold"
+                  >
+                    {t("landing.fullCreatorDetailsLink", "Full Creator Details →")}
+                  </Link>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => handleRoleToggle("creator")}
+                    className="shrink-0 text-[#ffabf3] hover:underline font-extrabold cursor-pointer"
+                  >
+                    {t("landing.switchToCreatorLink", "Switch to Creator →")}
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
       </main>
 
-      {/* Footer */}
+      {/* Untouched PublicFooter with Official 3D "S" Icon, Legal Links & SECCION Wordmark */}
       <PublicFooter />
     </div>
   );
