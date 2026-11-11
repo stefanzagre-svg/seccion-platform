@@ -17,6 +17,7 @@ import {
   Clock,
   Crown,
   MessageCircle,
+  ShieldCheck,
 } from "lucide-react";
 import PrelaunchModal from "@/components/PrelaunchModal";
 import { useTranslation } from "@/context/LanguageContext";
@@ -40,8 +41,8 @@ export default function LoginPage() {
   const { t, locale } = useTranslation();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  // Default to Passwordless (Option 1: Zero-Password Approval & Instant Studio Access)
-  const [useMagicLink, setUseMagicLink] = useState(true);
+  const [agreedToTerms, setAgreedToTerms] = useState(true);
+  const [showPasswordMode, setShowPasswordMode] = useState(false);
   const [sentMode, setSentMode] = useState<"code" | "link">("code");
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -64,9 +65,7 @@ export default function LoginPage() {
         setEmail(emailParam.trim());
       }
       if (params.get("mode") === "password") {
-        setUseMagicLink(false);
-      } else {
-        setUseMagicLink(true);
+        setShowPasswordMode(true);
       }
       if (params.get("error") === "auth_callback_failed") {
         setErrorMsg(
@@ -186,7 +185,7 @@ export default function LoginPage() {
       }
 
       const explicitNext = params.get("next");
-      // Option 1 + A2: Approved Creators skip /onboarding and land directly in /studio
+      // Approved Creators skip /onboarding and land directly in /studio
       const defaultDestination = resolvedRole === "creator" ? "/studio" : "/early-access";
       const nextTarget = explicitNext || defaultDestination;
       window.location.href = nextTarget;
@@ -238,6 +237,14 @@ export default function LoginPage() {
           setLoading(false);
           return;
         }
+      } else if (checkRes.status === 429) {
+        setErrorMsg(
+          locale === "es"
+            ? "Demasiadas solicitudes. Por favor espera un momento antes de volver a intentarlo."
+            : "Too many requests. Please wait a moment and try again."
+        );
+        setLoading(false);
+        return;
       }
 
       // Step 2: Approved Creator -> Send 6-Digit Code or 1-Click Magic Link straight to /studio
@@ -265,13 +272,23 @@ export default function LoginPage() {
     }
   };
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleSingleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email) return;
-
-    if (useMagicLink) {
-      return handleMagicOtp(sentMode);
+    if (!agreedToTerms) {
+      setErrorMsg(
+        locale === "es"
+          ? "Debes confirmar que eres mayor de 18 años y aceptar los Términos de Servicio y la Política de Privacidad para continuar."
+          : "You must confirm that you are at least 18 years old and agree to SECCION's Terms of Service and Privacy Policy to continue."
+      );
+      return;
     }
+    return handleMagicOtp("code");
+  };
+
+  const handlePasswordLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email || !password) return;
 
     setLoading(true);
     setErrorMsg(null);
@@ -306,10 +323,12 @@ export default function LoginPage() {
 
       window.location.href = nextTarget;
     } catch (err: any) {
-      console.error("Login error:", err);
+      console.error("Password login error:", err);
       setErrorMsg(
         err.message ||
-          "Failed to authenticate. Try Passwordless 6-Digit Code if you haven't set a password."
+          (locale === "es"
+            ? "Error de autenticación. Verifica tus credenciales o utiliza el acceso sin contraseña."
+            : "Authentication error. Check your credentials or use passwordless access.")
       );
     } finally {
       setLoading(false);
@@ -372,45 +391,15 @@ export default function LoginPage() {
                 alt="SECCION"
                 className="h-8 mx-auto object-contain drop-shadow-[0_0_20px_rgba(0,251,251,0.4)]"
               />
-              <p className="text-[10px] font-mono font-bold text-[#00fbfb] uppercase tracking-widest">
-                {locale === "es"
-                  ? "Acceso Directo al Creator Studio (Sin Contraseña)"
-                  : "Instant Creator Studio Access (Passwordless)"}
+              <p className="text-[11px] font-mono font-bold text-[#00fbfb] uppercase tracking-wider">
+                {t("onboarding.prelaunchGates.singleEmailTagline", "Instant Creator Studio & VIP Access (Passwordless)")}
               </p>
-            </div>
-
-            {/* Mode Switcher Tabs — Passwordless First */}
-            <div className="grid grid-cols-2 p-1 bg-black/60 border border-white/10 rounded-xl text-xs font-mono font-bold">
-              <button
-                type="button"
-                onClick={() => {
-                  setUseMagicLink(true);
-                  setErrorMsg(null);
-                  setPrelaunchState("idle");
-                }}
-                className={`py-2 px-3 rounded-lg text-center transition-all cursor-pointer ${
-                  useMagicLink
-                    ? "bg-[#00fbfb] text-black shadow-[0_0_15px_rgba(0,251,251,0.4)]"
-                    : "text-[#ffabf3] hover:text-white"
-                }`}
-              >
-                {t("onboarding.prelaunchGates.tabPasswordless", "✨ Instant Code / Link")}
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setUseMagicLink(false);
-                  setErrorMsg(null);
-                  setPrelaunchState("idle");
-                }}
-                className={`py-2 px-3 rounded-lg text-center transition-all cursor-pointer ${
-                  !useMagicLink
-                    ? "bg-white/15 text-[#00fbfb] shadow-[0_0_10px_rgba(0,251,251,0.2)]"
-                    : "text-white/40 hover:text-white"
-                }`}
-              >
-                {t("onboarding.prelaunchGates.tabPassword", "Use Password")}
-              </button>
+              <p className="text-[11px] text-[#b9cac9] leading-relaxed">
+                {t(
+                  "onboarding.prelaunchGates.singleEmailDesc",
+                  "Enter your email. Approved Creators enter Studio directly; Members get instant VIP waitlist access."
+                )}
+              </p>
             </div>
 
             {errorMsg && (
@@ -428,9 +417,7 @@ export default function LoginPage() {
                 </div>
                 <div className="space-y-1.5">
                   <h3 className="text-sm font-bold uppercase tracking-wider text-white">
-                    {locale === "es"
-                      ? "Tu Solicitud de Creador Está en Revisión"
-                      : "Your Creator Application is Under Review"}
+                    {t("onboarding.prelaunchGates.applicationUnderReviewTitle", "Your Creator Application is Under Review")}
                   </h3>
                   <p className="text-xs text-[#b9cac9] leading-relaxed">
                     {locale === "es" ? (
@@ -455,9 +442,7 @@ export default function LoginPage() {
                 >
                   <MessageCircle className="w-4 h-4" />
                   <span>
-                    {locale === "es"
-                      ? "Acelerar Aprobación por WhatsApp →"
-                      : "Fast-Track Approval on WhatsApp →"}
+                    {t("onboarding.prelaunchGates.whatsappFastTrackBtn", "Fast-Track Approval on WhatsApp →")}
                   </span>
                 </a>
                 <button
@@ -465,7 +450,7 @@ export default function LoginPage() {
                   onClick={() => setPrelaunchState("idle")}
                   className="text-[10px] font-mono text-white/50 hover:text-white underline uppercase cursor-pointer"
                 >
-                  {locale === "es" ? "← Probar con otro correo" : "← Try another email"}
+                  {t("onboarding.prelaunchGates.tryAnotherEmail", "← Use a different email")}
                 </button>
               </div>
             ) : prelaunchState === "unregistered" ? (
@@ -473,7 +458,7 @@ export default function LoginPage() {
               <div className="p-5 bg-white/5 border border-white/15 rounded-2xl space-y-4 text-center">
                 <div className="space-y-1.5">
                   <span className="inline-block text-[10px] font-mono font-bold uppercase px-2.5 py-0.5 rounded-full bg-[#00fbfb]/15 text-[#00fbfb]">
-                    {locale === "es" ? "Fase Pre-Lanzamiento" : "Pre-Launch Access Gate"}
+                    {t("onboarding.prelaunchGates.prelaunchGateTitle", "Pre-Launch Access Gate")}
                   </span>
                   <h3 className="text-sm font-bold uppercase tracking-wider text-white">
                     {locale === "es"
@@ -502,9 +487,7 @@ export default function LoginPage() {
                   >
                     <Crown className="w-4 h-4" />
                     <span>
-                      {locale === "es"
-                        ? "Soy Creador/a — Solicitar 90% Split →"
-                        : "I'm a Creator — Apply for 90% Split →"}
+                      {t("onboarding.prelaunchGates.applyAsCreatorBtn", "I'm a Creator — Apply for 90% Split →")}
                     </span>
                   </Link>
 
@@ -520,9 +503,7 @@ export default function LoginPage() {
                       <>
                         <Sparkles className="w-4 h-4" />
                         <span>
-                          {locale === "es"
-                            ? "Soy Miembro — Unirme a la Lista VIP (1-Clic)"
-                            : "I'm a Member — Join VIP Waitlist (1-Click)"}
+                          {t("onboarding.prelaunchGates.joinMemberWaitlistBtn", "I'm a Member — Join VIP Waitlist (1-Click)")}
                         </span>
                       </>
                     )}
@@ -534,16 +515,14 @@ export default function LoginPage() {
                   onClick={() => setPrelaunchState("idle")}
                   className="text-[10px] font-mono text-white/50 hover:text-white underline uppercase cursor-pointer"
                 >
-                  {locale === "es" ? "← Volver" : "← Back"}
+                  {t("onboarding.prelaunchGates.tryAnotherEmail", "← Use a different email")}
                 </button>
               </div>
             ) : prelaunchState === "waitlist_joined" ? (
               <div className="p-5 bg-[#00fbfb]/10 border border-[#00fbfb]/30 rounded-2xl space-y-3 text-center">
                 <CheckCircle2 className="w-10 h-10 text-[#00fbfb] mx-auto" />
                 <h3 className="text-base font-bold text-white">
-                  {locale === "es"
-                    ? "¡Estás en la Lista VIP de Miembros! 🎉"
-                    : "You're on the Founding Member VIP List! 🎉"}
+                  {t("onboarding.prelaunchGates.waitlistSuccessTitle", "You're on the Founding Member VIP List! 🎉")}
                 </h3>
                 <p className="text-xs text-[#b9cac9] leading-relaxed">
                   {locale === "es" ? (
@@ -569,6 +548,15 @@ export default function LoginPage() {
                     ? "¿Eres Creador/a? Solicita tu 90% Split aquí →"
                     : "Are you a Creator instead? Apply for 90% Split here →"}
                 </Link>
+                <div className="pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setPrelaunchState("idle")}
+                    className="text-[10px] font-mono text-white/50 hover:text-white underline uppercase cursor-pointer"
+                  >
+                    {t("onboarding.prelaunchGates.tryAnotherEmail", "← Use a different email")}
+                  </button>
+                </div>
               </div>
             ) : magicLinkSent ? (
               <div className="space-y-4">
@@ -576,10 +564,10 @@ export default function LoginPage() {
                   <>
                     <div className="p-4 bg-[#00fbfb]/5 border border-[#00fbfb]/20 text-[#00fbfb] text-xs rounded-xl space-y-1.5 text-center">
                       <h4 className="font-bold uppercase tracking-wider text-white">
-                        {locale === "es" ? "¡Código de 6 Dígitos Enviado!" : "6-Digit Access Code Sent!"}
+                        {t("onboarding.prelaunchGates.enterOtpTitle", "Enter 6-Digit Access Code")}
                       </h4>
-                      <p className="text-[10px] text-[#b9cac9] leading-relaxed">
-                        {locale === "es" ? "Enviamos tu código a " : "We sent your code to "}
+                      <p className="text-[11px] text-[#b9cac9] leading-relaxed">
+                        {t("onboarding.prelaunchGates.enterOtpDesc", "We sent a 6-digit passcode to your email.")}{" "}
                         <strong className="text-white">{email}</strong>.
                       </p>
                     </div>
@@ -589,7 +577,7 @@ export default function LoginPage() {
                       className="space-y-3 p-4 bg-white/5 border border-white/10 rounded-2xl"
                     >
                       <label className="block text-[10px] font-mono text-[#00fbfb] uppercase font-bold tracking-wider text-center">
-                        {locale === "es" ? "Ingresa el Código de 6 Dígitos:" : "Enter 6-Digit Code:"}
+                        {locale === "es" ? "Ingresa el Código:" : "Enter Code:"}
                       </label>
                       <input
                         type="text"
@@ -597,22 +585,34 @@ export default function LoginPage() {
                         value={otpCode}
                         onChange={(e) => setOtpCode(e.target.value)}
                         placeholder="123456"
-                        className="w-full bg-black/60 border border-white/20 focus:border-[#00fbfb] rounded-xl py-3 text-center text-lg font-mono tracking-[0.2em] font-bold outline-none transition text-white"
+                        autoFocus
+                        className="w-full bg-black/60 border border-white/20 focus:border-[#00fbfb] rounded-xl py-3 text-center text-xl font-mono tracking-[0.25em] font-bold outline-none transition text-white"
                       />
                       <button
                         type="submit"
                         disabled={verifyingOtp || otpCode.length < 6}
-                        className="w-full py-3 bg-[#00fbfb] text-black font-mono text-xs font-black uppercase tracking-wider rounded-xl hover:shadow-[0_0_15px_rgba(0,251,251,0.5)] transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-40"
+                        className="w-full py-3.5 bg-[#00fbfb] text-black font-mono text-xs font-black uppercase tracking-wider rounded-xl hover:shadow-[0_0_15px_rgba(0,251,251,0.5)] transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-40"
                       >
                         {verifyingOtp ? (
                           <Loader2 className="w-4 h-4 animate-spin" />
-                        ) : locale === "es" ? (
-                          "Entrar Directo al Creator Studio →"
                         ) : (
-                          "Enter Creator Studio Directly →"
+                          <span>
+                            {t("onboarding.prelaunchGates.enterStudioDirectly", "Enter Creator Studio Directly →")}
+                          </span>
                         )}
                       </button>
                     </form>
+
+                    <button
+                      type="button"
+                      onClick={() => handleMagicOtp("link")}
+                      disabled={loading}
+                      className="w-full py-2.5 bg-white/5 border border-white/10 text-white font-mono text-[10px] font-bold uppercase tracking-wider rounded-xl hover:bg-white/10 transition flex items-center justify-center gap-2 cursor-pointer"
+                    >
+                      <span>
+                        {t("onboarding.prelaunchGates.sendMagicLinkInstead", "✉️ Send 1-Click Magic Link instead")}
+                      </span>
+                    </button>
                   </>
                 ) : (
                   <div className="p-4 bg-emerald-500/5 border border-emerald-500/20 text-emerald-400 text-xs rounded-xl space-y-2 text-center">
@@ -635,44 +635,103 @@ export default function LoginPage() {
                   </div>
                 )}
 
-                <div className="text-center">
+                <div className="text-center pt-2">
                   <button
                     type="button"
                     onClick={() => {
                       setMagicLinkSent(false);
                       setErrorMsg(null);
                     }}
-                    className="text-[10px] font-mono text-white/40 hover:text-white underline uppercase cursor-pointer"
+                    className="text-[10px] font-mono text-white/50 hover:text-white underline uppercase cursor-pointer"
                   >
-                    {locale === "es"
-                      ? "← Intentar con otro correo o método"
-                      : "← Try another email or method"}
+                    {t("onboarding.prelaunchGates.tryAnotherEmail", "← Use a different email")}
                   </button>
                 </div>
               </div>
-            ) : (
-              <form onSubmit={handleLogin} className="space-y-4">
-                {useMagicLink ? (
-                  <div className="p-3 bg-[#00fbfb]/10 border border-[#00fbfb]/30 rounded-xl text-[11px] text-[#b9cac9] leading-relaxed flex items-start gap-2">
-                    <Sparkles className="w-4 h-4 text-[#00fbfb] shrink-0 mt-0.5" />
-                    <span>
-                      {locale === "es"
-                        ? "Sin contraseñas: ingresa tu correo de Creador Aprobado para recibir un código instantáneo de 6 dígitos y entrar directo a tu Creator Studio."
-                        : "Zero passwords needed: enter your Approved Creator email to receive an instant 6-digit code and enter your Creator Studio directly."}
-                    </span>
-                  </div>
-                ) : (
-                  <div className="text-[10px] font-mono text-white/60 px-1 leading-relaxed">
+            ) : showPasswordMode ? (
+              /* Founder / Admin Password Mode */
+              <form onSubmit={handlePasswordLogin} className="space-y-4">
+                <div className="p-3 bg-white/5 border border-white/15 rounded-xl text-[11px] text-[#b9cac9] leading-relaxed flex items-start gap-2">
+                  <ShieldCheck className="w-4 h-4 text-[#00fbfb] shrink-0 mt-0.5" />
+                  <span>
                     {locale === "es"
-                      ? "Ingresa tu correo y contraseña si ya configuraste una anteriormente."
-                      : "Enter your email and password if you already configured one."}
-                  </div>
-                )}
+                      ? "Acceso administrativo con contraseña para fundadores y equipo de SECCION."
+                      : "Administrative password authentication for SECCION founders and staff."}
+                  </span>
+                </div>
 
+                <div className="space-y-1.5">
+                  <label className="block text-[9px] font-mono text-white/50 uppercase font-bold tracking-wider">
+                    {t("onboarding.prelaunchGates.emailInputLabel", "Your Email Address")}
+                  </label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
+                    <input
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder={t("onboarding.prelaunchGates.emailPlaceholder", "you@email.com")}
+                      required
+                      className="w-full bg-black/40 border border-white/10 focus:border-[#00fbfb]/50 rounded-xl py-3 pl-10 pr-4 text-xs outline-none transition text-white"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="block text-[9px] font-mono text-white/50 uppercase font-bold tracking-wider">
+                    {t("onboarding.prelaunchGates.passwordLabel", "Account Password")}
+                  </label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
+                    <input
+                      type="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="••••••••"
+                      required
+                      minLength={6}
+                      className="w-full bg-black/40 border border-white/10 focus:border-[#00fbfb]/50 rounded-xl py-3 pl-10 pr-4 text-xs outline-none transition text-white"
+                    />
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full py-3.5 bg-[#00fbfb] text-black font-mono text-xs font-black uppercase tracking-wider rounded-xl hover:shadow-[0_0_15px_rgba(0,251,251,0.5)] transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-40"
+                >
+                  {loading ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <>
+                      <Key className="w-4 h-4" />
+                      <span>
+                        {locale === "es" ? "Entrar con Contraseña →" : "Sign In with Password →"}
+                      </span>
+                    </>
+                  )}
+                </button>
+
+                <div className="text-center pt-1">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowPasswordMode(false);
+                      setErrorMsg(null);
+                    }}
+                    className="text-[10px] font-mono text-white/50 hover:text-white underline uppercase cursor-pointer"
+                  >
+                    {t("onboarding.prelaunchGates.backToEmailLogin", "← Back to Passwordless Email")}
+                  </button>
+                </div>
+              </form>
+            ) : (
+              /* UNIFIED SINGLE-FIELD EMAIL ENTRY (Core Flow) */
+              <form onSubmit={handleSingleEmailSubmit} className="space-y-4">
                 {/* Email Input */}
                 <div className="space-y-1.5">
                   <label className="block text-[9px] font-mono text-white/50 uppercase font-bold tracking-wider">
-                    {locale === "es" ? "Tu Correo Electrónico" : "Your Email Address"}
+                    {t("onboarding.prelaunchGates.emailInputLabel", "Your Email Address")}
                   </label>
                   <div className="relative">
                     <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
@@ -683,91 +742,82 @@ export default function LoginPage() {
                         setEmail(e.target.value);
                         if (prelaunchState !== "idle") setPrelaunchState("idle");
                       }}
-                      placeholder={locale === "es" ? "tu@correo.com" : "you@email.com"}
+                      placeholder={t("onboarding.prelaunchGates.emailPlaceholder", "you@email.com")}
                       required
-                      className="w-full bg-black/40 border border-white/10 focus:border-[#00fbfb]/50 rounded-xl py-3 pl-10 pr-4 text-xs outline-none transition text-white"
+                      autoFocus
+                      className="w-full bg-black/40 border border-white/10 focus:border-[#00fbfb]/50 rounded-xl py-3.5 pl-10 pr-4 text-sm outline-none transition text-white placeholder:text-white/20"
                     />
                   </div>
                 </div>
 
-                {/* Password Input (Only in Password mode) */}
-                {!useMagicLink && (
-                  <div className="space-y-1.5 animate-fade-in">
-                    <label className="block text-[9px] font-mono text-white/50 uppercase font-bold tracking-wider">
-                      {locale === "es" ? "Contraseña" : "Password"}
-                    </label>
-                    <div className="relative">
-                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
-                      <input
-                        type="password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        placeholder="••••••••"
-                        required={!useMagicLink}
-                        minLength={6}
-                        className="w-full bg-black/40 border border-white/10 focus:border-[#00fbfb]/50 rounded-xl py-3 pl-10 pr-4 text-xs outline-none transition text-white"
-                      />
-                    </div>
-                  </div>
-                )}
-
-                {/* Login Action Buttons */}
-                {useMagicLink ? (
-                  <div className="space-y-2 pt-1">
-                    <button
-                      type="button"
-                      onClick={() => handleMagicOtp("code")}
-                      disabled={loading || !email}
-                      className="w-full py-3.5 bg-[#00fbfb] text-black font-mono text-xs font-black uppercase tracking-wider rounded-xl hover:shadow-[0_0_15px_rgba(0,251,251,0.5)] transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-40"
-                    >
-                      {loading && sentMode === "code" ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                      ) : (
-                        <>
-                          <Key className="w-4 h-4" />
-                          <span>
-                            {locale === "es"
-                              ? "Enviar Código de 6 Dígitos →"
-                              : "Send 6-Digit Access Code →"}
-                          </span>
-                        </>
-                      )}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleMagicOtp("link")}
-                      disabled={loading || !email}
-                      className="w-full py-2.5 bg-white/5 border border-white/10 text-white font-mono text-[10px] font-bold uppercase tracking-wider rounded-xl hover:bg-white/10 transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-40"
-                    >
-                      {loading && sentMode === "link" ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                      ) : (
-                        <span>
-                          {locale === "es"
-                            ? "✉️ Enviar Enlace de 1-Clic al Correo"
-                            : "✉️ Send 1-Click Magic Link to Email"}
-                        </span>
-                      )}
-                    </button>
-                  </div>
-                ) : (
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    className="w-full py-3.5 bg-[#00fbfb] text-black font-mono text-xs font-black uppercase tracking-wider rounded-xl hover:shadow-[0_0_15px_rgba(0,251,251,0.5)] transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-40"
-                  >
-                    {loading ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
+                {/* 18+ and Terms & Privacy Consent Checkbox (M1 Security & Compliance) */}
+                <label className="flex items-start gap-2.5 text-[11px] text-[#b9cac9] leading-tight cursor-pointer pt-1 select-none">
+                  <input
+                    type="checkbox"
+                    checked={agreedToTerms}
+                    onChange={(e) => setAgreedToTerms(e.target.checked)}
+                    className="mt-0.5 rounded border-white/20 bg-black/40 text-[#00fbfb] focus:ring-0 cursor-pointer"
+                  />
+                  <span>
+                    {locale === "es" ? (
+                      <>
+                        Declaro ser mayor de 18 años y acepto los{" "}
+                        <Link href="/rules" target="_blank" className="text-[#00fbfb] underline hover:text-white">
+                          Términos de Servicio
+                        </Link>{" "}
+                        y la{" "}
+                        <Link href="/privacy" target="_blank" className="text-[#00fbfb] underline hover:text-white">
+                          Política de Privacidad
+                        </Link>{" "}
+                        de SECCION.
+                      </>
                     ) : (
                       <>
-                        <Key className="w-4 h-4" />
-                        <span>
-                          {locale === "es" ? "Entrar con Contraseña →" : "Sign In with Password →"}
-                        </span>
+                        I declare that I am at least 18 years old and agree to SECCION's{" "}
+                        <Link href="/rules" target="_blank" className="text-[#00fbfb] underline hover:text-white">
+                          Terms of Service
+                        </Link>{" "}
+                        and{" "}
+                        <Link href="/privacy" target="_blank" className="text-[#00fbfb] underline hover:text-white">
+                          Privacy Policy
+                        </Link>
+                        .
                       </>
                     )}
+                  </span>
+                </label>
+
+                {/* Single Primary Action Button */}
+                <button
+                  type="submit"
+                  disabled={loading || !email}
+                  className="w-full py-3.5 bg-[#00fbfb] text-black font-mono text-xs font-black uppercase tracking-wider rounded-xl hover:shadow-[0_0_20px_rgba(0,251,251,0.5)] transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-40"
+                >
+                  {loading ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <>
+                      <Sparkles className="w-4 h-4" />
+                      <span>
+                        {t("onboarding.prelaunchGates.continueWithEmail", "Continue with Email →")}
+                      </span>
+                    </>
+                  )}
+                </button>
+
+                {/* Discreet Admin / Password Sign-In Toggle */}
+                <div className="pt-2 text-center">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowPasswordMode(true);
+                      setErrorMsg(null);
+                    }}
+                    className="text-[10px] font-mono text-white/35 hover:text-[#00fbfb] transition underline uppercase cursor-pointer"
+                  >
+                    {t("onboarding.prelaunchGates.adminLoginLink", "Admin / Founder password sign-in")}
                   </button>
-                )}
+                </div>
               </form>
             )}
 
@@ -775,24 +825,15 @@ export default function LoginPage() {
               <p className="text-[10px] text-[#b9cac9]">
                 {t(
                   "onboarding.prelaunchGates.loginNotAppliedNotice",
-                  "Are you a creator that has not applied for 90% revenue & 1-Year Free AI Assistant? "
-                )}{" "}
-                <Link
-                  href="/become-creator#apply"
-                  className="text-[#00fbfb] hover:underline font-bold font-mono uppercase tracking-wide"
-                >
-                  {t("onboarding.prelaunchGates.loginApplyNow", "APPLY NOW")}
-                </Link>
+                  "Are you a creator who hasn't applied for 90% revenue & 1-Year Free AI Assistant?"
+                )}
               </p>
-              <p className="text-[10px] text-[#b9cac9]">
-                {t("onboarding.prelaunchGates.loginMemberNotice", "Looking for early member access? ")}{" "}
-                <Link
-                  href="/early-access"
-                  className="text-[#ffabf3] hover:underline font-bold font-mono uppercase tracking-wide"
-                >
-                  {t("onboarding.prelaunchGates.loginJoinWaitlist", "JOIN EARLY ACCESS LIST")}
-                </Link>
-              </p>
+              <Link
+                href="/become-creator#apply"
+                className="inline-block text-[11px] font-mono font-bold text-[#ffabf3] hover:underline"
+              >
+                {t("onboarding.prelaunchGates.loginApplyNow", "APPLY NOW")} →
+              </Link>
             </div>
           </div>
         </DoubleBezelCard>

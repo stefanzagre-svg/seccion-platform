@@ -28,6 +28,25 @@ async function findAuthUserByEmail(supabaseAdmin: any, email: string) {
   return null;
 }
 
+async function checkRateLimit(supabaseAdmin: any, identifier: string): Promise<boolean> {
+  try {
+    const { data, error } = await supabaseAdmin.rpc('check_rate_limit', {
+      p_user_id: identifier,
+      p_endpoint: 'auth/prelaunch-access',
+      p_max_hits: 15,
+      p_window_s: 60,
+    });
+    if (error) {
+      console.warn('[RateLimit] RPC notice, allowing request:', error.message);
+      return false; // fail-open
+    }
+    return !(data?.allowed ?? true);
+  } catch (err) {
+    console.warn('[RateLimit] Unexpected error, allowing request:', err);
+    return false;
+  }
+}
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json().catch(() => null);
@@ -41,8 +60,23 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const clientIp =
+      req.headers.get('cf-connecting-ip') ||
+      req.headers.get('x-real-ip') ||
+      req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
+      'anon_client';
+
     const isFounder = cleanEmail === 'stefan.zagre@gmail.com';
     const supabaseAdmin = createAdminClient();
+
+    // Security First: Distributed IP rate limiting against email enumeration & brute force
+    const isRateLimited = await checkRateLimit(supabaseAdmin, `ip_${clientIp}`);
+    if (isRateLimited) {
+      return NextResponse.json(
+        { error: 'Too many requests. Please wait a moment and try again.' },
+        { status: 429 }
+      );
+    }
 
     // 1. Check creator_applications table (link1 instead of primary_handle)
     const { data: creatorApp } = await supabaseAdmin

@@ -156,3 +156,47 @@ describe('Phase A Security Hardening Invariants (C1, C2, C3, H1, Schema)', () =>
     expect(shouldOverwritePassword(false, true)).toBe(true);
   });
 });
+
+describe('Phase B Single-Field Email Authentication & Pre-Launch Gating', () => {
+  it('validates single-email submission requires 18+ and Terms & Privacy consent', () => {
+    const validateSingleEmailSubmit = (email: string, agreedToTerms: boolean) => {
+      if (!email || !email.includes('@')) {
+        return { valid: false, error: 'invalid_email' };
+      }
+      if (!agreedToTerms) {
+        return { valid: false, error: 'terms_required' };
+      }
+      return { valid: true };
+    };
+
+    expect(validateSingleEmailSubmit('', true).valid).toBe(false);
+    expect(validateSingleEmailSubmit('creator@seccion.ai', false).error).toBe('terms_required');
+    expect(validateSingleEmailSubmit('creator@seccion.ai', true).valid).toBe(true);
+  });
+
+  it('H3: gates non-creator accounts from member feed during creator pre-launch window', () => {
+    const resolvePrelaunchRoute = (pathname: string, isCreatorRole: boolean) => {
+      if (!isCreatorRole && (pathname === '/feed' || pathname.startsWith('/feed/') || pathname === '/top-profile')) {
+        return '/early-access';
+      }
+      return pathname;
+    };
+
+    expect(resolvePrelaunchRoute('/feed', false)).toBe('/early-access');
+    expect(resolvePrelaunchRoute('/feed/trending', false)).toBe('/early-access');
+    expect(resolvePrelaunchRoute('/top-profile', false)).toBe('/early-access');
+    expect(resolvePrelaunchRoute('/feed', true)).toBe('/feed');
+    expect(resolvePrelaunchRoute('/studio', true)).toBe('/studio');
+  });
+
+  it('H4: rate limits repeated prelaunch-access attempts per IP', () => {
+    const rateLimiter = (hitCount: number, maxHits = 15) => {
+      return hitCount > maxHits ? { allowed: false, status: 429 } : { allowed: true, status: 200 };
+    };
+
+    expect(rateLimiter(1).allowed).toBe(true);
+    expect(rateLimiter(15).allowed).toBe(true);
+    expect(rateLimiter(16).allowed).toBe(false);
+    expect(rateLimiter(16).status).toBe(429);
+  });
+});

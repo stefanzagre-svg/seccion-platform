@@ -207,6 +207,15 @@ export async function middleware(request: NextRequest) {
       request.nextUrl.searchParams.has('tutorial') ||
       request.nextUrl.searchParams.has('setup');
 
+    // Pre-Launch Member Gating (H3 Fix):
+    // In Creator Pre-Launch mode, restrict non-creator accounts from /feed and /top-profile
+    // and guide them gracefully to /early-access.
+    if (!isCreatorRole && (pathname === '/feed' || pathname.startsWith('/feed/') || pathname === '/top-profile')) {
+      const url = request.nextUrl.clone();
+      url.pathname = '/early-access';
+      return NextResponse.redirect(url);
+    }
+
     if (onboardingCompleted) {
       // Redirect fully onboarded authenticated users away from onboarding pages only when cookie is explicitly set
       if (isOnAuthRoute && onboardingCookie === '1' && !hasExplicitOnboardingOverride) {
