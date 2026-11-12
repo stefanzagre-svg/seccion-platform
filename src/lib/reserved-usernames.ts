@@ -57,6 +57,7 @@ export const RESERVED_USERNAMES = new Set([
   'seccion',
   'session',
   'steve',
+  'kate',
   'support',
   'help',
   'terms',

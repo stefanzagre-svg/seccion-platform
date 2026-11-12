@@ -1696,6 +1696,7 @@ export default function CreatorStudio() {
           onOpenKyc={() => router.push('/creator/kyc')}
           onAskCopilot={(question) => {
             if (typeof window !== 'undefined') {
+              window.dispatchEvent(new CustomEvent('seccion:ask-kate', { detail: { question } }));
               window.dispatchEvent(new CustomEvent('seccion:ask-steve', { detail: { question } }));
             }
           }}

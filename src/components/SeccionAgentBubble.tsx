@@ -28,9 +28,31 @@ export default function SeccionAgentBubble() {
   const [voiceEnabled, setVoiceEnabled] = useState(true);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [activeAgentLang, setActiveAgentLang] = useState<'fr' | 'es' | 'en' | 'ar'>('fr');
+  const [availableVoices, setAvailableVoices] = useState<SpeechSynthesisVoice[]>([]);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const recognitionRef = useRef<any>(null);
+
+  // Pre-load and cache voices eagerly to fix mobile Safari/Chrome empty voice roster bug
+  useEffect(() => {
+    if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
+
+    const syncVoices = () => {
+      const v = window.speechSynthesis.getVoices();
+      if (v && v.length > 0) {
+        setAvailableVoices(v);
+      }
+    };
+
+    syncVoices();
+    window.speechSynthesis.onvoiceschanged = syncVoices;
+
+    return () => {
+      if (window.speechSynthesis) {
+        window.speechSynthesis.onvoiceschanged = null;
+      }
+    };
+  }, []);
 
   // Initialize and persist agent language preference
   useEffect(() => {
@@ -117,22 +139,22 @@ export default function SeccionAgentBubble() {
         }
         utterance.lang = targetVoiceLang;
 
-        // Configure Steve's voice strictly as a warm, authoritative MALE voice
-        utterance.pitch = 0.82; // Masculine baritone timbre
-        utterance.rate = 0.96; // Natural human cadence
+        // Configure Kate's voice strictly as a warm, articulate, high-status FEMALE voice
+        utterance.pitch = 1.0; // Natural, articulate feminine pitch
+        utterance.rate = 1.0; // Fluent conversational pace
 
-        // Select a male voice from the browser's available voice roster
-        const voices = window.speechSynthesis.getVoices();
+        // Select a female voice from cached or live available voice roster
+        const voices = availableVoices.length > 0 ? availableVoices : (typeof window !== 'undefined' && 'speechSynthesis' in window ? window.speechSynthesis.getVoices() : []);
         if (voices.length > 0) {
           const langCode = utterance.lang.slice(0, 2).toLowerCase();
           const matchingLangVoices = voices.filter((v) => v.lang.toLowerCase().startsWith(langCode));
 
           const femaleKeywords = [
             'female', 'femme', 'mujer', 'woman', 'girl',
-            'amelie', 'amélie', 'aurelie', 'aurélie', 'marie', 'claire', 'hortense', 'julie', 'celine', 'céline', 'alice', 'charlotte', 'virginie',
+            'kate', 'amelie', 'amélie', 'aurelie', 'aurélie', 'marie', 'claire', 'hortense', 'julie', 'celine', 'céline', 'alice', 'charlotte', 'virginie',
             'monica', 'mónica', 'paulina', 'helena', 'laura', 'sofia', 'sofía', 'marta', 'rosa', 'conchita', 'lucia', 'lucía', 'carmen',
             'samantha', 'karen', 'victoria', 'moira', 'fiona', 'tessa', 'susan', 'zira', 'linda', 'jenny', 'heather', 'ava',
-            'mariam', 'laila', 'salma', 'zeina'
+            'mariam', 'laila', 'salma', 'zeina', 'audrey', 'sarah', 'emma'
           ];
 
           const maleKeywords = [
@@ -143,30 +165,30 @@ export default function SeccionAgentBubble() {
             'tarik', 'tarek', 'jamal', 'maged', 'majed', 'naayf', 'hamed', 'omar', 'karim'
           ];
 
-          // 1. Try to find a voice explicitly matching a male name and NOT matching female keywords
-          let maleVoice = matchingLangVoices.find((v) => {
+          // 1. Try to find a voice explicitly matching female keywords and NOT matching male keywords
+          let femaleVoice = matchingLangVoices.find((v) => {
             const name = v.name.toLowerCase();
-            return maleKeywords.some((m) => name.includes(m)) && !femaleKeywords.some((f) => name.includes(f));
+            return femaleKeywords.some((f) => name.includes(f)) && !maleKeywords.some((m) => name.includes(m));
           });
 
-          // 2. If not found, pick any voice in that language that is NOT female
-          if (!maleVoice) {
-            maleVoice = matchingLangVoices.find((v) => {
+          // 2. If not found, pick any matching language voice that is NOT explicitly male
+          if (!femaleVoice) {
+            femaleVoice = matchingLangVoices.find((v) => {
               const name = v.name.toLowerCase();
-              return !femaleKeywords.some((f) => name.includes(f));
+              return !maleKeywords.some((m) => name.includes(m));
             });
           }
 
-          // 3. Fallback to any male voice across all languages if language-specific male voice is absent
-          if (!maleVoice) {
-            maleVoice = voices.find((v) => {
+          // 3. Fallback to any female voice across all languages if language-specific voice is absent
+          if (!femaleVoice) {
+            femaleVoice = voices.find((v) => {
               const name = v.name.toLowerCase();
-              return maleKeywords.some((m) => name.includes(m)) && !femaleKeywords.some((f) => name.includes(f));
+              return femaleKeywords.some((f) => name.includes(f)) && !maleKeywords.some((m) => name.includes(m));
             });
           }
 
-          if (maleVoice) {
-            utterance.voice = maleVoice;
+          if (femaleVoice) {
+            utterance.voice = femaleVoice;
           }
         }
         utterance.onstart = () => setIsSpeaking(true);
@@ -183,7 +205,7 @@ export default function SeccionAgentBubble() {
         console.error('Speech synthesis error:', e);
       }
     },
-    [voiceEnabled, activeAgentLang]
+    [voiceEnabled, activeAgentLang, availableVoices]
   );
 
   const sendQuestion = useCallback(
@@ -227,7 +249,7 @@ export default function SeccionAgentBubble() {
         };
         setMessages((prev) => [...prev, agentMsg]);
 
-        // CRITICAL INVARIANT: If the creator spoke aloud, Steve MUST reply with vocal audio!
+        // CRITICAL INVARIANT: If the creator spoke aloud, Kate MUST reply with vocal audio!
         const replyVoiceLang = detected === 'fr' ? 'fr-FR' : detected === 'ar' ? 'ar-MA' : detected === 'es' ? 'es-ES' : detected === 'en' ? 'en-US' : undefined;
         speakText(replyText, isVocalInput, replyVoiceLang);
       } catch (err: any) {
@@ -322,17 +344,17 @@ export default function SeccionAgentBubble() {
       const isCreatorGuide =
         searchParams.get('guide') === 'creator' ||
         searchParams.get('ref') === 'creator' ||
-        (searchParams.get('role') === 'creator' && searchParams.get('help') === 'steve');
+        (searchParams.get('role') === 'creator' && (searchParams.get('help') === 'kate' || searchParams.get('help') === 'steve'));
 
       if (isMoroccoCreator) {
         setIsOpen(true);
         const langParam = searchParams.get('lang')?.toLowerCase();
-        let moroccoGreeting = "Marhaba ! 👋 Je suis Steve, votre conseiller SECCION pour le Maroc. Bienvenue dans notre phase d'accès anticipé ! Vous pouvez dès maintenant créer votre profil, explorer le Creator Studio et préparer votre bio avec moi. Profitez de notre bouclier de confidentialité (blocage du Maroc 'MA' en 1 clic pour être totalement invisible au pays) et de notre modèle à 90 % net. Les comptes bancaires de paiement sont en cours de finalisation et vous serez notifié(e) dès leur ouverture officielle. Comment puis-je vous aider à configurer votre studio aujourd'hui ?";
+        let moroccoGreeting = "Marhaba ! 👋 Je suis Kate, votre conseillère SECCION pour le Maroc. Bienvenue dans notre phase d'accès anticipé ! Vous pouvez dès maintenant créer votre profil, explorer le Creator Studio et préparer votre bio avec moi. Profitez de notre bouclier de confidentialité (blocage du Maroc 'MA' en 1 clic pour être totalement invisible au pays) et de notre modèle à 90 % net. Les comptes bancaires de paiement sont en cours de finalisation et vous serez notifié(e) dès leur ouverture officielle. Comment puis-je vous aider à configurer votre studio aujourd'hui ?";
 
         if (langParam === 'darija' || langParam === 'ar') {
-          moroccoGreeting = "Marhba bik! 👋 Ana Steve, lmosa3id dyalek f SECCION. Merhba bik f l-marhala dyal l-accès anticipé! T9der men daba t-9ad l-profil dyalek, t-chouf les outils dyal Creator Studio w t-kteb l-bio dyalek m3aya. Ghadi t-stafed men l-privacy l-kamla (t-bloqui l-Maghrib 'MA' f d9i9a bach matban l-hta wahed hna) w l-90% net. Les comptes bancaires f طور الإعداد w ghadi n-3elmouk f l-wa9t li ykouno wajdin. Bghiti n-bdaou n-9ado l-profil dyalek daba?";
+          moroccoGreeting = "Marhba bik! 👋 Ana Kate, lmosa3ida dyalek f SECCION. Merhba bik f l-marhala dyal l-accès anticipé! T9der men daba t-9ad l-profil dyalek, t-chouf les outils dyal Creator Studio w t-kteb l-bio dyalek m3aya. Ghadi t-stafed men l-privacy l-kamla (t-bloqui l-Maghrib 'MA' f d9i9a bach matban l-hta wahed hna) w l-90% net. Les comptes bancaires f طور الإعداد w ghadi n-3elmouk f l-wa9t li ykouno wajdin. Bghiti n-bdaou n-9ado l-profil dyalek daba?";
         } else if (langParam === 'en') {
-          moroccoGreeting = "Marhaba & Welcome! 👋 I'm Steve, your dedicated SECCION Creator Coach for Morocco. Welcome to our early access phase! You can already register your creator profile, explore the Creator Studio tools, and craft your bio with me. Enjoy our 5-Layer Privacy Shield (1-click 'MA' domestic geo-blocking) and 90% net revenue split. Direct payout rails are currently being finalized and you will be notified immediately upon full launch. What would you like to set up first?";
+          moroccoGreeting = "Marhaba & Welcome! 👋 I'm Kate, your dedicated SECCION Creator Coach for Morocco. Welcome to our early access phase! You can already register your creator profile, explore the Creator Studio tools, and craft your bio with me. Enjoy our 5-Layer Privacy Shield (1-click 'MA' domestic geo-blocking) and 90% net revenue split. Direct payout rails are currently being finalized and you will be notified immediately upon full launch. What would you like to set up first?";
         }
 
         setMessages([
@@ -352,7 +374,7 @@ export default function SeccionAgentBubble() {
           {
             id: 'compliance-welcome',
             sender: 'agent',
-            text: "Welcome Institutional Underwriting & Compliance Team! 👋 I'm Steve, SECCION's Onboarding & Compliance Specialist. Feel free to ask me anything regarding our Two-Stage SFW vs. NSFW Sightengine AI gate, DIDIT Zero-Knowledge KYC verification, 18 U.S.C. 2257 record-keeping, smart-contract escrow protection, terms of service, or refund protocols.",
+            text: "Welcome Institutional Underwriting & Compliance Team! 👋 I'm Kate, SECCION's Executive Onboarding & Compliance Specialist. Feel free to ask me anything regarding our Two-Stage SFW vs. NSFW Sightengine AI gate, DIDIT Zero-Knowledge KYC verification, 18 U.S.C. 2257 record-keeping, smart-contract escrow protection, terms of service, or refund protocols.",
             timestamp: new Date(),
           },
         ]);
@@ -367,8 +389,8 @@ export default function SeccionAgentBubble() {
             sender: 'agent',
             text:
               locale === 'es'
-                ? '¡Hola Creadora / Creador! 🌟 Soy Steve, tu Asesor de Onboarding y Monetización en SECCION. Estoy aquí para guiarte paso a paso: desde tu verificación KYC segura y configuración del Creator Studio, hasta cómo activar tus suscripciones VIP, pases Master (80% revenue pool), transmisiones en vivo y herramientas de IA. ¿Tienes alguna pregunta para empezar?'
-                : "Hey Creator! 🌟 I'm Steve, your dedicated Creator Onboarding & Monetization Coach on SECCION. I'm here to guide you through every step: from your private biometric KYC verification and Creator Studio setup, to activating VIP tiers, Master Platform Passes (80% pool redistribution), live broadcasts, and AI growth tools. What can I help you with first?",
+                ? '¡Hola Creadora / Creador! 🌟 Soy Kate, tu Asesora de Onboarding y Monetización en SECCION. Estoy aquí para guiarte paso a paso: desde tu verificación KYC segura y configuración del Creator Studio, hasta cómo activar tus suscripciones VIP, pases Master (80% revenue pool), transmisiones en vivo y herramientas de IA. ¿Tienes alguna pregunta para empezar?'
+                : "Hey Creator! 🌟 I'm Kate, your dedicated Creator Onboarding & Monetization Coach on SECCION. I'm here to guide you through every step: from your private biometric KYC verification and Creator Studio setup, to activating VIP tiers, Master Platform Passes (80% pool redistribution), live broadcasts, and AI growth tools. What can I help you with first?",
             timestamp: new Date(),
           },
         ]);
@@ -386,9 +408,9 @@ export default function SeccionAgentBubble() {
     ]);
   }, [locale, t]);
 
-  // Listen for custom "seccion:ask-steve" events from Creator Studio / Onboarding Checklist
+  // Listen for custom "seccion:ask-kate" or "seccion:ask-steve" events from Creator Studio / Onboarding Checklist
   useEffect(() => {
-    const handleAskSteve = (event: Event) => {
+    const handleAskKate = (event: Event) => {
       const customEvent = event as CustomEvent<{ question?: string }>;
       setIsOpen(true);
       if (customEvent.detail?.question) {
@@ -396,9 +418,11 @@ export default function SeccionAgentBubble() {
       }
     };
 
-    window.addEventListener('seccion:ask-steve', handleAskSteve);
+    window.addEventListener('seccion:ask-kate', handleAskKate);
+    window.addEventListener('seccion:ask-steve', handleAskKate);
     return () => {
-      window.removeEventListener('seccion:ask-steve', handleAskSteve);
+      window.removeEventListener('seccion:ask-kate', handleAskKate);
+      window.removeEventListener('seccion:ask-steve', handleAskKate);
     };
   }, [sendQuestion]);
 
@@ -482,17 +506,17 @@ export default function SeccionAgentBubble() {
               <div className="flex items-center gap-2.5">
                 <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#00fbfb] to-[#ec4899] p-[1.5px] shadow-[0_0_15px_rgba(0,251,251,0.4)] overflow-hidden">
                   <img
-                    src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=150&h=150&q=80"
-                    alt="Steve"
+                    src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=150&h=150&q=80"
+                    alt="Kate"
                     className="w-full h-full object-cover rounded-full"
                   />
                 </div>
                 <div className="text-left">
                   <h3 className="text-xs font-black uppercase tracking-widest text-white flex items-center gap-1.5">
-                    Steve <Sparkles className="w-3 h-3 text-[#00fbfb]" />
+                    Kate <Sparkles className="w-3 h-3 text-[#00fbfb]" />
                   </h3>
                   <span className="text-[9px] font-mono font-bold text-[#00fbfb] uppercase tracking-wider block">
-                    SECCION Agent & Guide
+                    SECCION Executive Guide
                   </span>
                 </div>
               </div>
@@ -592,8 +616,8 @@ export default function SeccionAgentBubble() {
                       ? 'bg-rose-500/20 border-rose-500 text-rose-400 animate-pulse'
                       : 'bg-white/[0.04] border-white/10 text-white/70 hover:text-[#00fbfb] hover:border-[#00fbfb]/40'
                   }`}
-                  aria-label="Speak to Steve (Voice Dictation)"
-                  title={isListening ? "Listening... (click to stop)" : "Speak to Steve"}
+                  aria-label="Speak to Kate (Voice Dictation)"
+                  title={isListening ? "Listening... (click to stop)" : "Speak to Kate"}
                 >
                   {isListening ? <MicOff className="w-4 h-4 text-rose-400" /> : <Mic className="w-4 h-4" />}
                 </button>

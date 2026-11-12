@@ -290,9 +290,9 @@
     "law2557Desc": "Verificación de edad estricta y registro de conformidad legal para todos los creadores de contenido."
   },
   "agent": {
-    "welcome": "¡Hola! Soy Steve, tu agente y guía de SECCION 🔮 Pregúntame sobre nuestra plataforma híbrida (Dating + Live Streaming + Creadores), compatibilidad de química o cómo comenzar tu quest.",
-    "thinking": "Steve está pensando...",
-    "placeholder": "Pregúntale a Steve sobre SECCION...",
+    "welcome": "¡Hola! Soy Kate, tu asesora y guía de SECCION 🔮 Pregúntame sobre nuestra plataforma híbrida (Dating + Live Streaming + Creadores), compatibilidad de química o cómo comenzar tu quest.",
+    "thinking": "Kate está pensando...",
+    "placeholder": "Pregúntale a Kate sobre SECCION...",
     "fallback": "¡Estoy aquí para guiar tu experiencia en SECCION!"
   },
   "contact": {

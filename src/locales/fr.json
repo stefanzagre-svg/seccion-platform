@@ -290,9 +290,9 @@
     "law2557Desc": "Vérification stricte de la majorité légale et archivage cryptographique des consentements conformément aux normes internationales de protection."
   },
   "agent": {
-    "welcome": "Bonjour ! Je suis Steve, votre conseiller et guide sur SECCION 🔮 Posez-moi vos questions sur la plateforme, les créateurs ou vos matches !",
-    "thinking": "Steve réfléchit...",
-    "placeholder": "Demandez à Steve à propos de SECCION...",
+    "welcome": "Bonjour ! Je suis Kate, votre conseillère et guide sur SECCION 🔮 Posez-moi vos questions sur la plateforme, les créateurs ou vos matches !",
+    "thinking": "Kate réfléchit...",
+    "placeholder": "Demandez à Kate à propos de SECCION...",
     "fallback": "Je suis là pour vous accompagner dans votre expérience SECCION !"
   },
   "contact": {

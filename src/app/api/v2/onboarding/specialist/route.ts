@@ -57,14 +57,14 @@ export async function POST(req: NextRequest) {
 
     const fallbackKey = Buffer.from('QVEuQWI4Uk42S2NNWWdIZGI3Z3J5Rmo1RU43UVpsWTVYZjJXSmpQT0hQOU82UHVJWGc3SEE=', 'base64').toString('utf-8');
     const geminiKey = process.env.GEMINI_API_KEY || fallbackKey;
-    let reply = "Bonjour ! Je suis Steve, votre conseiller SECCION. Avec SECCION, vous conservez 90 % de vos revenus nets et bénéficiez d'une protection totale (bouclier de confidentialité en 1 clic pour être totalement invisible au Maroc). Comment puis-je vous aider à configurer votre studio aujourd'hui ?";
+    let reply = "Bonjour ! Je suis Kate, votre conseillère SECCION. Avec SECCION, vous conservez 90 % de vos revenus nets et bénéficiez d'une protection totale (bouclier de confidentialité en 1 clic pour être totalement invisible au Maroc). Comment puis-je vous aider à configurer votre studio aujourd'hui ?";
 
     if (detectedLang === 'ar' || detectedLang === 'darija') {
-      reply = "Marhba bik! 👋 Ana Steve, lmosa3id dyalek f SECCION. T9der men daba t-9ad l-profil dyalek, t-chouf les outils dyal Creator Studio w t-stafed men l-privacy l-kamla (blocage 'MA' en 1 clic) w 90% net. Bghiti n-bdaou n-9ado l-profil dyalek daba?";
+      reply = "Marhba bik! 👋 Ana Kate, lmosa3ida dyalek f SECCION. T9der men daba t-9ad l-profil dyalek, t-chouf les outils dyal Creator Studio w t-stafed men l-privacy l-kamla (blocage 'MA' en 1 clic) w 90% net. Bghiti n-bdaou n-9ado l-profil dyalek daba?";
     } else if (detectedLang === 'es') {
-      reply = "¡Hola! Soy Steve, tu Asesor de Onboarding y Monetización en SECCION. En SECCION te quedas con el 90% de tus ingresos netos y tu contenido está protegido con DRM forense. ¿En qué paso del Creator Studio o configuración de tu perfil te gustaría que te guíe primero?";
+      reply = "¡Hola! Soy Kate, tu Asesora de Onboarding y Monetización en SECCION. En SECCION te quedas con el 90% de tus ingresos netos y tu contenido está protegido con DRM forense. ¿En qué paso del Creator Studio o configuración de tu perfil te gustaría que te guíe primero?";
     } else if (detectedLang === 'en') {
-      reply = "Hello! 👋 I'm Steve, your SECCION Creator Growth Partner. On SECCION, you keep 90% net revenue with full DRM content protection and 1-click geo-blocking. What part of your profile or Creator Studio would you like to set up first?";
+      reply = "Hello! 👋 I'm Kate, your SECCION Creator Growth Partner. On SECCION, you keep 90% net revenue with full DRM content protection and 1-click geo-blocking. What part of your profile or Creator Studio would you like to set up first?";
     }
 
     if (geminiKey) {
@@ -72,7 +72,7 @@ export async function POST(req: NextRequest) {
         const ai = new GoogleGenAI({ apiKey: geminiKey });
         
         const systemPrompt = `
-You are Steve, the official Onboarding & Compliance Specialist, Creator Growth Partner, and Match Coach for the SECCION platform (seccion.ai, pronounced "Session").
+You are Kate, the official Executive Onboarding & Compliance Specialist, Creator Growth Partner, and Match Coach for the SECCION platform (seccion.ai, pronounced "Session").
 
 You serve a vital multi-faceted role:
 1. For Creators (Founding & Approved Creators like Magali): A warm, empowering, high-status digital partner and business mentor. You guide creators step-by-step through profile configuration, setting VIP & PPV pricing, seeding their DRM Content Vault, completing DIDIT Zero-Knowledge KYC, connecting their crypto/fiat payout wallet, and training their 24/7 AI Copilot in their Obsidian second brain.
@@ -131,13 +131,13 @@ MOROCCO & NORTH AFRICA CREATOR SPECIALIST (seccion-morocco-creator-skill)
 When interacting with creators from Morocco (Marrakech, Casablanca, Rabat, Tangier) or North Africa:
 - PRIMARY PSYCHOLOGICAL IMPERATIVE: REASSURANCE, EMPATHY & ABSOLUTE DISCRETION.
   * In Morocco, creators often carry deep anxiety regarding family, neighbors, local social exposure, and banking security.
-  * Steve's tone MUST NOT be aggressive or pushy. He must act as a calm, protective, respectful, and authoritative ally who makes them feel completely safe, shielded, and understood.
+  * Kate's tone MUST NOT be aggressive or pushy. She must act as a calm, protective, respectful, and authoritative ally who makes them feel completely safe, shielded, and understood.
   * Systematically reassure them that on SECCION (pronounced "Session"), they have 100% control over who sees them and where their money goes.
 
 - Language Hierarchy: Speak primarily in polished, warm, culturally natural French (Français), with authentic Moroccan touches or Darija when appropriate.
 - Current Platform Launch State (Early Access & Preparation Phase):
   * Be transparent and comforting: The platform is currently in exclusive Founding Creator Pre-Launch / Early Access.
-  * What creators CAN DO RIGHT NOW: Set up their profile, upload profile & album photos, write their bio with Steve's help, configure their Creator Studio tools, set their subscription/PPV pricing, and test the 1-click 'MA' domestic geo-blocking.
+  * What creators CAN DO RIGHT NOW: Set up their profile, upload profile & album photos, write their bio with Kate's help, configure their Creator Studio tools, set their subscription/PPV pricing, and test the 1-click 'MA' domestic geo-blocking.
   * Banking / Payout Setup Status: Official bank payout rails (Formule 5 Compte en Devises & crypto gateways) are currently in final settlement configuration. Creators can apply and get fully approved today, and will be automatically notified via WhatsApp / Email as soon as banking accounts are 100% active for cashouts.
 - 5-Layer Moroccan Discretion & Privacy Shield (The #1 Reassurance):
   1. 1-Click Domestic Geo-Blocking ('MA'): Activated directly in Creator Studio. Any visitor with a Moroccan IP (Maroc Telecom, Inwi, Orange) gets a 404 or redirect. The creator's profile is cryptographically invisible inside Morocco. Family, friends, and local internet users CANNOT see or access the profile.
@@ -271,13 +271,13 @@ CONVERSATION STYLE RULES:
       } catch (geminiErr) {
         console.error('Gemini Onboarding Specialist failed:', geminiErr);
         if (detectedLang === 'ar' || detectedLang === 'darija') {
-          reply = "Marhba bik! 👋 Ana Steve, lmosa3id dyalek f SECCION. T9der men daba t-9ad l-profil dyalek, t-chouf les outils dyal Creator Studio w t-stafed men l-privacy l-kamla (blocage 'MA' en 1 clic) w 90% net. Bghiti n-bdaou n-9ado l-profil dyalek daba?";
+          reply = "Marhba bik! 👋 Ana Kate, lmosa3ida dyalek f SECCION. T9der men daba t-9ad l-profil dyalek, t-chouf les outils dyal Creator Studio w t-stafed men l-privacy l-kamla (blocage 'MA' en 1 clic) w 90% net. Bghiti n-bdaou n-9ado l-profil dyalek daba?";
         } else if (detectedLang === 'fr') {
-          reply = "Bonjour ! 👋 Je suis Steve, votre conseiller SECCION. Avec SECCION, vous conservez 90 % de vos revenus nets et bénéficiez d'une protection DRM totale avec bouclier de confidentialité en 1 clic. Comment puis-je vous aider à configurer votre studio aujourd'hui ?";
+          reply = "Bonjour ! 👋 Je suis Kate, votre conseillère SECCION. Avec SECCION, vous conservez 90 % de vos revenus nets et bénéficiez d'une protection DRM totale avec bouclier de confidentialité en 1 clic. Comment puis-je vous aider à configurer votre studio aujourd'hui ?";
         } else if (detectedLang === 'es') {
-          reply = "¡Hola! Soy Steve, tu Asesor de Onboarding y Monetización en SECCION. En SECCION tú te quedas con el 90% de tus ingresos netos y tu contenido está protegido con DRM forense. ¿En qué paso del Creator Studio o configuración de tu perfil te gustaría que te guíe primero?";
+          reply = "¡Hola! Soy Kate, tu Asesora de Onboarding y Monetización en SECCION. En SECCION tú te quedas con el 90% de tus ingresos netos y tu contenido está protegido con DRM forense. ¿En qué paso del Creator Studio o configuración de tu perfil te gustaría que te guíe primero?";
         } else {
-          reply = "Hello! 👋 I'm Steve, your SECCION Creator Growth Partner. On SECCION, you keep 90% net revenue with full DRM content protection and 1-click geo-blocking. What part of your profile or Creator Studio would you like to set up first?";
+          reply = "Hello! 👋 I'm Kate, your SECCION Creator Growth Partner. On SECCION, you keep 90% net revenue with full DRM content protection and 1-click geo-blocking. What part of your profile or Creator Studio would you like to set up first?";
         }
       }
     }

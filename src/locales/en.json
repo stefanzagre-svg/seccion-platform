@@ -290,9 +290,9 @@
     "law2557Desc": "Strict age verification and legal compliance record-keeping for all content creators."
   },
   "agent": {
-    "welcome": "Hi! I'm Steve, your SECCION agent and guide 🔮 Ask me about our hybrid platform (Dating + Live Streaming + Creators), chemistry matchmaking, or how to begin your quest.",
-    "thinking": "Steve is thinking...",
-    "placeholder": "Ask Steve about SECCION...",
+    "welcome": "Hi! I'm Kate, your SECCION executive guide 🔮 Ask me about our hybrid platform (Dating + Live Streaming + Creators), chemistry matchmaking, or how to begin your quest.",
+    "thinking": "Kate is thinking...",
+    "placeholder": "Ask Kate about SECCION...",
     "fallback": "I'm here to guide your SECCION experience!"
   },
   "contact": {
