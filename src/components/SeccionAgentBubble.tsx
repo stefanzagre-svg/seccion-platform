@@ -33,12 +33,20 @@ export default function SeccionAgentBubble() {
 
   // Play text-to-speech voice response
   const speakText = useCallback(
-    (textToSpeak: string) => {
-      if (typeof window === 'undefined' || !('speechSynthesis' in window) || !voiceEnabled) {
+    (textToSpeak: string, forceVoice: boolean = false) => {
+      if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
+        return;
+      }
+      if (!voiceEnabled && !forceVoice) {
         return;
       }
       try {
         window.speechSynthesis.cancel();
+        // If vocal was requested, ensure voiceEnabled stays on
+        if (forceVoice && !voiceEnabled) {
+          setVoiceEnabled(true);
+        }
+
         // Crucial pronunciation filter: SECCION is spelled SECCION in text, but phonetically pronounced "Session"
         // Replace SECCION/Seccion with Session in spoken audio so speech synthesis never says "Section"
         const phoneticText = textToSpeak.replace(/\bSECCION\b/gi, 'Session');
@@ -92,6 +100,11 @@ export default function SeccionAgentBubble() {
         utterance.onend = () => setIsSpeaking(false);
         utterance.onerror = () => setIsSpeaking(false);
 
+        // Resume speech synthesis queue if paused by mobile browser
+        if (window.speechSynthesis.paused) {
+          window.speechSynthesis.resume();
+        }
+
         window.speechSynthesis.speak(utterance);
       } catch (e) {
         console.error('Speech synthesis error:', e);
@@ -101,7 +114,7 @@ export default function SeccionAgentBubble() {
   );
 
   const sendQuestion = useCallback(
-    async (questionText: string) => {
+    async (questionText: string, isVocalInput: boolean = false) => {
       const trimmed = questionText.trim();
       if (!trimmed) return;
 
@@ -116,7 +129,7 @@ export default function SeccionAgentBubble() {
       setIsTyping(true);
 
       try {
-        let activeLocale = locale;
+        let activeLocale: string = locale;
         if (typeof window !== 'undefined') {
           const searchParams = new URLSearchParams(window.location.search);
           const langParam = searchParams.get('lang')?.toLowerCase();
@@ -151,7 +164,9 @@ export default function SeccionAgentBubble() {
           timestamp: new Date(),
         };
         setMessages((prev) => [...prev, agentMsg]);
-        speakText(replyText);
+
+        // CRITICAL INVARIANT: If the creator spoke aloud, Steve MUST reply with vocal audio!
+        speakText(replyText, isVocalInput);
       } catch (err: any) {
         console.error(err);
         setErrorText(err.message || 'Connecting error. Please try again.');
@@ -204,6 +219,7 @@ export default function SeccionAgentBubble() {
       recognition.onstart = () => {
         setIsListening(true);
         setErrorText(null);
+        setVoiceEnabled(true);
       };
 
       recognition.onresult = (event: any) => {
@@ -211,7 +227,7 @@ export default function SeccionAgentBubble() {
         if (transcript) {
           setInput(transcript);
           setIsListening(false);
-          sendQuestion(transcript);
+          sendQuestion(transcript, true);
         }
       };
 

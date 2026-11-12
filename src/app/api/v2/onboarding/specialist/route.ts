@@ -229,7 +229,15 @@ CONVERSATION STYLE RULES:
         reply = response.text || reply;
       } catch (geminiErr) {
         console.error('Gemini Onboarding Specialist failed:', geminiErr);
-        reply = "¡Hola Magali! Soy Steve, tu Asesor de Onboarding y Monetización en SECCION. En SECCION tú te quedas con el 90% de tus ingresos netos y tu contenido está protegido con DRM forense. ¿En qué paso del Creator Studio o configuración de tu perfil te gustaría que te guíe primero?";
+        if (locale === 'ar' || locale === 'darija') {
+          reply = "Marhba bik! 👋 Ana Steve, lmosa3id dyalek f SECCION. T9der men daba t-9ad l-profil dyalek, t-chouf les outils dyal Creator Studio w t-stafed men l-privacy l-kamla (blocage 'MA' en 1 clic) w 90% net. Bghiti n-bdaou n-9ado l-profil dyalek daba?";
+        } else if (locale === 'fr') {
+          reply = "Bonjour ! 👋 Je suis Steve, votre conseiller SECCION. Avec SECCION, vous conservez 90 % de vos revenus nets et bénéficiez d'une protection DRM totale avec bouclier de confidentialité en 1 clic. Comment puis-je vous aider à configurer votre studio aujourd'hui ?";
+        } else if (locale === 'en') {
+          reply = "Hello! 👋 I'm Steve, your SECCION Creator Growth Partner. On SECCION, you keep 90% net revenue with full DRM content protection and 1-click geo-blocking. What part of your profile or Creator Studio would you like to set up first?";
+        } else {
+          reply = "¡Hola! Soy Steve, tu Asesor de Onboarding y Monetización en SECCION. En SECCION tú te quedas con el 90% de tus ingresos netos y tu contenido está protegido con DRM forense. ¿En qué paso del Creator Studio o configuración de tu perfil te gustaría que te guíe primero?";
+        }
       }
     }
 
