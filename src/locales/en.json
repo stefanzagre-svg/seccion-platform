@@ -529,6 +529,8 @@
       "profile_title": "Profile & Portfolio Setup",
       "profile_sub": "Configure custom monetization tiers and privacy locks.",
       "profile_blur_label": "Face Blur Privacy Gate Enabled",
+      "morocco_shield_title": "Morocco Domestic Privacy Shield [Recommended]",
+      "morocco_shield_desc": "Cryptographically shields your profile and live streams from all domestic Moroccan IP addresses (Maroc Telecom, Inwi, Orange). Only international fans outside Morocco can discover your studio.",
       "profile_cta": "Save and Go Live",
       "secret_title": "Studio Tour Complete",
       "secret_p1": "Everything you've seen is mapped dynamically to protect and monetize your audience. SECCION does the heavy lifting for you.",

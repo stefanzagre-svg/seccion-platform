@@ -42,6 +42,7 @@ interface CountryRegulation {
   lawName: string;
   description: string;
   descriptionEs: string;
+  descriptionFr?: string;
   requiresStrictProof: boolean;
 }
 
@@ -116,6 +117,17 @@ const REGULATORY_RULES: Record<string, CountryRegulation> = {
     descriptionEs: 'Confirmación instantánea de fecha en 1 toque.',
     requiresStrictProof: false,
   },
+  MA: {
+    code: 'MA',
+    name: 'Morocco / Royaume du Maroc',
+    flag: '🇲🇦',
+    minAge: 18,
+    lawName: 'Loi 09-08 (CNDP) & Code Pénal Art. 483',
+    description: '1-Tap declaration. Built-in Domestic Privacy Shield to protect creators from local discovery.',
+    descriptionEs: 'Declaración en 1 toque. Escudo de Privacidad Doméstica integrado para proteger a los creadores de visibilidad local.',
+    descriptionFr: 'Déclaration en 1 geste. Bouclier de Confidentialité Domestique intégré pour protéger les créateurs de toute visibilité locale.',
+    requiresStrictProof: false,
+  },
   GLOBAL: {
     code: 'GLOBAL',
     name: 'International Standard',
@@ -158,6 +170,7 @@ export default function CountryAgeVerification({ onVerified, isCreatorMode = fal
       else if (userTz.includes('New_York') || userTz.includes('Los_Angeles') || userTz.includes('Chicago')) setCountryCode('US');
       else if (userTz.includes('Mexico')) setCountryCode('MX');
       else if (userTz.includes('Sao_Paulo')) setCountryCode('BR');
+      else if (userTz.includes('Casablanca')) setCountryCode('MA');
       else setCountryCode('ES'); // Default to Spain
     } catch (e) {
       setCountryCode('ES');
@@ -362,12 +375,35 @@ export default function CountryAgeVerification({ onVerified, isCreatorMode = fal
           {/* Regulation Explanation */}
           <div className="p-3 bg-white/[0.02] border-l-2 border-[#00fbfb] rounded-r-xl space-y-1">
             <span className="text-[9px] font-mono text-[#00fbfb] font-bold uppercase tracking-wider block">
-              ⚡ {locale === 'es' ? 'Proceso Optimizado de Registro' : 'High-Speed Onboarding Pipeline'}
+              ⚡ {locale === 'fr' ? 'Processus d\'Inscription Accéléré' : locale === 'es' ? 'Proceso Optimizado de Registro' : 'High-Speed Onboarding Pipeline'}
             </span>
             <p className="text-[11px] text-[#b9cac9] leading-relaxed">
-              {locale === 'es' ? reg.descriptionEs : reg.description}
+              {locale === 'fr' && reg.descriptionFr
+                ? reg.descriptionFr
+                : locale === 'es'
+                ? reg.descriptionEs
+                : reg.description}
             </p>
           </div>
+
+          {/* Moroccan Domestic Privacy Shield Banner */}
+          {countryCode === 'MA' && isCreatorMode && (
+            <div className="p-3 bg-[#00fbfb]/10 border border-[#00fbfb]/40 rounded-xl flex items-center justify-between text-xs">
+              <div className="flex items-center gap-2">
+                <span className="text-base">🇲🇦</span>
+                <span className="font-mono text-[#00fbfb] font-bold text-[11px]">
+                  {locale === 'fr'
+                    ? 'Bouclier Maroc Activé (Géoblocage IP National Automatique)'
+                    : locale === 'es'
+                    ? 'Escudo Marruecos Activado (Geobloqueo IP Nacional Automático)'
+                    : 'Morocco Domestic Privacy Shield Active (Auto IP Geoblock)'}
+                </span>
+              </div>
+              <span className="px-2 py-0.5 rounded bg-[#00fbfb]/20 text-[#00fbfb] font-mono text-[9px] font-bold border border-[#00fbfb]/30">
+                LOCKED
+              </span>
+            </div>
+          )}
 
           {/* DOB Form */}
           <form onSubmit={handleStandardVerify} className="space-y-4">

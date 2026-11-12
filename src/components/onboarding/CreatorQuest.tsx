@@ -32,6 +32,8 @@ export default function CreatorQuest({ onSignUp, onSwitchToMember, onClose }: Cr
     profile_title: translate("creatorQuest.main.profile_title", "Profile & Portfolio Setup"),
     profile_sub: translate("creatorQuest.main.profile_sub", "Configure custom monetization tiers and privacy locks."),
     profile_blur_label: translate("creatorQuest.main.profile_blur_label", "Face Blur Privacy Gate Enabled"),
+    morocco_shield_title: translate("creatorQuest.main.morocco_shield_title", "Morocco Domestic Privacy Shield [Recommended]"),
+    morocco_shield_desc: translate("creatorQuest.main.morocco_shield_desc", "Cryptographically shields your profile and live streams from all domestic Moroccan IP addresses (Maroc Telecom, Inwi, Orange). Only international fans outside Morocco can discover your studio."),
     profile_cta: translate("creatorQuest.main.profile_cta", "Save and Go Live"),
     secret_title: translate("creatorQuest.main.secret_title", "Studio Tour Complete"),
     secret_p1: translate("creatorQuest.main.secret_p1", "Everything you've seen is mapped dynamically to protect and monetize your audience. SECCION does the heavy lifting for you."),
@@ -55,6 +57,42 @@ export default function CreatorQuest({ onSignUp, onSwitchToMember, onClose }: Cr
   const [residence, setResidence] = useState("");
   const [residenceError, setResidenceError] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Moroccan Domestic Privacy Shield States (Task 2)
+  const [moroccoShieldActive, setMoroccoShieldActive] = useState<boolean>(true);
+  const [isMoroccoDetected, setIsMoroccoDetected] = useState<boolean>(false);
+
+  const checkIsMorocco = (val: string): boolean => {
+    if (!val) return false;
+    const v = val.toLowerCase().trim();
+    return (
+      v === 'ma' ||
+      v.includes('morocco') ||
+      v.includes('maroc') ||
+      v.includes('marruecos') ||
+      v.includes('marrakech') ||
+      v.includes('casablanca') ||
+      v.includes('rabat') ||
+      v.includes('tangier') ||
+      v.includes('tanger') ||
+      v.includes('agadir') ||
+      v.includes('fes') ||
+      v.includes('fès') ||
+      v.includes('meknes') ||
+      v.includes('+212')
+    );
+  };
+
+  useEffect(() => {
+    try {
+      const userTz = Intl.DateTimeFormat().resolvedOptions().timeZone || '';
+      if (userTz.includes('Casablanca')) {
+        setIsMoroccoDetected(true);
+        setMoroccoShieldActive(true);
+        setResidence((prev) => prev || 'Morocco (MA)');
+      }
+    } catch {}
+  }, []);
 
   // Identity Setup States (Multi-select arrays up to 5 options)
   const [creatorPurposes, setCreatorPurposes] = useState<string[]>([]);
@@ -133,9 +171,107 @@ export default function CreatorQuest({ onSignUp, onSwitchToMember, onClose }: Cr
     "Not sure yet": "Aún no lo tengo claro"
   };
 
+  // French display mappings for localized UI
+  const PURPOSES_FR: Record<string, string> = {
+    "Lifestyle": "Style de Vie",
+    "AI & Technology": "IA & Technologie",
+    "Gaming": "Gaming & Jeux Vidéo",
+    "Explicit 18+": "Exclusif / 18+",
+    "Coaching": "Coaching & Mentorat",
+    "Education": "Éducation & Savoir",
+    "Expertise": "Expertise & Business"
+  };
+
+  const SPECIALIZATIONS_FR: Record<string, string> = {
+    "AI & Technology": "IA & Technologie",
+    "Beauty": "Beauté & Soins",
+    "Gaming": "Gaming & Esport",
+    "Explicit": "Contenu Adulte & 18+",
+    "Social & Communication": "Social & Éloquence",
+    "Economy & Finance": "Économie & Finance",
+    "Dating & Marriage": "Rencontres & Relations",
+    "Cooking": "Cuisine & Gastronomie",
+    "Fitness & Wellness": "Fitness & Bien-Être",
+    "Health & Psychology": "Santé & Psychologie",
+    "Art & Music": "Art & Musique"
+  };
+
+  const SEXUAL_PREF_FR: Record<string, string> = {
+    "Straight": "Hétérosexuel(le)",
+    "Gay": "Gay",
+    "Lesbian": "Lesbienne",
+    "Bisexual": "Bisexuel(le)",
+    "Pansexual": "Pansexuel(le)",
+    "Queer": "Queer",
+    "Questioning": "En Questionnement",
+    "Asexual": "Asexuel(le)",
+    "Demisexual": "Demisexuel(le)",
+    "Aromantic": "Aromantique",
+    "Omnisexual": "Omnisexuel(le)"
+  };
+
+  const REL_GOALS_FR: Record<string, string> = {
+    "Long term partner": "Partenaire à long terme",
+    "Long term not against Short term Crush": "Long terme ouvert à un crush éphémère",
+    "Good Vibe Instant Crush": "Bonne vibe et coup de cœur instantané",
+    "Short term Vibe leads to long term": "Vibe spontanée pouvant évoluer",
+    "Not limit myself": "Sans étiquettes ni limites",
+    "Let's figure after a date.": "À voir après un premier rendez-vous",
+    "Travel Companion": "Compagnon de voyage",
+    "Make New Frends": "Nouvelles amitiés",
+    "Flat Mate": "Colocataire",
+    "Social & Economical Support": "Soutien social et économique",
+    "Sex Mate": "Partenaire intime"
+  };
+
+  const REL_TYPES_FR: Record<string, string> = {
+    "Monogamous": "Monogame",
+    "Polyamorous": "Polygame / Polyamoureux",
+    "Open Relationship": "Relation Libre",
+    "Ethical Non-Monogamy": "Non-Monogamie Éthique",
+    "Open to Explore": "Ouvert(e) à explorer",
+    "Libertinism Mindset": "Esprit Libertin",
+    "Swinging Open": "Échangisme ouvert",
+    "Open to Distant Relation": "Ouvert(e) à distance",
+    "Digital Relationship": "Relation Virtuelle",
+    "FWB": "Amis avec bénéfices (FWB)",
+    "Not sure yet": "Pas encore fixé(e)"
+  };
+
   const isExplicit = creatorPurposes.includes("Explicit 18+") || specialization === "Explicit";
   const isDatingSpecialized = specialization === "Dating & Marriage";
   const needsRelFields = isExplicit || isDatingSpecialized;
+
+  // Localized string resolution helpers
+  const getPurposeLabel = (p: string) => {
+    if (lang === 'fr' && PURPOSES_FR[p]) return PURPOSES_FR[p];
+    if (lang === 'es' && PURPOSES_ES[p]) return PURPOSES_ES[p];
+    return p;
+  };
+
+  const getSpecLabel = (s: string) => {
+    if (lang === 'fr' && SPECIALIZATIONS_FR[s]) return SPECIALIZATIONS_FR[s];
+    if (lang === 'es' && SPECIALIZATIONS_ES[s]) return SPECIALIZATIONS_ES[s];
+    return s;
+  };
+
+  const getSexPrefLabel = (sp: string) => {
+    if (lang === 'fr' && SEXUAL_PREF_FR[sp]) return SEXUAL_PREF_FR[sp];
+    if (lang === 'es' && SEXUAL_PREF_ES[sp]) return SEXUAL_PREF_ES[sp];
+    return sp;
+  };
+
+  const getRelGoalLabel = (rg: string) => {
+    if (lang === 'fr' && REL_GOALS_FR[rg]) return REL_GOALS_FR[rg];
+    if (lang === 'es' && REL_GOALS_ES[rg]) return REL_GOALS_ES[rg];
+    return rg;
+  };
+
+  const getRelTypeLabel = (rt: string) => {
+    if (lang === 'fr' && REL_TYPES_FR[rt]) return REL_TYPES_FR[rt];
+    if (lang === 'es' && REL_TYPES_ES[rt]) return REL_TYPES_ES[rt];
+    return rt;
+  };
 
   // Audio Synthesis & Subtitle states
   const [speechSupported, setSpeechSupported] = useState(false);
@@ -172,6 +308,7 @@ export default function CreatorQuest({ onSignUp, onSwitchToMember, onClose }: Cr
     
     const utterance = new SpeechSynthesisUtterance(text);
     if (lang === "es") utterance.lang = "es-ES";
+    else if (lang === "fr") utterance.lang = "fr-FR";
     else utterance.lang = "en-US";
 
     utterance.rate = 1.05;
@@ -236,6 +373,7 @@ export default function CreatorQuest({ onSignUp, onSwitchToMember, onClose }: Cr
   };
 
   const getSubmitsData = () => {
+    const isShieldOn = isMoroccoDetected && moroccoShieldActive;
     // Cache values in sessionStorage
     const data = {
       archetype: selectedVibe,
@@ -249,7 +387,9 @@ export default function CreatorQuest({ onSignUp, onSwitchToMember, onClose }: Cr
       sexual_preferences: sexualPreferences,
       relationship_goals: relationshipGoals,
       relationship_types: relationshipTypes,
-      is_adult_content: isExplicit
+      is_adult_content: isExplicit,
+      morocco_domestic_shield: isShieldOn,
+      blocked_countries: isShieldOn ? ["MA"] : []
     };
     sessionStorage.setItem("_onboarding_creator_archive_choice", selectedVibe);
     sessionStorage.setItem("_onboarding_creator_tier_price", tierPrice.toString());
@@ -261,6 +401,12 @@ export default function CreatorQuest({ onSignUp, onSwitchToMember, onClose }: Cr
     sessionStorage.setItem("_onboarding_creator_relationship_goals", JSON.stringify(relationshipGoals));
     sessionStorage.setItem("_onboarding_creator_relationship_types", JSON.stringify(relationshipTypes));
     sessionStorage.setItem("_onboarding_creator_is_adult", isExplicit ? "true" : "false");
+    sessionStorage.setItem("_onboarding_creator_morocco_shield", isShieldOn ? "true" : "false");
+    if (isShieldOn) {
+      sessionStorage.setItem("_onboarding_creator_blocked_countries", JSON.stringify(["MA"]));
+    } else {
+      sessionStorage.removeItem("_onboarding_creator_blocked_countries");
+    }
     return data;
   };
 
@@ -282,11 +428,12 @@ export default function CreatorQuest({ onSignUp, onSwitchToMember, onClose }: Cr
           {/* Language Selector */}
           <select
             value={lang}
-            onChange={(e) => setLang(e.target.value as 'en' | 'es')}
+            onChange={(e) => setLang(e.target.value as any)}
             className="bg-white/5 border border-white/15 rounded-lg px-2 py-1 text-[10px] font-black uppercase text-white tracking-wider outline-none hover:bg-white/10 transition cursor-pointer"
           >
             <option value="en" className="bg-neutral-900 text-white">EN</option>
             <option value="es" className="bg-neutral-900 text-white">ES</option>
+            <option value="fr" className="bg-neutral-900 text-white">FR</option>
           </select>
 
           {/* Mute Button */}
@@ -391,13 +538,23 @@ export default function CreatorQuest({ onSignUp, onSwitchToMember, onClose }: Cr
               className="w-full space-y-6 max-w-xl text-left mx-auto"
             >
               <div className="text-center space-y-2 mb-6">
-                <h3 className="text-2xl font-black uppercase Outfit">Identity Keys Unlocked</h3>
-                <p className="text-xs text-white/50">Define your creator aura and get matched to the right audience immediately.</p>
+                <h3 className="text-2xl font-black uppercase Outfit">
+                  {lang === 'fr' ? 'Clés d\'Identité Débloquées' : lang === 'es' ? 'Claves de Identidad Desbloqueadas' : 'Identity Keys Unlocked'}
+                </h3>
+                <p className="text-xs text-white/50">
+                  {lang === 'fr'
+                    ? 'Définissez votre aura de créateur et connectez-vous immédiatement à votre audience cible.'
+                    : lang === 'es'
+                    ? 'Define tu aura de creador y conéctate con la audiencia adecuada de inmediato.'
+                    : 'Define your creator aura and get matched to the right audience immediately.'}
+                </p>
               </div>
 
               {/* Archetype */}
               <div className="space-y-3">
-                <label className="text-[10px] font-black uppercase text-white/50 tracking-wider">Studio Archetype</label>
+                <label className="text-[10px] font-black uppercase text-white/50 tracking-wider">
+                  {lang === 'fr' ? 'Archétype de Studio' : lang === 'es' ? 'Arquetipo de Estudio' : 'Studio Archetype'}
+                </label>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                   {CREATOR_ARCHETYPES.map((arch) => (
                     <div 
@@ -416,7 +573,7 @@ export default function CreatorQuest({ onSignUp, onSwitchToMember, onClose }: Cr
               {/* Creator Purposes */}
               <div className="space-y-3">
                 <label className="text-[10px] font-black uppercase text-white/50 tracking-wider">
-                  {lang === 'es' ? 'Auras de Intención del Creador (Selecciona Múltiples)' : 'Creator Intent Auras (Select Multiple)'}
+                  {lang === 'fr' ? 'Auras d\'Intention du Créateur (Sélection Multiple)' : lang === 'es' ? 'Auras de Intención del Creador (Selecciona Múltiples)' : 'Creator Intent Auras (Select Multiple)'}
                 </label>
                 <div className="flex flex-wrap gap-2">
                   {PURPOSES.map(p => (
@@ -431,7 +588,7 @@ export default function CreatorQuest({ onSignUp, onSwitchToMember, onClose }: Cr
                       }}
                       className={`px-3 py-1.5 rounded-lg border text-xs font-bold transition cursor-pointer ${creatorPurposes.includes(p) ? 'bg-primary border-primary text-black' : 'bg-black/40 border-white/20 text-white hover:border-white/40'}`}
                     >
-                      {lang === 'es' && PURPOSES_ES[p] ? PURPOSES_ES[p] : p}
+                      {getPurposeLabel(p)}
                     </button>
                   ))}
                 </div>
@@ -440,16 +597,16 @@ export default function CreatorQuest({ onSignUp, onSwitchToMember, onClose }: Cr
               {/* Specialization */}
               <div className="space-y-3">
                 <label className="text-[10px] font-black uppercase text-white/50 tracking-wider">
-                  {lang === 'es' ? 'Sinergia de Contenido Principal' : 'Primary Content Synergy'}
+                  {lang === 'fr' ? 'Synergie de Contenu Principale' : lang === 'es' ? 'Sinergia de Contenido Principal' : 'Primary Content Synergy'}
                 </label>
                 <select 
                   value={specialization}
                   onChange={(e) => setSpecialization(e.target.value)}
                   className="w-full px-4 py-3 bg-black/40 border border-white/10 rounded-xl text-xs text-white focus:border-primary outline-none cursor-pointer"
                 >
-                  <option value="">{lang === 'es' ? 'Selecciona tu dominio principal...' : 'Select your main domain...'}</option>
+                  <option value="">{lang === 'fr' ? 'Sélectionnez votre domaine principal...' : lang === 'es' ? 'Selecciona tu dominio principal...' : 'Select your main domain...'}</option>
                   {SPECIALIZATIONS.map(s => (
-                    <option key={s} value={s}>{lang === 'es' && SPECIALIZATIONS_ES[s] ? SPECIALIZATIONS_ES[s] : s}</option>
+                    <option key={s} value={s}>{getSpecLabel(s)}</option>
                   ))}
                 </select>
               </div>
@@ -460,19 +617,21 @@ export default function CreatorQuest({ onSignUp, onSwitchToMember, onClose }: Cr
                   <div className="flex items-center gap-2 mb-2">
                     <span className="text-sm">🔥</span>
                     <h4 className="text-[11px] font-black uppercase tracking-widest text-primary">
-                      {lang === 'es' ? 'Segmentación Avanzada de Audiencia' : 'Advanced Audience Targeting'}
+                      {lang === 'fr' ? 'Ciblage Avancé d\'Audience' : lang === 'es' ? 'Segmentación Avanzada de Audiencia' : 'Advanced Audience Targeting'}
                     </h4>
                   </div>
                   <p className="text-[10px] text-white/50 leading-relaxed mb-4">
-                    {lang === 'es'
-                      ? 'Dado que tu contenido incluye temáticas especializadas o para adultos, requerimos tus preferencias de mapeo de audiencia. La edad y ubicación estricta se verificarán de forma segura mediante Shufti KYC.'
-                      : 'Because your intent includes specialized or mature themes, we require your audience mapping preferences. Age and strict location will be securely locked via Shufti KYC in the next step.'}
+                    {lang === 'fr'
+                      ? 'Puisque votre intention inclut des thématiques spécialisées ou pour adultes, nous requérons vos préférences d\'audience. L\'âge et la localisation stricte seront vérifiés de manière sécurisée via DIDIT Zero-Knowledge à l\'étape suivante.'
+                      : lang === 'es'
+                      ? 'Dado que tu contenido incluye temáticas especializadas o para adultos, requerimos tus preferencias de mapeo de audiencia. La edad y ubicación estricta se verificarán de forma segura mediante DIDIT KYC en el siguiente paso.'
+                      : 'Because your intent includes specialized or mature themes, we require your audience mapping preferences. Age and strict location will be securely locked via DIDIT KYC in the next step.'}
                   </p>
                   
                   {isExplicit && (
                     <div className="space-y-2">
                       <label className="text-[9px] font-black uppercase text-white/40 tracking-wider">
-                        {lang === 'es' ? 'Matriz de Preferencia Sexual (Selecciona Múltiples)' : 'Sexual Preference Matrix (Select Multiple)'}
+                        {lang === 'fr' ? 'Matrice de Préférence Sexuelle (Sélection Multiple)' : lang === 'es' ? 'Matriz de Preferencia Sexual (Selecciona Múltiples)' : 'Sexual Preference Matrix (Select Multiple)'}
                       </label>
                       <div className="flex flex-wrap gap-1.5">
                         {SEXUAL_PREFERENCES.map(sp => {
@@ -494,7 +653,7 @@ export default function CreatorQuest({ onSignUp, onSwitchToMember, onClose }: Cr
                                   : 'bg-black/40 border-white/15 text-white/70 hover:border-white/40 hover:text-white'
                               }`}
                             >
-                              {lang === 'es' && SEXUAL_PREF_ES[sp] ? SEXUAL_PREF_ES[sp] : sp}
+                              {getSexPrefLabel(sp)}
                             </button>
                           );
                         })}
@@ -506,10 +665,10 @@ export default function CreatorQuest({ onSignUp, onSwitchToMember, onClose }: Cr
                   <div className="space-y-2">
                     <div className="flex justify-between items-center">
                       <label className="text-[9px] font-black uppercase text-white/40 tracking-wider">
-                        {lang === 'es' ? 'Metas de Relación (Selecciona hasta 5)' : 'Relationship Goals (Select up to 5)'}
+                        {lang === 'fr' ? 'Objectifs Relationnels (Jusqu\'à 5)' : lang === 'es' ? 'Metas de Relación (Selecciona hasta 5)' : 'Relationship Goals (Select up to 5)'}
                       </label>
                       <span className="text-[8px] font-mono text-[#00fbfb]">
-                        {relationshipGoals.length}/5 {lang === 'es' ? 'seleccionadas' : 'selected'}
+                        {relationshipGoals.length}/5 {lang === 'fr' ? 'sélectionnés' : lang === 'es' ? 'seleccionadas' : 'selected'}
                       </span>
                     </div>
                     <div className="flex flex-wrap gap-1.5">
@@ -533,7 +692,7 @@ export default function CreatorQuest({ onSignUp, onSwitchToMember, onClose }: Cr
                                 : 'bg-black/40 border-white/15 text-white/70 hover:border-white/40 hover:text-white'
                             }`}
                           >
-                            {lang === 'es' && REL_GOALS_ES[rg] ? REL_GOALS_ES[rg] : rg}
+                            {getRelGoalLabel(rg)}
                           </button>
                         );
                       })}
@@ -544,10 +703,10 @@ export default function CreatorQuest({ onSignUp, onSwitchToMember, onClose }: Cr
                   <div className="space-y-2">
                     <div className="flex justify-between items-center">
                       <label className="text-[9px] font-black uppercase text-white/40 tracking-wider">
-                        {lang === 'es' ? 'Tipos de Relación (Selecciona hasta 5)' : 'Relationship Types (Select up to 5)'}
+                        {lang === 'fr' ? 'Types de Relation (Jusqu\'à 5)' : lang === 'es' ? 'Tipos de Relación (Selecciona hasta 5)' : 'Relationship Types (Select up to 5)'}
                       </label>
                       <span className="text-[8px] font-mono text-[#00fbfb]">
-                        {relationshipTypes.length}/5 {lang === 'es' ? 'seleccionados' : 'selected'}
+                        {relationshipTypes.length}/5 {lang === 'fr' ? 'sélectionnés' : lang === 'es' ? 'seleccionados' : 'selected'}
                       </span>
                     </div>
                     <div className="flex flex-wrap gap-1.5">
@@ -571,7 +730,7 @@ export default function CreatorQuest({ onSignUp, onSwitchToMember, onClose }: Cr
                                 : 'bg-black/40 border-white/15 text-white/70 hover:border-white/40 hover:text-white'
                             }`}
                           >
-                            {lang === 'es' && REL_TYPES_ES[rt] ? REL_TYPES_ES[rt] : rt}
+                            {getRelTypeLabel(rt)}
                           </button>
                         );
                       })}
@@ -583,18 +742,18 @@ export default function CreatorQuest({ onSignUp, onSwitchToMember, onClose }: Cr
               <button
                 onClick={() => {
                   if (creatorPurposes.length === 0 || !specialization) {
-                    alert(lang === 'es' ? "Por favor selecciona al menos un Aura de Intención y tu Sinergia de Contenido." : "Please select at least one Intent Aura and your Content Synergy to proceed.");
+                    alert(lang === 'fr' ? "Veuillez sélectionner au moins une Aura d'Intention et votre Synergie de Contenu pour continuer." : lang === 'es' ? "Por favor selecciona al menos un Aura de Intención y tu Sinergia de Contenido." : "Please select at least one Intent Aura and your Content Synergy to proceed.");
                     return;
                   }
                   if (needsRelFields && (relationshipGoals.length === 0 || relationshipTypes.length === 0 || (isExplicit && sexualPreferences.length === 0))) {
-                    alert(lang === 'es' ? "Por favor completa todos los campos de Segmentación Avanzada requeridos para tu intención." : "Please complete all Advanced Audience Targeting fields required for your intent.");
+                    alert(lang === 'fr' ? "Veuillez compléter tous les champs de Ciblage Avancé d'Audience requis pour votre intention." : lang === 'es' ? "Por favor completa todos los campos de Segmentación Avanzada requeridos para tu intención." : "Please complete all Advanced Audience Targeting fields required for your intent.");
                     return;
                   }
                   setStep("revenue-engine");
                 }}
                 className="w-full bg-primary text-black font-black uppercase tracking-widest py-4 rounded-xl hover:shadow-[0_0_20px_rgba(102,252,241,0.4)] transition text-xs flex items-center justify-center gap-2 mt-6 cursor-pointer"
               >
-                {lang === 'es' ? 'Activar Motor de Ingresos →' : 'Engage Revenue Engine →'}
+                {lang === 'fr' ? 'Activer le Moteur de Revenus →' : lang === 'es' ? 'Activar Motor de Ingresos →' : 'Engage Revenue Engine →'}
               </button>
             </motion.div>
           )}
@@ -718,20 +877,34 @@ export default function CreatorQuest({ onSignUp, onSwitchToMember, onClose }: Cr
                   </div>
                 </div>
 
-                {/* Residence Input */}
-                <div className="glass-card p-4 rounded-xl border border-white/10 bg-white/2 space-y-2">
+                {/* Residence Input & Moroccan Privacy Shield */}
+                <div className="glass-card p-4 rounded-xl border border-white/10 bg-white/2 space-y-3">
                   <div className="flex justify-between items-center">
                     <span className="text-[9px] font-black uppercase text-white/50 tracking-wider">
-                      Tax Residence Country / State (Required)
+                      {lang === 'fr'
+                        ? 'Pays / État de Résidence Fiscale (Obligatoire)'
+                        : lang === 'es'
+                        ? 'País / Estado de Residencia Fiscal (Obligatorio)'
+                        : 'Tax Residence Country / State (Required)'}
                     </span>
+                    {isMoroccoDetected && (
+                      <span className="text-[9px] font-mono font-bold text-primary flex items-center gap-1">
+                        <span>🇲🇦</span>
+                        <span>{lang === 'fr' ? 'Bouclier Maroc Prêt' : lang === 'es' ? 'Escudo Marruecos Listo' : 'Morocco Shield Ready'}</span>
+                      </span>
+                    )}
                   </div>
                   <input
                     type="text"
-                    placeholder="e.g. Alicante, Spain"
+                    placeholder="e.g. Morocco (MA), Alicante (ES), Paris (FR)"
                     value={residence}
                     onChange={(e) => {
-                      setResidence(e.target.value);
-                      if (e.target.value.trim()) setResidenceError(false);
+                      const val = e.target.value;
+                      setResidence(val);
+                      if (val.trim()) setResidenceError(false);
+                      const isMo = checkIsMorocco(val);
+                      setIsMoroccoDetected(isMo);
+                      if (isMo && !moroccoShieldActive) setMoroccoShieldActive(true);
                     }}
                     className={`w-full px-4 py-3 bg-black/40 border rounded-xl text-xs text-white placeholder-white/20 focus:border-primary focus:outline-none transition ${
                       residenceError ? "border-red-500/50" : "border-white/10"
@@ -739,8 +912,107 @@ export default function CreatorQuest({ onSignUp, onSwitchToMember, onClose }: Cr
                   />
                   {residenceError && (
                     <span className="text-[9px] font-bold text-red-400 uppercase tracking-wide block mt-1">
-                      Residence is required for tax and legal compliance.
+                      {lang === 'fr'
+                        ? 'La résidence est requise pour la conformité fiscale et légale.'
+                        : lang === 'es'
+                        ? 'La residencia es obligatoria para cumplimiento fiscal y legal.'
+                        : 'Residence is required for tax and legal compliance.'}
                     </span>
+                  )}
+
+                  {/* 1-Click Country & Privacy Presets */}
+                  <div className="flex flex-wrap items-center gap-2 pt-1">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setResidence("Morocco (MA)");
+                        setIsMoroccoDetected(true);
+                        setMoroccoShieldActive(true);
+                        setResidenceError(false);
+                      }}
+                      className={`px-2.5 py-1 rounded-lg text-[10px] font-mono border transition flex items-center gap-1.5 cursor-pointer ${
+                        isMoroccoDetected
+                          ? "bg-primary/20 border-primary text-white"
+                          : "bg-white/5 border-white/10 text-white/60 hover:text-white"
+                      }`}
+                    >
+                      <span>🇲🇦</span>
+                      <span>Morocco (MA) + Privacy Shield</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setResidence("Spain (ES)");
+                        setIsMoroccoDetected(false);
+                        setResidenceError(false);
+                      }}
+                      className="px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-[10px] font-mono text-white/60 hover:text-white transition flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <span>🇪🇸</span>
+                      <span>Spain (ES)</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setResidence("France (FR)");
+                        setIsMoroccoDetected(false);
+                        setResidenceError(false);
+                      }}
+                      className="px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-[10px] font-mono text-white/60 hover:text-white transition flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <span>🇫🇷</span>
+                      <span>France (FR)</span>
+                    </button>
+                  </div>
+
+                  {/* Moroccan Domestic Privacy Shield HUD */}
+                  {isMoroccoDetected && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="p-3.5 mt-2 rounded-xl border border-primary/40 bg-gradient-to-r from-primary/10 via-black/40 to-primary/5 space-y-2.5"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="text-base">🇲🇦</span>
+                          <span className="text-xs font-black uppercase text-primary tracking-wider">
+                            {t.morocco_shield_title}
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setMoroccoShieldActive(!moroccoShieldActive)}
+                          className={`px-3 py-1 rounded-lg text-[10px] font-mono font-bold uppercase transition cursor-pointer ${
+                            moroccoShieldActive
+                              ? "bg-primary text-black shadow-[0_0_12px_rgba(0,251,251,0.4)]"
+                              : "bg-white/10 text-white/40 hover:text-white"
+                          }`}
+                        >
+                          {moroccoShieldActive
+                            ? (lang === 'fr' ? 'Activé' : lang === 'es' ? 'Activado' : 'Active')
+                            : (lang === 'fr' ? 'Désactivé' : lang === 'es' ? 'Desactivado' : 'Disabled')}
+                        </button>
+                      </div>
+
+                      <p className="text-[11px] text-[#b9cac9] leading-relaxed">
+                        {t.morocco_shield_desc}
+                      </p>
+
+                      <div className="grid grid-cols-3 gap-2 pt-1 text-[8.5px] font-mono">
+                        <div className="p-2 rounded-lg bg-black/50 border border-white/10 flex flex-col gap-0.5 text-center">
+                          <span className="text-primary font-bold">1-Click 'MA' Geoblock</span>
+                          <span className="text-white/60">{moroccoShieldActive ? "ENFORCED" : "OFF"}</span>
+                        </div>
+                        <div className="p-2 rounded-lg bg-black/50 border border-white/10 flex flex-col gap-0.5 text-center">
+                          <span className="text-primary font-bold">ZKP Face Blur</span>
+                          <span className="text-white/60">{faceBlurActive ? "ENFORCED" : "OFF"}</span>
+                        </div>
+                        <div className="p-2 rounded-lg bg-black/50 border border-white/10 flex flex-col gap-0.5 text-center">
+                          <span className="text-primary font-bold">B2B Export Invoice</span>
+                          <span className="text-white/60">0% IVA · 70% DEVISES</span>
+                        </div>
+                      </div>
+                    </motion.div>
                   )}
                 </div>
               </div>

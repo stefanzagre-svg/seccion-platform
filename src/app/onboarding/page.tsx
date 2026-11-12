@@ -162,6 +162,20 @@ export default function OnboardingFlow() {
           } else if (relationshipType) {
             updatePayload.relationship_types = [relationshipType];
           }
+
+          // Moroccan Domestic Privacy Shield (Task 2)
+          const moroccoShield = sessionStorage.getItem("_onboarding_creator_morocco_shield");
+          const blockedCountriesStr = sessionStorage.getItem("_onboarding_creator_blocked_countries");
+          if (moroccoShield === "true" || blockedCountriesStr) {
+            try {
+              const blocked = blockedCountriesStr ? JSON.parse(blockedCountriesStr) : ["MA"];
+              updatePayload.privacy_settings = {
+                ...(updatePayload.privacy_settings || {}),
+                blocked_countries: Array.from(new Set([...(updatePayload.privacy_settings?.blocked_countries || []), ...blocked])),
+                morocco_domestic_shield: true,
+              };
+            } catch {}
+          }
         }
 
         // Safe profile update with timeout guard to prevent network hang

@@ -1109,6 +1109,7 @@ export function detectUserCountryCode(): string {
     if (userTz.includes('Mexico')) return 'MX';
     if (userTz.includes('Buenos_Aires') || userTz.includes('Argentina')) return 'AR';
     if (userTz.includes('Sao_Paulo')) return 'BR';
+    if (userTz.includes('Casablanca')) return 'MA';
     return 'ES';
   } catch {
     return 'ES';

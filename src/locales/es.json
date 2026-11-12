@@ -548,7 +548,9 @@
       "archetype_portfolio": "Curador de la Bóveda",
       "archetype_portfolio_desc": "Lanza obras maestras exclusivas. Cura galerías secretas y desbloquea acceso VIP a tu estética más alta.",
       "archetype_hybrid": "Personaje Principal",
-      "archetype_hybrid_desc": "Controla la narrativa. Engánchalos con lore casual, luego desbloquea sesiones de sinergia privadas 1 a 1."
+      "archetype_hybrid_desc": "Controla la narrativa. Engánchalos con lore casual, luego desbloquea sesiones de sinergia privadas 1 a 1.",
+      "morocco_shield_title": "Escudo de Privacidad Doméstica para Marruecos [Recomendado]",
+      "morocco_shield_desc": "Oculta criptográficamente tu perfil y streams para todas las direcciones IP en Marruecos (Maroc Telecom, Inwi, Orange). Solo los miembros internacionales fuera de Marruecos podrán descubrir tu contenido."
     }
   },
   "demos": {
