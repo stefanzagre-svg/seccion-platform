@@ -505,7 +505,7 @@ export default function LandingPageHook({
                     selectedInterest === "education" ? "romance" : "education"
                   )
                 }
-                className="relative col-span-1 h-40 sm:h-48 rounded-2xl overflow-hidden border border-[#00fbfb] shadow-[0_8px_24px_rgba(0,251,251,0.18)] cursor-pointer group transition-transform hover:-translate-y-0.5"
+                className="relative col-span-1 h-40 sm:h-48 lg:h-52 rounded-2xl overflow-hidden border border-[#00fbfb] shadow-[0_8px_24px_rgba(0,251,251,0.18)] cursor-pointer group transition-transform hover:-translate-y-0.5"
               >
                 <div className="w-full h-full grid grid-cols-2">
                   <img
@@ -542,7 +542,7 @@ export default function LandingPageHook({
               {/* Card 2: Connect #2 (Male Fitness Coach + Female Member Interested in Fitness — Closely Linked in One Card) */}
               <div
                 onClick={() => setSelectedInterest("fitness")}
-                className="relative col-span-1 h-40 sm:h-48 rounded-2xl overflow-hidden border border-emerald-400/60 shadow-[0_8px_20px_rgba(16,185,129,0.14)] cursor-pointer group transition-transform hover:-translate-y-0.5"
+                className="relative col-span-1 h-40 sm:h-48 lg:h-52 rounded-2xl overflow-hidden border border-emerald-400/60 shadow-[0_8px_20px_rgba(16,185,129,0.14)] cursor-pointer group transition-transform hover:-translate-y-0.5"
               >
                 <div className="w-full h-full grid grid-cols-2">
                   <img
@@ -576,84 +576,60 @@ export default function LandingPageHook({
                 </div>
               </div>
 
-              {/* Card 3: Stream (Option B Split Dual-Portrait: Live Host + Interactive Co-Stream Room) */}
+              {/* Card 3: Stream (Single Live Host Portrait Adjusted for Desktop & Mobile) */}
               <Link
                 href="/now-streaming"
-                className="relative col-span-1 h-40 sm:h-48 rounded-2xl overflow-hidden border border-red-400/50 hover:border-[#00fbfb] shadow-[0_8px_20px_rgba(239,68,68,0.14)] cursor-pointer group transition-all hover:-translate-y-0.5 block"
+                className="relative col-span-1 h-40 sm:h-48 lg:h-52 rounded-2xl overflow-hidden border border-white/15 hover:border-[#00fbfb] shadow-[0_8px_20px_rgba(239,68,68,0.14)] cursor-pointer group transition-all hover:-translate-y-0.5 block"
               >
-                <div className="w-full h-full grid grid-cols-2">
-                  <img
-                    src={PORTRAITS.sofia}
-                    alt="Sofia Live Host"
-                    className="w-full h-full object-cover object-[center_18%] border-r border-red-400/40"
-                  />
-                  <img
-                    src={PORTRAITS.david}
-                    alt="Alex Live Co-Stream"
-                    className="w-full h-full object-cover object-[center_18%]"
-                  />
-                </div>
-                <div className="absolute inset-0 bg-gradient-to-b from-black/25 via-transparent to-[#05050c]/90 p-2 sm:p-2.5 flex flex-col justify-between">
+                <img
+                  src={PORTRAITS.sofia}
+                  alt="Sofia Live Stream"
+                  className="w-full h-full object-cover object-[center_16%] sm:object-[62%_16%]"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#05050c]/95 via-transparent to-black/30 p-2 sm:p-2.5 flex flex-col justify-between">
                   <span className="self-start text-[8px] sm:text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-red-500/90 text-white shadow-[0_0_10px_rgba(239,68,68,0.5)]">
                     {t("landing.reelStreamChip", "● Stream")}
                   </span>
                   <div className="text-left">
-                    <div className="text-[11px] sm:text-xs font-black text-white leading-tight mb-1 drop-shadow-[0_2px_6px_rgba(0,0,0,0.95)]">
-                      {t("landing.reelStreamTitle", "Sofia & Alex Live")}
+                    <div className="text-[11px] sm:text-xs font-black text-white leading-tight drop-shadow-[0_2px_6px_rgba(0,0,0,0.95)]">
+                      {t("landing.reelStreamTitle", "Sofia Live")}
                     </div>
-                    <div className="flex items-center justify-between gap-1">
-                      <span className="text-[7.5px] sm:text-[8.5px] font-extrabold px-1.5 py-0.5 rounded-full bg-[#07070F]/90 border border-red-400/55 text-slate-100 whitespace-nowrap">
-                        {t("landing.reelStreamLeftPill", "● Live Host")}
-                      </span>
-                      <span className="text-[7.5px] sm:text-[8.5px] font-extrabold px-1.5 py-0.5 rounded-full bg-[#07070F]/90 border border-[#00fbfb]/50 text-slate-100 whitespace-nowrap">
-                        {t("landing.reelStreamRightPill", "🌐 75+ Lang AI")}
-                      </span>
+                    <div className="text-[8.5px] sm:text-[10px] text-slate-200 leading-snug mt-0.5 font-semibold drop-shadow-[0_2px_4px_rgba(0,0,0,0.95)]">
+                      {t(
+                        "landing.reelStreamSub",
+                        "🌐 75+ Lang Voice AI · Interactive Rooms"
+                      )}
                     </div>
                   </div>
                 </div>
               </Link>
 
-              {/* Card 4: Studio (Option B Split Dual-Portrait: VIP/Match 4+ Unblurred vs. Smart Face-Blur Public Feed) */}
+              {/* Card 4: Studio (Single Creator Studio Portrait with Interactive Face-Blur Preview) */}
               <div
                 onClick={() => setStudioBlurred((prev) => !prev)}
-                title="Tap to toggle SECCION Smart Face-Blur"
-                className="relative col-span-1 h-40 sm:h-48 rounded-2xl overflow-hidden border border-[#ffabf3]/55 hover:border-[#ffabf3] shadow-[0_8px_20px_rgba(255,171,243,0.14)] cursor-pointer group transition-all hover:-translate-y-0.5"
+                title="Tap to preview SECCION Smart Face-Blur"
+                className="relative col-span-1 h-40 sm:h-48 lg:h-52 rounded-2xl overflow-hidden border border-white/15 hover:border-[#ffabf3] shadow-[0_8px_20px_rgba(255,171,243,0.14)] cursor-pointer group transition-all hover:-translate-y-0.5"
               >
-                <div className="w-full h-full grid grid-cols-2">
-                  <div className="relative w-full h-full overflow-hidden border-r border-[#ffabf3]/45">
-                    <img
-                      src={PORTRAITS.valeria}
-                      alt="Creator Studio VIP Unlocked"
-                      className={`w-full h-full object-cover object-[center_18%] transition-all duration-300 ${
-                        studioBlurred ? "blur-md scale-105" : ""
-                      }`}
-                    />
-                  </div>
-                  <div className="relative w-full h-full overflow-hidden">
-                    <img
-                      src={PORTRAITS.valeria}
-                      alt="Creator Studio Smart Face-Blur"
-                      className={`w-full h-full object-cover object-[center_18%] transition-all duration-300 ${
-                        studioBlurred ? "" : "blur-[6px] scale-105 brightness-90"
-                      }`}
-                    />
-                  </div>
-                </div>
-                <div className="absolute inset-0 bg-gradient-to-b from-black/25 via-transparent to-[#05050c]/90 p-2 sm:p-2.5 flex flex-col justify-between">
+                <img
+                  src={PORTRAITS.valeria}
+                  alt="Creator Studio"
+                  className={`w-full h-full object-cover object-[center_14%] sm:object-[center_12%] transition-all duration-300 ${
+                    studioBlurred ? "blur-md scale-105" : ""
+                  }`}
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#05050c]/95 via-transparent to-black/30 p-2 sm:p-2.5 flex flex-col justify-between">
                   <span className="self-start text-[8px] sm:text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-[#ffabf3]/25 text-[#ffabf3] border border-[#ffabf3]">
                     {t("landing.reelStudioChip", "Studio")}
                   </span>
                   <div className="text-left">
-                    <div className="text-[11px] sm:text-xs font-black text-white leading-tight mb-1 drop-shadow-[0_2px_6px_rgba(0,0,0,0.95)]">
+                    <div className="text-[11px] sm:text-xs font-black text-white leading-tight drop-shadow-[0_2px_6px_rgba(0,0,0,0.95)]">
                       {t("landing.reelStudioTitle", "Creator Studio")}
                     </div>
-                    <div className="flex items-center justify-between gap-1">
-                      <span className="text-[7.5px] sm:text-[8.5px] font-extrabold px-1.5 py-0.5 rounded-full bg-[#07070F]/90 border border-[#00fbfb]/50 text-slate-100 whitespace-nowrap">
-                        {t("landing.reelStudioLeftPill", "✨ VIP / Match 4+")}
-                      </span>
-                      <span className="text-[7.5px] sm:text-[8.5px] font-extrabold px-1.5 py-0.5 rounded-full bg-[#07070F]/90 border border-[#ffabf3]/55 text-slate-100 whitespace-nowrap">
-                        {t("landing.reelStudioRightPill", "🛡️ Face-Blur Feed")}
-                      </span>
+                    <div className="text-[8.5px] sm:text-[10px] text-slate-200 leading-snug mt-0.5 font-semibold drop-shadow-[0_2px_4px_rgba(0,0,0,0.95)]">
+                      {t(
+                        "landing.reelStudioSub",
+                        "🛡️ Face-Blur Privacy · Custom Skill Orders"
+                      )}
                     </div>
                   </div>
                 </div>

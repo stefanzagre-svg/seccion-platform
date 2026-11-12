@@ -75,10 +75,36 @@ export default function SeccionAgentBubble() {
     if (typeof window !== 'undefined') {
       const searchParams = new URLSearchParams(window.location.search);
       const isComplianceReviewer = searchParams.get('reviewer') === 'compliance' || searchParams.get('reviewer') === 'underwriting';
+      const isMoroccoCreator =
+        searchParams.get('ref') === 'morocco' ||
+        searchParams.get('country') === 'ma' ||
+        searchParams.get('source') === 'morocco';
       const isCreatorGuide =
         searchParams.get('guide') === 'creator' ||
         searchParams.get('ref') === 'creator' ||
         (searchParams.get('role') === 'creator' && searchParams.get('help') === 'steve');
+
+      if (isMoroccoCreator) {
+        setIsOpen(true);
+        const langParam = searchParams.get('lang')?.toLowerCase();
+        let moroccoGreeting = "Marhaba ! 👋 Je suis Steve, votre conseiller SECCION pour le Maroc. Bienvenue dans notre phase d'accès anticipé ! Vous pouvez dès maintenant créer votre profil, explorer le Creator Studio et préparer votre bio avec moi. Profitez de notre bouclier de confidentialité (blocage du Maroc 'MA' en 1 clic pour être totalement invisible au pays) et de notre modèle à 90 % net. Les comptes bancaires de paiement sont en cours de finalisation et vous serez notifié(e) dès leur ouverture officielle. Comment puis-je vous aider à configurer votre studio aujourd'hui ?";
+
+        if (langParam === 'darija' || langParam === 'ar') {
+          moroccoGreeting = "Marhba bik! 👋 Ana Steve, lmosa3id dyalek f SECCION. Merhba bik f l-marhala dyal l-accès anticipé! T9der men daba t-9ad l-profil dyalek, t-chouf les outils dyal Creator Studio w t-kteb l-bio dyalek m3aya. Ghadi t-stafed men l-privacy l-kamla (t-bloqui l-Maghrib 'MA' f d9i9a bach matban l-hta wahed hna) w l-90% net. Les comptes bancaires f طور الإعداد w ghadi n-3elmouk f l-wa9t li ykouno wajdin. Bghiti n-bdaou n-9ado l-profil dyalek daba?";
+        } else if (langParam === 'en') {
+          moroccoGreeting = "Marhaba & Welcome! 👋 I'm Steve, your dedicated SECCION Creator Coach for Morocco. Welcome to our early access phase! You can already register your creator profile, explore the Creator Studio tools, and craft your bio with me. Enjoy our 5-Layer Privacy Shield (1-click 'MA' domestic geo-blocking) and 90% net revenue split. Direct payout rails are currently being finalized and you will be notified immediately upon full launch. What would you like to set up first?";
+        }
+
+        setMessages([
+          {
+            id: 'morocco-creator-welcome',
+            sender: 'agent',
+            text: moroccoGreeting,
+            timestamp: new Date(),
+          },
+        ]);
+        return;
+      }
 
       if (isComplianceReviewer) {
         setIsOpen(true);
