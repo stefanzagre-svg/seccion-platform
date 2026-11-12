@@ -32,18 +32,24 @@ export default function FloatingBugButton() {
   return (
     <>
       <div 
-        className="fixed bottom-20 sm:bottom-6 right-4 sm:right-6 z-40 flex items-center gap-2 group"
+        className="fixed bottom-[calc(4.75rem+env(safe-area-inset-bottom,0px))] left-4 md:bottom-6 md:left-6 z-40 flex flex-row-reverse items-center gap-2 group"
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
         {/* Expanded Tooltip pill on hover */}
         <div 
           className={`hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-[#0F1117]/95 border border-[#00fbfb]/30 rounded-full text-[10px] font-mono text-white shadow-[0_0_15px_rgba(0,251,251,0.2)] backdrop-blur-md transition-all duration-300 pointer-events-none ${
-            isHovered ? 'opacity-100 translate-x-0 scale-100' : 'opacity-0 translate-x-2 scale-95'
+            isHovered ? 'opacity-100 translate-x-0 scale-100' : 'opacity-0 -translate-x-2 scale-95'
           }`}
         >
           <Sparkles className="w-3.5 h-3.5 text-[#00fbfb]" />
-          <span>{locale === 'es' ? 'Reportar Fallo & Ganar XP/Boost 💎' : 'Report Glitch & Earn XP/Boost 💎'}</span>
+          <span>
+            {locale === 'fr'
+              ? 'Signaler un bug & gagner XP/Boost 💎'
+              : locale === 'es'
+                ? 'Reportar Fallo & Ganar XP/Boost 💎'
+                : 'Report Glitch & Earn XP/Boost 💎'}
+          </span>
           <span className="text-[8px] opacity-40 pl-1">(Ctrl+Shift+B)</span>
         </div>
 

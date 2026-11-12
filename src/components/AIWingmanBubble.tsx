@@ -81,9 +81,16 @@ export default function AIWingmanBubble() {
     loadUser();
   }, []);
 
+  const isKateOwnedRoute =
+    pathname?.startsWith('/studio') ||
+    pathname?.startsWith('/onboarding') ||
+    pathname?.startsWith('/become-creator') ||
+    pathname?.startsWith('/login');
+
   if (
     !user ||
     profile?.role !== 'member' ||
+    isKateOwnedRoute ||
     pathname?.startsWith('/admin') ||
     pathname?.startsWith('/auth')
   ) {

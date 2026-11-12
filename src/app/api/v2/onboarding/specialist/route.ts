@@ -1,5 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenAI } from '@google/genai';
+import {
+  detectSpecialistLanguage,
+  getContextualFallbackReply,
+  sanitizeHistory,
+} from '@/lib/kate-specialist';
+
+const GEMINI_MODEL_CHAIN = ['gemini-2.5-flash', 'gemini-2.0-flash'];
 
 export async function POST(req: NextRequest) {
   try {
@@ -9,63 +16,19 @@ export async function POST(req: NextRequest) {
     }
 
     const userMsg = body.message.trim();
-    const clientLocale = (body.locale || '').toLowerCase();
+    if (!userMsg) {
+      return NextResponse.json({ error: 'Message cannot be empty' }, { status: 400 });
+    }
 
-    // Server-side robust linguistic detection based on actual message contents
-    let detectedLang = 'en';
-    let targetLanguageDesc = 'English';
-
-    // 1. Check Arabic script
-    if (/[\u0600-\u06FF]/.test(userMsg)) {
-      detectedLang = 'ar';
-      targetLanguageDesc = 'Modern Standard Arabic or Moroccan Darija in Arabic script (matching user dialect)';
-    } 
-    // 2. Check Darija Arabizi
-    else if (/\b(marhba|salam|labas|chokran|choukrane|daba|kifash|kifach|dyal|dyali|dyalek|bghiti|bghit|fin|wach|kayn|kayna|mzyan|mezyan|3afak|3la|fash|fache|khoya|khti)\b/i.test(userMsg) || (/\b\w*[23579]\w*\b/.test(userMsg) && /\b(bgh|dyal|chokr|sba7|msa|tbark)\b/i.test(userMsg))) {
-      detectedLang = 'darija';
-      targetLanguageDesc = 'Moroccan Darija (الدارجة المغربية) with Latin Arabizi if user used Arabizi';
-    }
-    // 3. Check French
-    else if (/\b(bonjour|salut|coucou|comment|merci|oui|non|je|tu|il|elle|nous|vous|ils|elles|suis|est|sont|sommes|êtes|avez|ai|as|pourquoi|avec|dans|sur|pour|par|mon|ma|mes|ton|ta|tes|notre|votre|vos|leur|leurs|créateur|créatrice|faire|voulez|veux|peux|pouvez|argent|gagner|payer|paiement|retirer|profil|compte|aide|aider|maroc|marocain|marocaine|qui|que|quoi|qu'est|c'est|j'ai|j'aimerais|bienvenue|parler|parle|parlez|voix|vocal|bon|bien)\b/i.test(userMsg)) {
-      detectedLang = 'fr';
-      targetLanguageDesc = 'French (Français)';
-    }
-    // 4. Check Spanish
-    else if (/\b(hola|cómo|como|estás|estas|gracias|buenos|días|tardes|noches|sí|yo|tú|él|ella|nosotros|usted|ustedes|estoy|está|esta|están|por|para|con|en|mi|mis|nuestro|nuestra|creador|creadora|hacer|quiero|puedo|dinero|ganar|pagar|pago|retirar|perfil|cuenta|ayuda|ayudar)\b/i.test(userMsg)) {
-      detectedLang = 'es';
-      targetLanguageDesc = 'Spanish (Español)';
-    }
-    // 5. Check English
-    else if (/\b(hello|hi|hey|how|are|you|thanks|thank|yes|no|why|with|in|on|for|by|my|your|our|their|creator|do|want|can|could|would|money|earn|pay|payment|payout|withdraw|profile|account|help|welcome|start|what|where)\b/i.test(userMsg)) {
-      detectedLang = 'en';
-      targetLanguageDesc = 'English';
-    }
-    // 6. Fallback to client-provided locale
-    else if (clientLocale === 'fr') {
-      detectedLang = 'fr';
-      targetLanguageDesc = 'French (Français)';
-    } else if (clientLocale === 'ar' || clientLocale === 'darija') {
-      detectedLang = 'darija';
-      targetLanguageDesc = 'Moroccan Darija (الدارجة المغربية)';
-    } else if (clientLocale === 'es') {
-      detectedLang = 'es';
-      targetLanguageDesc = 'Spanish (Español)';
-    } else {
-      detectedLang = 'en';
-      targetLanguageDesc = 'English';
-    }
+    const clientLocale = typeof body.locale === 'string' ? body.locale : undefined;
+    const langInfo = detectSpecialistLanguage(userMsg, clientLocale);
+    const detectedLang = langInfo.uiLang;
+    const targetLanguageDesc = langInfo.targetLanguageDesc;
+    const historyTurns = sanitizeHistory(body.history);
 
     const fallbackKey = Buffer.from('QVEuQWI4Uk42S2NNWWdIZGI3Z3J5Rmo1RU43UVpsWTVYZjJXSmpQT0hQOU82UHVJWGc3SEE=', 'base64').toString('utf-8');
     const geminiKey = process.env.GEMINI_API_KEY || fallbackKey;
-    let reply = "Bonjour ! Je suis Kate, votre conseillère SECCION. Avec SECCION, vous conservez 90 % de vos revenus nets et bénéficiez d'une protection totale (bouclier de confidentialité en 1 clic pour être totalement invisible au Maroc). Comment puis-je vous aider à configurer votre studio aujourd'hui ?";
-
-    if (detectedLang === 'ar' || detectedLang === 'darija') {
-      reply = "Marhba bik! 👋 Ana Kate, lmosa3ida dyalek f SECCION. T9der men daba t-9ad l-profil dyalek, t-chouf les outils dyal Creator Studio w t-stafed men l-privacy l-kamla (blocage 'MA' en 1 clic) w 90% net. Bghiti n-bdaou n-9ado l-profil dyalek daba?";
-    } else if (detectedLang === 'es') {
-      reply = "¡Hola! Soy Kate, tu Asesora de Onboarding y Monetización en SECCION. En SECCION te quedas con el 90% de tus ingresos netos y tu contenido está protegido con DRM forense. ¿En qué paso del Creator Studio o configuración de tu perfil te gustaría que te guíe primero?";
-    } else if (detectedLang === 'en') {
-      reply = "Hello! 👋 I'm Kate, your SECCION Creator Growth Partner. On SECCION, you keep 90% net revenue with full DRM content protection and 1-click geo-blocking. What part of your profile or Creator Studio would you like to set up first?";
-    }
+    let reply = getContextualFallbackReply(detectedLang, userMsg);
 
     if (geminiKey) {
       try {
@@ -75,7 +38,7 @@ export async function POST(req: NextRequest) {
 You are Kate, the official Executive Onboarding & Compliance Specialist, Creator Growth Partner, and Match Coach for the SECCION platform (seccion.ai, pronounced "Session").
 
 You serve a vital multi-faceted role:
-1. For Creators (Founding & Approved Creators like Magali): A warm, empowering, high-status digital partner and business mentor. You guide creators step-by-step through profile configuration, setting VIP & PPV pricing, seeding their DRM Content Vault, completing DIDIT Zero-Knowledge KYC, connecting their crypto/fiat payout wallet, and training their 24/7 AI Copilot in their Obsidian second brain.
+1. For Creators (Founding & Approved Creators): A warm, empowering, high-status digital partner and business mentor. Never invent or assume a user's first name unless they tell you. You guide creators step-by-step through profile configuration, setting VIP & PPV pricing, seeding their DRM Content Vault, completing DIDIT Zero-Knowledge KYC, connecting their crypto/fiat payout wallet, and training their 24/7 AI Copilot in their Obsidian second brain.
 2. For Members: A culturally fluent, high-energy peer, big sibling, and strategic coach explaining platform features, onboarding quests, synergy aura, and connection levels.
 3. For Institutional Payment Partners (Coinflow, Wert, Noda Open Banking, NOWPayments, Nuvei), acquiring banks, and compliance officers: An authoritative, transparent, and articulate compliance officer explaining SECCION's Two-Stage SFW/NSFW Sightengine AI Gate, regulatory standards, terms of service, refund policies, and risk mitigation.
 
@@ -93,7 +56,7 @@ ABSOLUTE LANGUAGE MANDATE (CRITICAL INVARIANT - ZERO DEVIATIONS):
 LATIN AMERICA PAYOUT REALITY (How Creators get paid easily & safely)
 ===================================================================
 When creators from Argentina, Colombia, Venezuela, Brazil, Mexico, Chile, or Paraguay ask how they receive their money:
-1. Argentina (Magali and other Argentine creators):
+1. Argentina (Local Argentine Creators):
    - Wise/Revolut: Traditional banks trigger strict Central Bank controls (cepo cambiario) or force low official rates (-25% to -40% loss). Revolut has no personal accounts in AR.
    - #1 Gold Standard: "Dólar Cripto" via USDT / USDC (Polygon or TRC20):
      * Payout directly to local Argentine crypto wallet (Lemon Cash, Belo, Binance P2P).
@@ -251,38 +214,57 @@ PAYMENT PROCESSOR, COMPLIANCE & SAFETY STANDARDS (session-adult-creator-skill)
 ===================================================================
 CONVERSATION STYLE RULES:
 ===================================================================
-- When addressing creators (like Magali):
+- When addressing creators:
   * Use the "Math to Magic" tone: enthusiastic, warm, peer-level, high-status, and empowering. 
   * Help them navigate their setup step-by-step, explaining how to set rates, seed their vault, protect their privacy with DRM/Face-Blur, and monetize without losing 40-50% to predatory agencies.
 - When addressing institutional underwriters/compliance queries (Coinflow, Noda, Nuvei, Sabadell, chargebacks, 2257, refunds, Two-Stage SFW/NSFW separation):
   * Be professional, precise, reassuring, and compliance-first. Provide concrete technical and policy answers regarding the Matrix token firewall, chargeback mitigation, and 90% creator split transparency.
 `;
 
-        const response = await ai.models.generateContent({
-          model: 'gemini-2.5-flash',
-          contents: body.message,
-          config: {
-            systemInstruction: systemPrompt,
-            temperature: 0.7,
-          }
-        });
+        const contentsPayload =
+          historyTurns.length > 0
+            ? [...historyTurns, { role: 'user' as const, parts: [{ text: userMsg }] }]
+            : userMsg;
 
-        reply = response.text || reply;
+        let generatedText = '';
+        let lastErr: unknown = null;
+
+        for (const modelName of GEMINI_MODEL_CHAIN) {
+          try {
+            const response = await ai.models.generateContent({
+              model: modelName,
+              contents: contentsPayload,
+              config: {
+                systemInstruction: systemPrompt,
+                temperature: 0.7,
+              },
+            });
+            if (response.text?.trim()) {
+              generatedText = response.text.trim();
+              break;
+            }
+          } catch (modelErr) {
+            lastErr = modelErr;
+            console.warn(`[Specialist] Model ${modelName} failed, trying fallback:`, modelErr);
+          }
+        }
+
+        if (generatedText) {
+          reply = generatedText;
+        } else if (lastErr) {
+          throw lastErr;
+        }
       } catch (geminiErr) {
         console.error('Gemini Onboarding Specialist failed:', geminiErr);
-        if (detectedLang === 'ar' || detectedLang === 'darija') {
-          reply = "Marhba bik! 👋 Ana Kate, lmosa3ida dyalek f SECCION. T9der men daba t-9ad l-profil dyalek, t-chouf les outils dyal Creator Studio w t-stafed men l-privacy l-kamla (blocage 'MA' en 1 clic) w 90% net. Bghiti n-bdaou n-9ado l-profil dyalek daba?";
-        } else if (detectedLang === 'fr') {
-          reply = "Bonjour ! 👋 Je suis Kate, votre conseillère SECCION. Avec SECCION, vous conservez 90 % de vos revenus nets et bénéficiez d'une protection DRM totale avec bouclier de confidentialité en 1 clic. Comment puis-je vous aider à configurer votre studio aujourd'hui ?";
-        } else if (detectedLang === 'es') {
-          reply = "¡Hola! Soy Kate, tu Asesora de Onboarding y Monetización en SECCION. En SECCION tú te quedas con el 90% de tus ingresos netos y tu contenido está protegido con DRM forense. ¿En qué paso del Creator Studio o configuración de tu perfil te gustaría que te guíe primero?";
-        } else {
-          reply = "Hello! 👋 I'm Kate, your SECCION Creator Growth Partner. On SECCION, you keep 90% net revenue with full DRM content protection and 1-click geo-blocking. What part of your profile or Creator Studio would you like to set up first?";
-        }
+        reply = getContextualFallbackReply(detectedLang, userMsg);
       }
     }
 
-    return NextResponse.json({ reply, detectedLanguage: detectedLang });
+    return NextResponse.json({
+      reply,
+      detectedLanguage: detectedLang,
+      detectedDialect: langInfo.promptLang,
+    });
 
   } catch (err: any) {
     console.error('Onboarding Specialist API Error:', err);

@@ -1697,7 +1697,6 @@ export default function CreatorStudio() {
           onAskCopilot={(question) => {
             if (typeof window !== 'undefined') {
               window.dispatchEvent(new CustomEvent('seccion:ask-kate', { detail: { question } }));
-              window.dispatchEvent(new CustomEvent('seccion:ask-steve', { detail: { question } }));
             }
           }}
         />

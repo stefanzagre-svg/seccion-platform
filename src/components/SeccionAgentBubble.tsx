@@ -6,6 +6,7 @@ import { Sparkles, X, Send, Loader2, MessageSquare, Mic, MicOff, Volume2, Volume
 import { usePathname } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { useTranslation, SupportedLocale } from '@/context/LanguageContext';
+import { prepareSpeechText } from '@/lib/kate-specialist';
 
 interface Message {
   id: string;
@@ -213,6 +214,19 @@ export default function SeccionAgentBubble() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const recognitionRef = useRef<any>(null);
   const audioPlayerRef = useRef<HTMLAudioElement | null>(null);
+  const currentAudioUrlRef = useRef<string | null>(null);
+  const ttsAbortRef = useRef<AbortController | null>(null);
+  const specialistAbortRef = useRef<AbortController | null>(null);
+  const speakSeqRef = useRef<number>(0);
+  const isRequestInFlightRef = useRef<boolean>(false);
+  const lastDispatchedRef = useRef<{ text: string; at: number } | null>(null);
+  const userSelectedLangRef = useRef<boolean>(false);
+  const hasSeededWelcomeRef = useRef<boolean>(false);
+  const messagesRef = useRef<Message[]>([]);
+
+  useEffect(() => {
+    messagesRef.current = messages;
+  }, [messages]);
 
   const getLocalizedGreeting = useCallback((lang: 'fr' | 'es' | 'en' | 'ar'): string => {
     if (lang === 'fr') {
@@ -227,18 +241,62 @@ export default function SeccionAgentBubble() {
     return "Hi! I'm Kate, your SECCION executive guide 🔮 Ask me about our hybrid platform (Dating + Live Streaming + Creators), chemistry matchmaking, or how to begin your quest.";
   }, []);
 
-  // Stop all active audio streams (both neural ElevenLabs and fallback Web Speech)
+  // Stop all active audio streams (both neural ElevenLabs and fallback Web Speech) and invalidate pending fetches
   const stopAllAudio = useCallback(() => {
+    speakSeqRef.current += 1;
+    if (ttsAbortRef.current) {
+      ttsAbortRef.current.abort();
+      ttsAbortRef.current = null;
+    }
     if (audioPlayerRef.current) {
+      audioPlayerRef.current.onplay = null;
+      audioPlayerRef.current.onended = null;
+      audioPlayerRef.current.onerror = null;
       audioPlayerRef.current.pause();
       audioPlayerRef.current.currentTime = 0;
       audioPlayerRef.current = null;
+    }
+    if (currentAudioUrlRef.current) {
+      URL.revokeObjectURL(currentAudioUrlRef.current);
+      currentAudioUrlRef.current = null;
     }
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
       window.speechSynthesis.cancel();
     }
     setIsSpeaking(false);
   }, []);
+
+  // Synchronously prime audio playback inside user gestures (iOS Safari / in-app WebView resilience)
+  const unlockAudioPlayback = useCallback(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      const AudioCtx = (window as any).AudioContext || (window as any).webkitAudioContext;
+      if (AudioCtx) {
+        const ctx = new AudioCtx();
+        if (ctx.state === 'suspended') {
+          ctx.resume().catch(() => {});
+        }
+        setTimeout(() => {
+          ctx.close().catch(() => {});
+        }, 300);
+      }
+    } catch {}
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      stopAllAudio();
+      if (specialistAbortRef.current) {
+        specialistAbortRef.current.abort();
+        specialistAbortRef.current = null;
+      }
+      if (recognitionRef.current) {
+        try {
+          recognitionRef.current.abort();
+        } catch {}
+      }
+    };
+  }, [stopAllAudio]);
 
   // Pre-load and cache voices eagerly to fix mobile Safari/Chrome empty voice roster bug
   useEffect(() => {
@@ -261,14 +319,17 @@ export default function SeccionAgentBubble() {
     };
   }, []);
 
-  // Synchronize language preference with app locale and URL parameters on mount and updates
+  // Synchronize language preference with app locale only when the user has not locked/picked a language
   useEffect(() => {
+    if (userSelectedLangRef.current) return;
     const resolved = resolveInitialLang(locale);
     setActiveAgentLang(resolved);
   }, [locale]);
 
   // Language pill selector in header
   const handleSelectLang = (newLang: 'fr' | 'es' | 'en' | 'ar') => {
+    userSelectedLangRef.current = true;
+    stopAllAudio();
     setActiveAgentLang(newLang);
     setSuggestionOffset(0);
     setAskedQuestions([]); // Fresh suite of questions in new language
@@ -419,51 +480,95 @@ export default function SeccionAgentBubble() {
       if (!voiceEnabled && !forceVoice) return;
 
       stopAllAudio();
+      const requestSeq = speakSeqRef.current;
       if (forceVoice && !voiceEnabled) {
         setVoiceEnabled(true);
       }
 
-      // Phonetic filter: SECCION is spelled SECCION in text, but phonetically pronounced "Session"
-      const phoneticText = textToSpeak.replace(/\bSECCION\b/gi, 'Session');
-      const cleanText = phoneticText.replace(/[#*_`~]/g, '').trim();
-      const speakSlice = cleanText.slice(0, 350);
+      const cleanText = prepareSpeechText(textToSpeak, 380);
+      if (!cleanText) return;
+
+      const controller = new AbortController();
+      ttsAbortRef.current = controller;
 
       // 1. PRIMARY ENGINE: Stream studio-grade ElevenLabs neural voice
       try {
         setIsSpeaking(true);
         const res = await fetch('/api/v2/voice/speak', {
           method: 'POST',
+          signal: controller.signal,
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text: speakSlice }),
+          body: JSON.stringify({ text: cleanText }),
         });
+
+        // Abort cleanly if user muted, interrupted, or triggered a newer message while TTS was loading
+        if (speakSeqRef.current !== requestSeq) {
+          return;
+        }
 
         if (res.ok) {
           const blob = await res.blob();
+          if (speakSeqRef.current !== requestSeq) {
+            return;
+          }
           const audioUrl = URL.createObjectURL(blob);
+          currentAudioUrlRef.current = audioUrl;
           const audio = new Audio(audioUrl);
           audioPlayerRef.current = audio;
 
-          audio.onplay = () => setIsSpeaking(true);
+          const cleanupAudioUrl = () => {
+            if (currentAudioUrlRef.current === audioUrl) {
+              URL.revokeObjectURL(audioUrl);
+              currentAudioUrlRef.current = null;
+            }
+          };
+
+          audio.onplay = () => {
+            if (speakSeqRef.current === requestSeq) {
+              setIsSpeaking(true);
+            }
+          };
           audio.onended = () => {
-            setIsSpeaking(false);
-            URL.revokeObjectURL(audioUrl);
-            audioPlayerRef.current = null;
+            if (speakSeqRef.current === requestSeq) {
+              setIsSpeaking(false);
+            }
+            cleanupAudioUrl();
+            if (audioPlayerRef.current === audio) {
+              audioPlayerRef.current = null;
+            }
           };
           audio.onerror = () => {
-            setIsSpeaking(false);
-            audioPlayerRef.current = null;
-            fallbackWebSpeech(speakSlice, overrideLang);
+            cleanupAudioUrl();
+            if (audioPlayerRef.current === audio) {
+              audioPlayerRef.current = null;
+            }
+            if (speakSeqRef.current === requestSeq) {
+              setIsSpeaking(false);
+              fallbackWebSpeech(cleanText, overrideLang);
+            }
           };
 
           await audio.play();
           return;
         }
-      } catch (neuralErr) {
+      } catch (neuralErr: any) {
+        if (neuralErr?.name === 'AbortError' || speakSeqRef.current !== requestSeq) {
+          return;
+        }
         console.warn('[Voice Engine] ElevenLabs stream error, falling back to Web Speech:', neuralErr);
+      } finally {
+        if (ttsAbortRef.current === controller) {
+          ttsAbortRef.current = null;
+        }
+      }
+
+      if (speakSeqRef.current !== requestSeq) {
+        setIsSpeaking(false);
+        return;
       }
 
       // 2. FALLBACK ENGINE: Browser Web Speech API
-      fallbackWebSpeech(speakSlice, overrideLang);
+      fallbackWebSpeech(cleanText, overrideLang);
     },
     [voiceEnabled, stopAllAudio, fallbackWebSpeech]
   );
@@ -473,10 +578,29 @@ export default function SeccionAgentBubble() {
       const trimmed = questionText.trim();
       if (!trimmed) return;
 
+      const now = Date.now();
+      if (
+        lastDispatchedRef.current &&
+        lastDispatchedRef.current.text === trimmed &&
+        now - lastDispatchedRef.current.at < 400
+      ) {
+        return;
+      }
+      if (isRequestInFlightRef.current) {
+        return;
+      }
+      lastDispatchedRef.current = { text: trimmed, at: now };
+      isRequestInFlightRef.current = true;
+
       setErrorText(null);
       setAskedQuestions((prev) => (prev.includes(trimmed) ? prev : [...prev, trimmed]));
+      const recentHistory = messagesRef.current
+        .filter((m) => !m.id.startsWith('welcome-') && !m.id.startsWith('lang-switch-'))
+        .slice(-8)
+        .map((m) => ({ sender: m.sender, text: m.text }));
+
       const userMsg: Message = {
-        id: `user-${Date.now()}`,
+        id: `user-${now}`,
         sender: 'user',
         text: trimmed,
         timestamp: new Date(),
@@ -484,11 +608,19 @@ export default function SeccionAgentBubble() {
       setMessages((prev) => [...prev, userMsg]);
       setIsTyping(true);
 
+      const controller = new AbortController();
+      specialistAbortRef.current = controller;
+
       try {
         const response = await fetch('/api/v2/onboarding/specialist', {
           method: 'POST',
+          signal: controller.signal,
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ message: trimmed, locale: activeAgentLang }),
+          body: JSON.stringify({
+            message: trimmed,
+            locale: activeAgentLang,
+            history: recentHistory,
+          }),
         });
         const data = await response.json();
 
@@ -496,9 +628,23 @@ export default function SeccionAgentBubble() {
           throw new Error(data.error || 'Connection error. Please try again.');
         }
 
-        const replyText = data.reply || data.response || t('agent.fallback');
-        const detected = data.detectedLanguage;
-        if (detected && ['fr', 'es', 'en', 'ar'].includes(detected) && detected !== activeAgentLang) {
+        const fallbackCopy =
+          activeAgentLang === 'fr'
+            ? "Je suis là pour vous aider sur SECCION ! Pouvez-vous préciser votre question ?"
+            : activeAgentLang === 'es'
+              ? "¡Estoy aquí para ayudarte en SECCION! ¿Podrías darme un poco más de detalle?"
+              : activeAgentLang === 'ar'
+                ? "Ana hna bach n-3awnek f SECCION! T9der t-wda7 lia ktar?"
+                : "I'm here to help you with SECCION! Could you share a bit more detail?";
+        const replyText = data.reply || data.response || fallbackCopy;
+        const rawDetected = data.detectedLanguage === 'darija' ? 'ar' : data.detectedLanguage;
+        const detected =
+          rawDetected && ['fr', 'es', 'en', 'ar'].includes(rawDetected)
+            ? (rawDetected as 'fr' | 'es' | 'en' | 'ar')
+            : undefined;
+
+        if (detected && detected !== activeAgentLang) {
+          userSelectedLangRef.current = true;
           setActiveAgentLang(detected);
         }
 
@@ -511,27 +657,50 @@ export default function SeccionAgentBubble() {
         setMessages((prev) => [...prev, agentMsg]);
 
         // Vocal readout
-        const replyVoiceLang = detected === 'fr' ? 'fr-FR' : detected === 'ar' ? 'ar-MA' : detected === 'es' ? 'es-ES' : detected === 'en' ? 'en-US' : undefined;
+        const effectiveLang = detected || activeAgentLang;
+        const replyVoiceLang =
+          effectiveLang === 'fr'
+            ? 'fr-FR'
+            : effectiveLang === 'ar'
+              ? 'ar-MA'
+              : effectiveLang === 'es'
+                ? 'es-ES'
+                : 'en-US';
         speakText(replyText, isVocalInput, replyVoiceLang);
       } catch (err: any) {
-        console.error(err);
-        setErrorText(err.message || 'Connecting error. Please try again.');
+        if (err?.name !== 'AbortError') {
+          console.error(err);
+          setErrorText(err.message || 'Connecting error. Please try again.');
+        }
       } finally {
+        if (specialistAbortRef.current === controller) {
+          specialistAbortRef.current = null;
+        }
+        isRequestInFlightRef.current = false;
         setIsTyping(false);
       }
     },
-    [activeAgentLang, t, speakText]
+    [activeAgentLang, speakText]
   );
 
   // Toggle Voice Dictation (Microphone input)
   const toggleSpeechRecognition = useCallback(() => {
     if (typeof window === 'undefined') return;
+    unlockAudioPlayback();
 
     const SpeechRecognition =
       (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
 
     if (!SpeechRecognition) {
-      setErrorText('Voice input is not supported in this browser. Please type your question.');
+      setErrorText(
+        activeAgentLang === 'fr'
+          ? "La dictée vocale n'est pas supportée sur ce navigateur. Tapez votre question."
+          : activeAgentLang === 'es'
+            ? 'El dictado por voz no es compatible con este navegador. Escribe tu pregunta.'
+            : activeAgentLang === 'ar'
+              ? 'L-micro ma kheddamch f had l-navigateur. Kteb sou2al dyalek hna.'
+              : 'Voice input is not supported in this browser. Please type your question.'
+      );
       return;
     }
 
@@ -543,7 +712,12 @@ export default function SeccionAgentBubble() {
       return;
     }
 
+    if (isRequestInFlightRef.current) {
+      return;
+    }
+
     try {
+      stopAllAudio();
       const recognition = new SpeechRecognition();
       recognition.continuous = false;
       recognition.interimResults = false;
@@ -565,9 +739,9 @@ export default function SeccionAgentBubble() {
       };
 
       recognition.onresult = (event: any) => {
-        const transcript = event.results[0][0].transcript;
+        const transcript = event?.results?.[0]?.[0]?.transcript;
         if (transcript) {
-          setInput(transcript);
+          setInput('');
           setIsListening(false);
           sendQuestion(transcript, true);
         }
@@ -576,8 +750,16 @@ export default function SeccionAgentBubble() {
       recognition.onerror = (event: any) => {
         console.error('Speech recognition error:', event);
         setIsListening(false);
-        if (event.error !== 'no-speech') {
-          setErrorText('Microphone permission or network error. Please try again or type.');
+        if (event.error !== 'no-speech' && event.error !== 'aborted') {
+          setErrorText(
+            activeAgentLang === 'fr'
+              ? 'Accès au micro refusé ou erreur réseau. Réessayez ou tapez votre question.'
+              : activeAgentLang === 'es'
+                ? 'Permiso de micrófono o error de red. Inténtalo de nuevo o escribe tu pregunta.'
+                : activeAgentLang === 'ar'
+                  ? 'Mochkil f l-micro aw connexion. 3awed jereb wla kteb sou2alek.'
+                  : 'Microphone permission or network error. Please try again or type.'
+          );
         }
       };
 
@@ -590,91 +772,118 @@ export default function SeccionAgentBubble() {
     } catch (err: any) {
       console.error(err);
       setIsListening(false);
-      setErrorText('Could not access microphone.');
+      setErrorText(
+        activeAgentLang === 'fr'
+          ? 'Impossible d’accéder au microphone.'
+          : activeAgentLang === 'es'
+            ? 'No se pudo acceder al micrófono.'
+            : 'Could not access microphone.'
+      );
     }
-  }, [isListening, activeAgentLang, sendQuestion]);
+  }, [isListening, activeAgentLang, sendQuestion, stopAllAudio, unlockAudioPlayback]);
 
-  // Initial welcome message configuration on mount
+  // Initial welcome message configuration without ever wiping an active conversation
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const searchParams = new URLSearchParams(window.location.search);
-      const isComplianceReviewer = searchParams.get('reviewer') === 'compliance' || searchParams.get('reviewer') === 'underwriting';
-      const isMoroccoCreator =
-        searchParams.get('ref') === 'morocco' ||
-        searchParams.get('country') === 'ma' ||
-        searchParams.get('source') === 'morocco';
-      const isCreatorGuide =
-        searchParams.get('guide') === 'creator' ||
-        searchParams.get('ref') === 'creator' ||
-        searchParams.get('help') === 'kate' ||
-        searchParams.get('chat') === 'kate' ||
-        (searchParams.get('role') === 'creator' && (searchParams.get('help') === 'kate' || searchParams.get('help') === 'steve'));
+    const buildInitialGreeting = (): { shouldOpen: boolean; message: Message } => {
+      if (typeof window !== 'undefined') {
+        const searchParams = new URLSearchParams(window.location.search);
+        const isComplianceReviewer =
+          searchParams.get('reviewer') === 'compliance' ||
+          searchParams.get('reviewer') === 'underwriting';
+        const isMoroccoCreator =
+          searchParams.get('ref') === 'morocco' ||
+          searchParams.get('country') === 'ma' ||
+          searchParams.get('source') === 'morocco';
+        const isCreatorGuide =
+          searchParams.get('guide') === 'creator' ||
+          searchParams.get('ref') === 'creator' ||
+          searchParams.get('help') === 'kate' ||
+          searchParams.get('chat') === 'kate' ||
+          (searchParams.get('role') === 'creator' &&
+            (searchParams.get('help') === 'kate' || searchParams.get('help') === 'steve'));
 
-      if (isMoroccoCreator) {
-        setIsOpen(true);
-        let moroccoGreeting = "Marhaba ! 👋 Je suis Kate, votre conseillère SECCION pour le Maroc. Bienvenue dans notre phase d'accès anticipé ! Vous pouvez dès maintenant créer votre profil, explorer le Creator Studio et préparer votre bio avec moi. Profitez de notre bouclier de confidentialité (blocage du Maroc 'MA' en 1 clic pour être totalement invisible au pays) et de notre modèle à 90 % net. Les comptes bancaires de paiement sont en cours de finalisation et vous serez notifié(e) dès leur ouverture officielle. Comment puis-je vous aider à configurer votre studio aujourd'hui ?";
+        if (isMoroccoCreator) {
+          let moroccoGreeting =
+            "Marhaba ! 👋 Je suis Kate, votre conseillère SECCION pour le Maroc. Bienvenue dans notre phase d'accès anticipé ! Vous pouvez dès maintenant créer votre profil, explorer le Creator Studio et préparer votre bio avec moi. Profitez de notre bouclier de confidentialité (blocage du Maroc 'MA' en 1 clic pour être totalement invisible au pays) et de notre modèle à 90 % net. Les comptes bancaires de paiement sont en cours de finalisation et vous serez notifié(e) dès leur ouverture officielle. Comment puis-je vous aider à configurer votre studio aujourd'hui ?";
 
-        if (activeAgentLang === 'ar') {
-          moroccoGreeting = "Marhba bik! 👋 Ana Kate, lmosa3ida dyalek f SECCION. Merhba bik f l-marhala dyal l-accès anticipé! T9der men daba t-9ad l-profil dyalek, t-chouf les outils dyal Creator Studio w t-kteb l-bio dyalek m3aya. Ghadi t-stafed men l-privacy l-kamla (t-bloqui l-Maghrib 'MA' f d9i9a bach matban l-hta wahed hna) w l-90% net. Les comptes bancaires f طور الإعداد w ghadi n-3elmouk f l-wa9t li ykouno wajdin. Bghiti n-bdaou n-9ado l-profil dyalek daba?";
-        } else if (activeAgentLang === 'en') {
-          moroccoGreeting = "Marhaba & Welcome! 👋 I'm Kate, your dedicated SECCION Creator Coach for Morocco. Welcome to our early access phase! You can already register your creator profile, explore the Creator Studio tools, and craft your bio with me. Enjoy our 5-Layer Privacy Shield (1-click 'MA' domestic geo-blocking) and 90% net revenue split. Direct payout rails are currently being finalized and you will be notified immediately upon full launch. What would you like to set up first?";
-        } else if (activeAgentLang === 'es') {
-          moroccoGreeting = "¡Marhaba y Bienvenida/o! 👋 Soy Kate, tu asesora de SECCION para Marruecos. ¡Bienvenida a nuestra fase de acceso anticipado! Ya puedes crear tu perfil, explorar el Creator Studio y redactar tu bio conmigo. Disfruta de nuestro escudo de privacidad (bloqueo de Marruecos 'MA' en 1 clic para ser invisible en tu país) y nuestro reparto del 90% neto. Las cuentas bancarias de pago están en fase final y te notificaremos cuando abran. ¿Cómo puedo ayudarte hoy?";
+          if (activeAgentLang === 'ar') {
+            moroccoGreeting =
+              "Marhba bik! 👋 Ana Kate, lmosa3ida dyalek f SECCION. Merhba bik f l-marhala dyal l-accès anticipé! T9der men daba t-9ad l-profil dyalek, t-chouf les outils dyal Creator Studio w t-kteb l-bio dyalek m3aya. Ghadi t-stafed men l-privacy l-kamla (t-bloqui l-Maghrib 'MA' f d9i9a bach matban l-hta wahed hna) w l-90% net. Les comptes bancaires f طور الإعداد w ghadi n-3elmouk f l-wa9t li ykouno wajdin. Bghiti n-bdaou n-9ado l-profil dyalek daba?";
+          } else if (activeAgentLang === 'en') {
+            moroccoGreeting =
+              "Marhaba & Welcome! 👋 I'm Kate, your dedicated SECCION Creator Coach for Morocco. Welcome to our early access phase! You can already register your creator profile, explore the Creator Studio tools, and craft your bio with me. Enjoy our 5-Layer Privacy Shield (1-click 'MA' domestic geo-blocking) and 90% net revenue split. Direct payout rails are currently being finalized and you will be notified immediately upon full launch. What would you like to set up first?";
+          } else if (activeAgentLang === 'es') {
+            moroccoGreeting =
+              '¡Marhaba y Bienvenida/o! 👋 Soy Kate, tu asesora de SECCION para Marruecos. ¡Bienvenida a nuestra fase de acceso anticipado! Ya puedes crear tu perfil, explorar el Creator Studio y redactar tu bio conmigo. Disfruta de nuestro escudo de privacidad (bloqueo de Marruecos \'MA\' en 1 clic para ser invisible en tu país) y nuestro reparto del 90% neto. Las cuentas bancarias de pago están en fase final y te notificaremos cuando abran. ¿Cómo puedo ayudarte hoy?';
+          }
+
+          return {
+            shouldOpen: true,
+            message: {
+              id: `welcome-morocco-${activeAgentLang}`,
+              sender: 'agent',
+              text: moroccoGreeting,
+              timestamp: new Date(),
+            },
+          };
         }
 
-        setMessages([
-          {
-            id: 'morocco-creator-welcome',
-            sender: 'agent',
-            text: moroccoGreeting,
-            timestamp: new Date(),
-          },
-        ]);
-        return;
+        if (isComplianceReviewer) {
+          return {
+            shouldOpen: true,
+            message: {
+              id: 'welcome-compliance',
+              sender: 'agent',
+              text: "Welcome Institutional Underwriting & Compliance Team! 👋 I'm Kate, SECCION's Executive Onboarding & Compliance Specialist. Feel free to ask me anything regarding our Two-Stage SFW vs. NSFW Sightengine AI gate, DIDIT Zero-Knowledge KYC verification, 18 U.S.C. 2257 record-keeping, smart-contract escrow protection, terms of service, or refund protocols.",
+              timestamp: new Date(),
+            },
+          };
+        }
+
+        if (isCreatorGuide) {
+          return {
+            shouldOpen: true,
+            message: {
+              id: `welcome-creator-guide-${activeAgentLang}`,
+              sender: 'agent',
+              text:
+                activeAgentLang === 'es'
+                  ? '¡Hola Creadora / Creador! 🌟 Soy Kate, tu Asesora de Onboarding y Monetización en SECCION. Estoy aquí para guiarte paso a paso: desde tu verificación KYC segura y configuración del Creator Studio, hasta cómo activar tus suscripciones VIP, pases Master (80% revenue pool), transmisiones en vivo y herramientas de IA. ¿Tienes alguna pregunta para empezar?'
+                  : activeAgentLang === 'fr'
+                    ? "Bonjour Créatrice / Créateur ! 🌟 Je suis Kate, votre conseillère d'intégration et de monétisation sur SECCION. Je suis là pour vous guider pas à pas : de votre vérification KYC privée à la configuration du Creator Studio, l'activation des abonnements VIP, pass Master (80% net), lives privés et outils IA. Par quoi souhaitez-vous commencer ?"
+                    : activeAgentLang === 'ar'
+                      ? "Marhba bik Créatrice / Créateur ! 🌟 Ana Kate, lmosa3ida dyalek f SECCION. Hna bach n-3awnek étape par étape : men l-KYC biometrique w Creator Studio, 7tal l-abonnements VIP, live streams w les outils d'IA. Bghiti n-bdaou daba?"
+                      : "Hey Creator! 🌟 I'm Kate, your dedicated Creator Onboarding & Monetization Coach on SECCION. I'm here to guide you through every step: from your private biometric KYC verification and Creator Studio setup, to activating VIP tiers, Master Platform Passes (80% pool redistribution), live broadcasts, and AI growth tools. What can I help you with first?",
+              timestamp: new Date(),
+            },
+          };
+        }
       }
 
-      if (isComplianceReviewer) {
-        setIsOpen(true);
-        setMessages([
-          {
-            id: 'compliance-welcome',
-            sender: 'agent',
-            text: "Welcome Institutional Underwriting & Compliance Team! 👋 I'm Kate, SECCION's Executive Onboarding & Compliance Specialist. Feel free to ask me anything regarding our Two-Stage SFW vs. NSFW Sightengine AI gate, DIDIT Zero-Knowledge KYC verification, 18 U.S.C. 2257 record-keeping, smart-contract escrow protection, terms of service, or refund protocols.",
-            timestamp: new Date(),
-          },
-        ]);
-        return;
-      }
+      return {
+        shouldOpen: false,
+        message: {
+          id: `welcome-${activeAgentLang}`,
+          sender: 'agent',
+          text: getLocalizedGreeting(activeAgentLang),
+          timestamp: new Date(),
+        },
+      };
+    };
 
-      if (isCreatorGuide) {
-        setIsOpen(true);
-        setMessages([
-          {
-            id: 'creator-guide-welcome',
-            sender: 'agent',
-            text:
-              activeAgentLang === 'es'
-                ? '¡Hola Creadora / Creador! 🌟 Soy Kate, tu Asesora de Onboarding y Monetización en SECCION. Estoy aquí para guiarte paso a paso: desde tu verificación KYC segura y configuración del Creator Studio, hasta cómo activar tus suscripciones VIP, pases Master (80% revenue pool), transmisiones en vivo y herramientas de IA. ¿Tienes alguna pregunta para empezar?'
-                : activeAgentLang === 'fr'
-                ? "Bonjour Créatrice / Créateur ! 🌟 Je suis Kate, votre conseillère d'intégration et de monétisation sur SECCION. Je suis là pour vous guider pas à pas : de votre vérification KYC privée à la configuration du Creator Studio, l'activation des abonnements VIP, pass Master (80% net), lives privés et outils IA. Par quoi souhaitez-vous commencer ?"
-                : activeAgentLang === 'ar'
-                ? "Marhba bik Créatrice / Créateur ! 🌟 Ana Kate, lmosa3ida dyalek f SECCION. Hna bach n-3awnek étape par étape : men l-KYC biometrique w Creator Studio, 7tal l-abonnements VIP, live streams w les outils d'IA. Bghiti n-bdaou daba?"
-                : "Hey Creator! 🌟 I'm Kate, your dedicated Creator Onboarding & Monetization Coach on SECCION. I'm here to guide you through every step: from your private biometric KYC verification and Creator Studio setup, to activating VIP tiers, Master Platform Passes (80% pool redistribution), live broadcasts, and AI growth tools. What can I help you with first?",
-            timestamp: new Date(),
-          },
-        ]);
-        return;
-      }
+    const { shouldOpen, message } = buildInitialGreeting();
+    if (!hasSeededWelcomeRef.current && shouldOpen) {
+      setIsOpen(true);
     }
+    hasSeededWelcomeRef.current = true;
 
-    setMessages([
-      {
-        id: `welcome-${activeAgentLang}`,
-        sender: 'agent',
-        text: getLocalizedGreeting(activeAgentLang),
-        timestamp: new Date(),
-      },
-    ]);
+    setMessages((prev) => {
+      // Never erase existing conversation once user has asked a question or switched mid-chat
+      if (prev.length > 1 || prev.some((m) => m.sender === 'user')) {
+        return prev;
+      }
+      return [message];
+    });
   }, [activeAgentLang, getLocalizedGreeting]);
 
   // Listen for custom "seccion:ask-kate" or "seccion:ask-steve" events from Creator Studio / Onboarding Checklist
@@ -702,51 +911,40 @@ export default function SeccionAgentBubble() {
 
   // Check if a member is logged in — if a logged-in member is present on member pages, AIWingmanBubble takes over!
   useEffect(() => {
+    let cancelled = false;
     async function checkUser() {
       const {
         data: { session },
       } = await supabase.auth.getSession();
+      if (cancelled) return;
       if (session?.user) {
         const { data: profile } = await supabase
           .from('profiles')
           .select('role')
           .eq('id', session.user.id)
           .single();
-        if (profile?.role === 'member') {
-          setIsMemberLoggedIn(true);
-        } else {
-          setIsMemberLoggedIn(false);
+        if (!cancelled) {
+          setIsMemberLoggedIn(profile?.role === 'member');
         }
+      } else {
+        setIsMemberLoggedIn(false);
       }
     }
     checkUser();
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(() => {
+      checkUser();
+    });
+
+    return () => {
+      cancelled = true;
+      subscription.unsubscribe();
+    };
   }, [pathname]);
 
-  // Hide SECCION Agent if user is a logged-in member on non-studio/non-onboarding routes, or on admin/auth routes
-  const isCreatorOrOnboardingRoute =
-    pathname?.startsWith('/studio') ||
-    pathname?.startsWith('/onboarding') ||
-    pathname?.startsWith('/become-creator') ||
-    pathname?.startsWith('/login');
-
-  if (
-    (isMemberLoggedIn && !isCreatorOrOnboardingRoute) ||
-    pathname?.startsWith('/admin') ||
-    pathname?.startsWith('/auth')
-  ) {
-    return null;
-  }
-
-  const handleSend = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!input.trim() || isTyping) return;
-    const text = input.trim();
-    setInput('');
-    await sendQuestion(text);
-  };
-
-  // Continuous engagement question recommendation engine:
-  // Preserves unanswered quick questions all along and dynamically suggests fresh context questions
+  // Continuous engagement question recommendation engine (must run unconditionally before early return!)
   const activeQuestionsList = useMemo(() => {
     const langData = QUESTIONS_BANK[activeAgentLang] || QUESTIONS_BANK.fr;
     const lastUserOrAgentMsg = messages[messages.length - 1]?.text?.toLowerCase() || '';
@@ -787,6 +985,30 @@ export default function SeccionAgentBubble() {
     }
     return picked;
   }, [activeAgentLang, messages, askedQuestions, suggestionOffset]);
+
+  // Hide SECCION Agent if user is a logged-in member on non-studio/non-onboarding routes, or on admin/auth routes
+  const isCreatorOrOnboardingRoute =
+    pathname?.startsWith('/studio') ||
+    pathname?.startsWith('/onboarding') ||
+    pathname?.startsWith('/become-creator') ||
+    pathname?.startsWith('/login');
+
+  if (
+    (isMemberLoggedIn && !isCreatorOrOnboardingRoute) ||
+    pathname?.startsWith('/admin') ||
+    pathname?.startsWith('/auth')
+  ) {
+    return null;
+  }
+
+  const handleSend = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!input.trim() || isTyping) return;
+    unlockAudioPlayback();
+    const text = input.trim();
+    setInput('');
+    await sendQuestion(text);
+  };
 
   const cycleSuggestions = () => {
     setSuggestionOffset((prev) => prev + 2);
@@ -870,7 +1092,23 @@ export default function SeccionAgentBubble() {
                         : 'bg-white/5 border border-white/10 text-white/90 rounded-tl-none'
                     }`}
                   >
-                    {msg.text}
+                    <p className="whitespace-pre-wrap break-words">{msg.text}</p>
+                    {msg.sender === 'agent' && (
+                      <div className="mt-1.5 flex justify-end">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            unlockAudioPlayback();
+                            speakText(msg.text, true);
+                          }}
+                          className="inline-flex items-center gap-1 text-[10px] text-white/40 hover:text-[#00fbfb] transition cursor-pointer"
+                          aria-label="Listen to Kate"
+                          title="Listen"
+                        >
+                          <Volume2 className="w-3 h-3" />
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}
@@ -911,8 +1149,12 @@ export default function SeccionAgentBubble() {
                     <button
                       key={`${q}-${idx}`}
                       type="button"
-                      onClick={() => sendQuestion(q)}
-                      className="w-full text-left px-3 py-2 rounded-xl bg-white/[0.04] hover:bg-[#00fbfb]/15 border border-white/10 hover:border-[#00fbfb]/40 text-[11px] text-white/80 hover:text-white transition cursor-pointer flex items-center justify-between group shadow-sm"
+                      disabled={isTyping}
+                      onClick={() => {
+                        unlockAudioPlayback();
+                        sendQuestion(q);
+                      }}
+                      className="w-full text-left px-3 py-2 rounded-xl bg-white/[0.04] hover:bg-[#00fbfb]/15 border border-white/10 hover:border-[#00fbfb]/40 text-[11px] text-white/80 hover:text-white transition cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-between group shadow-sm"
                     >
                       <span className="flex items-center gap-1.5">
                         <span className="text-[#00fbfb]">💬</span>
@@ -955,8 +1197,9 @@ export default function SeccionAgentBubble() {
               <div className="flex items-center gap-2">
                 <button
                   type="button"
+                  disabled={isTyping && !isListening}
                   onClick={toggleSpeechRecognition}
-                  className={`w-9 h-9 rounded-xl flex items-center justify-center transition border shrink-0 cursor-pointer ${
+                  className={`w-9 h-9 rounded-xl flex items-center justify-center transition border shrink-0 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed ${
                     isListening
                       ? 'bg-rose-500/20 border-rose-500 text-rose-400 animate-pulse'
                       : 'bg-white/[0.04] border-white/10 text-white/70 hover:text-[#00fbfb] hover:border-[#00fbfb]/40'

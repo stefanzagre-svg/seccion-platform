@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { prepareSpeechText } from '@/lib/kate-specialist';
 
 const FALLBACK_ELEVEN_KEY = Buffer.from('c2tfYWI1NGQ5ZWMwMWI1Mjk4N2MxOTdjNDU1M2QxNDM1YzJhZjFjMmZmNjViYTU3ZGZj', 'base64').toString('utf-8');
 const DEFAULT_KATE_VOICE_ID = 'Xb7hH8MSUJpSbSDYk0k2'; // Alice (British, clear, engaging, articulate)
@@ -11,12 +12,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Missing text parameter' }, { status: 400 });
     }
 
-    // Sanitize and trim text to 400 characters to conserve quota and maintain low latency
-    const cleanedText = rawText
-      .replace(/[#*_~`]/g, '') // remove markdown symbols
-      .replace(/\s+/g, ' ')
-      .trim()
-      .slice(0, 400);
+    // Sanitize markdown/URLs, apply Session phonetic spelling, and trim cleanly on sentence/word boundary
+    const cleanedText = prepareSpeechText(rawText, 400);
+    if (!cleanedText) {
+      return NextResponse.json({ error: 'Text contains no speakable content' }, { status: 400 });
+    }
 
     const voiceId = body?.voiceId || DEFAULT_KATE_VOICE_ID;
     const apiKey = process.env.ELEVENLABS_API_KEY || FALLBACK_ELEVEN_KEY;
@@ -28,6 +28,7 @@ export async function POST(req: NextRequest) {
     const elevenUrl = `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}?output_format=mp3_44100_128`;
     const response = await fetch(elevenUrl, {
       method: 'POST',
+      signal: AbortSignal.timeout(10000),
       headers: {
         'xi-api-key': apiKey,
         'Content-Type': 'application/json',
