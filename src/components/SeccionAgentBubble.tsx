@@ -32,6 +32,20 @@ export default function SeccionAgentBubble() {
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const recognitionRef = useRef<any>(null);
+  const audioPlayerRef = useRef<HTMLAudioElement | null>(null);
+
+  // Stop all active audio streams (both neural ElevenLabs and fallback Web Speech)
+  const stopAllAudio = useCallback(() => {
+    if (audioPlayerRef.current) {
+      audioPlayerRef.current.pause();
+      audioPlayerRef.current.currentTime = 0;
+      audioPlayerRef.current = null;
+    }
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+    }
+    setIsSpeaking(false);
+  }, []);
 
   // Pre-load and cache voices eagerly to fix mobile Safari/Chrome empty voice roster bug
   useEffect(() => {
@@ -94,29 +108,17 @@ export default function SeccionAgentBubble() {
     }
   };
 
-  // Play text-to-speech voice response
-  const speakText = useCallback(
-    (textToSpeak: string, forceVoice: boolean = false, overrideLang?: string) => {
+  // Fallback Web Speech API synthesis
+  const fallbackWebSpeech = useCallback(
+    (cleanText: string, overrideLang?: string) => {
       if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
-        return;
-      }
-      if (!voiceEnabled && !forceVoice) {
+        setIsSpeaking(false);
         return;
       }
       try {
         window.speechSynthesis.cancel();
-        // If vocal was requested, ensure voiceEnabled stays on
-        if (forceVoice && !voiceEnabled) {
-          setVoiceEnabled(true);
-        }
-
-        // Crucial pronunciation filter: SECCION is spelled SECCION in text, but phonetically pronounced "Session"
-        // Replace SECCION/Seccion with Session in spoken audio so speech synthesis never says "Section"
-        const phoneticText = textToSpeak.replace(/\bSECCION\b/gi, 'Session');
-        const cleanText = phoneticText.replace(/[#*_`]/g, '').slice(0, 300);
         const utterance = new SpeechSynthesisUtterance(cleanText);
 
-        // Determine voice language: first check explicit override, then content detection, then fallback
         let targetVoiceLang = overrideLang;
         if (!targetVoiceLang) {
           if (/[\u0600-\u06FF]/.test(cleanText)) {
@@ -138,13 +140,10 @@ export default function SeccionAgentBubble() {
           }
         }
         utterance.lang = targetVoiceLang;
+        utterance.pitch = 1.0;
+        utterance.rate = 1.0;
 
-        // Configure Kate's voice strictly as a warm, articulate, high-status FEMALE voice
-        utterance.pitch = 1.0; // Natural, articulate feminine pitch
-        utterance.rate = 1.0; // Fluent conversational pace
-
-        // Select a female voice from cached or live available voice roster
-        const voices = availableVoices.length > 0 ? availableVoices : (typeof window !== 'undefined' && 'speechSynthesis' in window ? window.speechSynthesis.getVoices() : []);
+        const voices = availableVoices.length > 0 ? availableVoices : window.speechSynthesis.getVoices();
         if (voices.length > 0) {
           const langCode = utterance.lang.slice(0, 2).toLowerCase();
           const matchingLangVoices = voices.filter((v) => v.lang.toLowerCase().startsWith(langCode));
@@ -156,7 +155,6 @@ export default function SeccionAgentBubble() {
             'samantha', 'karen', 'victoria', 'moira', 'fiona', 'tessa', 'susan', 'zira', 'linda', 'jenny', 'heather', 'ava',
             'mariam', 'laila', 'salma', 'zeina', 'audrey', 'sarah', 'emma'
           ];
-
           const maleKeywords = [
             'male', 'homme', 'hombre', 'man', 'boy',
             'thomas', 'nicolas', 'paul', 'antoine', 'sebastien', 'sébastien', 'henri', 'claude', 'bernard', 'guy', 'mathieu', 'pierre', 'louis',
@@ -165,47 +163,97 @@ export default function SeccionAgentBubble() {
             'tarik', 'tarek', 'jamal', 'maged', 'majed', 'naayf', 'hamed', 'omar', 'karim'
           ];
 
-          // 1. Try to find a voice explicitly matching female keywords and NOT matching male keywords
           let femaleVoice = matchingLangVoices.find((v) => {
             const name = v.name.toLowerCase();
             return femaleKeywords.some((f) => name.includes(f)) && !maleKeywords.some((m) => name.includes(m));
           });
-
-          // 2. If not found, pick any matching language voice that is NOT explicitly male
           if (!femaleVoice) {
             femaleVoice = matchingLangVoices.find((v) => {
               const name = v.name.toLowerCase();
               return !maleKeywords.some((m) => name.includes(m));
             });
           }
-
-          // 3. Fallback to any female voice across all languages if language-specific voice is absent
           if (!femaleVoice) {
             femaleVoice = voices.find((v) => {
               const name = v.name.toLowerCase();
               return femaleKeywords.some((f) => name.includes(f)) && !maleKeywords.some((m) => name.includes(m));
             });
           }
-
           if (femaleVoice) {
             utterance.voice = femaleVoice;
           }
         }
+
         utterance.onstart = () => setIsSpeaking(true);
         utterance.onend = () => setIsSpeaking(false);
         utterance.onerror = () => setIsSpeaking(false);
 
-        // Resume speech synthesis queue if paused by mobile browser
         if (window.speechSynthesis.paused) {
           window.speechSynthesis.resume();
         }
-
         window.speechSynthesis.speak(utterance);
       } catch (e) {
-        console.error('Speech synthesis error:', e);
+        console.error('Fallback speech synthesis error:', e);
+        setIsSpeaking(false);
       }
     },
-    [voiceEnabled, activeAgentLang, availableVoices]
+    [activeAgentLang, availableVoices]
+  );
+
+  // Play text-to-speech voice response (ElevenLabs Neural Studio Audio with Web Speech fallback)
+  const speakText = useCallback(
+    async (textToSpeak: string, forceVoice: boolean = false, overrideLang?: string) => {
+      if (typeof window === 'undefined') return;
+      if (!voiceEnabled && !forceVoice) return;
+
+      stopAllAudio();
+      if (forceVoice && !voiceEnabled) {
+        setVoiceEnabled(true);
+      }
+
+      // Phonetic filter: SECCION is spelled SECCION in text, but phonetically pronounced "Session"
+      const phoneticText = textToSpeak.replace(/\bSECCION\b/gi, 'Session');
+      const cleanText = phoneticText.replace(/[#*_`~]/g, '').trim();
+      const speakSlice = cleanText.slice(0, 350);
+
+      // 1. PRIMARY ENGINE: Stream studio-grade ElevenLabs neural voice
+      try {
+        setIsSpeaking(true);
+        const res = await fetch('/api/v2/voice/speak', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text: speakSlice }),
+        });
+
+        if (res.ok) {
+          const blob = await res.blob();
+          const audioUrl = URL.createObjectURL(blob);
+          const audio = new Audio(audioUrl);
+          audioPlayerRef.current = audio;
+
+          audio.onplay = () => setIsSpeaking(true);
+          audio.onended = () => {
+            setIsSpeaking(false);
+            URL.revokeObjectURL(audioUrl);
+            audioPlayerRef.current = null;
+          };
+          audio.onerror = () => {
+            setIsSpeaking(false);
+            audioPlayerRef.current = null;
+            fallbackWebSpeech(speakSlice, overrideLang);
+          };
+
+          await audio.play();
+          return;
+        }
+      } catch (neuralErr) {
+        console.warn('[Voice Engine] ElevenLabs stream error, falling back to Web Speech:', neuralErr);
+      }
+
+      // 2. FALLBACK ENGINE: Browser Web Speech API
+      fallbackWebSpeech(speakSlice, overrideLang);
+    },
+    [voiceEnabled, stopAllAudio, fallbackWebSpeech]
   );
 
   const sendQuestion = useCallback(
@@ -542,7 +590,10 @@ export default function SeccionAgentBubble() {
                 </div>
 
                 <button
-                  onClick={() => setIsOpen(false)}
+                  onClick={() => {
+                    stopAllAudio();
+                    setIsOpen(false);
+                  }}
                   className="w-7 h-7 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-white/70 hover:text-white transition cursor-pointer"
                 >
                   <X className="w-3.5 h-3.5" />
@@ -634,8 +685,7 @@ export default function SeccionAgentBubble() {
                   type="button"
                   onClick={() => {
                     if (isSpeaking) {
-                      window.speechSynthesis?.cancel();
-                      setIsSpeaking(false);
+                      stopAllAudio();
                     } else {
                       setVoiceEnabled(!voiceEnabled);
                     }
