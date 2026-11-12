@@ -105,15 +105,14 @@ export async function POST(request: NextRequest) {
       userXpProfile = xpProf;
     }
 
-    // 3. Query all candidate profiles (we filter creators or all profiles depending on role, let's filter all for maximum results)
-    let dbQuery = supabase.from('profiles').select('*');
+    // 3. Query all candidate profiles (strictly require avatar_url to prevent ghost profiles - M4 fix)
+    let dbQuery = supabase.from('profiles').select('*').not('avatar_url', 'is', null);
 
-    if (query) {
-      dbQuery = dbQuery.or(`username.ilike.%${query}%,display_name.ilike.%${query}%,bio.ilike.%${query}%`);
-    }
-
-    if (profileStatus && profileStatus !== 'All') {
-      dbQuery = dbQuery.eq('role', profileStatus.toLowerCase());
+    if (query && typeof query === 'string') {
+      const sanitizedQuery = query.replace(/[^a-zA-Z0-9_\s]/g, '').trim();
+      if (sanitizedQuery) {
+        dbQuery = dbQuery.or(`username.ilike.%${sanitizedQuery}%,display_name.ilike.%${sanitizedQuery}%,bio.ilike.%${sanitizedQuery}%`);
+      }
     }
 
     // Apply basic SQL filters

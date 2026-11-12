@@ -903,17 +903,19 @@ export default function OnboardingFlow() {
         member_purposes: activePurposes.length > 0 ? activePurposes : ["lifestyle"],
       };
 
-      if (typeof window !== "undefined") {
-        document.cookie = "sb_ob=1; path=/; max-age=2592000; SameSite=Lax";
-      }
-
       // Advance UI NOW (synchronous — no await)
       saveOnboardingState({ step: "profile-checklist", activeItem: "bio", avatarUrl });
       setChecklist((prev) => prev.map((item) => item.id === "bio" ? { ...item, completed: true } : item));
       const updatedChecklist = checklist.map((item) => item.id === "bio" ? { ...item, completed: true } : item);
       const nextIncomplete = updatedChecklist.find((item) => !item.completed);
-      if (nextIncomplete) setActiveItem(nextIncomplete.id as any);
-      else setStep("welcome");
+      if (nextIncomplete) {
+        setActiveItem(nextIncomplete.id as any);
+      } else {
+        if (typeof window !== "undefined") {
+          document.cookie = "sb_ob=1; path=/; max-age=2592000; SameSite=Lax";
+        }
+        setStep("welcome");
+      }
 
       // Background DB write — fire-and-forget, never blocks UI
       resolveUserId().then((uid) => {
@@ -952,14 +954,14 @@ export default function OnboardingFlow() {
         const { error } = await supabase.from("profiles").update(photoPayload).eq("id", uid);
         if (error) console.warn('[SECCION] photo DB write error:', error.message);
 
-        // Sync public album photos into profile_media so checkPublicPhotoRequirement() passes
+        // Sync public album photos into profile_media so checkPublicPhotoRequirement() passes (H3 Fix)
         if (albumPhotos.length > 0) {
           try {
             const { data: existingMedia } = await supabase
               .from("profile_media")
               .select("media_url")
               .eq("user_id", uid)
-              .eq("visibility", "public");
+              .eq("is_hidden", false);
             const existingUrls = new Set((existingMedia || []).map((m: any) => m.media_url));
             const newMediaRows = albumPhotos
               .filter((url) => url && !existingUrls.has(url))
@@ -967,7 +969,8 @@ export default function OnboardingFlow() {
                 user_id: uid,
                 media_url: url,
                 media_type: "image",
-                visibility: "public",
+                is_hidden: false,
+                required_level: "public",
               }));
             if (newMediaRows.length > 0) {
               await supabase.from("profile_media").insert(newMediaRows);
@@ -1317,31 +1320,18 @@ export default function OnboardingFlow() {
                     </button>
                   </div>
                 ) : (
-                  <div className="mb-4 p-4 rounded-2xl bg-gradient-to-r from-[#00fbfb]/15 via-[#11111A] to-emerald-500/15 border border-[#00fbfb]/40 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-[0_0_25px_rgba(0,251,251,0.12)]">
+                  <div className="mb-4 p-4 rounded-2xl bg-gradient-to-r from-[#00fbfb]/10 via-[#11111A] to-emerald-500/10 border border-[#00fbfb]/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-[0_0_20px_rgba(0,251,251,0.08)]">
                     <div className="space-y-0.5 text-left">
                       <div className="flex items-center gap-1.5 text-[#00fbfb] font-mono text-[10px] font-black uppercase tracking-wider">
                         <Sparkles className="w-3.5 h-3.5" />
-                        <span>{locale === "es" ? "Sinergia Calibrada · Acceso Inmediato" : "Synergy Calibrated · Instant Access"}</span>
+                        <span>{locale === "es" ? "Sinergia Calibrada · Perfil Rápido" : "Synergy Calibrated · Quick Setup"}</span>
                       </div>
                       <p className="text-[11px] text-white/80 leading-snug">
                         {locale === "es"
-                          ? "Tu perfil de sinergia y avatar estilizado están listos. Puedes subir fotos propias aquí o ajustar todo cuando quieras desde tu Panel de Perfil de Miembro."
-                          : "Your synergy profile and stylized avatar are ready. Upload custom photos below or adjust anything anytime from your Member Profile Panel."}
+                          ? "Selecciona tu foto de avatar y responde tu primer prompt a continuación. Podrás ajustar y enriquecer todo después desde tu Panel de Perfil de Miembro."
+                          : "Select your avatar photo and answer your first prompt below. You can refine and expand everything anytime in your Member Profile Panel."}
                       </p>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (typeof window !== "undefined") {
-                          document.cookie = "sb_ob=1; path=/; max-age=2592000; SameSite=Lax";
-                        }
-                        setStep("welcome");
-                      }}
-                      className="shrink-0 px-4 py-2.5 bg-[#00fbfb] hover:bg-[#00fbfb]/90 text-black font-mono text-[10px] font-black uppercase tracking-wider rounded-xl transition shadow-[0_0_15px_rgba(0,251,251,0.35)] flex items-center justify-center gap-1.5 cursor-pointer"
-                    >
-                      <span>{locale === "es" ? "Entrar a SECCION Ahora" : "Enter SECCION Now"}</span>
-                      <ArrowRight className="w-3.5 h-3.5" />
-                    </button>
                   </div>
                 )}
 

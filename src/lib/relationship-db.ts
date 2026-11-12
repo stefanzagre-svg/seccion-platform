@@ -86,11 +86,12 @@ export async function fetchSwipeableProfiles(currentUserId: string): Promise<Pro
     
     const excludedIds = Array.from(new Set([...interactedIds, ...blockedIds, currentUserId]));
 
-    // 2. Fetch profiles not in that list
+    // 2. Fetch profiles not in that list (guarantee candidate has an avatar photo)
     const { data: profiles, error: profError } = await supabase
       .from('profiles')
       .select('*')
       .not('id', 'in', `(${excludedIds.join(',')})`)
+      .not('avatar_url', 'is', null)
       .limit(10);
 
     if (profError) throw profError;
@@ -678,7 +679,14 @@ export async function checkPublicPhotoRequirement(userId: string): Promise<boole
       .eq('user_id', userId)
       .eq('is_hidden', false);
 
-    const totalPublic = (countAlbums || 0) + (countMedia || 0);
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('album_photos')
+      .eq('id', userId)
+      .maybeSingle();
+
+    const albumPhotosCount = Array.isArray(profile?.album_photos) ? profile.album_photos.length : 0;
+    const totalPublic = Math.max((countAlbums || 0) + (countMedia || 0), albumPhotosCount);
     return totalPublic >= 2;
   } catch (err) {
     console.error('Error checking public photo requirement:', err);

@@ -1671,7 +1671,7 @@ export default function CreatorStudio() {
             hasSeedContent: uploadedPosts.length >= 2,
             hasVaultNote: true, // Profile has default Obsidian persona
             hasKyc: !!profile?.is_kyc_verified,
-            hasTaxId: !!(profile?.tax_id_number || taxIdNumber)
+            hasTaxId: !!(taxIdNumber || profile?.privacy_settings?.tax_id_number || (profile as any)?.tax_id_number)
           }}
           onNavigateTab={(tabId) => setActiveTab(tabId as any)}
           onNavigateAiTools={() => router.push('/studio/ai-tools')}
