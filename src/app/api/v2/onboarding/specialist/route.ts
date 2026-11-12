@@ -8,7 +8,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Missing message input' }, { status: 400 });
     }
 
-    const locale = body.locale || 'es';
+    const locale = body.locale || 'auto';
     const localeNames: Record<string, string> = {
       es: 'Spanish (Español)',
       en: 'English',
@@ -17,10 +17,11 @@ export async function POST(req: NextRequest) {
       ru: 'Russian (Русский)',
       uk: 'Ukrainian (Українська)',
       ro: 'Romanian (Română)',
-      ar: 'Moroccan Arabic / Darija (الدارجة المغربية)',
+      ar: 'Standard Arabic or Moroccan Darija (match the user input)',
+      standard_ar: 'Modern Standard Arabic (العربية الفصحى)',
       darija: 'Moroccan Arabic / Darija (الدارجة المغربية)'
     };
-    const targetLanguage = localeNames[locale] || 'Moroccan Arabic / Darija (الدارجة المغربية)';
+    const targetLanguage = localeNames[locale] || 'the same language and dialect the user is speaking (Arabic, Moroccan Darija, French, English, or Spanish)';
 
     const geminiKey = process.env.GEMINI_API_KEY;
     let reply = "¡Hola! Estoy en modo demostración local, pero puedo decirte que SECCION se trata de encontrar conexiones auténticas sin algoritmos corporativos. ¿Listo para empezar tu quest?";
@@ -39,11 +40,13 @@ You serve a vital multi-faceted role:
 
 Language & Cultural Imperative:
 - Target Language: ${targetLanguage}.
-- You MUST reply fluently, clearly, and naturally in ${targetLanguage}.
-- For Moroccan Arabic / Darija: You MUST answer strictly in authentic Moroccan Darija (using standard Arabic script or contemporary Arabizi/Darija in Latin script if the user addresses you in Latin). NEVER answer in Spanish, English, or Classical Arabic when Darija is targeted.
-- For French (Français): Reply in elegant, clear, modern French.
-- For Spanish (Español): Use warm, culturally natural, peer-level Spanish (accessible to Argentina, Colombia, Mexico, and Spain). Address creators with high respect, enthusiasm, and practical guidance without robotic corporate jargon.
-- For Russian (Русский): Use warm, professional, peer-level Russian. Be transparent, supportive, and direct about payouts, avoiding cold bureaucratic phrases. Use standard creator terminology (крипта, USDT, P2P, Т-Банк, Сбер, вывод, сплит 90%, без агентских комиссий).
+- ADAPTIVE LINGUISTIC MIRRORING:
+  * If the user writes or speaks in Moroccan Darija (whether in Arabic script or Latin Arabizi numbers like 3, 7, 9): Reply fluently and naturally in Moroccan Darija.
+  * If the user writes or speaks in Modern Standard Arabic (الفصحى): Reply strictly in clear Modern Standard Arabic.
+  * If the user writes or speaks in French (Français): Reply in elegant, contemporary French.
+  * If the user writes or speaks in English: Reply in polished English.
+  * If the user writes or speaks in Spanish (Español): Reply in warm, peer-level Spanish.
+  * NEVER switch to an unrequested language (e.g. do not reply in Spanish if the user writes in Arabic, Darija, or French). Always match the user's immediate language and tone.
 
 ===================================================================
 LATIN AMERICA PAYOUT REALITY (How Creators get paid easily & safely)
