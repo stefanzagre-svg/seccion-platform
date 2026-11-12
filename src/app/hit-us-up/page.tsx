@@ -8,7 +8,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const savedLocale = (cookieStore.get("seccion_user_locale")?.value || "en") as SupportedLocale;
 
   return {
-    title: savedLocale === "fr" ? "Contactez-nous | SECCION" : savedLocale === "es" ? "Contáctanos | SECCION" : "Contact Us | SECCION",
+    title: savedLocale === "fr" ? "Contactez-nous" : savedLocale === "es" ? "Contáctanos" : "Contact Us",
     description: savedLocale === "fr" ? "Prenez contact avec l'équipe SECCION. Nous accompagnons créateurs et membres 24/7." : savedLocale === "es" ? "Ponte en contacto con el equipo de SECCION. Estamos aquí para apoyar a creadores y miembros." : "Get in touch with the SECCION team. We are here to support creators and members.",
     alternates: {
       canonical: "https://seccion.ai/hit-us-up",

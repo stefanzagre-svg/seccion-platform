@@ -11,10 +11,10 @@ export async function generateMetadata(): Promise<Metadata> {
   const isEs = savedLocale === "es";
 
   const title = isFr
-    ? "AI Copilot pour Créateurs — Gestionnaire DM 24/7 avec Votre Voix Exacte | SECCION"
+    ? "AI Copilot pour Créateurs — Gestionnaire DM 24/7 avec Votre Voix Exacte"
     : isEs
-    ? "AI Copilot para Creadores — Gestor de DMs 24/7 con Tu Voz Exacta | SECCION"
-    : "AI Copilot for Creators — 24/7 DM Manager in Your Exact Voice | SECCION";
+    ? "AI Copilot para Creadores — Gestor de DMs 24/7 con Tu Voz Exacta"
+    : "AI Copilot for Creators — 24/7 DM Manager in Your Exact Voice";
 
   const description = isFr
     ? "L'AI Copilot de SECCION répond à vos fans 24/7 en messages privés avec votre ton et votre voix authentiques — entraîné avec votre consentement. Remplacez les agences à 50 % et gardez 90 % de vos revenus."

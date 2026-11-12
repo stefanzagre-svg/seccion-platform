@@ -11,10 +11,10 @@ export async function generateMetadata(): Promise<Metadata> {
   const isEs = savedLocale === "es";
 
   const title = isFr
-    ? "DRM Content Vault — Protection Anti-Piratage pour Créateurs | SECCION"
+    ? "DRM Content Vault — Protection Anti-Piratage pour Créateurs"
     : isEs
-    ? "Content Vault DRM — Protección Antipiratería para Creadores | SECCION"
-    : "DRM Content Vault — Anti-Piracy Protection for Creators | SECCION";
+    ? "Content Vault DRM — Protección Antipiratería para Creadores"
+    : "DRM Content Vault — Anti-Piracy Protection for Creators";
 
   const description = isFr
     ? "Le DRM Content Vault de SECCION utilise un filigrane cryptographique et un robot DMCA autonome pour protéger vos photos et vidéos du piratage et des fuites — automatiquement, 24/7."

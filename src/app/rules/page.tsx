@@ -12,7 +12,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const dict = savedLocale === "fr" ? fr : savedLocale === "es" ? es : en;
 
   return {
-    title: savedLocale === "fr" ? "Règles & Conditions | SECCION" : savedLocale === "es" ? "Reglas | SECCION" : "Rules | SECCION",
+    title: savedLocale === "fr" ? "Règles & Conditions" : savedLocale === "es" ? "Reglas" : "Rules",
     description: dict.metadata.description,
     alternates: {
       canonical: "https://seccion.ai/rules",

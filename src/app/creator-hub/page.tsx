@@ -12,7 +12,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const dict = savedLocale === "fr" ? fr : savedLocale === "es" ? es : en;
 
   return {
-    title: savedLocale === "fr" ? "Centre des Créateurs | SECCION" : savedLocale === "es" ? "Centro de Creadores | SECCION" : "Creator Hub | SECCION",
+    title: savedLocale === "fr" ? "Centre des Créateurs" : savedLocale === "es" ? "Centro de Creadores" : "Creator Hub",
     description: dict.metadata.description,
     alternates: {
       canonical: "https://seccion.ai/creator-hub",
