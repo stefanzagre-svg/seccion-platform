@@ -285,29 +285,7 @@ export function prepareSpeechText(rawText: string, maxChars = 400): string {
   return head.trim();
 }
 
-/**
- * Active low-latency Gemini fallback chain ordered by verified live availability & separate quota buckets.
- * Excludes deprecated 404 models (e.g. gemini-2.0-flash, gemini-2.5-flash-lite) and places active models before
- * strictly free-tier-capped gemini-2.5-flash (20 RPD).
- */
-export const SPECIALIST_MODEL_CHAIN: readonly string[] = [
-  'gemini-3-flash-preview',
-  'gemini-3.5-flash-lite',
-  'gemini-flash-lite-latest',
-  'gemini-3.1-flash-lite-preview',
-  'gemini-2.5-flash',
-];
-
-/**
- * Identifies transient upstream Gemini errors (short RPM spikes / 503 high demand) worth a brief retry,
- * vs. permanent 404 deprecation or daily (RPD) quota exhaustion which should fail over immediately.
- */
-export function isTransientGeminiError(err: unknown): boolean {
-  const msg = String((err as any)?.message ?? err ?? '');
-  if (!msg) return false;
-  if (/\b404\b|no longer available|not found/i.test(msg)) return false;
-  if (/PerDay|FreeTier.*limit:\s*\d+/i.test(msg)) return false;
-  return /\b(429|500|502|503|504)\b|UNAVAILABLE|high demand|RESOURCE_EXHAUSTED|timeout|fetch failed/i.test(
-    msg
-  );
-}
+export {
+  GEMINI_FREE_MODEL_CHAIN as SPECIALIST_MODEL_CHAIN,
+  isTransientGeminiError,
+} from './gemini-failover';

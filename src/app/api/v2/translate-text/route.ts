@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { GoogleGenAI } from '@google/genai';
+import { generateContentWithFailover } from '@/lib/gemini-failover';
 
 // Mock translation dictionary for sandbox environment if Gemini is unavailable
 const SANDBOX_TRANSLATIONS: Record<string, Record<string, string>> = {
@@ -82,16 +82,16 @@ export async function POST(req: NextRequest) {
     const geminiKey = process.env.GEMINI_API_KEY;
     if (geminiKey) {
       try {
-        const ai = new GoogleGenAI({ apiKey: geminiKey });
-        const response = await ai.models.generateContent({
-          model: 'gemini-2.5-flash',
+        const response = await generateContentWithFailover({
+          apiKeys: geminiKey,
           contents: `Translate the following text into target language code "${normalizedTarget}". Return ONLY the translation, no explanation, no formatting, no extra tokens.\n\nText: ${text}`,
           config: {
             temperature: 0.1
-          }
+          },
+          logTag: 'TranslateAPI',
         });
-        
-        translatedText = response.text?.trim() || '';
+
+        translatedText = response.text.trim();
         engine = 'gemini';
       } catch (err) {
         console.warn('[Translate API] Gemini translation failed, falling back to sandbox dictionary:', err);

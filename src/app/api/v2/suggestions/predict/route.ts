@@ -8,7 +8,7 @@ import {
   PredictionPayload
 } from '@/lib/ai-suggestion-service';
 import { UserProfile } from '@/lib/match-engine';
-import { GoogleGenAI } from '@google/genai';
+import { generateContentWithFailover } from '@/lib/gemini-failover';
 import { SYSTEM_INSTRUCTION, buildPredictionPrompt } from '@/lib/prompts/suggestion-prompt';
 
 // C4 FIX: Rate limiting is now handled by Supabase RPC (check_rate_limit)
@@ -204,17 +204,17 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     const geminiKey = process.env.GEMINI_API_KEY;
     if (geminiKey) {
       try {
-        const ai = new GoogleGenAI({ apiKey: geminiKey });
         const prompt = buildPredictionPrompt(currentUser, body.context_data, JSON.stringify(mappedCandidates, null, 2));
         
-        const response = await ai.models.generateContent({
-          model: 'gemini-2.5-flash',
+        const response = await generateContentWithFailover({
+          apiKeys: geminiKey,
           contents: prompt,
           config: {
             systemInstruction: SYSTEM_INSTRUCTION,
             responseMimeType: 'application/json',
             temperature: 0.7,
-          }
+          },
+          logTag: 'SuggestionsPredict',
         });
         
         const text = response.text;
@@ -235,14 +235,14 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
           await supabase.from('suggestion_caches').insert({
             user_id: body.user_id,
             suggestions: enrichedPredictions,
-            model_version: 'gemini-2.5-flash',
+            model_version: response.modelUsed,
             is_read: true, // Mark as read since it is returned to active user feed
           });
 
           return NextResponse.json({
             suggestions: enrichedPredictions,
             generated_at: new Date().toISOString(),
-            model_version: 'gemini-2.5-flash',
+            model_version: response.modelUsed,
           } as SuggestionResponse);
         }
       } catch (err) {

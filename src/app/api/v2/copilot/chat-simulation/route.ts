@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { GoogleGenAI } from '@google/genai';
 import { scoreToLevel, resolveSharedScore, MIN_MATCHES_FOR_AUTO_CHAT } from '@/lib/relationship-engine';
+import { generateContentWithFailover } from '@/lib/gemini-failover';
 import { createAdminClient } from '@/lib/supabase/admin-client';
 import { createClient as createServerClient } from '@/lib/supabase/server';
 import { scrubPIIBeforeLLM } from '@/lib/ai/pii-scrubber';
@@ -260,8 +260,6 @@ export async function POST(req: NextRequest) {
 
     if (geminiKey) {
       try {
-        const ai = new GoogleGenAI({ apiKey: geminiKey });
-
         const systemInstruction = `
 You are the AI Digital Twin for Creator "${creatorName}".
 Creator Tone: Friendly, authentic, witty, engaging, peer-level.
@@ -283,10 +281,11 @@ ${scrubbed.sanitizedText || 'No previous history. Start a warm conversation.'}
 Draft a single-sentence or double-sentence casual reply:
 `;
 
-        const response = await ai.models.generateContent({
-          model: 'gemini-2.5-flash',
+        const response = await generateContentWithFailover({
+          apiKeys: geminiKey,
           contents: prompt,
           config: { systemInstruction, temperature: 0.8, maxOutputTokens: 100 },
+          logTag: 'CopilotChatSim',
         });
 
         replyText = response.text || '';

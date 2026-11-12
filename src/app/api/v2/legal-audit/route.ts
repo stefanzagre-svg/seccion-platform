@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { GoogleGenAI } from '@google/genai';
+import { generateContentWithFailover } from '@/lib/gemini-failover';
 
 interface AuditRisk {
   clause: string;
@@ -30,8 +30,6 @@ export async function POST(req: NextRequest) {
 
     if (geminiKey) {
       try {
-        const ai = new GoogleGenAI({ apiKey: geminiKey });
-        
         const systemInstruction = `
 You are the SECCION Legal Vetting Copilot.
 You analyze incoming brand sponsorship and management contracts for digital creators.
@@ -56,14 +54,15 @@ Return ONLY a valid JSON object matching this schema:
 }
 `;
 
-        const response = await ai.models.generateContent({
-          model: 'gemini-2.5-flash',
+        const response = await generateContentWithFailover({
+          apiKeys: geminiKey,
           contents: contractText,
           config: {
             systemInstruction,
             responseMimeType: 'application/json',
             temperature: 0.2
-          }
+          },
+          logTag: 'LegalAudit',
         });
 
         const text = response.text;

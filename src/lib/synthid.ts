@@ -4,7 +4,7 @@
 // Uses @google/genai SDK / Gemini API and Google Cloud AI Content Detection.
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { GoogleGenAI } from '@google/genai';
+import { generateContentWithFailover } from './gemini-failover';
 import type { AutoDetectionResult, ProvenanceLevel } from './content-provenance';
 
 export interface SynthIdDetectionResult {
@@ -35,8 +35,6 @@ export async function detectSynthId(
   }
 
   try {
-    const ai = new GoogleGenAI({ apiKey: geminiKey });
-
     // For images, we can utilize Gemini's multimodal vision content inspection
     // to verify SynthID watermark signals and provenance signatures
     if (mediaType === 'image') {
@@ -76,15 +74,16 @@ Respond with a strict JSON object:
   "modelSignature": string or null (e.g. "Google Imagen", "Veo", "Midjourney", null)
 }`;
 
-        const response = await ai.models.generateContent({
-          model: 'gemini-2.5-flash',
+        const response = await generateContentWithFailover({
+          apiKeys: geminiKey,
           contents: [prompt, imagePart],
           config: {
             responseMimeType: 'application/json',
           },
+          logTag: 'SynthID',
         });
 
-        const text = response.text?.trim();
+        const text = response.text.trim();
         if (text) {
           try {
             const parsed = JSON.parse(text) as {

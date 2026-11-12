@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { GoogleGenAI } from '@google/genai';
 import { createClient } from '@/lib/supabase/server';
+import { generateContentWithFailover } from '@/lib/gemini-failover';
 
 interface AnalyzeRequest {
   targetId?: string;
@@ -64,10 +64,9 @@ export async function POST(req: NextRequest) {
     const geminiKey = process.env.GEMINI_API_KEY;
     let analysis: { conversationGravity: number; extractedTraits: string[]; summary: string };
 
-    // 3. Google Gemini Analysis (Live Mode)
+    // 3. Google Gemini Analysis (Live Mode with Multi-Bucket Failover)
     if (geminiKey) {
       try {
-        const ai = new GoogleGenAI({ apiKey: geminiKey });
         const prompt = `
 You are an expert Conversation Gravity Sentiment Analyzer and Trait Extractor for a connection platform.
 Analyze the following conversation history.
@@ -87,13 +86,14 @@ Return ONLY a valid JSON object matching this schema:
 }
 `;
 
-        const response = await ai.models.generateContent({
-          model: 'gemini-2.5-flash',
+        const response = await generateContentWithFailover({
+          apiKeys: geminiKey,
           contents: prompt,
           config: {
             responseMimeType: 'application/json',
             temperature: 0.3,
-          }
+          },
+          logTag: 'MessagesAnalyze',
         });
 
         const text = response.text;

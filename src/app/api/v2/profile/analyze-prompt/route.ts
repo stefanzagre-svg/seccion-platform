@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { GoogleGenAI } from '@google/genai';
+import { generateContentWithFailover } from '@/lib/gemini-failover';
 
 interface AnalyzePromptRequest {
   promptCategory: string;
@@ -44,8 +44,6 @@ export async function POST(req: NextRequest) {
 
     if (geminiKey) {
       try {
-        const ai = new GoogleGenAI({ apiKey: geminiKey });
-        
         const isDating = activePurposes.includes('dating') || activePurposes.includes('intimate');
         const isLifestyle = activePurposes.includes('lifestyle');
         
@@ -103,14 +101,15 @@ Return a JSON matching this schema:
 }
         `;
 
-        const response = await ai.models.generateContent({
-          model: 'gemini-2.5-flash',
+        const response = await generateContentWithFailover({
+          apiKeys: geminiKey,
           contents: prompt,
           config: {
             systemInstruction,
             responseMimeType: 'application/json',
             temperature: 0.3,
-          }
+          },
+          logTag: 'AnalyzePrompt',
         });
 
         const text = response.text;

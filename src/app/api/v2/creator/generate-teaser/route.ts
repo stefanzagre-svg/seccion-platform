@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { GoogleGenAI } from '@google/genai';
+import { generateContentWithFailover } from '@/lib/gemini-failover';
 
 export async function POST(req: NextRequest) {
   try {
@@ -20,12 +20,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'GEMINI_API_KEY not configured' }, { status: 500 });
     }
 
-    const ai = new GoogleGenAI({ apiKey: geminiKey });
-
-    // Step 1: Use Gemini to create an Imagen 3 Prompt cue
-    const promptCueResponse = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
-      contents: `You are an art director. Generate a highly detailed Imagen 3 prompt to create a "teaser thumbnail" for a custom content order titled: "${orderTitle}". Description: "${description}". The image should be cinematic, slightly mysterious, and hype up the delivery of the content.`
+    // Step 1: Use Gemini to create an Imagen 3 Prompt cue (multi-bucket failover)
+    const promptCueResponse = await generateContentWithFailover({
+      apiKeys: geminiKey,
+      contents: `You are an art director. Generate a highly detailed Imagen 3 prompt to create a "teaser thumbnail" for a custom content order titled: "${orderTitle}". Description: "${description}". The image should be cinematic, slightly mysterious, and hype up the delivery of the content.`,
+      logTag: 'GenerateTeaser',
     });
 
     const imagenPrompt = promptCueResponse.text || `Cinematic teaser poster for ${orderTitle}`;

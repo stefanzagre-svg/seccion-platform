@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin-client';
-import { GoogleGenAI } from '@google/genai';
+import { generateContentWithFailover } from '@/lib/gemini-failover';
 
 interface ChatRequest {
   message: string;
@@ -104,8 +104,6 @@ export async function POST(req: NextRequest) {
 
     if (geminiKey) {
       try {
-        const ai = new GoogleGenAI({ apiKey: geminiKey });
-        
         const systemPrompt = `
 You are the elite AI Dating Wingman for a premium connection platform called SECCION.
 Your role is to advise and coach members to help them navigate the platform, start conversations, and find matches.
@@ -130,13 +128,14 @@ Instructions:
 5. Keep answers concise, glassmorphic-themed, and tailored to the SECCION platform features.
 `;
 
-        const response = await ai.models.generateContent({
-          model: 'gemini-2.5-flash',
+        const response = await generateContentWithFailover({
+          apiKeys: geminiKey,
           contents: body.message,
           config: {
             systemInstruction: systemPrompt,
             temperature: 0.7,
-          }
+          },
+          logTag: 'WingmanChat',
         });
 
         reply = response.text || reply;

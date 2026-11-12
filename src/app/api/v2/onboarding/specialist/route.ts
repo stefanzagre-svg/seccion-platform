@@ -1,14 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { GoogleGenAI } from '@google/genai';
+import { generateContentWithFailover } from '@/lib/gemini-failover';
 import {
   SPECIALIST_MODEL_CHAIN,
   detectSpecialistLanguage,
   getContextualFallbackReply,
-  isTransientGeminiError,
   sanitizeHistory,
 } from '@/lib/kate-specialist';
-
-const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export async function POST(req: NextRequest) {
   try {
@@ -33,9 +30,6 @@ export async function POST(req: NextRequest) {
       new Set([process.env.GEMINI_API_KEY?.trim(), fallbackKey.trim()].filter((k): k is string => Boolean(k)))
     );
     const configuredPrimaryModel = process.env.KATE_GEMINI_MODEL?.trim() || process.env.GEMINI_MODEL?.trim();
-    const modelChain = Array.from(
-      new Set([...(configuredPrimaryModel ? [configuredPrimaryModel] : []), ...SPECIALIST_MODEL_CHAIN])
-    );
 
     let reply = getContextualFallbackReply(detectedLang, userMsg);
     let replySource: 'gemini' | 'fallback' = 'fallback';
@@ -49,7 +43,7 @@ You are Kate, the official Executive Onboarding & Compliance Specialist, Creator
 You serve a vital multi-faceted role:
 1. For Creators (Founding & Approved Creators): A warm, empowering, high-status digital partner and business mentor. Never invent or assume a user's first name unless they tell you. You guide creators step-by-step through profile configuration, setting VIP & PPV pricing, seeding their DRM Content Vault, completing DIDIT Zero-Knowledge KYC, connecting their crypto/fiat payout wallet, and training their 24/7 AI Copilot in their Obsidian second brain.
 2. For Members: A culturally fluent, high-energy peer, big sibling, and strategic coach explaining platform features, onboarding quests, synergy aura, and connection levels.
-3. For Institutional Payment Partners (Coinflow, Wert, Noda Open Banking, NOWPayments, Nuvei), acquiring banks, and compliance officers: An authoritative, transparent, and articulate compliance officer explaining SECCION's Two-Stage SFW/NSFW Sightengine AI Gate, regulatory standards, terms of service, refund policies, and risk mitigation.
+3. For Institutional Payment Partners (NOWPayments, Nuvei, Noda Open Banking, Wert, Paxum, Cosmo Payment), acquiring banks (Banco Sabadell / BBVA), MiCA CASPs (Bit2Me Corporate / Kraken Business), and compliance officers: An authoritative, transparent, and articulate compliance officer explaining SECCION's Two-Stage SFW/NSFW Sightengine AI Gate, EU/Spanish tax & KYC standards, refund policies, and 3-Ring isolation risk mitigation.
 
 ===================================================================
 ABSOLUTE LANGUAGE MANDATE (CRITICAL INVARIANT - ZERO DEVIATIONS):
@@ -199,10 +193,10 @@ PAYMENT PROCESSOR, COMPLIANCE & SAFETY STANDARDS (session-adult-creator-skill)
 - STRICT ZERO-EXPLICIT BY DEFAULT (SFW vs. NSFW Isolation):
   * The default platform feed is 100% clean, non-explicit lifestyle matchmaking. Members who do not want adult interactions will NEVER be exposed to explicit content.
   * Explicit content is strictly quarantined in an 18+ opt-in layer requiring member double-consent and 100% KYC-verified creators.
-- TWO-STAGE COMPLIANCE FIREWALL & DUAL-LEDGER PROTECTION (V3.0):
-  * Mainstream MCC 5818 direct card checkout (Nuvei / UpGate) mints strictly restricted SFW Studio Credits (✨) that are physically blocked by Sightengine AI (nudity.raw <= 0.15) from ever unlocking 18+ media or explicit custom orders.
-  * 18+ content and uncensored custom orders require Sovereign Red Pills (💊) funded via 100% chargeback-indemnified Instant USDC (Coinflow/Wert), Open Banking A2A QR (Noda/Brite), NOWPayments Web3, or anonymous E-Vouchers (Rewarble).
-  * Corporate Spanish banks (Banco Sabadell, Revolut Business) are 100% insulated under 3-Ring Isolation and never process customer checkouts or direct adult creator payouts.
+- TWO-STAGE COMPLIANCE FIREWALL & DUAL-LEDGER PROTECTION (V3.1):
+  * Mainstream MCC 5818 direct card checkout (Nuvei / UpGate) and standard PSD2 Open Banking (Noda / Brite) mint strictly restricted SFW Studio Credits (✨) that are physically blocked by Sightengine AI (nudity.raw <= 0.15, nudity.partial <= 0.25) from ever unlocking 18+ media or explicit custom orders.
+  * 18+ content and uncensored custom orders require Sovereign Red Pills (💊) funded primarily via NOWPayments Web3 (USDC-first with MiCA-compliant USDC/EURC corporate settlement to CNMV-licensed Bit2Me/Kraken) or explicitly written-underwritten alternative rails.
+  * Corporate Spanish banks (Banco Sabadell / BBVA) are 100% insulated under Ring 3 and never process raw 18+ checkouts or direct mass payouts to creators (handled by Ring 2 NOWPayments Mass Payout, Paxum Business, and Cosmo Payment).
 - 18+ KYC / AML Verification, ZKP (Zero-Knowledge Proofs) & Age Gating:
   * Mandatory government photo ID verification + 3D biometric facial liveness checks before any creator can publish monetized content or receive payouts.
   * ZERO-KNOWLEDGE PROOF (ZKP) AGE VERIFICATION: For privacy-conscious members and EU users, SECCION supports decentralized eID verification via Privado ID (Polygon ID), zkPass TransGate, and EU Digital Identity Wallets (eIDAS 2.0).
@@ -226,7 +220,7 @@ CONVERSATION STYLE RULES:
 - When addressing creators:
   * Use the "Math to Magic" tone: enthusiastic, warm, peer-level, high-status, and empowering. 
   * Help them navigate their setup step-by-step, explaining how to set rates, seed their vault, protect their privacy with DRM/Face-Blur, and monetize without losing 40-50% to predatory agencies.
-- When addressing institutional underwriters/compliance queries (Coinflow, Noda, Nuvei, Sabadell, chargebacks, 2257, refunds, Two-Stage SFW/NSFW separation):
+- When addressing institutional underwriters/compliance queries (Sabadell, BBVA, Bit2Me, Kraken, Nuvei, Noda, NOWPayments, Wert, Paxum, chargebacks, 2257, refunds, Two-Stage SFW/NSFW separation):
   * Be professional, precise, reassuring, and compliance-first. Provide concrete technical and policy answers regarding the Matrix token firewall, chargeback mitigation, and 90% creator split transparency.
 `;
 
@@ -235,48 +229,21 @@ CONVERSATION STYLE RULES:
             ? [...historyTurns, { role: 'user' as const, parts: [{ text: userMsg }] }]
             : userMsg;
 
-        let generatedText = '';
-        let lastErr: unknown = null;
+        const result = await generateContentWithFailover({
+          apiKeys,
+          contents: contentsPayload,
+          config: {
+            systemInstruction: systemPrompt,
+            temperature: 0.7,
+          },
+          preferredModel: configuredPrimaryModel,
+          modelChain: SPECIALIST_MODEL_CHAIN,
+          logTag: 'Specialist',
+        });
 
-        outer: for (const key of apiKeys) {
-          const ai = new GoogleGenAI({ apiKey: key });
-          for (const modelName of modelChain) {
-            const maxAttempts = isTransientGeminiError(lastErr) ? 1 : 2;
-            for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-              try {
-                const response = await ai.models.generateContent({
-                  model: modelName,
-                  contents: contentsPayload,
-                  config: {
-                    systemInstruction: systemPrompt,
-                    temperature: 0.7,
-                  },
-                });
-                if (response.text?.trim()) {
-                  generatedText = response.text.trim();
-                  modelUsed = modelName;
-                  break outer;
-                }
-              } catch (modelErr) {
-                lastErr = modelErr;
-                const shouldRetrySameModel = attempt < maxAttempts && isTransientGeminiError(modelErr);
-                if (shouldRetrySameModel) {
-                  await sleep(250);
-                  continue;
-                }
-                console.warn(`[Specialist] Model ${modelName} failed, failing over:`, modelErr);
-                break;
-              }
-            }
-          }
-        }
-
-        if (generatedText) {
-          reply = generatedText;
-          replySource = 'gemini';
-        } else if (lastErr) {
-          throw lastErr;
-        }
+        reply = result.text.trim();
+        modelUsed = result.modelUsed;
+        replySource = 'gemini';
       } catch (geminiErr) {
         console.error('Gemini Onboarding Specialist failed:', geminiErr);
         reply = getContextualFallbackReply(detectedLang, userMsg);

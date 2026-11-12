@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { GoogleGenAI } from '@google/genai';
 import { createAdminClient } from '@/lib/supabase/admin-client';
 import { createClient as createServerClient } from '@/lib/supabase/server';
+import { generateContentWithFailover } from '@/lib/gemini-failover';
 
 /**
  * Sandbox / Development convenience:
@@ -76,8 +76,6 @@ export async function POST(req: NextRequest) {
 
     if (geminiKey) {
       try {
-        const ai = new GoogleGenAI({ apiKey: geminiKey });
-
         const systemInstruction = `
 You are the AI Content Strategist for Creator ${creatorName}.
 Your task is to generate premium short-form marketing captions and video concepts.
@@ -91,10 +89,11 @@ Is Sponsored Campaign: ${isSponsored ? 'YES' : 'NO'}
 Generate a short, punchy marketing caption and a 3-step video recording prompt for the creator.
 `;
 
-        const response = await ai.models.generateContent({
-          model: 'gemini-2.5-flash',
+        const response = await generateContentWithFailover({
+          apiKeys: geminiKey,
           contents: prompt,
           config: { systemInstruction, temperature: 0.7, maxOutputTokens: 250 },
+          logTag: 'CopilotContentOps',
         });
 
         suggestion = response.text || '';
