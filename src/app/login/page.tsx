@@ -39,6 +39,8 @@ type PrelaunchStatusState = "idle" | "pending_creator" | "unregistered" | "waitl
 export default function LoginPage() {
   const router = useRouter();
   const { t, locale } = useTranslation();
+  const isFr = locale === "fr";
+  const isEs = locale === "es";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [agreedToTerms, setAgreedToTerms] = useState(true);
@@ -69,7 +71,9 @@ export default function LoginPage() {
       }
       if (params.get("error") === "auth_callback_failed") {
         setErrorMsg(
-          locale === "es"
+          isFr
+            ? "Le lien d'accès en 1 clic a expiré ou a été ouvert dans un autre navigateur. Entrez votre e-mail pour recevoir un code à 6 chiffres instantané."
+            : isEs
             ? "El enlace de acceso directo expiró o se abrió en otro navegador. Introduce tu correo para recibir un código de 6 dígitos instantáneo."
             : "The 1-click access link expired or was opened in another browser. Enter your email below to receive an instant 6-digit passcode."
         );
@@ -192,7 +196,9 @@ export default function LoginPage() {
       console.error("OTP Verification Error:", err);
       setErrorMsg(
         err.message ||
-          (locale === "es"
+          (isFr
+            ? "Code invalide ou expiré. Vérifiez votre boîte de réception pour le code à 6 chiffres."
+            : isEs
             ? "Código inválido o expirado. Revisa tu correo e inténtalo de nuevo."
             : "Invalid or expired code. Check your email for the 6-digit passcode.")
       );
@@ -238,7 +244,9 @@ export default function LoginPage() {
         }
         if (checkData.status !== "approved_creator") {
           setErrorMsg(
-            locale === "es"
+            isFr
+              ? "Accès restreint durant la phase de pré-lancement créateur."
+              : isEs
               ? "Acceso restringido durante la fase de pre-lanzamiento de creadores."
               : "Access is restricted during the creator pre-launch phase."
           );
@@ -248,13 +256,17 @@ export default function LoginPage() {
       } else {
         if (checkRes.status === 429) {
           setErrorMsg(
-            locale === "es"
+            isFr
+              ? "Trop de requêtes. Veuillez patienter un instant avant de réessayer."
+              : isEs
               ? "Demasiadas solicitudes. Por favor espera un momento antes de volver a intentarlo."
               : "Too many requests. Please wait a moment and try again."
           );
         } else {
           setErrorMsg(
-            locale === "es"
+            isFr
+              ? "Impossible de vérifier le statut d'accès de pré-lancement. Veuillez réessayer."
+              : isEs
               ? "No pudimos verificar el estado de acceso de pre-lanzamiento. Inténtalo de nuevo."
               : "Unable to verify pre-launch access status. Please try again."
           );
@@ -293,7 +305,9 @@ export default function LoginPage() {
     if (!email) return;
     if (!agreedToTerms) {
       setErrorMsg(
-        locale === "es"
+        isFr
+          ? "Vous devez confirmer avoir au moins 18 ans et accepter les Conditions d'Utilisation et la Politique de Confidentialité de SECCION pour continuer."
+          : isEs
           ? "Debes confirmar que eres mayor de 18 años y aceptar los Términos de Servicio y la Política de Privacidad para continuar."
           : "You must confirm that you are at least 18 years old and agree to SECCION's Terms of Service and Privacy Policy to continue."
       );
@@ -345,7 +359,9 @@ export default function LoginPage() {
       console.error("Password login error:", err);
       setErrorMsg(
         err.message ||
-          (locale === "es"
+          (isFr
+            ? "Erreur d'authentification. Vérifiez vos identifiants ou utilisez l'accès par e-mail sans mot de passe."
+            : isEs
             ? "Error de autenticación. Verifica tus credenciales o utiliza el acceso sin contraseña."
             : "Authentication error. Check your credentials or use passwordless access.")
       );
@@ -355,7 +371,9 @@ export default function LoginPage() {
   };
 
   const directWhatsAppLink = `https://wa.me/34662907153?text=${encodeURIComponent(
-    locale === "es"
+    isFr
+      ? `Bonjour Stefan, mon e-mail est ${email}. Je souhaite accélérer la validation de mon statut Créateur Fondateur sur SECCION.`
+      : isEs
       ? `Hola Stefan, mi correo es ${email}. Quiero confirmar mi aprobación como Creador Fundador en SECCION.`
       : `Hi Stefan, my email is ${email}. I'd like to fast-track my Founding Creator approval on SECCION.`
   )}`;
@@ -383,7 +401,7 @@ export default function LoginPage() {
           className="inline-flex items-center gap-2 text-xs font-mono font-bold text-white/40 hover:text-[#00fbfb] transition mb-6 group"
         >
           <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-          <span>{locale === "es" ? "Volver al Inicio" : "Back to Home"}</span>
+          <span>{isFr ? "Retour à l'Accueil" : isEs ? "Volver al Inicio" : "Back to Home"}</span>
         </Link>
 
         {/* Pre-Launch Locked Banner */}
@@ -391,14 +409,18 @@ export default function LoginPage() {
           <div className="flex items-center gap-2 text-[#00fbfb] font-mono font-bold text-[11px] uppercase">
             <ShieldAlert className="w-4 h-4 shrink-0" />
             <span>
-              {locale === "es" ? "Acceso Creadores Pre-Lanzamiento" : "Creator Pre-Launch Access"}
+              {isFr
+                ? "Accès Pré-Lancement Créateur"
+                : isEs
+                ? "Acceso Creadores Pre-Lanzamiento"
+                : "Creator Pre-Launch Access"}
             </span>
           </div>
           <button
             onClick={() => setIsPrelaunchModalOpen(true)}
             className="text-[10px] font-mono font-bold text-[#ffabf3] underline hover:text-white transition cursor-pointer"
           >
-            {locale === "es" ? "Saber Más" : "Learn Why"}
+            {isFr ? "En Savoir Plus" : isEs ? "Saber Más" : "Learn Why"}
           </button>
         </div>
 
@@ -439,7 +461,12 @@ export default function LoginPage() {
                     {t("onboarding.prelaunchGates.applicationUnderReviewTitle", "Your Creator Application is Under Review")}
                   </h3>
                   <p className="text-xs text-[#b9cac9] leading-relaxed">
-                    {locale === "es" ? (
+                    {isFr ? (
+                      <>
+                        Nous avons bien reçu la candidature pour <strong className="text-white">{email}</strong>. Dès
+                        validation, vous accéderez directement à votre Creator Studio (Partage 90%).
+                      </>
+                    ) : isEs ? (
                       <>
                         Recibimos la solicitud para <strong className="text-white">{email}</strong>. En
                         cuanto sea aprobada recibirás acceso directo a tu Creator Studio (90% Split).
@@ -480,12 +507,19 @@ export default function LoginPage() {
                     {t("onboarding.prelaunchGates.prelaunchGateTitle", "Pre-Launch Access Gate")}
                   </span>
                   <h3 className="text-sm font-bold uppercase tracking-wider text-white">
-                    {locale === "es"
+                    {isFr
+                      ? "Comment souhaitez-vous rejoindre SECCION ?"
+                      : isEs
                       ? "¿Cómo quieres unirte a SECCION?"
                       : "How would you like to join SECCION?"}
                   </h3>
                   <p className="text-xs text-[#b9cac9] leading-relaxed">
-                    {locale === "es" ? (
+                    {isFr ? (
+                      <>
+                        L&apos;adresse <strong className="text-white">{email}</strong> ne dispose pas encore d&apos;un
+                        compte Créateur approuvé. Choisissez votre accès en 1 clic :
+                      </>
+                    ) : isEs ? (
                       <>
                         El correo <strong className="text-white">{email}</strong> aún no tiene una
                         cuenta activa de Creador Aprobado. Elige tu acceso en 1 clic:
@@ -544,7 +578,13 @@ export default function LoginPage() {
                   {t("onboarding.prelaunchGates.waitlistSuccessTitle", "You're on the Founding Member VIP List! 🎉")}
                 </h3>
                 <p className="text-xs text-[#b9cac9] leading-relaxed">
-                  {locale === "es" ? (
+                  {isFr ? (
+                    <>
+                      Accès membre prioritaire réservé pour <strong className="text-white">{email}</strong>
+                      {waitlistPosition ? ` (Position #${waitlistPosition})` : ""}. Nous vous avertirons par
+                      e-mail dès l&apos;ouverture de l&apos;accès Membre.
+                    </>
+                  ) : isEs ? (
                     <>
                       Reservamos el acceso prioritario para <strong className="text-white">{email}</strong>
                       {waitlistPosition ? ` (Posición #${waitlistPosition})` : ""}. Te avisaremos por
@@ -563,7 +603,9 @@ export default function LoginPage() {
                   href="/become-creator#apply"
                   className="inline-block text-[11px] font-mono font-bold text-[#ffabf3] hover:underline pt-1"
                 >
-                  {locale === "es"
+                  {isFr
+                    ? "Vous êtes plutôt Créateur ? Postulez pour le partage 90% ici →"
+                    : isEs
                     ? "¿Eres Creador/a? Solicita tu 90% Split aquí →"
                     : "Are you a Creator instead? Apply for 90% Split here →"}
                 </Link>
@@ -596,7 +638,7 @@ export default function LoginPage() {
                       className="space-y-3 p-4 bg-white/5 border border-white/10 rounded-2xl"
                     >
                       <label className="block text-[10px] font-mono text-[#00fbfb] uppercase font-bold tracking-wider text-center">
-                        {locale === "es" ? "Ingresa el Código:" : "Enter Code:"}
+                        {isFr ? "Entrez le Code :" : isEs ? "Ingresa el Código:" : "Enter Code:"}
                       </label>
                       <input
                         type="text"
@@ -636,10 +678,15 @@ export default function LoginPage() {
                 ) : (
                   <div className="p-4 bg-emerald-500/5 border border-emerald-500/20 text-emerald-400 text-xs rounded-xl space-y-2 text-center">
                     <h4 className="font-bold uppercase tracking-wider">
-                      {locale === "es" ? "¡Enlace de 1-Clic Enviado!" : "1-Click Magic Link Sent!"}
+                      {isFr ? "Lien Magique en 1 Clic Envoyé !" : isEs ? "¡Enlace de 1-Clic Enviado!" : "1-Click Magic Link Sent!"}
                     </h4>
                     <p className="text-[10px] text-[#b9cac9] leading-relaxed">
-                      {locale === "es" ? (
+                      {isFr ? (
+                        <>
+                          Nous avons envoyé votre lien direct à <strong className="text-white">{email}</strong>.
+                          Cliquez sur le lien dans votre boîte e-mail pour accéder directement à votre Creator Studio.
+                        </>
+                      ) : isEs ? (
                         <>
                           Enviamos tu enlace directo a <strong className="text-white">{email}</strong>.
                           Haz clic en el enlace desde tu correo para entrar directo a tu Creator Studio.
@@ -673,7 +720,9 @@ export default function LoginPage() {
                 <div className="p-3 bg-white/5 border border-white/15 rounded-xl text-[11px] text-[#b9cac9] leading-relaxed flex items-start gap-2">
                   <ShieldCheck className="w-4 h-4 text-[#00fbfb] shrink-0 mt-0.5" />
                   <span>
-                    {locale === "es"
+                    {isFr
+                      ? "Authentification administrative par mot de passe pour les fondateurs et l'équipe SECCION."
+                      : isEs
                       ? "Acceso administrativo con contraseña para fundadores y equipo de SECCION."
                       : "Administrative password authentication for SECCION founders and staff."}
                   </span>
@@ -725,7 +774,11 @@ export default function LoginPage() {
                     <>
                       <Key className="w-4 h-4" />
                       <span>
-                        {locale === "es" ? "Entrar con Contraseña →" : "Sign In with Password →"}
+                        {isFr
+                          ? "Connexion avec Mot de Passe →"
+                          : isEs
+                          ? "Entrar con Contraseña →"
+                          : "Sign In with Password →"}
                       </span>
                     </>
                   )}
@@ -778,7 +831,19 @@ export default function LoginPage() {
                     className="mt-0.5 rounded border-white/20 bg-black/40 text-[#00fbfb] focus:ring-0 cursor-pointer"
                   />
                   <span>
-                    {locale === "es" ? (
+                    {isFr ? (
+                      <>
+                        Je certifie avoir plus de 18 ans et j&apos;accepte les{" "}
+                        <Link href="/rules" target="_blank" className="text-[#00fbfb] underline hover:text-white">
+                          Conditions d&apos;Utilisation
+                        </Link>{" "}
+                        et la{" "}
+                        <Link href="/privacy" target="_blank" className="text-[#00fbfb] underline hover:text-white">
+                          Politique de Confidentialité
+                        </Link>{" "}
+                        de SECCION.
+                      </>
+                    ) : isEs ? (
                       <>
                         Declaro ser mayor de 18 años y acepto los{" "}
                         <Link href="/rules" target="_blank" className="text-[#00fbfb] underline hover:text-white">

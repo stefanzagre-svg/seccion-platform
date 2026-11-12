@@ -17,8 +17,10 @@ export interface BlogPost {
   slug: string;
   title: string;
   titleEs?: string;
+  titleFr?: string;
   description: string;
   descriptionEs?: string;
+  descriptionFr?: string;
   date: string;
   lastModified?: string;
   readTime: string;
@@ -58,8 +60,10 @@ export const BLOG_POSTS: BlogPost[] = [
     slug: 'creator-platform-90-percent-payout-comparison-2026',
     title: 'Creator Platform Payout Comparison 2026: Who Lets You Keep the Most?',
     titleEs: 'Comparativa de Pagos para Creadores 2026: ¿Quién te Deja Ganar Más?',
+    titleFr: 'Comparatif des Rémunérations Créateurs 2026 : Quelle Plateforme Vous Rémunère le Mieux ?',
     description: 'An empirical breakdown of creator platform take-rates, processing fees, agency cuts, and why SECCION’s 90% Founding Offer (+ Free AI Copilot) transforms creator unit economics.',
     descriptionEs: 'Desglose exhaustivo de comisiones de plataformas, costos de procesamiento, agencias y por qué la Oferta Fundadora del 90% de SECCION (+ Copiloto IA Gratis) revoluciona la economía del creador.',
+    descriptionFr: 'Analyse approfondie des commissions de plateformes, des frais de traitement, des parts d’agences et de la façon dont l’Offre Fondatrice à 90 % de SECCION (+ Copilote IA Offert) transforme la rentabilité des créateurs.',
     date: '2026-03-15',
     lastModified: '2026-03-15',
     readTime: '9 min read',
@@ -213,8 +217,10 @@ export const BLOG_POSTS: BlogPost[] = [
     slug: 'what-is-a-warm-paywall-creator-economy',
     title: 'What Is a Warm Paywall? Why Chemistry-First Monetization Beats Cold Paywalls',
     titleEs: '¿Qué es un Warm Paywall? Por Qué la Monetización por Química Supera a los Paywalls Fríos',
+    titleFr: 'Qu’est-ce qu’un Warm Paywall ? Pourquoi la Monétisation par la Complicité Surpasse les Paywalls Froids',
     description: 'Explore the Warm Paywall paradigm: how chemistry-first access, 8-level relationship mechanics, and anti-situationship progression eliminate 30%+ subscriber churn and maximize creator LTV.',
     descriptionEs: 'Explora el paradigma del Warm Paywall: cómo el acceso guiado por química, mecánicas de relación de 8 niveles y la eliminación del situationship limbo reducen el churn mensual del 30% y disparan el LTV.',
+    descriptionFr: 'Découvrez le modèle du Warm Paywall : comment l’accès guidé par les affinités, les 8 niveaux relationnels et la fin du flou situationship réduisent le churn de 30 % et maximisent la valeur vie créateur.',
     date: '2026-03-12',
     lastModified: '2026-03-14',
     readTime: '8 min read',

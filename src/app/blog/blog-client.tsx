@@ -28,6 +28,7 @@ interface BlogClientProps {
 
 export default function BlogClient({ posts }: BlogClientProps) {
   const { locale } = useTranslation();
+  const isFr = locale === "fr";
   const isEs = locale === "es";
 
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
@@ -83,7 +84,13 @@ export default function BlogClient({ posts }: BlogClientProps) {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder={isEs ? "Buscar artículos, análisis o palabras clave..." : "Search articles, guides, or keywords..."}
+              placeholder={
+                isFr
+                  ? "Rechercher des articles, guides ou mots-clés..."
+                  : isEs
+                  ? "Buscar artículos, análisis o palabras clave..."
+                  : "Search articles, guides, or keywords..."
+              }
               className="w-full pl-11 pr-4 py-2.5 rounded-full bg-white/5 border border-white/10 text-xs sm:text-sm text-white placeholder-white/40 focus:outline-none focus:border-[#00fbfb]/60 focus:bg-white/[0.08] transition-all font-sans"
             />
             {searchQuery && (
@@ -100,7 +107,7 @@ export default function BlogClient({ posts }: BlogClientProps) {
           {selectedTag && (
             <div className="flex items-center gap-2 self-start md:self-auto">
               <span className="text-[11px] font-mono text-white/50">
-                {isEs ? "Etiqueta activa:" : "Active tag:"}
+                {isFr ? "Tag actif :" : isEs ? "Etiqueta activa:" : "Active tag:"}
               </span>
               <button
                 onClick={() => setSelectedTag(null)}
@@ -126,7 +133,7 @@ export default function BlogClient({ posts }: BlogClientProps) {
                 : "bg-white/5 text-white/60 hover:text-white hover:bg-white/10 border border-white/5"
             }`}
           >
-            {isEs ? "Todos los Artículos" : "All Articles"}
+            {isFr ? "Tous les Articles" : isEs ? "Todos los Artículos" : "All Articles"}
           </button>
 
           {BLOG_CATEGORIES.map((cat) => {
@@ -157,10 +164,12 @@ export default function BlogClient({ posts }: BlogClientProps) {
         <div className="p-12 text-center rounded-3xl bg-white/[0.02] border border-white/5 space-y-4">
           <SlidersHorizontal className="w-8 h-8 text-white/30 mx-auto" />
           <h3 className="font-['Outfit'] text-lg font-bold text-white uppercase">
-            {isEs ? "No se encontraron artículos" : "No Articles Found"}
+            {isFr ? "Aucun Article Trouvé" : isEs ? "No se encontraron artículos" : "No Articles Found"}
           </h3>
           <p className="text-xs text-white/50 max-w-md mx-auto">
-            {isEs
+            {isFr
+              ? "Essayez d'ajuster vos critères de recherche ou réinitialisez les filtres."
+              : isEs
               ? "Prueba ajustando los términos de búsqueda o selecciona otra categoría."
               : "Try adjusting your search criteria or clear active category filters."}
           </p>
@@ -172,15 +181,25 @@ export default function BlogClient({ posts }: BlogClientProps) {
             }}
             className="px-5 py-2 rounded-full bg-white/10 text-white font-mono text-xs font-bold hover:bg-white/20 transition"
           >
-            {isEs ? "Restablecer Filtros" : "Reset Filters"}
+            {isFr ? "Réinitialiser les Filtres" : isEs ? "Restablecer Filtros" : "Reset Filters"}
           </button>
         </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {filteredPosts.map((post, idx) => {
             const isPillar = idx === 0;
-            const title = (isEs && post.titleEs) ? post.titleEs : post.title;
-            const desc = (isEs && post.descriptionEs) ? post.descriptionEs : post.description;
+            const title =
+              isFr && post.titleFr
+                ? post.titleFr
+                : isEs && post.titleEs
+                ? post.titleEs
+                : post.title;
+            const desc =
+              isFr && post.descriptionFr
+                ? post.descriptionFr
+                : isEs && post.descriptionEs
+                ? post.descriptionEs
+                : post.description;
 
             return (
               <article
@@ -225,7 +244,7 @@ export default function BlogClient({ posts }: BlogClientProps) {
                   {post.summaryPoints && post.summaryPoints.length > 0 && (
                     <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 space-y-2">
                       <span className="font-mono text-[9px] font-bold text-white/40 uppercase tracking-widest block">
-                        {isEs ? "CLAVES DEL ANÁLISIS" : "KEY TAKEAWAYS"}
+                        {isFr ? "POINTS CLÉS DE L'ANALYSE" : isEs ? "CLAVES DEL ANÁLISIS" : "KEY TAKEAWAYS"}
                       </span>
                       <ul className="space-y-1.5 text-[11px] text-white/70">
                         {post.summaryPoints.slice(0, 2).map((pt, i) => (
@@ -256,7 +275,7 @@ export default function BlogClient({ posts }: BlogClientProps) {
                       href={`/blog/${post.slug}`}
                       className="inline-flex items-center gap-2 font-mono text-xs font-bold text-[#00fbfb] group-hover:translate-x-1 transition-transform self-end sm:self-auto shrink-0"
                     >
-                      <span>{isEs ? "Leer Artículo" : "Read Article"}</span>
+                      <span>{isFr ? "Lire l'Article" : isEs ? "Leer Artículo" : "Read Article"}</span>
                       <ArrowRight className="w-3.5 h-3.5" />
                     </Link>
                   </div>
@@ -272,7 +291,7 @@ export default function BlogClient({ posts }: BlogClientProps) {
         <div className="flex items-center gap-2">
           <Tag className="w-4 h-4 text-[#ffabf3]" />
           <span className="font-['Outfit'] text-xs font-bold text-white uppercase tracking-wider">
-            {isEs ? "Explorar por Temas Populares" : "Explore Popular Topics"}
+            {isFr ? "Explorer par Thèmes Populaires" : isEs ? "Explorar por Temas Populares" : "Explore Popular Topics"}
           </span>
         </div>
         <div className="flex flex-wrap gap-2">
