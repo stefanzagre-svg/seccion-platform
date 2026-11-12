@@ -647,7 +647,7 @@ export default function BecomeCreatorPage({ initialProfile, userEmail }: { initi
                 <div className="w-5 h-5 rounded-full bg-[#00fbfb]/10 border border-[#00fbfb]/30 flex items-center justify-center shrink-0 mt-0.5 sm:mt-0">
                   <Check className="w-3.5 h-3.5 text-[#00fbfb]" />
                 </div>
-                <span className="break-words">{locale === "es" ? "Controles de geocerca para ocultar tu perfil en países o ciudades específicas" : "Geofencing controls to hide your profile in specific countries or cities"}</span>
+                <span className="break-words">{locale === "fr" ? "Contrôles de géoblocage pour masquer votre profil dans des pays ou villes spécifiques" : locale === "es" ? "Controles de geocerca para ocultar tu perfil en países o ciudades específicas" : "Geofencing controls to hide your profile in specific countries or cities"}</span>
               </div>
             </div>
           </div>
@@ -1061,7 +1061,7 @@ export default function BecomeCreatorPage({ initialProfile, userEmail }: { initi
                       name="link2"
                       value={formData.link2}
                       onChange={handleInputChange}
-                      placeholder={locale === "es" ? "Segundo perfil (Opcional, ej. @onlyfans / Fansly / Twitch)" : "Second handle/link (Optional, e.g. @onlyfans / Fansly / Twitch)"}
+                      placeholder={locale === "fr" ? "Deuxième profil (Optionnel, ex. @onlyfans / Fansly / Twitch)" : locale === "es" ? "Segundo perfil (Opcional, ej. @onlyfans / Fansly / Twitch)" : "Second handle/link (Optional, e.g. @onlyfans / Fansly / Twitch)"}
                       className="w-full px-4 py-3 rounded-xl bg-black/50 border border-white/10 focus:border-[#00fbfb] text-white text-xs placeholder-white/20 focus:outline-none transition font-sans"
                     />
 
@@ -1192,7 +1192,7 @@ export default function BecomeCreatorPage({ initialProfile, userEmail }: { initi
             <div className="p-5 bg-white/[0.02] border border-white/5 rounded-2xl text-left space-y-2.5">
               <h4 className="text-sm font-bold text-white flex items-center gap-2">
                 <HelpCircle className="w-4 h-4 text-[#00fbfb] shrink-0" />
-                {locale === "es" ? "¿Qué es la oferta del Pack Creador Fundador (90% Comisión + 1 Año IA Gratis)?" : "What is the Founding Creator Pack (90% Revenue Split + 1-Year Free AI)?"}
+                {locale === "fr" ? "Qu'est-ce que l'offre Pack Créateur Fondateur (90 % de Revenus + 1 An IA Gratuit) ?" : locale === "es" ? "¿Qué es la oferta del Pack Creador Fundador (90% Comisión + 1 Año IA Gratis)?" : "What is the Founding Creator Pack (90% Revenue Split + 1-Year Free AI)?"}
               </h4>
               <p className="text-xs text-[#b9cac9] leading-relaxed pl-6">
                 {locale === "fr"
@@ -1234,7 +1234,7 @@ export default function BecomeCreatorPage({ initialProfile, userEmail }: { initi
             <div className="p-5 bg-white/[0.02] border border-white/5 rounded-2xl text-left space-y-2.5">
               <h4 className="text-sm font-bold text-white flex items-center gap-2">
                 <HelpCircle className="w-4 h-4 text-[#00fbfb] shrink-0" />
-                {locale === "es" ? "¿Qué son los \"Creadores Patrocinados\" y cómo funciona el matchmaking?" : "What are \"Sponsored Creators\" and how does matchmaking work?"}
+                {locale === "fr" ? "Que sont les \"Créateurs Sponsorisés\" et comment fonctionne le matchmaking ?" : locale === "es" ? "¿Qué son los \"Creadores Patrocinados\" y cómo funciona el matchmaking?" : "What are \"Sponsored Creators\" and how does matchmaking work?"}
               </h4>
               <p className="text-xs text-[#b9cac9] leading-relaxed pl-6">
                 {locale === "es"

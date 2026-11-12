@@ -606,6 +606,8 @@ export default function SeccionAgentBubble() {
       const isCreatorGuide =
         searchParams.get('guide') === 'creator' ||
         searchParams.get('ref') === 'creator' ||
+        searchParams.get('help') === 'kate' ||
+        searchParams.get('chat') === 'kate' ||
         (searchParams.get('role') === 'creator' && (searchParams.get('help') === 'kate' || searchParams.get('help') === 'steve'));
 
       if (isMoroccoCreator) {
