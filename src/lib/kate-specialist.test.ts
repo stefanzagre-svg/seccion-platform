@@ -1,7 +1,9 @@
 import { describe, it, expect } from 'vitest';
 import {
+  SPECIALIST_MODEL_CHAIN,
   detectSpecialistLanguage,
   getContextualFallbackReply,
+  isTransientGeminiError,
   prepareSpeechText,
   sanitizeHistory,
 } from './kate-specialist';
@@ -134,6 +136,31 @@ describe('Kate Specialist Resilience & Multilingual Engine', () => {
         body: JSON.stringify({ text: 'https://seccion.ai/onboarding' }),
       });
       expect((await speakPost(req2)).status).toBe(400);
+    });
+  });
+
+  describe('Gemini Model Chain & Transient Error Resilience', () => {
+    it('excludes deprecated 404 models and prioritizes active multi-bucket Flash models', () => {
+      expect(SPECIALIST_MODEL_CHAIN).not.toContain('gemini-2.0-flash');
+      expect(SPECIALIST_MODEL_CHAIN).not.toContain('gemini-2.5-flash-lite');
+      expect(SPECIALIST_MODEL_CHAIN[0]).toBe('gemini-3-flash-preview');
+      expect(SPECIALIST_MODEL_CHAIN).toContain('gemini-3.5-flash-lite');
+    });
+
+    it('distinguishes transient 503/RPM spikes from 404 deprecation and daily RPD limits', () => {
+      expect(
+        isTransientGeminiError(new Error('503 This model is currently experiencing high demand'))
+      ).toBe(true);
+      expect(
+        isTransientGeminiError(
+          new Error('404 This model models/gemini-2.0-flash is no longer available')
+        )
+      ).toBe(false);
+      expect(
+        isTransientGeminiError(
+          new Error('429 GenerateRequestsPerDayPerProjectPerModel-FreeTier limit: 20')
+        )
+      ).toBe(false);
     });
   });
 });

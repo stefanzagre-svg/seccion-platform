@@ -1,12 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenAI } from '@google/genai';
 import {
+  SPECIALIST_MODEL_CHAIN,
   detectSpecialistLanguage,
   getContextualFallbackReply,
+  isTransientGeminiError,
   sanitizeHistory,
 } from '@/lib/kate-specialist';
 
-const GEMINI_MODEL_CHAIN = ['gemini-2.5-flash', 'gemini-2.0-flash'];
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export async function POST(req: NextRequest) {
   try {
@@ -27,13 +29,20 @@ export async function POST(req: NextRequest) {
     const historyTurns = sanitizeHistory(body.history);
 
     const fallbackKey = Buffer.from('QVEuQWI4Uk42S2NNWWdIZGI3Z3J5Rmo1RU43UVpsWTVYZjJXSmpQT0hQOU82UHVJWGc3SEE=', 'base64').toString('utf-8');
-    const geminiKey = process.env.GEMINI_API_KEY || fallbackKey;
-    let reply = getContextualFallbackReply(detectedLang, userMsg);
+    const apiKeys = Array.from(
+      new Set([process.env.GEMINI_API_KEY?.trim(), fallbackKey.trim()].filter((k): k is string => Boolean(k)))
+    );
+    const configuredPrimaryModel = process.env.KATE_GEMINI_MODEL?.trim() || process.env.GEMINI_MODEL?.trim();
+    const modelChain = Array.from(
+      new Set([...(configuredPrimaryModel ? [configuredPrimaryModel] : []), ...SPECIALIST_MODEL_CHAIN])
+    );
 
-    if (geminiKey) {
+    let reply = getContextualFallbackReply(detectedLang, userMsg);
+    let replySource: 'gemini' | 'fallback' = 'fallback';
+    let modelUsed: string | null = null;
+
+    if (apiKeys.length > 0) {
       try {
-        const ai = new GoogleGenAI({ apiKey: geminiKey });
-        
         const systemPrompt = `
 You are Kate, the official Executive Onboarding & Compliance Specialist, Creator Growth Partner, and Match Coach for the SECCION platform (seccion.ai, pronounced "Session").
 
@@ -229,34 +238,49 @@ CONVERSATION STYLE RULES:
         let generatedText = '';
         let lastErr: unknown = null;
 
-        for (const modelName of GEMINI_MODEL_CHAIN) {
-          try {
-            const response = await ai.models.generateContent({
-              model: modelName,
-              contents: contentsPayload,
-              config: {
-                systemInstruction: systemPrompt,
-                temperature: 0.7,
-              },
-            });
-            if (response.text?.trim()) {
-              generatedText = response.text.trim();
-              break;
+        outer: for (const key of apiKeys) {
+          const ai = new GoogleGenAI({ apiKey: key });
+          for (const modelName of modelChain) {
+            const maxAttempts = isTransientGeminiError(lastErr) ? 1 : 2;
+            for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+              try {
+                const response = await ai.models.generateContent({
+                  model: modelName,
+                  contents: contentsPayload,
+                  config: {
+                    systemInstruction: systemPrompt,
+                    temperature: 0.7,
+                  },
+                });
+                if (response.text?.trim()) {
+                  generatedText = response.text.trim();
+                  modelUsed = modelName;
+                  break outer;
+                }
+              } catch (modelErr) {
+                lastErr = modelErr;
+                const shouldRetrySameModel = attempt < maxAttempts && isTransientGeminiError(modelErr);
+                if (shouldRetrySameModel) {
+                  await sleep(250);
+                  continue;
+                }
+                console.warn(`[Specialist] Model ${modelName} failed, failing over:`, modelErr);
+                break;
+              }
             }
-          } catch (modelErr) {
-            lastErr = modelErr;
-            console.warn(`[Specialist] Model ${modelName} failed, trying fallback:`, modelErr);
           }
         }
 
         if (generatedText) {
           reply = generatedText;
+          replySource = 'gemini';
         } else if (lastErr) {
           throw lastErr;
         }
       } catch (geminiErr) {
         console.error('Gemini Onboarding Specialist failed:', geminiErr);
         reply = getContextualFallbackReply(detectedLang, userMsg);
+        replySource = 'fallback';
       }
     }
 
@@ -264,6 +288,8 @@ CONVERSATION STYLE RULES:
       reply,
       detectedLanguage: detectedLang,
       detectedDialect: langInfo.promptLang,
+      source: replySource,
+      ...(modelUsed ? { modelUsed } : {}),
     });
 
   } catch (err: any) {
