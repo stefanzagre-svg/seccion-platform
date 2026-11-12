@@ -8,23 +8,55 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Missing message input' }, { status: 400 });
     }
 
-    const locale = body.locale || 'auto';
-    const localeNames: Record<string, string> = {
-      es: 'Spanish (Español)',
-      en: 'English',
-      fr: 'French (Français)',
-      pt: 'Portuguese (Português)',
-      ru: 'Russian (Русский)',
-      uk: 'Ukrainian (Українська)',
-      ro: 'Romanian (Română)',
-      ar: 'Standard Arabic or Moroccan Darija (match the user input)',
-      standard_ar: 'Modern Standard Arabic (العربية الفصحى)',
-      darija: 'Moroccan Arabic / Darija (الدارجة المغربية)'
-    };
-    const targetLanguage = localeNames[locale] || 'the same language and dialect the user is speaking (Arabic, Moroccan Darija, French, English, or Spanish)';
+    const userMsg = body.message.trim();
+    const clientLocale = (body.locale || '').toLowerCase();
+
+    // Server-side robust linguistic detection based on actual message contents
+    let detectedLang = 'en';
+    let targetLanguageDesc = 'English';
+
+    // 1. Check Arabic script
+    if (/[\u0600-\u06FF]/.test(userMsg)) {
+      detectedLang = 'ar';
+      targetLanguageDesc = 'Modern Standard Arabic or Moroccan Darija in Arabic script (matching user dialect)';
+    } 
+    // 2. Check Darija Arabizi
+    else if (/\b(marhba|salam|labas|chokran|choukrane|daba|kifash|kifach|dyal|dyali|dyalek|bghiti|bghit|fin|wach|kayn|kayna|mzyan|mezyan|3afak|3la|fash|fache|khoya|khti)\b/i.test(userMsg) || (/\b\w*[23579]\w*\b/.test(userMsg) && /\b(bgh|dyal|chokr|sba7|msa|tbark)\b/i.test(userMsg))) {
+      detectedLang = 'darija';
+      targetLanguageDesc = 'Moroccan Darija (الدارجة المغربية) with Latin Arabizi if user used Arabizi';
+    }
+    // 3. Check French
+    else if (/\b(bonjour|salut|coucou|comment|merci|oui|non|je|tu|il|elle|nous|vous|ils|elles|suis|est|sont|sommes|êtes|avez|ai|as|pourquoi|avec|dans|sur|pour|par|mon|ma|mes|ton|ta|tes|notre|votre|vos|leur|leurs|créateur|créatrice|faire|voulez|veux|peux|pouvez|argent|gagner|payer|paiement|retirer|profil|compte|aide|aider|maroc|marocain|marocaine|qui|que|quoi|qu'est|c'est|j'ai|j'aimerais|bienvenue|parler|parle|parlez|voix|vocal|bon|bien)\b/i.test(userMsg)) {
+      detectedLang = 'fr';
+      targetLanguageDesc = 'French (Français)';
+    }
+    // 4. Check Spanish
+    else if (/\b(hola|cómo|como|estás|estas|gracias|buenos|días|tardes|noches|sí|yo|tú|él|ella|nosotros|usted|ustedes|estoy|está|esta|están|por|para|con|en|mi|mis|nuestro|nuestra|creador|creadora|hacer|quiero|puedo|dinero|ganar|pagar|pago|retirar|perfil|cuenta|ayuda|ayudar)\b/i.test(userMsg)) {
+      detectedLang = 'es';
+      targetLanguageDesc = 'Spanish (Español)';
+    }
+    // 5. Check English
+    else if (/\b(hello|hi|hey|how|are|you|thanks|thank|yes|no|why|with|in|on|for|by|my|your|our|their|creator|do|want|can|could|would|money|earn|pay|payment|payout|withdraw|profile|account|help|welcome|start|what|where)\b/i.test(userMsg)) {
+      detectedLang = 'en';
+      targetLanguageDesc = 'English';
+    }
+    // 6. Fallback to client-provided locale
+    else if (clientLocale === 'fr') {
+      detectedLang = 'fr';
+      targetLanguageDesc = 'French (Français)';
+    } else if (clientLocale === 'ar' || clientLocale === 'darija') {
+      detectedLang = 'darija';
+      targetLanguageDesc = 'Moroccan Darija (الدارجة المغربية)';
+    } else if (clientLocale === 'es') {
+      detectedLang = 'es';
+      targetLanguageDesc = 'Spanish (Español)';
+    } else {
+      detectedLang = 'en';
+      targetLanguageDesc = 'English';
+    }
 
     const geminiKey = process.env.GEMINI_API_KEY;
-    let reply = "¡Hola! Estoy en modo demostración local, pero puedo decirte que SECCION se trata de encontrar conexiones auténticas sin algoritmos corporativos. ¿Listo para empezar tu quest?";
+    let reply = "Bonjour ! Je suis Steve, votre conseiller SECCION. Avec SECCION, vous conservez 90 % de vos revenus nets et bénéficiez d'une protection DRM totale. Comment puis-je vous aider ?";
 
     if (geminiKey) {
       try {
@@ -38,15 +70,15 @@ You serve a vital multi-faceted role:
 2. For Members: A culturally fluent, high-energy peer, big sibling, and strategic coach explaining platform features, onboarding quests, synergy aura, and connection levels.
 3. For Institutional Payment Partners (Coinflow, Wert, Noda Open Banking, NOWPayments, Nuvei), acquiring banks, and compliance officers: An authoritative, transparent, and articulate compliance officer explaining SECCION's Two-Stage SFW/NSFW Sightengine AI Gate, regulatory standards, terms of service, refund policies, and risk mitigation.
 
-Language & Cultural Imperative:
-- Target Language: ${targetLanguage}.
-- ADAPTIVE LINGUISTIC MIRRORING:
-  * If the user writes or speaks in Moroccan Darija (whether in Arabic script or Latin Arabizi numbers like 3, 7, 9): Reply fluently and naturally in Moroccan Darija.
-  * If the user writes or speaks in Modern Standard Arabic (الفصحى): Reply strictly in clear Modern Standard Arabic.
-  * If the user writes or speaks in French (Français): Reply in elegant, contemporary French.
-  * If the user writes or speaks in English: Reply in polished English.
-  * If the user writes or speaks in Spanish (Español): Reply in warm, peer-level Spanish.
-  * NEVER switch to an unrequested language (e.g. do not reply in Spanish if the user writes in Arabic, Darija, or French). Always match the user's immediate language and tone.
+===================================================================
+ABSOLUTE LANGUAGE MANDATE (CRITICAL INVARIANT - ZERO DEVIATIONS):
+===================================================================
+- The user is addressing you in: ${targetLanguageDesc}.
+- YOU MUST RESPOND STRICTLY AND ENTIRELY IN ${targetLanguageDesc}.
+- DO NOT DEFAULT TO SPANISH. If the user message is in French, respond in fluent, polished, natural French.
+- If the user message is in Darija or Arabic, respond in authentic Darija or Arabic.
+- If the user message is in English, respond in polished English.
+- Only respond in Spanish if the user writes or speaks to you in Spanish!
 
 ===================================================================
 LATIN AMERICA PAYOUT REALITY (How Creators get paid easily & safely)
@@ -229,19 +261,19 @@ CONVERSATION STYLE RULES:
         reply = response.text || reply;
       } catch (geminiErr) {
         console.error('Gemini Onboarding Specialist failed:', geminiErr);
-        if (locale === 'ar' || locale === 'darija') {
+        if (detectedLang === 'ar' || detectedLang === 'darija') {
           reply = "Marhba bik! 👋 Ana Steve, lmosa3id dyalek f SECCION. T9der men daba t-9ad l-profil dyalek, t-chouf les outils dyal Creator Studio w t-stafed men l-privacy l-kamla (blocage 'MA' en 1 clic) w 90% net. Bghiti n-bdaou n-9ado l-profil dyalek daba?";
-        } else if (locale === 'fr') {
+        } else if (detectedLang === 'fr') {
           reply = "Bonjour ! 👋 Je suis Steve, votre conseiller SECCION. Avec SECCION, vous conservez 90 % de vos revenus nets et bénéficiez d'une protection DRM totale avec bouclier de confidentialité en 1 clic. Comment puis-je vous aider à configurer votre studio aujourd'hui ?";
-        } else if (locale === 'en') {
-          reply = "Hello! 👋 I'm Steve, your SECCION Creator Growth Partner. On SECCION, you keep 90% net revenue with full DRM content protection and 1-click geo-blocking. What part of your profile or Creator Studio would you like to set up first?";
-        } else {
+        } else if (detectedLang === 'es') {
           reply = "¡Hola! Soy Steve, tu Asesor de Onboarding y Monetización en SECCION. En SECCION tú te quedas con el 90% de tus ingresos netos y tu contenido está protegido con DRM forense. ¿En qué paso del Creator Studio o configuración de tu perfil te gustaría que te guíe primero?";
+        } else {
+          reply = "Hello! 👋 I'm Steve, your SECCION Creator Growth Partner. On SECCION, you keep 90% net revenue with full DRM content protection and 1-click geo-blocking. What part of your profile or Creator Studio would you like to set up first?";
         }
       }
     }
 
-    return NextResponse.json({ reply });
+    return NextResponse.json({ reply, detectedLanguage: detectedLang });
 
   } catch (err: any) {
     console.error('Onboarding Specialist API Error:', err);

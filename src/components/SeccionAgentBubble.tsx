@@ -27,13 +27,54 @@ export default function SeccionAgentBubble() {
   const [isListening, setIsListening] = useState(false);
   const [voiceEnabled, setVoiceEnabled] = useState(true);
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [activeAgentLang, setActiveAgentLang] = useState<'fr' | 'es' | 'en' | 'ar'>('fr');
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const recognitionRef = useRef<any>(null);
 
+  // Initialize and persist agent language preference
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const searchParams = new URLSearchParams(window.location.search);
+      const langParam = searchParams.get('lang')?.toLowerCase();
+      const isMorocco = searchParams.get('ref') === 'morocco' || searchParams.get('country') === 'ma';
+      if (langParam === 'darija' || langParam === 'ar') {
+        setActiveAgentLang('ar');
+      } else if (langParam === 'fr' || isMorocco) {
+        setActiveAgentLang('fr');
+      } else if (langParam === 'es') {
+        setActiveAgentLang('es');
+      } else if (langParam === 'en') {
+        setActiveAgentLang('en');
+      } else {
+        const saved = localStorage.getItem('seccion_agent_lang') as any;
+        if (saved && ['fr', 'es', 'en', 'ar'].includes(saved)) {
+          setActiveAgentLang(saved);
+        } else if (locale === 'fr') {
+          setActiveAgentLang('fr');
+        } else if (locale === 'es') {
+          setActiveAgentLang('es');
+        } else {
+          setActiveAgentLang('fr');
+        }
+      }
+    }
+  }, [locale]);
+
+  const handleSelectLang = (newLang: 'fr' | 'es' | 'en' | 'ar') => {
+    setActiveAgentLang(newLang);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('seccion_agent_lang', newLang);
+    }
+    if (recognitionRef.current && isListening) {
+      recognitionRef.current.stop();
+      setIsListening(false);
+    }
+  };
+
   // Play text-to-speech voice response
   const speakText = useCallback(
-    (textToSpeak: string, forceVoice: boolean = false) => {
+    (textToSpeak: string, forceVoice: boolean = false, overrideLang?: string) => {
       if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
         return;
       }
@@ -53,19 +94,28 @@ export default function SeccionAgentBubble() {
         const cleanText = phoneticText.replace(/[#*_`]/g, '').slice(0, 300);
         const utterance = new SpeechSynthesisUtterance(cleanText);
 
-        const searchParams = new URLSearchParams(window.location.search);
-        const langParam = searchParams.get('lang')?.toLowerCase();
-        const isMorocco = searchParams.get('ref') === 'morocco' || searchParams.get('country') === 'ma';
-
-        if (isMorocco && (langParam === 'darija' || langParam === 'ar')) {
-          utterance.lang = 'ar-MA';
-        } else if (isMorocco || locale === 'fr' || langParam === 'fr') {
-          utterance.lang = 'fr-FR';
-        } else if (locale === 'es') {
-          utterance.lang = 'es-ES';
-        } else {
-          utterance.lang = 'en-US';
+        // Determine voice language: first check explicit override, then content detection, then fallback
+        let targetVoiceLang = overrideLang;
+        if (!targetVoiceLang) {
+          if (/[\u0600-\u06FF]/.test(cleanText)) {
+            targetVoiceLang = 'ar-MA';
+          } else if (/\b(bonjour|salut|bienvenue|vous|nous|votre|avec|dans|pour|comment|merci|suis|est|plateforme|créateur|profil|argent|retirer)\b/i.test(cleanText)) {
+            targetVoiceLang = 'fr-FR';
+          } else if (/\b(hola|bienvenido|creador|perfil|estás|gracias|cuenta|plata)\b/i.test(cleanText)) {
+            targetVoiceLang = 'es-ES';
+          } else if (/\b(hello|welcome|creator|profile|what|how|thank)\b/i.test(cleanText)) {
+            targetVoiceLang = 'en-US';
+          } else if (activeAgentLang === 'fr') {
+            targetVoiceLang = 'fr-FR';
+          } else if (activeAgentLang === 'ar') {
+            targetVoiceLang = 'ar-MA';
+          } else if (activeAgentLang === 'es') {
+            targetVoiceLang = 'es-ES';
+          } else {
+            targetVoiceLang = 'en-US';
+          }
         }
+        utterance.lang = targetVoiceLang;
 
         // Configure Steve's voice strictly as a warm, authoritative MALE voice
         utterance.pitch = 0.9; // Lower pitch for clear masculine timbre
@@ -110,7 +160,7 @@ export default function SeccionAgentBubble() {
         console.error('Speech synthesis error:', e);
       }
     },
-    [voiceEnabled, locale]
+    [voiceEnabled, activeAgentLang]
   );
 
   const sendQuestion = useCallback(
@@ -129,26 +179,10 @@ export default function SeccionAgentBubble() {
       setIsTyping(true);
 
       try {
-        let activeLocale: string = locale;
-        if (typeof window !== 'undefined') {
-          const searchParams = new URLSearchParams(window.location.search);
-          const langParam = searchParams.get('lang')?.toLowerCase();
-          const isMorocco = searchParams.get('ref') === 'morocco' || searchParams.get('country') === 'ma';
-          if (isMorocco && (langParam === 'darija' || langParam === 'ar')) {
-            activeLocale = 'ar';
-          } else if (isMorocco && langParam === 'fr') {
-            activeLocale = 'fr';
-          } else if (isMorocco && langParam === 'en') {
-            activeLocale = 'en';
-          } else if (langParam) {
-            activeLocale = langParam;
-          }
-        }
-
         const response = await fetch('/api/v2/onboarding/specialist', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ message: trimmed, locale: activeLocale }),
+          body: JSON.stringify({ message: trimmed, locale: activeAgentLang }),
         });
         const data = await response.json();
 
@@ -157,6 +191,11 @@ export default function SeccionAgentBubble() {
         }
 
         const replyText = data.reply || data.response || t('agent.fallback');
+        const detected = data.detectedLanguage;
+        if (detected && ['fr', 'es', 'en', 'ar'].includes(detected) && detected !== activeAgentLang) {
+          setActiveAgentLang(detected);
+        }
+
         const agentMsg: Message = {
           id: `agent-${Date.now()}`,
           sender: 'agent',
@@ -166,7 +205,8 @@ export default function SeccionAgentBubble() {
         setMessages((prev) => [...prev, agentMsg]);
 
         // CRITICAL INVARIANT: If the creator spoke aloud, Steve MUST reply with vocal audio!
-        speakText(replyText, isVocalInput);
+        const replyVoiceLang = detected === 'fr' ? 'fr-FR' : detected === 'ar' ? 'ar-MA' : detected === 'es' ? 'es-ES' : detected === 'en' ? 'en-US' : undefined;
+        speakText(replyText, isVocalInput, replyVoiceLang);
       } catch (err: any) {
         console.error(err);
         setErrorText(err.message || 'Connecting error. Please try again.');
@@ -174,7 +214,7 @@ export default function SeccionAgentBubble() {
         setIsTyping(false);
       }
     },
-    [locale, t, speakText]
+    [activeAgentLang, t, speakText]
   );
 
   // Toggle Voice Dictation (Microphone input)
@@ -202,15 +242,11 @@ export default function SeccionAgentBubble() {
       recognition.continuous = false;
       recognition.interimResults = false;
 
-      const searchParams = new URLSearchParams(window.location.search);
-      const langParam = searchParams.get('lang')?.toLowerCase();
-      const isMorocco = searchParams.get('ref') === 'morocco' || searchParams.get('country') === 'ma';
-
-      if (isMorocco && (langParam === 'darija' || langParam === 'ar')) {
+      if (activeAgentLang === 'ar') {
         recognition.lang = 'ar-MA';
-      } else if (isMorocco || locale === 'fr' || langParam === 'fr') {
+      } else if (activeAgentLang === 'fr') {
         recognition.lang = 'fr-FR';
-      } else if (locale === 'es') {
+      } else if (activeAgentLang === 'es') {
         recognition.lang = 'es-ES';
       } else {
         recognition.lang = 'en-US';
@@ -238,6 +274,19 @@ export default function SeccionAgentBubble() {
           setErrorText('Microphone permission or network error. Please try again or type.');
         }
       };
+
+      recognition.onend = () => {
+        setIsListening(false);
+      };
+
+      recognitionRef.current = recognition;
+      recognition.start();
+    } catch (err: any) {
+      console.error(err);
+      setIsListening(false);
+      setErrorText('Could not access microphone.');
+    }
+  }, [isListening, activeAgentLang, sendQuestion]);
 
       recognition.onend = () => {
         setIsListening(false);
@@ -419,8 +468,8 @@ export default function SeccionAgentBubble() {
             className="fixed bottom-[calc(8.75rem+env(safe-area-inset-bottom,0px))] right-4 left-4 sm:left-auto sm:right-6 sm:bottom-24 z-[9995] w-auto sm:w-[370px] h-[480px] max-h-[70vh] bg-[#0A0A12]/95 border border-white/10 rounded-[2rem] shadow-[0_20px_60px_rgba(0,240,255,0.2)] flex flex-col overflow-hidden backdrop-blur-2xl"
           >
             {/* Header */}
-            <header className="p-4 border-b border-white/10 bg-gradient-to-r from-[#00fbfb]/10 via-purple-950/20 to-[#ec4899]/10 flex items-center justify-between shrink-0">
-              <div className="flex items-center gap-3">
+            <header className="p-3.5 border-b border-white/10 bg-gradient-to-r from-[#00fbfb]/10 via-purple-950/20 to-[#ec4899]/10 flex items-center justify-between shrink-0">
+              <div className="flex items-center gap-2.5">
                 <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#00fbfb] to-[#ec4899] p-[1.5px] shadow-[0_0_15px_rgba(0,251,251,0.4)] overflow-hidden">
                   <img
                     src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=150&h=150&q=80"
@@ -437,12 +486,34 @@ export default function SeccionAgentBubble() {
                   </span>
                 </div>
               </div>
-              <button
-                onClick={() => setIsOpen(false)}
-                className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-white/70 hover:text-white transition cursor-pointer"
-              >
-                <X className="w-4 h-4" />
-              </button>
+
+              {/* Language Selector Pills & Close Button */}
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-0.5 bg-black/40 p-1 rounded-xl border border-white/10">
+                  {(['fr', 'es', 'en', 'ar'] as const).map((l) => (
+                    <button
+                      key={l}
+                      type="button"
+                      onClick={() => handleSelectLang(l)}
+                      className={`px-1.5 py-0.5 text-[9px] font-mono font-bold rounded-lg transition cursor-pointer ${
+                        activeAgentLang === l
+                          ? 'bg-[#00fbfb] text-black shadow-[0_0_8px_rgba(0,251,251,0.4)]'
+                          : 'text-white/40 hover:text-white'
+                      }`}
+                      title={l === 'fr' ? 'Français' : l === 'es' ? 'Español' : l === 'en' ? 'English' : 'الدارجة المغربية / العربية'}
+                    >
+                      {l.toUpperCase()}
+                    </button>
+                  ))}
+                </div>
+
+                <button
+                  onClick={() => setIsOpen(false)}
+                  className="w-7 h-7 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-white/70 hover:text-white transition cursor-pointer"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
             </header>
 
             {/* Message List */}
