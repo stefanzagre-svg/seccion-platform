@@ -288,19 +288,6 @@ export default function SeccionAgentBubble() {
     }
   }, [isListening, activeAgentLang, sendQuestion]);
 
-      recognition.onend = () => {
-        setIsListening(false);
-      };
-
-      recognitionRef.current = recognition;
-      recognition.start();
-    } catch (err: any) {
-      console.error(err);
-      setIsListening(false);
-      setErrorText('Could not access microphone.');
-    }
-  }, [isListening, locale, sendQuestion]);
-
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const searchParams = new URLSearchParams(window.location.search);
