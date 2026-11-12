@@ -36,6 +36,7 @@ const PUBLIC_API_ROUTES = [
   '/api/admin/auth/founder-login',
   '/api/media/blur',
   '/api/v2/onboarding/specialist',
+  '/api/v2/voice/speak',
   '/api/creator/check-username'
 ];
 
