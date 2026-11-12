@@ -118,29 +118,52 @@ export default function SeccionAgentBubble() {
         utterance.lang = targetVoiceLang;
 
         // Configure Steve's voice strictly as a warm, authoritative MALE voice
-        utterance.pitch = 0.9; // Lower pitch for clear masculine timbre
-        utterance.rate = 1.0;
+        utterance.pitch = 0.82; // Masculine baritone timbre
+        utterance.rate = 0.96; // Natural human cadence
 
         // Select a male voice from the browser's available voice roster
         const voices = window.speechSynthesis.getVoices();
         if (voices.length > 0) {
-          const maleVoice = voices.find((v) => {
+          const langCode = utterance.lang.slice(0, 2).toLowerCase();
+          const matchingLangVoices = voices.filter((v) => v.lang.toLowerCase().startsWith(langCode));
+
+          const femaleKeywords = [
+            'female', 'femme', 'mujer', 'woman', 'girl',
+            'amelie', 'amélie', 'aurelie', 'aurélie', 'marie', 'claire', 'hortense', 'julie', 'celine', 'céline', 'alice', 'charlotte', 'virginie',
+            'monica', 'mónica', 'paulina', 'helena', 'laura', 'sofia', 'sofía', 'marta', 'rosa', 'conchita', 'lucia', 'lucía', 'carmen',
+            'samantha', 'karen', 'victoria', 'moira', 'fiona', 'tessa', 'susan', 'zira', 'linda', 'jenny', 'heather', 'ava',
+            'mariam', 'laila', 'salma', 'zeina'
+          ];
+
+          const maleKeywords = [
+            'male', 'homme', 'hombre', 'man', 'boy',
+            'thomas', 'nicolas', 'paul', 'antoine', 'sebastien', 'sébastien', 'henri', 'claude', 'bernard', 'guy', 'mathieu', 'pierre', 'louis',
+            'jorge', 'diego', 'carlos', 'enrique', 'pablo', 'alvaro', 'álvaro', 'mateo', 'miguel', 'javier', 'manuel',
+            'david', 'george', 'daniel', 'arthur', 'mark', 'fred', 'aaron', 'oliver', 'alex', 'james', 'brian',
+            'tarik', 'tarek', 'jamal', 'maged', 'majed', 'naayf', 'hamed', 'omar', 'karim'
+          ];
+
+          // 1. Try to find a voice explicitly matching a male name and NOT matching female keywords
+          let maleVoice = matchingLangVoices.find((v) => {
             const name = v.name.toLowerCase();
-            const langMatches = v.lang.startsWith(utterance.lang.slice(0, 2));
-            const isMaleKeyword =
-              name.includes('male') ||
-              name.includes('david') ||
-              name.includes('george') ||
-              name.includes('thomas') ||
-              name.includes('antoine') ||
-              name.includes('paul') ||
-              name.includes('nicolas') ||
-              name.includes('tarik') ||
-              name.includes('jamal') ||
-              name.includes('guy') ||
-              name.includes('henri');
-            return langMatches && isMaleKeyword;
-          }) || voices.find((v) => v.lang.startsWith(utterance.lang.slice(0, 2)));
+            return maleKeywords.some((m) => name.includes(m)) && !femaleKeywords.some((f) => name.includes(f));
+          });
+
+          // 2. If not found, pick any voice in that language that is NOT female
+          if (!maleVoice) {
+            maleVoice = matchingLangVoices.find((v) => {
+              const name = v.name.toLowerCase();
+              return !femaleKeywords.some((f) => name.includes(f));
+            });
+          }
+
+          // 3. Fallback to any male voice across all languages if language-specific male voice is absent
+          if (!maleVoice) {
+            maleVoice = voices.find((v) => {
+              const name = v.name.toLowerCase();
+              return maleKeywords.some((m) => name.includes(m)) && !femaleKeywords.some((f) => name.includes(f));
+            });
+          }
 
           if (maleVoice) {
             utterance.voice = maleVoice;
