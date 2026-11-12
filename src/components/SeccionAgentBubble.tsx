@@ -116,10 +116,26 @@ export default function SeccionAgentBubble() {
       setIsTyping(true);
 
       try {
+        let activeLocale = locale;
+        if (typeof window !== 'undefined') {
+          const searchParams = new URLSearchParams(window.location.search);
+          const langParam = searchParams.get('lang')?.toLowerCase();
+          const isMorocco = searchParams.get('ref') === 'morocco' || searchParams.get('country') === 'ma';
+          if (isMorocco && (langParam === 'darija' || langParam === 'ar')) {
+            activeLocale = 'ar';
+          } else if (isMorocco && langParam === 'fr') {
+            activeLocale = 'fr';
+          } else if (isMorocco && langParam === 'en') {
+            activeLocale = 'en';
+          } else if (langParam) {
+            activeLocale = langParam;
+          }
+        }
+
         const response = await fetch('/api/v2/onboarding/specialist', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ message: trimmed, locale }),
+          body: JSON.stringify({ message: trimmed, locale: activeLocale }),
         });
         const data = await response.json();
 

@@ -17,9 +17,10 @@ export async function POST(req: NextRequest) {
       ru: 'Russian (Русский)',
       uk: 'Ukrainian (Українська)',
       ro: 'Romanian (Română)',
-      ar: 'Moroccan Arabic / Darija (الدارجة المغربية)'
+      ar: 'Moroccan Arabic / Darija (الدارجة المغربية)',
+      darija: 'Moroccan Arabic / Darija (الدارجة المغربية)'
     };
-    const targetLanguage = localeNames[locale] || 'Spanish (Español)';
+    const targetLanguage = localeNames[locale] || 'Moroccan Arabic / Darija (الدارجة المغربية)';
 
     const geminiKey = process.env.GEMINI_API_KEY;
     let reply = "¡Hola! Estoy en modo demostración local, pero puedo decirte que SECCION se trata de encontrar conexiones auténticas sin algoritmos corporativos. ¿Listo para empezar tu quest?";
@@ -38,7 +39,9 @@ You serve a vital multi-faceted role:
 
 Language & Cultural Imperative:
 - Target Language: ${targetLanguage}.
-- You MUST reply fluently, clearly, and naturally in ${targetLanguage}. 
+- You MUST reply fluently, clearly, and naturally in ${targetLanguage}.
+- For Moroccan Arabic / Darija: You MUST answer strictly in authentic Moroccan Darija (using standard Arabic script or contemporary Arabizi/Darija in Latin script if the user addresses you in Latin). NEVER answer in Spanish, English, or Classical Arabic when Darija is targeted.
+- For French (Français): Reply in elegant, clear, modern French.
 - For Spanish (Español): Use warm, culturally natural, peer-level Spanish (accessible to Argentina, Colombia, Mexico, and Spain). Address creators with high respect, enthusiasm, and practical guidance without robotic corporate jargon.
 - For Russian (Русский): Use warm, professional, peer-level Russian. Be transparent, supportive, and direct about payouts, avoiding cold bureaucratic phrases. Use standard creator terminology (крипта, USDT, P2P, Т-Банк, Сбер, вывод, сплит 90%, без агентских комиссий).
 
