@@ -48,7 +48,7 @@ export default function LanguageSelector() {
           >
             <div className="px-3 py-1.5 border-b border-white/10 flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-white/40">
               <Globe className="w-3 h-3 text-primary" />
-              <span>Language / Idioma</span>
+              <span>Language / Idioma / Langue</span>
             </div>
 
             <div className="py-1 max-h-60 overflow-y-auto">

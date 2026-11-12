@@ -3,8 +3,9 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import en from "@/locales/en.json";
 import es from "@/locales/es.json";
+import fr from "@/locales/fr.json";
 
-export type SupportedLocale = "es" | "en";
+export type SupportedLocale = "es" | "en" | "fr";
 
 export interface LocaleMeta {
   code: SupportedLocale;
@@ -17,11 +18,13 @@ export interface LocaleMeta {
 export const LOCALES: Record<SupportedLocale, LocaleMeta> = {
   es: { code: "es", name: "Spanish", nativeName: "Español", flag: "🇪🇸", dir: "ltr" },
   en: { code: "en", name: "English", nativeName: "English", flag: "🇺🇸", dir: "ltr" },
+  fr: { code: "fr", name: "French", nativeName: "Français", flag: "🇫🇷", dir: "ltr" },
 };
 
 const DICTIONARIES: Record<SupportedLocale, any> = {
   en,
   es,
+  fr,
 };
 
 interface LanguageContextType {
@@ -56,9 +59,13 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode; initialLoca
         document.documentElement.setAttribute("lang", saved);
         document.documentElement.setAttribute("dir", LOCALES[saved]?.dir || "ltr");
       } else if (typeof navigator !== "undefined") {
-        // Auto-detect browser/system language (e.g. es-AR, es-DO, es-ES -> 'es')
+        // Auto-detect browser/system language (e.g. fr-FR, es-ES, en-US)
         const browserLang = (navigator.language || (navigator as any).userLanguage || "").toLowerCase();
-        const detectedLocale: SupportedLocale = browserLang.startsWith("es") ? "es" : "en";
+        const detectedLocale: SupportedLocale = browserLang.startsWith("fr")
+          ? "fr"
+          : browserLang.startsWith("es")
+          ? "es"
+          : "en";
         setLocaleState(detectedLocale);
         document.documentElement.setAttribute("lang", detectedLocale);
         document.documentElement.setAttribute("dir", LOCALES[detectedLocale]?.dir || "ltr");
