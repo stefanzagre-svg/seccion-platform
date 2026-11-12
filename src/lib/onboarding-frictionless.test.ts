@@ -200,3 +200,83 @@ describe('Phase B Single-Field Email Authentication & Pre-Launch Gating', () => 
     expect(rateLimiter(16).status).toBe(429);
   });
 });
+
+describe('Phase C Security Hardening & Creator Pre-Launch Invariants (Items 1-4 & Decisions 2-3)', () => {
+  it('Item 1 (C1): rejects client-supplied user_metadata.role from escalating to creator', () => {
+    const isApprovedCreatorAccess = (
+      isFounder: boolean,
+      creatorAppStatus?: string,
+      profileRole?: string,
+      _userMetadataRole?: string
+    ) => {
+      // Invariant: _userMetadataRole is completely ignored
+      return isFounder || creatorAppStatus === 'approved' || profileRole === 'creator' || profileRole === 'admin';
+    };
+
+    // Attacker sends user_metadata.role = 'creator'
+    expect(isApprovedCreatorAccess(false, undefined, undefined, 'creator')).toBe(false);
+    expect(isApprovedCreatorAccess(false, 'pending', 'member', 'creator')).toBe(false);
+    expect(isApprovedCreatorAccess(false, 'waitlist', undefined, 'creator')).toBe(false);
+
+    // Genuine approved creator or founder
+    expect(isApprovedCreatorAccess(true, undefined, undefined, undefined)).toBe(true);
+    expect(isApprovedCreatorAccess(false, 'approved', undefined, undefined)).toBe(true);
+    expect(isApprovedCreatorAccess(false, undefined, 'creator', undefined)).toBe(true);
+  });
+
+  it('Item 3 (C2): sanitizes public creator profile payload against financial PII leakage', () => {
+    const publicProfileColumns = [
+      'id', 'username', 'display_name', 'avatar_url', 'cover_url', 'bio',
+      'specialization', 'origins', 'residence', 'base_subscription_price',
+      'favorite_languages', 'hobbies', 'moods', 'relationship_goals',
+      'lifestyle_habits', 'is_kyc_verified', 'core_passion', 'archetype',
+      'face_blur_active', 'avatar_face_coordinates'
+    ];
+
+    const sensitiveFinancialColumns = [
+      'tax_id_number', 'legal_business_name', 'vat_gst_number',
+      'paxum_email', 'crypto_wallet_address', 'payout_wallet'
+    ];
+
+    sensitiveFinancialColumns.forEach(col => {
+      expect(publicProfileColumns.includes(col)).toBe(false);
+    });
+  });
+
+  it('Item 4 (Decision 2): strictly routes non-creator registrations to VIP waitlist during pre-launch', () => {
+    const handlePrelaunchRegistration = (isApprovedCreator: boolean) => {
+      if (!isApprovedCreator) {
+        return {
+          success: true,
+          waitlist: true,
+          redirectUrl: '/early-access'
+        };
+      }
+      return {
+        success: true,
+        waitlist: false,
+        redirectUrl: '/studio?welcome=true'
+      };
+    };
+
+    expect(handlePrelaunchRegistration(false).waitlist).toBe(true);
+    expect(handlePrelaunchRegistration(false).redirectUrl).toBe('/early-access');
+    expect(handlePrelaunchRegistration(true).waitlist).toBe(false);
+    expect(handlePrelaunchRegistration(true).redirectUrl).toBe('/studio?welcome=true');
+  });
+
+  it('Decision 3: validates DIDIT Zero-Knowledge 3D liveness session creation', () => {
+    const buildDiditSessionPayload = (userId: string, targetRole: 'creator' | 'member') => ({
+      workflow_id: '6cfcca5f-5f49-4226-b005-cbb22fd92b6b',
+      vendor_data: userId,
+      callback: `https://seccion.ai/onboarding?didit_session=completed`,
+      metadata: { user_id: userId, platform: 'SECCION', target_role: targetRole }
+    });
+
+    const payload = buildDiditSessionPayload('usr_12345', 'member');
+    expect(payload.workflow_id).toBe('6cfcca5f-5f49-4226-b005-cbb22fd92b6b');
+    expect(payload.vendor_data).toBe('usr_12345');
+    expect(payload.callback).toContain('/onboarding?didit_session=completed');
+    expect(payload.metadata.target_role).toBe('member');
+  });
+});

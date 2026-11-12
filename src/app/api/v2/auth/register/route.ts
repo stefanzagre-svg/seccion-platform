@@ -201,6 +201,25 @@ export async function POST(req: NextRequest) {
     const isApprovedCreator = isFounder || creatorApp?.status === 'approved';
     const effectiveRole: 'creator' | 'member' = isApprovedCreator ? 'creator' : 'member';
 
+    if (!isApprovedCreator) {
+      // Pre-launch gating (Decision 2): member accounts are placed on the VIP waitlist until creator milestone is met
+      await adminClient.from('member_waitlist').upsert(
+        {
+          email: cleanEmail,
+          city: userCountry || 'Global',
+        },
+        { onConflict: 'email' }
+      );
+
+      return NextResponse.json({
+        success: true,
+        waitlist: true,
+        isCreator: false,
+        message: 'SECCION is currently in Creator Pre-Launch. You have been placed on the VIP early access waitlist!',
+        redirectUrl: '/early-access',
+      });
+    }
+
     const baseUsername = (
       rawUsername ||
       extractHandleFromLink(creatorApp?.link1, cleanEmail) ||

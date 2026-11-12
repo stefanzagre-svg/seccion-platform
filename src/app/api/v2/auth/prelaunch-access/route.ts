@@ -110,8 +110,7 @@ export async function POST(req: NextRequest) {
       isFounder ||
       creatorApp?.status === 'approved' ||
       existingProfile?.role === 'creator' ||
-      existingProfile?.role === 'admin' ||
-      existingAuthUser?.user_metadata?.role === 'creator';
+      existingProfile?.role === 'admin';
 
     if (isApprovedCreator) {
       const fallbackHandle = extractHandleFromLink(creatorApp?.link1, cleanEmail);

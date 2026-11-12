@@ -64,7 +64,7 @@ export async function GET(request: NextRequest) {
 
   if (authenticatedUser) {
     let targetPath = explicitNext;
-    let resolvedRole = authenticatedUser.user_metadata?.role === 'creator' ? 'creator' : 'member';
+    let resolvedRole: 'creator' | 'member' = 'member';
     let isCompleted = false;
 
     // Schema fix: Select existing columns (lifestyle_habits, bio_prompt_answer) instead of non-existent onboarding_completed
@@ -76,7 +76,7 @@ export async function GET(request: NextRequest) {
 
     if (profile?.role === 'creator' || profile?.role === 'admin') {
       resolvedRole = 'creator';
-    } else if (profile?.role === 'member') {
+    } else {
       resolvedRole = 'member';
     }
     if (profile?.lifestyle_habits || profile?.bio_prompt_answer) {

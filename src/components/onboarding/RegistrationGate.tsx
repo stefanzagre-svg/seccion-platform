@@ -231,6 +231,11 @@ export default function RegistrationGate({ onComplete, initialError }: Registrat
           });
 
           const resData = await res.json();
+          if (res.ok && resData.waitlist) {
+            registeredViaServer = true;
+            window.location.href = resData.redirectUrl || '/early-access';
+            return;
+          }
           if (res.ok && resData.success && resData.user) {
             registeredViaServer = true;
 
@@ -289,7 +294,7 @@ export default function RegistrationGate({ onComplete, initialError }: Registrat
               emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(nextTarget)}`,
               data: {
                 username: effectiveUsername,
-                role: userRole,
+                role: 'member',
               },
             },
           });

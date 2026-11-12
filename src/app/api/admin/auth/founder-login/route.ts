@@ -145,7 +145,6 @@ export async function POST(req: NextRequest) {
     const isCreator =
       isFounder ||
       profileRow?.role === 'creator' ||
-      data.user.user_metadata?.role === 'creator' ||
       creatorApp?.status === 'approved';
 
     const effectiveRole: 'creator' | 'member' = isCreator ? 'creator' : 'member';

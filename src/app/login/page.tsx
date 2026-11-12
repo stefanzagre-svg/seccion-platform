@@ -87,7 +87,7 @@ export default function LoginPage() {
             .eq("id", session.user.id)
             .maybeSingle();
 
-          const role = profile?.role || session.user.user_metadata?.role || "creator";
+          const role = profile?.role === "creator" || profile?.role === "admin" ? "creator" : "member";
           document.cookie = `sb_role=${role}; path=/; max-age=2592000; SameSite=Lax`;
           document.cookie = "sb_ob=1; path=/; max-age=2592000; SameSite=Lax";
           const explicitNext = params.get("next");
@@ -157,13 +157,12 @@ export default function LoginPage() {
           .replace(/[^a-z0-9_]/g, "");
 
         if (!existingProfile) {
-          const isApprovedCreatorMeta = data.user.user_metadata?.role === "creator";
-          resolvedRole = isApprovedCreatorMeta ? "creator" : "member";
+          resolvedRole = "member";
           await supabase.from("profiles").upsert({
             id: data.user.id,
             username: defaultUsername,
             display_name: defaultUsername,
-            role: resolvedRole,
+            role: "member",
           });
         } else {
           resolvedRole =
@@ -237,12 +236,29 @@ export default function LoginPage() {
           setLoading(false);
           return;
         }
-      } else if (checkRes.status === 429) {
-        setErrorMsg(
-          locale === "es"
-            ? "Demasiadas solicitudes. Por favor espera un momento antes de volver a intentarlo."
-            : "Too many requests. Please wait a moment and try again."
-        );
+        if (checkData.status !== "approved_creator") {
+          setErrorMsg(
+            locale === "es"
+              ? "Acceso restringido durante la fase de pre-lanzamiento de creadores."
+              : "Access is restricted during the creator pre-launch phase."
+          );
+          setLoading(false);
+          return;
+        }
+      } else {
+        if (checkRes.status === 429) {
+          setErrorMsg(
+            locale === "es"
+              ? "Demasiadas solicitudes. Por favor espera un momento antes de volver a intentarlo."
+              : "Too many requests. Please wait a moment and try again."
+          );
+        } else {
+          setErrorMsg(
+            locale === "es"
+              ? "No pudimos verificar el estado de acceso de pre-lanzamiento. Inténtalo de nuevo."
+              : "Unable to verify pre-launch access status. Please try again."
+          );
+        }
         setLoading(false);
         return;
       }
@@ -282,6 +298,9 @@ export default function LoginPage() {
           : "You must confirm that you are at least 18 years old and agree to SECCION's Terms of Service and Privacy Policy to continue."
       );
       return;
+    }
+    if (prelaunchState === "unregistered") {
+      return handleOneClickWaitlist();
     }
     return handleMagicOtp("code");
   };

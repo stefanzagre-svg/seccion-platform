@@ -849,18 +849,32 @@ export default function CreatorStudio() {
             .eq('id', user.id)
             .single();
 
-          const isCreatorIntent =
-            user.user_metadata?.role === 'creator' ||
-            (typeof window !== 'undefined' && (
-              localStorage.getItem('is_creator_signup') === 'true' ||
-              Boolean(sessionStorage.getItem('_onboarding_creator_archive_choice')) ||
-              document.cookie.includes('sb_role=creator') ||
-              new URLSearchParams(window.location.search).get('welcome') === 'true'
-            ));
+          if (profileData && profileData.role !== 'creator' && profileData.role !== 'admin') {
+            console.warn('[Studio] Access denied: user is not an approved creator');
+            window.location.href = '/early-access';
+            return;
+          }
 
-          if (!profileData || (profileData.role !== 'creator' && isCreatorIntent)) {
+          if (!profileData) {
+            // Strict server verification: only provision creator if approved in creator_applications or founder
+            let isApproved = user.email === 'stefan.zagre@gmail.com';
+            if (!isApproved && user.email) {
+              const { data: appData } = await supabase
+                .from('creator_applications')
+                .select('status')
+                .eq('email', user.email.toLowerCase().trim())
+                .eq('status', 'approved')
+                .maybeSingle();
+              if (appData) isApproved = true;
+            }
+
+            if (!isApproved) {
+              console.warn('[Studio] Access denied: no approved creator application');
+              window.location.href = '/early-access';
+              return;
+            }
+
             const fallbackUsername = (
-              profileData?.username ||
               user.user_metadata?.username ||
               user.email?.split('@')[0] ||
               `creator_${user.id.slice(0, 6)}`
@@ -874,7 +888,6 @@ export default function CreatorStudio() {
                 id: user.id,
                 username: fallbackUsername,
                 display_name:
-                  profileData?.display_name ||
                   user.user_metadata?.full_name ||
                   fallbackUsername,
                 role: 'creator',
@@ -911,13 +924,37 @@ export default function CreatorStudio() {
             setCustomRequestPermission(privacy.custom_request_permission || 'anyone');
             setFaceBlurDefault(Boolean(privacy.face_blur_default || false));
 
-            // Tax & Payout Profile Init
-            setLegalBusinessName(privacy.legal_business_name || '');
-            setTaxIdNumber(privacy.tax_id_number || '');
-            setVatGstNumber(privacy.vat_gst_number || '');
-            setPaxumEmail(privacy.paxum_email || '');
-            setCryptoWalletAddress(privacy.crypto_wallet_address || '');
-            setCryptoNetwork(privacy.crypto_network || 'USDT_TRC20');
+            // Tax & Payout Profile Init (with isolated creator_private_data table)
+            try {
+              const { data: privData } = await supabase
+                .from('creator_private_data')
+                .select('*')
+                .eq('user_id', user.id)
+                .maybeSingle();
+
+              if (privData) {
+                setLegalBusinessName(privData.legal_business_name || '');
+                setTaxIdNumber(privData.tax_id_number || '');
+                setVatGstNumber(privData.vat_gst_number || '');
+                setPaxumEmail(privData.paxum_email || '');
+                setCryptoWalletAddress(privData.crypto_wallet_address || '');
+                setCryptoNetwork(privData.crypto_network || 'USDT_TRC20');
+              } else {
+                setLegalBusinessName(privacy.legal_business_name || '');
+                setTaxIdNumber(privacy.tax_id_number || '');
+                setVatGstNumber(privacy.vat_gst_number || '');
+                setPaxumEmail(privacy.paxum_email || '');
+                setCryptoWalletAddress(privacy.crypto_wallet_address || '');
+                setCryptoNetwork(privacy.crypto_network || 'USDT_TRC20');
+              }
+            } catch {
+              setLegalBusinessName(privacy.legal_business_name || '');
+              setTaxIdNumber(privacy.tax_id_number || '');
+              setVatGstNumber(privacy.vat_gst_number || '');
+              setPaxumEmail(privacy.paxum_email || '');
+              setCryptoWalletAddress(privacy.crypto_wallet_address || '');
+              setCryptoNetwork(privacy.crypto_network || 'USDT_TRC20');
+            }
             setCreatorResidence(profileData.residence || '');
             
             // Load Calendar Status
@@ -1182,15 +1219,35 @@ export default function CreatorStudio() {
           .split(',')
           .map(c => c.trim().toUpperCase())
           .filter(Boolean),
-        legal_business_name: legalBusinessName,
-        tax_id_number: taxIdNumber,
-        vat_gst_number: vatGstNumber,
-        paxum_email: paxumEmail,
-        crypto_wallet_address: cryptoWalletAddress,
-        crypto_network: cryptoNetwork,
         custom_request_permission: customRequestPermission,
         face_blur_default: faceBlurDefault,
       };
+
+      // Strip sensitive financial keys from public profiles.privacy_settings (C2 fix)
+      delete (updatedPrivacy as any).legal_business_name;
+      delete (updatedPrivacy as any).tax_id_number;
+      delete (updatedPrivacy as any).vat_gst_number;
+      delete (updatedPrivacy as any).paxum_email;
+      delete (updatedPrivacy as any).crypto_wallet_address;
+      delete (updatedPrivacy as any).crypto_network;
+
+      // Upsert isolated private financial data into creator_private_data
+      try {
+        await supabase
+          .from('creator_private_data')
+          .upsert({
+            user_id: profile.id,
+            legal_business_name: legalBusinessName,
+            tax_id_number: taxIdNumber,
+            vat_gst_number: vatGstNumber,
+            paxum_email: paxumEmail,
+            crypto_wallet_address: cryptoWalletAddress,
+            crypto_network: cryptoNetwork,
+            updated_at: new Date().toISOString()
+          });
+      } catch (privErr) {
+        console.warn('[Studio] creator_private_data sync notice:', privErr);
+      }
       
         const { error: updateError } = await supabase
         .from('profiles')

@@ -148,8 +148,8 @@ export async function middleware(request: NextRequest) {
     // Fallback: if cookie is absent, query DB once (first login after onboarding, or cookie cleared).
     const onboardingCookie = request.cookies.get(ONBOARDING_DONE_COOKIE)?.value;
     const roleCookie = request.cookies.get('sb_role')?.value;
-    let isCreatorRole =
-      roleCookie === 'creator' || user?.user_metadata?.role === 'creator';
+    const isFounder = user?.email === 'stefan.zagre@gmail.com';
+    let isCreatorRole = isFounder;
     let onboardingCompleted = onboardingCookie === '1';
 
     // Purpose Eligibility Checker (60-Second Synergy Calibration Compatible)
@@ -167,17 +167,21 @@ export async function middleware(request: NextRequest) {
     };
 
     const isOnAuthRoute = AUTH_ROUTES.some(route => pathname === route);
+    // Security check: Never trust client-writable sb_role cookie for /studio access or pre-launch gating without server DB verification
+    const needsProfileCheck = !onboardingCompleted || (pathname.startsWith('/studio') && !isFounder) || (roleCookie === 'creator' && !isFounder);
 
-    if (!onboardingCompleted && supabaseClient) {
-      // Cookie missing — do the DB check once and set the cookie for next time
+    if (needsProfileCheck && supabaseClient) {
+      // Fetch server profile to verify genuine role and onboarding status
       const { data: profile } = await supabaseClient
         .from('profiles')
         .select('role, archetype, lifestyle_habits, bio, bio_prompt_answer, member_purposes')
         .eq('id', user.id)
         .single();
 
-      if (profile?.role === 'creator') {
+      if (profile?.role === 'creator' || profile?.role === 'admin' || isFounder) {
         isCreatorRole = true;
+      } else {
+        isCreatorRole = false;
       }
 
       onboardingCompleted = checkPurposeEligibility(profile);
@@ -198,6 +202,13 @@ export async function middleware(request: NextRequest) {
           sameSite: 'lax',
           httpOnly: false,
         });
+      } else {
+        supabaseResponse.cookies.set('sb_role', 'member', {
+          path: '/',
+          maxAge: 60 * 60 * 24 * 30,
+          sameSite: 'lax',
+          httpOnly: false,
+        });
       }
     }
 
@@ -206,6 +217,13 @@ export async function middleware(request: NextRequest) {
       request.nextUrl.searchParams.has('reset') ||
       request.nextUrl.searchParams.has('tutorial') ||
       request.nextUrl.searchParams.has('setup');
+
+    // Studio Protection: Non-creator sessions attempting to reach /studio are redirected
+    if (!isCreatorRole && pathname.startsWith('/studio')) {
+      const url = request.nextUrl.clone();
+      url.pathname = '/early-access';
+      return NextResponse.redirect(url);
+    }
 
     // Pre-Launch Member Gating (H3 Fix):
     // In Creator Pre-Launch mode, restrict non-creator accounts from /feed and /top-profile

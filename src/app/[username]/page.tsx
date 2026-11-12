@@ -103,9 +103,10 @@ export default async function CreatorVanityPage({ params }: PageProps) {
   const supabase = createAdminClient();
 
   // Strict Invariant: Strictly fetch creators only (members remain private)
+  // Security & Privacy: Select only public presentation columns to prevent PII leakage (C2 fix)
   const { data: creator } = await supabase
     .from('profiles')
-    .select('*')
+    .select('id, username, display_name, avatar_url, cover_url, bio, specialization, origins, residence, base_subscription_price, favorite_languages, hobbies, moods, relationship_goals, lifestyle_habits, is_kyc_verified, core_passion, archetype, face_blur_active, avatar_face_coordinates')
     .ilike('username', cleanUsername)
     .eq('role', 'creator')
     .maybeSingle();
@@ -131,11 +132,12 @@ export default async function CreatorVanityPage({ params }: PageProps) {
     notFound();
   }
 
-  // Fetch creator's public & teaser media
+  // Fetch creator's public & teaser media (strictly exclude hidden items)
   const { data: mediaItems } = await supabase
     .from('profile_media')
-    .select('*')
+    .select('id, user_id, media_url, media_type, is_hidden, required_level, face_blur_enabled, face_coordinates, created_at')
     .eq('user_id', creator.id)
+    .eq('is_hidden', false)
     .order('created_at', { ascending: false })
     .limit(12);
 
