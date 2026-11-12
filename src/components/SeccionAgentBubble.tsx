@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles, X, Send, Loader2, MessageSquare, Mic, MicOff, Volume2, VolumeX, RefreshCw } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
-import { useTranslation } from '@/context/LanguageContext';
+import { useTranslation, SupportedLocale } from '@/context/LanguageContext';
 
 interface Message {
   id: string;
@@ -145,9 +145,56 @@ const QUESTIONS_BANK: Record<'fr' | 'es' | 'en' | 'ar', QuestionCategory> = {
   },
 };
 
+// Deterministic initial language resolution prioritizing app locale
+function resolveInitialLang(appLocale?: string): 'fr' | 'es' | 'en' | 'ar' {
+  if (typeof window === 'undefined') {
+    if (appLocale === 'es' || appLocale === 'en' || appLocale === 'fr') return appLocale;
+    return 'fr';
+  }
+  try {
+    const searchParams = new URLSearchParams(window.location.search);
+    const langParam = searchParams.get('lang')?.toLowerCase();
+    if (langParam === 'darija' || langParam === 'ar') return 'ar';
+    if (langParam === 'fr') return 'fr';
+    if (langParam === 'es') return 'es';
+    if (langParam === 'en') return 'en';
+    if (searchParams.get('ref') === 'morocco' || searchParams.get('country') === 'ma') return 'fr';
+
+    // 1. App-wide locale stored in localStorage
+    const savedAppLocale = localStorage.getItem('seccion_user_locale')?.toLowerCase();
+    if (savedAppLocale === 'fr' || savedAppLocale === 'es' || savedAppLocale === 'en') {
+      return savedAppLocale;
+    }
+
+    // 2. React Context locale
+    if (appLocale === 'es' || appLocale === 'en' || appLocale === 'fr') {
+      return appLocale;
+    }
+
+    // 3. Document HTML lang
+    const docLang = document.documentElement.getAttribute('lang')?.toLowerCase();
+    if (docLang?.startsWith('fr')) return 'fr';
+    if (docLang?.startsWith('es')) return 'es';
+    if (docLang?.startsWith('en')) return 'en';
+
+    // 4. Device / navigator language
+    const navLang = (navigator.language || (navigator as any).userLanguage || '').toLowerCase();
+    if (navLang.startsWith('fr')) return 'fr';
+    if (navLang.startsWith('es')) return 'es';
+    if (navLang.startsWith('ar')) return 'ar';
+
+    // 5. Explicitly saved agent preference
+    const savedAgent = localStorage.getItem('seccion_agent_lang')?.toLowerCase();
+    if (savedAgent === 'fr' || savedAgent === 'es' || savedAgent === 'en' || savedAgent === 'ar') {
+      return savedAgent as any;
+    }
+  } catch (e) {}
+  return 'fr';
+}
+
 export default function SeccionAgentBubble() {
   const pathname = usePathname();
-  const { locale, t } = useTranslation();
+  const { locale, setLocale, t } = useTranslation();
 
   const [isOpen, setIsOpen] = useState(false);
   const [isMemberLoggedIn, setIsMemberLoggedIn] = useState(false);
@@ -166,6 +213,19 @@ export default function SeccionAgentBubble() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const recognitionRef = useRef<any>(null);
   const audioPlayerRef = useRef<HTMLAudioElement | null>(null);
+
+  const getLocalizedGreeting = useCallback((lang: 'fr' | 'es' | 'en' | 'ar'): string => {
+    if (lang === 'fr') {
+      return "Bonjour ! Je suis Kate, votre conseillère et guide sur SECCION 🔮 Posez-moi vos questions sur la plateforme, les créateurs ou vos matches !";
+    }
+    if (lang === 'es') {
+      return "¡Hola! Soy Kate, tu asesora y guía de SECCION 🔮 Pregúntame sobre nuestra plataforma híbrida (Dating + Live Streaming + Creadores), compatibilidad de química o cómo comenzar tu quest.";
+    }
+    if (lang === 'ar') {
+      return "Marhba bik! 👋 Ana Kate, lmosa3ida dyalek f SECCION 🔮 Sewwelni 3la la plateforme, les créateurs, wla kifash t-bda l-quest dyalek!";
+    }
+    return "Hi! I'm Kate, your SECCION executive guide 🔮 Ask me about our hybrid platform (Dating + Live Streaming + Creators), chemistry matchmaking, or how to begin your quest.";
+  }, []);
 
   // Stop all active audio streams (both neural ElevenLabs and fallback Web Speech)
   const stopAllAudio = useCallback(() => {
@@ -201,44 +261,63 @@ export default function SeccionAgentBubble() {
     };
   }, []);
 
-  // Initialize and persist agent language preference
+  // Synchronize language preference with app locale and URL parameters on mount and updates
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const searchParams = new URLSearchParams(window.location.search);
-      const langParam = searchParams.get('lang')?.toLowerCase();
-      const isMorocco = searchParams.get('ref') === 'morocco' || searchParams.get('country') === 'ma';
-      if (langParam === 'darija' || langParam === 'ar') {
-        setActiveAgentLang('ar');
-      } else if (langParam === 'fr' || isMorocco) {
-        setActiveAgentLang('fr');
-      } else if (langParam === 'es') {
-        setActiveAgentLang('es');
-      } else if (langParam === 'en') {
-        setActiveAgentLang('en');
-      } else {
-        const saved = localStorage.getItem('seccion_agent_lang') as any;
-        if (saved && ['fr', 'es', 'en', 'ar'].includes(saved)) {
-          setActiveAgentLang(saved);
-        } else if (locale === 'fr') {
-          setActiveAgentLang('fr');
-        } else if (locale === 'es') {
-          setActiveAgentLang('es');
-        } else {
-          setActiveAgentLang('fr');
-        }
-      }
-    }
+    const resolved = resolveInitialLang(locale);
+    setActiveAgentLang(resolved);
   }, [locale]);
 
+  // Language pill selector in header
   const handleSelectLang = (newLang: 'fr' | 'es' | 'en' | 'ar') => {
     setActiveAgentLang(newLang);
+    setSuggestionOffset(0);
+    setAskedQuestions([]); // Fresh suite of questions in new language
+
     if (typeof window !== 'undefined') {
-      localStorage.setItem('seccion_agent_lang', newLang);
+      try {
+        localStorage.setItem('seccion_agent_lang', newLang);
+        if (newLang === 'fr' || newLang === 'es' || newLang === 'en') {
+          localStorage.setItem('seccion_user_locale', newLang);
+          document.cookie = `seccion_user_locale=${newLang}; path=/; max-age=31536000; SameSite=Lax`;
+          document.documentElement.setAttribute('lang', newLang);
+          setLocale(newLang as SupportedLocale);
+        }
+      } catch (e) {}
     }
+
     if (recognitionRef.current && isListening) {
       recognitionRef.current.stop();
       setIsListening(false);
     }
+
+    // Immediately update greeting or add inline notification
+    setMessages((prev) => {
+      if (prev.length <= 1) {
+        return [
+          {
+            id: `welcome-${newLang}`,
+            sender: 'agent',
+            text: getLocalizedGreeting(newLang),
+            timestamp: new Date(),
+          },
+        ];
+      }
+      const notices: Record<'fr' | 'es' | 'en' | 'ar', string> = {
+        fr: "Langue basculée en Français 🇫🇷 Comment puis-je vous aider ?",
+        es: "Idioma cambiado a Español 🇪🇸 ¿En qué puedo ayudarte ahora?",
+        en: "Switched to English 🇬🇧 How can I assist you now?",
+        ar: "T-bdel l-lougha l Darija 🇲🇦 Kifash n-9der n-3awnek daba?",
+      };
+      return [
+        ...prev,
+        {
+          id: `lang-switch-${Date.now()}`,
+          sender: 'agent',
+          text: notices[newLang],
+          timestamp: new Date(),
+        },
+      ];
+    });
   };
 
   // Fallback Web Speech API synthesis
@@ -431,7 +510,7 @@ export default function SeccionAgentBubble() {
         };
         setMessages((prev) => [...prev, agentMsg]);
 
-        // CRITICAL INVARIANT: If the creator spoke aloud, Kate MUST reply with vocal audio!
+        // Vocal readout
         const replyVoiceLang = detected === 'fr' ? 'fr-FR' : detected === 'ar' ? 'ar-MA' : detected === 'es' ? 'es-ES' : detected === 'en' ? 'en-US' : undefined;
         speakText(replyText, isVocalInput, replyVoiceLang);
       } catch (err: any) {
@@ -515,6 +594,7 @@ export default function SeccionAgentBubble() {
     }
   }, [isListening, activeAgentLang, sendQuestion]);
 
+  // Initial welcome message configuration on mount
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const searchParams = new URLSearchParams(window.location.search);
@@ -530,13 +610,14 @@ export default function SeccionAgentBubble() {
 
       if (isMoroccoCreator) {
         setIsOpen(true);
-        const langParam = searchParams.get('lang')?.toLowerCase();
         let moroccoGreeting = "Marhaba ! 👋 Je suis Kate, votre conseillère SECCION pour le Maroc. Bienvenue dans notre phase d'accès anticipé ! Vous pouvez dès maintenant créer votre profil, explorer le Creator Studio et préparer votre bio avec moi. Profitez de notre bouclier de confidentialité (blocage du Maroc 'MA' en 1 clic pour être totalement invisible au pays) et de notre modèle à 90 % net. Les comptes bancaires de paiement sont en cours de finalisation et vous serez notifié(e) dès leur ouverture officielle. Comment puis-je vous aider à configurer votre studio aujourd'hui ?";
 
-        if (langParam === 'darija' || langParam === 'ar') {
+        if (activeAgentLang === 'ar') {
           moroccoGreeting = "Marhba bik! 👋 Ana Kate, lmosa3ida dyalek f SECCION. Merhba bik f l-marhala dyal l-accès anticipé! T9der men daba t-9ad l-profil dyalek, t-chouf les outils dyal Creator Studio w t-kteb l-bio dyalek m3aya. Ghadi t-stafed men l-privacy l-kamla (t-bloqui l-Maghrib 'MA' f d9i9a bach matban l-hta wahed hna) w l-90% net. Les comptes bancaires f طور الإعداد w ghadi n-3elmouk f l-wa9t li ykouno wajdin. Bghiti n-bdaou n-9ado l-profil dyalek daba?";
-        } else if (langParam === 'en') {
+        } else if (activeAgentLang === 'en') {
           moroccoGreeting = "Marhaba & Welcome! 👋 I'm Kate, your dedicated SECCION Creator Coach for Morocco. Welcome to our early access phase! You can already register your creator profile, explore the Creator Studio tools, and craft your bio with me. Enjoy our 5-Layer Privacy Shield (1-click 'MA' domestic geo-blocking) and 90% net revenue split. Direct payout rails are currently being finalized and you will be notified immediately upon full launch. What would you like to set up first?";
+        } else if (activeAgentLang === 'es') {
+          moroccoGreeting = "¡Marhaba y Bienvenida/o! 👋 Soy Kate, tu asesora de SECCION para Marruecos. ¡Bienvenida a nuestra fase de acceso anticipado! Ya puedes crear tu perfil, explorar el Creator Studio y redactar tu bio conmigo. Disfruta de nuestro escudo de privacidad (bloqueo de Marruecos 'MA' en 1 clic para ser invisible en tu país) y nuestro reparto del 90% neto. Las cuentas bancarias de pago están en fase final y te notificaremos cuando abran. ¿Cómo puedo ayudarte hoy?";
         }
 
         setMessages([
@@ -570,8 +651,12 @@ export default function SeccionAgentBubble() {
             id: 'creator-guide-welcome',
             sender: 'agent',
             text:
-              locale === 'es'
+              activeAgentLang === 'es'
                 ? '¡Hola Creadora / Creador! 🌟 Soy Kate, tu Asesora de Onboarding y Monetización en SECCION. Estoy aquí para guiarte paso a paso: desde tu verificación KYC segura y configuración del Creator Studio, hasta cómo activar tus suscripciones VIP, pases Master (80% revenue pool), transmisiones en vivo y herramientas de IA. ¿Tienes alguna pregunta para empezar?'
+                : activeAgentLang === 'fr'
+                ? "Bonjour Créatrice / Créateur ! 🌟 Je suis Kate, votre conseillère d'intégration et de monétisation sur SECCION. Je suis là pour vous guider pas à pas : de votre vérification KYC privée à la configuration du Creator Studio, l'activation des abonnements VIP, pass Master (80% net), lives privés et outils IA. Par quoi souhaitez-vous commencer ?"
+                : activeAgentLang === 'ar'
+                ? "Marhba bik Créatrice / Créateur ! 🌟 Ana Kate, lmosa3ida dyalek f SECCION. Hna bach n-3awnek étape par étape : men l-KYC biometrique w Creator Studio, 7tal l-abonnements VIP, live streams w les outils d'IA. Bghiti n-bdaou daba?"
                 : "Hey Creator! 🌟 I'm Kate, your dedicated Creator Onboarding & Monetization Coach on SECCION. I'm here to guide you through every step: from your private biometric KYC verification and Creator Studio setup, to activating VIP tiers, Master Platform Passes (80% pool redistribution), live broadcasts, and AI growth tools. What can I help you with first?",
             timestamp: new Date(),
           },
@@ -582,13 +667,13 @@ export default function SeccionAgentBubble() {
 
     setMessages([
       {
-        id: 'welcome',
+        id: `welcome-${activeAgentLang}`,
         sender: 'agent',
-        text: t('agent.welcome'),
+        text: getLocalizedGreeting(activeAgentLang),
         timestamp: new Date(),
       },
     ]);
-  }, [locale, t]);
+  }, [activeAgentLang, getLocalizedGreeting]);
 
   // Listen for custom "seccion:ask-kate" or "seccion:ask-steve" events from Creator Studio / Onboarding Checklist
   useEffect(() => {
@@ -658,20 +743,13 @@ export default function SeccionAgentBubble() {
     await sendQuestion(text);
   };
 
-  // Starter questions for initial welcome state (localized and filtered)
-  const starterQuestions = useMemo(() => {
-    const langData = QUESTIONS_BANK[activeAgentLang] || QUESTIONS_BANK.fr;
-    const remaining = langData.starter.filter((q) => !askedQuestions.includes(q));
-    if (remaining.length > 0) return remaining;
-    return langData.general.filter((q) => !askedQuestions.includes(q)).slice(0, 3);
-  }, [activeAgentLang, askedQuestions]);
-
-  // Context-aware question suggestion algorithm for ongoing conversation
-  const activeSuggestions = useMemo(() => {
+  // Continuous engagement question recommendation engine:
+  // Preserves unanswered quick questions all along and dynamically suggests fresh context questions
+  const activeQuestionsList = useMemo(() => {
     const langData = QUESTIONS_BANK[activeAgentLang] || QUESTIONS_BANK.fr;
     const lastUserOrAgentMsg = messages[messages.length - 1]?.text?.toLowerCase() || '';
 
-    // Detect context from conversation
+    // Detect context from the latest message
     let contextualPool = langData.general;
     if (/\b(payout|retrait|argent|payer|paiement|flous|jbed|dinero|cobro|precio|price|90%|crypto|usdt|rib|banco|bank)\b/i.test(lastUserOrAgentMsg)) {
       contextualPool = langData.payouts;
@@ -681,18 +759,24 @@ export default function SeccionAgentBubble() {
       contextualPool = langData.studio;
     }
 
-    const combined = [
+    // 1. Unasked starter questions (preserves remaining questions all along!)
+    const unaskedStarters = langData.starter.filter((q) => !askedQuestions.includes(q));
+
+    // 2. Secondary engagement pool: context-specific, then general, studio, payouts, privacy
+    const secondaryPool = [
       ...contextualPool,
-      ...langData.starter,
       ...langData.general,
+      ...langData.studio,
       ...langData.payouts,
       ...langData.privacy,
-      ...langData.studio,
     ];
+    const unaskedSecondary = Array.from(new Set(secondaryPool)).filter(
+      (q) => !askedQuestions.includes(q) && !unaskedStarters.includes(q)
+    );
 
-    // Filter out already asked questions so users always see fresh ones
-    const unasked = Array.from(new Set(combined)).filter((q) => !askedQuestions.includes(q));
-    const poolToUse = unasked.length >= 2 ? unasked : Array.from(new Set(combined));
+    // Combine unasked starters first, followed by fresh secondary engagement questions
+    const combinedUnasked = [...unaskedStarters, ...unaskedSecondary];
+    const poolToUse = combinedUnasked.length > 0 ? combinedUnasked : Array.from(new Set([...langData.starter, ...secondaryPool]));
 
     const startIdx = suggestionOffset % poolToUse.length;
     const picked = poolToUse.slice(startIdx, startIdx + 3);
@@ -789,35 +873,49 @@ export default function SeccionAgentBubble() {
                 </div>
               ))}
 
-              {messages.length <= 1 && !isTyping && starterQuestions.length > 0 && (
+              {/* Dynamic Persistent Quick Questions & Follow-Up Engagement Suggestions */}
+              {!isTyping && activeQuestionsList.length > 0 && (
                 <div className="pt-2 space-y-1.5">
                   <div className="flex items-center justify-between px-1">
-                    <span className="text-[9px] font-mono uppercase tracking-wider text-white/40 block">
-                      {activeAgentLang === 'fr'
-                        ? 'Questions fréquentes :'
+                    <span className="text-[9px] font-mono uppercase tracking-wider text-white/40 flex items-center gap-1">
+                      <Sparkles className="w-2.5 h-2.5 text-[#00fbfb]" />
+                      {messages.length <= 1
+                        ? activeAgentLang === 'fr'
+                          ? 'Questions fréquentes :'
+                          : activeAgentLang === 'es'
+                          ? 'Preguntas frecuentes:'
+                          : activeAgentLang === 'ar'
+                          ? 'الأسئلة الشائعة:'
+                          : 'Quick questions:'
+                        : activeAgentLang === 'fr'
+                        ? 'Questions suggérées :'
                         : activeAgentLang === 'es'
-                        ? 'Preguntas frecuentes:'
+                        ? 'Preguntas sugeridas:'
                         : activeAgentLang === 'ar'
-                        ? 'الأسئلة الشائعة:'
-                        : 'Quick questions:'}
+                        ? 'أسئلة مقترحة:'
+                        : 'Suggested follow-ups:'}
                     </span>
                     <button
                       type="button"
                       onClick={cycleSuggestions}
                       className="text-[9px] font-mono text-[#00fbfb]/70 hover:text-[#00fbfb] flex items-center gap-1 transition cursor-pointer"
+                      title={activeAgentLang === 'fr' ? 'Changer' : activeAgentLang === 'es' ? 'Cambiar' : activeAgentLang === 'ar' ? 'تبديل' : 'Shuffle'}
                     >
                       <RefreshCw className="w-2.5 h-2.5" />
-                      <span>{activeAgentLang === 'fr' ? 'Changer' : activeAgentLang === 'es' ? 'Cambiar' : 'Shuffle'}</span>
+                      <span>{activeAgentLang === 'fr' ? 'Changer' : activeAgentLang === 'es' ? 'Cambiar' : activeAgentLang === 'ar' ? 'تبديل' : 'Shuffle'}</span>
                     </button>
                   </div>
-                  {starterQuestions.map((q, idx) => (
+                  {activeQuestionsList.map((q, idx) => (
                     <button
-                      key={idx}
+                      key={`${q}-${idx}`}
                       type="button"
                       onClick={() => sendQuestion(q)}
-                      className="w-full text-left px-3 py-2 rounded-xl bg-white/[0.04] hover:bg-[#00fbfb]/15 border border-white/10 hover:border-[#00fbfb]/40 text-[11px] text-white/80 hover:text-white transition cursor-pointer flex items-center justify-between group"
+                      className="w-full text-left px-3 py-2 rounded-xl bg-white/[0.04] hover:bg-[#00fbfb]/15 border border-white/10 hover:border-[#00fbfb]/40 text-[11px] text-white/80 hover:text-white transition cursor-pointer flex items-center justify-between group shadow-sm"
                     >
-                      <span>💬 {q}</span>
+                      <span className="flex items-center gap-1.5">
+                        <span className="text-[#00fbfb]">💬</span>
+                        <span>{q}</span>
+                      </span>
                       <span className="text-white/20 group-hover:text-[#00fbfb] transition text-[10px]">↵</span>
                     </button>
                   ))}
@@ -828,7 +926,15 @@ export default function SeccionAgentBubble() {
                 <div className="flex justify-start">
                   <div className="bg-white/5 border border-white/10 text-white/60 rounded-2xl p-3 text-xs rounded-tl-none flex items-center gap-2">
                     <Loader2 className="w-3.5 h-3.5 animate-spin text-[#00fbfb]" />
-                    <span>{t('agent.thinking')}</span>
+                    <span>
+                      {activeAgentLang === 'fr'
+                        ? 'Kate réfléchit...'
+                        : activeAgentLang === 'es'
+                        ? 'Kate está pensando...'
+                        : activeAgentLang === 'ar'
+                        ? 'Kate kat-feker...'
+                        : 'Kate is thinking...'}
+                    </span>
                   </div>
                 </div>
               )}
@@ -841,45 +947,6 @@ export default function SeccionAgentBubble() {
 
               <div ref={messagesEndRef} />
             </div>
-
-            {/* Dynamic Persistent Suggestion Bar (Available throughout the entire conversation) */}
-            {!isTyping && activeSuggestions.length > 0 && (
-              <div className="px-3 py-2 border-t border-white/10 bg-white/[0.03] backdrop-blur-md shrink-0 flex items-center gap-1.5 overflow-x-auto scrollbar-none">
-                <span className="text-[9px] font-mono font-bold uppercase tracking-wider text-[#00fbfb] shrink-0 flex items-center gap-1 pl-1">
-                  <Sparkles className="w-2.5 h-2.5 text-[#00fbfb]" />
-                  {activeAgentLang === 'fr'
-                    ? 'Suggestions :'
-                    : activeAgentLang === 'es'
-                    ? 'Sugerencias:'
-                    : activeAgentLang === 'ar'
-                    ? 'اقتراحات:'
-                    : 'Suggestions:'}
-                </span>
-
-                <div className="flex items-center gap-1.5 flex-nowrap">
-                  {activeSuggestions.map((q, idx) => (
-                    <button
-                      key={idx}
-                      type="button"
-                      onClick={() => sendQuestion(q)}
-                      className="shrink-0 px-2.5 py-1 rounded-full bg-white/[0.05] hover:bg-[#00fbfb]/20 border border-white/10 hover:border-[#00fbfb]/50 text-[10.5px] text-white/90 hover:text-white transition whitespace-nowrap cursor-pointer flex items-center gap-1.5 shadow-sm"
-                    >
-                      <span className="text-[10px] text-[#00fbfb]">💬</span>
-                      <span>{q}</span>
-                    </button>
-                  ))}
-
-                  <button
-                    type="button"
-                    onClick={cycleSuggestions}
-                    className="shrink-0 w-6 h-6 rounded-full bg-white/[0.05] hover:bg-white/15 border border-white/10 flex items-center justify-center text-white/50 hover:text-[#00fbfb] transition cursor-pointer"
-                    title={activeAgentLang === 'fr' ? 'Plus de questions' : activeAgentLang === 'es' ? 'Más preguntas' : 'More questions'}
-                  >
-                    <RefreshCw className="w-2.5 h-2.5" />
-                  </button>
-                </div>
-              </div>
-            )}
 
             {/* Input Form with Voice Dictation & Audio Readout */}
             <form onSubmit={handleSend} className="p-3 border-t border-white/10 bg-black/40 shrink-0">
@@ -900,7 +967,23 @@ export default function SeccionAgentBubble() {
 
                 <input
                   type="text"
-                  placeholder={isListening ? "Listening... speak now" : t('agent.placeholder')}
+                  placeholder={
+                    isListening
+                      ? activeAgentLang === 'fr'
+                        ? 'Écoute en cours... parlez maintenant'
+                        : activeAgentLang === 'es'
+                        ? 'Escuchando... habla ahora'
+                        : activeAgentLang === 'ar'
+                        ? 'Kan-sm3ek... hder daba'
+                        : 'Listening... speak now'
+                      : activeAgentLang === 'fr'
+                      ? 'Posez votre question à Kate...'
+                      : activeAgentLang === 'es'
+                      ? 'Pregúntale a Kate...'
+                      : activeAgentLang === 'ar'
+                      ? 'Sewwel Kate...'
+                      : 'Ask Kate anything...'
+                  }
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   className="flex-1 bg-white/[0.04] border border-white/10 rounded-xl py-2 px-3 outline-none focus:border-[#00fbfb]/50 focus:bg-white/[0.08] transition text-xs text-white placeholder-white/30"

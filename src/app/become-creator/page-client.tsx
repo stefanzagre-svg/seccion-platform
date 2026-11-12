@@ -34,23 +34,23 @@ import PublicNavbar from "@/components/PublicNavbar";
 import CreatorQuickApplyModal from "@/components/creator/CreatorQuickApplyModal";
 
 const CITIES = [
-  { value: "global_other", label: "🌍 Global / Worldwide (Any City or Country)", labelEs: "🌍 Global / Internacional (Cualquier Ciudad o País)" },
-  { value: "marrakech", label: "🇲🇦 Marrakech (Morocco)", labelEs: "🇲🇦 Marrakech (Marruecos)" },
-  { value: "casablanca", label: "🇲🇦 Casablanca / Rabat (Morocco)", labelEs: "🇲🇦 Casablanca / Rabat (Marruecos)" },
-  { value: "medellin", label: "🇨🇴 Medellín (Soft Launch Hub)", labelEs: "🇨🇴 Medellín (Hub de Lanzamiento)" },
-  { value: "bogota", label: "🇨🇴 Bogotá", labelEs: "🇨🇴 Bogotá" },
-  { value: "cali", label: "🇨🇴 Cali", labelEs: "🇨🇴 Cali" },
-  { value: "madrid", label: "🇪🇸 Madrid", labelEs: "🇪🇸 Madrid" },
-  { value: "barcelona", label: "🇪🇸 Barcelona", labelEs: "🇪🇸 Barcelona" },
-  { value: "alicante", label: "🇪🇸 Alicante / Valencia", labelEs: "🇪🇸 Alicante / Valencia" },
-  { value: "paris", label: "🇫🇷 Paris", labelEs: "🇫🇷 París" },
-  { value: "london", label: "🇬🇧 London", labelEs: "🇬🇧 Londres" },
-  { value: "miami", label: "🇺🇸 Miami, FL", labelEs: "🇺🇸 Miami, FL" },
-  { value: "new_york", label: "🇺🇸 New York, NY", labelEs: "🇺🇸 Nueva York, NY" },
-  { value: "mexico_city", label: "🇲🇽 Mexico City", labelEs: "🇲🇽 Ciudad de México" },
-  { value: "buenos_aires", label: "🇦🇷 Buenos Aires", labelEs: "🇦🇷 Buenos Aires" },
-  { value: "santiago", label: "🇨🇱 Santiago", labelEs: "🇨🇱 Santiago" },
-  { value: "other", label: "✨ Other City (Type Below)", labelEs: "✨ Otra Ciudad (Escribir abajo)" },
+  { value: "global_other", label: "🌍 Global / Worldwide (Any City or Country)", labelEs: "🌍 Global / Internacional (Cualquier Ciudad o País)", labelFr: "🌍 Global / International (Toute Ville ou Pays)" },
+  { value: "marrakech", label: "🇲🇦 Marrakech (Morocco)", labelEs: "🇲🇦 Marrakech (Marruecos)", labelFr: "🇲🇦 Marrakech (Maroc)" },
+  { value: "casablanca", label: "🇲🇦 Casablanca / Rabat (Morocco)", labelEs: "🇲🇦 Casablanca / Rabat (Marruecos)", labelFr: "🇲🇦 Casablanca / Rabat (Maroc)" },
+  { value: "medellin", label: "🇨🇴 Medellín (Soft Launch Hub)", labelEs: "🇨🇴 Medellín (Hub de Lanzamiento)", labelFr: "🇨🇴 Medellín (Pôle de Lancement)" },
+  { value: "bogota", label: "🇨🇴 Bogotá", labelEs: "🇨🇴 Bogotá", labelFr: "🇨🇴 Bogotá" },
+  { value: "cali", label: "🇨🇴 Cali", labelEs: "🇨🇴 Cali", labelFr: "🇨🇴 Cali" },
+  { value: "madrid", label: "🇪🇸 Madrid", labelEs: "🇪🇸 Madrid", labelFr: "🇪🇸 Madrid" },
+  { value: "barcelona", label: "🇪🇸 Barcelona", labelEs: "🇪🇸 Barcelona", labelFr: "🇪🇸 Barcelone" },
+  { value: "alicante", label: "🇪🇸 Alicante / Valencia", labelEs: "🇪🇸 Alicante / Valencia", labelFr: "🇪🇸 Alicante / Valence" },
+  { value: "paris", label: "🇫🇷 Paris", labelEs: "🇫🇷 París", labelFr: "🇫🇷 Paris" },
+  { value: "london", label: "🇬🇧 London", labelEs: "🇬🇧 Londres", labelFr: "🇬🇧 Londres" },
+  { value: "miami", label: "🇺🇸 Miami, FL", labelEs: "🇺🇸 Miami, FL", labelFr: "🇺🇸 Miami, FL" },
+  { value: "new_york", label: "🇺🇸 New York, NY", labelEs: "🇺🇸 Nueva York, NY", labelFr: "🇺🇸 New York, NY" },
+  { value: "mexico_city", label: "🇲🇽 Mexico City", labelEs: "🇲🇽 Ciudad de México", labelFr: "🇲🇽 Mexico" },
+  { value: "buenos_aires", label: "🇦🇷 Buenos Aires", labelEs: "🇦🇷 Buenos Aires", labelFr: "🇦🇷 Buenos Aires" },
+  { value: "santiago", label: "🇨🇱 Santiago", labelEs: "🇨🇱 Santiago", labelFr: "🇨🇱 Santiago" },
+  { value: "other", label: "✨ Other City (Type Below)", labelEs: "✨ Otra Ciudad (Escribir abajo)", labelFr: "✨ Autre Ville (Préciser ci-dessous)" },
 ];
 
 // Reusable Double-Bezel Container (Doppelrand)
@@ -151,18 +151,20 @@ export default function BecomeCreatorPage({ initialProfile, userEmail }: { initi
   const validateInput = () => {
     const newErrors: { [key: string]: string } = {};
     if (!formData.fullName.trim()) {
-      newErrors.fullName = locale === "es" ? "El nombre o apodo es obligatorio" : "Creator name is required";
+      newErrors.fullName = locale === "fr" ? "Le nom ou pseudo de créateur est requis" : locale === "es" ? "El nombre o apodo es obligatorio" : "Creator name is required";
     }
     
     if (!formData.email.trim() || !formData.email.includes("@")) {
-      newErrors.email = locale === "es" ? "Email válido obligatorio" : "Valid email required";
+      newErrors.email = locale === "fr" ? "Adresse e-mail valide requise" : locale === "es" ? "Email válido obligatorio" : "Valid email required";
     }
 
     // Smart handle validation (Accepts @handle or full URL)
     if (!formData.link1.trim()) {
-      newErrors.link1 = locale === "es" 
-        ? "Indica tu @usuario o enlace principal" 
-        : "Primary handle or link is required";
+      newErrors.link1 = locale === "fr"
+    ? "Identifiant (@) ou lien principal requis"
+    : locale === "es"
+    ? "Indica tu @usuario o enlace principal"
+    : "Primary handle or link is required";
     }
     
     setErrors(newErrors);
@@ -189,13 +191,13 @@ export default function BecomeCreatorPage({ initialProfile, userEmail }: { initi
       });
       
       if (response.status === 409) {
-        setErrors({ submit: locale === "es" ? "Ya existe una solicitud registrada con este correo electrónico" : "An application with this email already exists" });
+        setErrors({ submit: locale === "fr" ? "Une candidature existe déjà avec cette adresse e-mail" : locale === "es" ? "Ya existe una solicitud registrada con este correo electrónico" : "An application with this email already exists" });
         setFormStep("input");
         return;
       }
       
       if (!response.ok) {
-        setErrors({ submit: locale === "es" ? "Ocurrió un error al enviar tu solicitud. Por favor intenta de nuevo." : "An error occurred submitting your application. Please try again." });
+        setErrors({ submit: locale === "fr" ? "Une erreur est survenue lors de l'envoi de votre candidature. Veuillez réessayer." : locale === "es" ? "Ocurrió un error al enviar tu solicitud. Por favor intenta de nuevo." : "An error occurred submitting your application. Please try again." });
         setFormStep("input");
         return;
       }
@@ -206,7 +208,7 @@ export default function BecomeCreatorPage({ initialProfile, userEmail }: { initi
       }
       setFormStep("success");
     } catch (error) {
-      setErrors({ submit: locale === "es" ? "Error de red. Por favor intenta más tarde." : "Network error. Please try again later." });
+      setErrors({ submit: locale === "fr" ? "Erreur réseau. Veuillez réessayer plus tard." : locale === "es" ? "Error de red. Por favor intenta más tarde." : "Network error. Please try again later." });
       setFormStep("input");
     }
   };
@@ -252,7 +254,7 @@ export default function BecomeCreatorPage({ initialProfile, userEmail }: { initi
               <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-[#ffabf3]/30 bg-[#ffabf3]/5 backdrop-blur-md">
                 <Sparkles className="w-3.5 h-3.5 text-[#ffabf3] animate-pulse" />
                 <span className="text-[10px] font-mono font-bold text-[#ffabf3] uppercase tracking-[0.2em]">
-                  {locale === "es" ? "Únete a la Campaña de Creadores" : "Join the Creator Campaign"}
+                  {locale === "fr" ? "Rejoignez la Campagne Créateurs" : locale === "es" ? "Únete a la Campaña de Creadores" : "Join the Creator Campaign"}
                 </span>
               </div>
               <h1 className="font-display font-black leading-[1.05] tracking-tight text-white text-[32px] sm:text-[56px] md:text-[72px] lg:text-[80px] text-left">
@@ -273,9 +275,11 @@ export default function BecomeCreatorPage({ initialProfile, userEmail }: { initi
             </div>
             
             <p className="max-w-full sm:max-w-[580px] text-xs sm:text-base text-[#b9cac9] leading-relaxed font-medium break-words text-left">
-              {locale === "es" 
-                ? "Dirige tu negocio de creador de forma independiente y recupera tus ingresos de las agencias. Los primeros 500 creadores fundadores aseguran un 90% de retención neta y reciben su Asistente IA de Operaciones 100% gratis durante el 1er Año." 
-                : "Run your creator business independently and reclaim your income from agencies. The first 500 founding creators lock in a 90% net revenue split and receive their built-in AI Operations Assistant free for Year 1."}
+              {locale === "fr"
+    ? "Gérez votre activité de créateur de manière indépendante et reprenez le contrôle face aux agences. Les 500 premiers créateurs fondateurs sécurisent 90% de rétention nette et reçoivent leur Assistant Opérationnel IA 100% gratuit pendant la 1ère Année."
+    : locale === "es"
+    ? "Dirige tu negocio de creador de forma independiente y recupera tus ingresos de las agencias. Los primeros 500 creadores fundadores aseguran un 90% de retención neta y reciben su Asistente IA de Operaciones 100% gratis durante el 1er Año."
+    : "Run your creator business independently and reclaim your income from agencies. The first 500 founding creators lock in a 90% net revenue split and receive their built-in AI Operations Assistant free for Year 1."}
             </p>
 
             <div className="flex flex-wrap items-center gap-3 pt-2">
@@ -284,7 +288,7 @@ export default function BecomeCreatorPage({ initialProfile, userEmail }: { initi
                 onClick={() => setIsQuickApplyOpen(true)}
                 className="group px-6 py-3.5 rounded-full bg-gradient-to-r from-[#00fbfb] to-[#00d2d2] text-black font-mono text-[11px] font-black uppercase tracking-wider inline-flex items-center justify-between gap-3 hover:shadow-[0_0_35px_rgba(0,251,251,0.7)] active:scale-[0.98] transition-all duration-300 min-h-[48px] cursor-pointer shadow-lg"
               >
-                <span>{locale === "es" ? "⚡ Aplicar en 30s (90% Ganancias)" : "⚡ Fast-Track Apply in 30s (90%)"}</span>
+                <span>{locale === "fr" ? "⚡ Candidature Express en 30s (90%)" : locale === "es" ? "⚡ Aplicar en 30s (90% Ganancias)" : "⚡ Fast-Track Apply in 30s (90%)"}</span>
                 <span className="w-6 h-6 rounded-full bg-black/10 flex items-center justify-center shrink-0 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform duration-300">
                   <ArrowUpRight className="w-3.5 h-3.5" />
                 </span>
@@ -294,7 +298,7 @@ export default function BecomeCreatorPage({ initialProfile, userEmail }: { initi
                 onClick={() => setIsTourOpen(true)}
                 className="group px-5 py-3.5 rounded-full border border-[#ffabf3]/40 bg-[#ffabf3]/5 text-[#ffabf3] font-mono text-[11px] font-black uppercase tracking-wider inline-flex items-center justify-between gap-3 hover:bg-[#ffabf3]/15 hover:border-[#ffabf3] active:scale-[0.98] transition-all duration-300 shadow-[0_0_15px_rgba(255,171,243,0.2)] hover:shadow-[0_0_25px_rgba(255,171,243,0.4)] min-h-[48px] cursor-pointer"
               >
-                <span>{locale === "es" ? "Tour de la Demo" : "Take Demo Tour"}</span>
+                <span>{locale === "fr" ? "Visite de la Démo" : locale === "es" ? "Tour de la Demo" : "Take Demo Tour"}</span>
                 <span className="w-6 h-6 rounded-full bg-[#ffabf3]/10 flex items-center justify-center shrink-0">
                   <Play className="w-3 h-3 fill-current" />
                 </span>
@@ -327,31 +331,31 @@ export default function BecomeCreatorPage({ initialProfile, userEmail }: { initi
                 <div className="flex-1 flex flex-col justify-center space-y-4 my-3 sm:my-5">
                   <div className="text-center space-y-1">
                     <span className="text-[9px] font-mono uppercase tracking-widest text-white/40">
-                      {locale === "es" ? "HUD de Aura de Audiencia" : "Audience Aura HUD"}
+                      {locale === "fr" ? "HUD d'Aura de l'Audience" : locale === "es" ? "HUD de Aura de Audiencia" : "Audience Aura HUD"}
                     </span>
                     <h3 className="text-2xl sm:text-3xl font-black text-white leading-none">
                       <MonoNumber value="94.2" suffix="%" />
                     </h3>
                     <p className="text-[9px] text-[#00fbfb] tracking-wider font-semibold">
-                      {locale === "es" ? "Sincronización de Sinergia con Espectador Top" : "Synergy Sync with Top Viewer"}
+                      {locale === "fr" ? "Synchronisation de Synergie avec Spectateur Top" : locale === "es" ? "Sincronización de Sinergia con Espectador Top" : "Synergy Sync with Top Viewer"}
                     </p>
                   </div>
 
                   <div className="space-y-2">
                     <div className="p-3 bg-white/[0.04] border border-white/5 rounded-2xl flex flex-row justify-between items-center gap-2">
                       <span className="text-[10px] sm:text-xs text-white/70 font-medium shrink-0">
-                        {locale === "es" ? "Módulo de Chat" : "Chatter Module"}
+                        {locale === "fr" ? "Module de Chat" : locale === "es" ? "Módulo de Chat" : "Chatter Module"}
                       </span>
                       <span className="text-[8px] sm:text-[9px] font-mono text-[#39FF14] bg-[#39FF14]/10 border border-[#39FF14]/30 px-2.5 py-0.5 rounded-full uppercase shrink-0 font-bold">
-                        {locale === "es" ? "Activo 24/7" : "Running 24/7"}
+                        {locale === "fr" ? "Actif 24/7" : locale === "es" ? "Activo 24/7" : "Running 24/7"}
                       </span>
                     </div>
                     <div className="p-3 bg-white/[0.04] border border-white/5 rounded-2xl flex flex-row justify-between items-center gap-2">
                       <span className="text-[10px] sm:text-xs text-white/70 font-medium shrink-0">
-                        {locale === "es" ? "Cifrado Difuminado Facial" : "Face Blur Encryption"}
+                        {locale === "fr" ? "Chiffrement Flou Facial" : locale === "fr" ? "Chiffrement Flou Facial" : locale === "es" ? "Cifrado Difuminado Facial" : "Face Blur Encryption"}
                       </span>
                       <span className="text-[8px] sm:text-[9px] font-mono text-[#00fbfb] bg-[#00fbfb]/10 border border-[#00fbfb]/30 px-2.5 py-0.5 rounded-full uppercase shrink-0 font-bold">
-                        {locale === "es" ? "Activo" : "Active"}
+                        {locale === "fr" ? "Actif" : locale === "es" ? "Activo" : "Active"}
                       </span>
                     </div>
                   </div>
@@ -361,13 +365,13 @@ export default function BecomeCreatorPage({ initialProfile, userEmail }: { initi
                 <div className="border-t border-white/5 pt-3 sm:pt-4 flex justify-between items-center">
                   <div className="text-left">
                     <span className="text-[8px] font-mono uppercase text-white/40 block">
-                      {locale === "es" ? "Retención Neta Fundador" : "Founding Net Keeps"}
+                      {locale === "fr" ? "Revenus Nets Fondateur" : locale === "es" ? "Retención Neta Fundador" : "Founding Net Keeps"}
                     </span>
                     <span className="text-xs sm:text-sm font-bold text-white"><MonoNumber value="90" suffix="%" /></span>
                   </div>
                   <div className="text-right">
                     <span className="text-[8px] font-mono uppercase text-white/40 block">
-                      {locale === "es" ? "Comisión Intermediarios" : "Middlemen Cut"}
+                      {locale === "fr" ? "Commission Intermédiaires" : locale === "es" ? "Comisión Intermediarios" : "Middlemen Cut"}
                     </span>
                     <span className="text-xs sm:text-sm font-bold text-rose-500 font-mono">0%</span>
                   </div>
@@ -383,10 +387,10 @@ export default function BecomeCreatorPage({ initialProfile, userEmail }: { initi
         <div className="max-w-[900px] mx-auto space-y-12 text-center">
           <div className="space-y-3">
             <span className="text-[10px] font-mono font-bold text-[#00fbfb] bg-[#00fbfb]/5 border border-[#00fbfb]/20 px-3 py-1 rounded-full uppercase tracking-wider">
-              {locale === "es" ? "Tu Espacio. Tus Ahorros." : "Your Space. Your Savings."}
+              {locale === "fr" ? "Votre Studio. Vos Économies." : locale === "es" ? "Tu Espacio. Tus Ahorros." : "Your Space. Your Savings."}
             </span>
             <h2 className="font-display text-3xl md:text-5xl font-black text-white tracking-tight">
-              {locale === "es" ? "Calcula tus Ingresos Reales" : "Calculate Your True Earnings"}
+              {locale === "fr" ? "Calculez vos Revenus Réels" : locale === "es" ? "Calcula tus Ingresos Reales" : "Calculate Your True Earnings"}
             </h2>
             <p className="max-w-[550px] mx-auto text-xs sm:text-sm text-[#b9cac9] leading-relaxed">
               {locale === "es" 
@@ -401,7 +405,7 @@ export default function BecomeCreatorPage({ initialProfile, userEmail }: { initi
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
                   <span className="text-xs font-mono uppercase text-[#b9cac9]">
-                    {locale === "es" ? "Ingresos Brutos Mensuales" : "Gross Monthly Earnings"}
+                    {locale === "fr" ? "Revenus Mensuels Bruts" : locale === "es" ? "Ingresos Brutos Mensuales" : "Gross Monthly Earnings"}
                   </span>
                   <span className="text-xl sm:text-2xl font-bold text-white">
                     <MonoNumber value={earnings.toLocaleString()} suffix="€" />
@@ -431,20 +435,20 @@ export default function BecomeCreatorPage({ initialProfile, userEmail }: { initi
                 {/* Traditional Agency */}
                 <div className="p-5 bg-white/[0.02] border border-white/5 rounded-2xl space-y-4 text-left">
                   <h4 className="text-[10px] font-mono font-bold text-rose-500 uppercase tracking-widest">
-                    {locale === "es" ? "Agencia + Competencia" : "Agency + Competitors"}
+                    {locale === "fr" ? "Agence + Concurrents" : locale === "es" ? "Agencia + Competencia" : "Agency + Competitors"}
                   </h4>
                   <div className="space-y-2">
                     <div className="flex justify-between text-xs text-[#b9cac9]">
-                      <span>{locale === "es" ? "Comisión Plataforma (20%)" : "Platform Cut (20%)"}</span>
+                      <span>{locale === "fr" ? "Commission Plateforme (20%)" : locale === "es" ? "Comisión Plataforma (20%)" : "Platform Cut (20%)"}</span>
                       <span className="font-mono text-white/70">-{traditionalPlatformFee.toLocaleString()} €</span>
                     </div>
                     <div className="flex justify-between text-xs text-[#b9cac9]">
-                      <span>{locale === "es" ? "Comisión Agencia (40%)" : "Agency Manager Cut (40%)"}</span>
+                      <span>{locale === "fr" ? "Commission Agence (40%)" : locale === "es" ? "Comisión Agencia (40%)" : "Agency Manager Cut (40%)"}</span>
                       <span className="font-mono text-white/70">-{traditionalAgencyFee.toLocaleString()} €</span>
                     </div>
                   </div>
                   <div className="border-t border-white/5 pt-3 flex justify-between items-center">
-                    <span className="text-xs font-bold text-white">{locale === "es" ? "Lo Que Conservas (40%)" : "What You Keep (40%)"}</span>
+                    <span className="text-xs font-bold text-white">{locale === "fr" ? "Ce que vous gardez (40%)" : locale === "es" ? "Lo Que Conservas (40%)" : "What You Keep (40%)"}</span>
                     <span className="font-mono text-rose-400 font-bold">{traditionalCreatorKeeps.toLocaleString()} €</span>
                   </div>
                 </div>
@@ -455,16 +459,16 @@ export default function BecomeCreatorPage({ initialProfile, userEmail }: { initi
                   <h4 className="text-[10px] font-mono font-bold text-[#00fbfb] uppercase tracking-widest">SECCION space</h4>
                   <div className="space-y-2">
                     <div className="flex justify-between text-xs text-[#b9cac9]">
-                      <span>{locale === "es" ? "Tasa Creador Fundador (10%)" : "Founding Creator Rate (10%)"}</span>
+                      <span>{locale === "fr" ? "Taux Créateur Fondateur (10%)" : locale === "es" ? "Tasa Creador Fundador (10%)" : "Founding Creator Rate (10%)"}</span>
                       <span className="font-mono text-white/70">-{seccionFee.toLocaleString()} €</span>
                     </div>
                     <div className="flex justify-between text-xs text-[#b9cac9]">
-                      <span>{locale === "es" ? "Asistente IA Año 1 (0%)" : "AI Assistant Year 1 (0%)"}</span>
-                      <span className="font-mono text-[#39FF14] font-semibold">{locale === "es" ? "GRATIS" : "FREE"}</span>
+                      <span>{locale === "fr" ? "Assistant IA 1ère Année (0%)" : locale === "es" ? "Asistente IA Año 1 (0%)" : "AI Assistant Year 1 (0%)"}</span>
+                      <span className="font-mono text-[#39FF14] font-semibold">{locale === "fr" ? "GRATUIT" : locale === "es" ? "GRATIS" : "FREE"}</span>
                     </div>
                   </div>
                   <div className="border-t border-white/10 pt-3 flex justify-between items-center">
-                    <span className="text-xs font-bold text-white">{locale === "es" ? "Lo Que Conservas (90%)" : "What You Keep (90%)"}</span>
+                    <span className="text-xs font-bold text-white">{locale === "fr" ? "Ce que vous gardez (90%)" : locale === "es" ? "Lo Que Conservas (90%)" : "What You Keep (90%)"}</span>
                     <span className="font-mono text-[#00fbfb] text-glow font-bold">{seccionCreatorKeeps.toLocaleString()} €</span>
                   </div>
                 </div>
@@ -474,14 +478,16 @@ export default function BecomeCreatorPage({ initialProfile, userEmail }: { initi
               <div className="p-4 bg-[#39FF14]/5 border border-[#39FF14]/20 rounded-2xl text-center">
                 <p className="text-xs text-[#b9cac9] font-medium leading-relaxed">
                   {locale === "es" ? "Al dirigir tu canal de forma independiente en SECCION, ahorras " : "By running your channel independently on SECCION, you save "}
-                  <MonoNumber value={monthlySavings.toLocaleString()} suffix={locale === "es" ? " €/mes" : " €/month"} />
+                  <MonoNumber value={monthlySavings.toLocaleString()} suffix={locale === "fr" ? " €/mois" : locale === "es" ? " €/mes" : " €/month"} />
                 </p>
               </div>
 
               <p className="text-[10px] text-[#b9cac9]/50 font-medium leading-normal max-w-[550px] mx-auto">
-                {locale === "es" 
-                  ? "Los primeros 500 creadores fundadores conservan el 90% de sus ingresos netos y reciben el Asistente IA 100% gratis durante todo el Año 1. Posteriormente, la tasa estándar de plataforma es del 20% (conservas el 80% de por vida) y el asistente IA cuesta 69 €/mes opcional. Sin intermediarios ni comisiones ocultas." 
-                  : "The first 500 founding creators keep 90% of net earnings and receive the built-in AI Operations Assistant 100% free for Year 1. Afterwards, the standard platform rate is just 20% (you keep 80% lifetime) with optional AI assistant at €69/month. Zero middlemen, zero hidden fees."}
+                {locale === "fr"
+    ? " €/mois"
+    : locale === "es"
+    ? "Los primeros 500 creadores fundadores conservan el 90% de sus ingresos netos y reciben el Asistente IA 100% gratis durante todo el Año 1. Posteriormente, la tasa estándar de plataforma es del 20% (conservas el 80% de por vida) y el asistente IA cuesta 69 €/mes opcional. Sin intermediarios ni comisiones ocultas."
+    : "The first 500 founding creators keep 90% of net earnings and receive the built-in AI Operations Assistant 100% free for Year 1. Afterwards, the standard platform rate is just 20% (you keep 80% lifetime) with optional AI assistant at €69/month. Zero middlemen, zero hidden fees."}
               </p>
 
             </div>
@@ -494,10 +500,10 @@ export default function BecomeCreatorPage({ initialProfile, userEmail }: { initi
         <div className="space-y-12">
           <div className="text-left space-y-3">
             <span className="text-[10px] font-mono font-bold text-[#ffabf3] bg-[#ffabf3]/5 border border-[#ffabf3]/25 px-3 py-1 rounded-full uppercase tracking-wider">
-              {locale === "es" ? "Recupera tu Libertad" : "Reclaim Your Freedom"}
+              {locale === "fr" ? "Reprenez votre Liberté" : locale === "es" ? "Recupera tu Libertad" : "Reclaim Your Freedom"}
             </span>
             <h2 className="font-display text-3xl md:text-5xl font-black text-white tracking-tight">
-              {locale === "es" ? "Tu Agencia en un Solo Clic" : "Your Agency in a Single Toggle"}
+              {locale === "fr" ? "Votre Agence en un Seul Clic" : locale === "es" ? "Tu Agencia en un Solo Clic" : "Your Agency in a Single Toggle"}
             </h2>
             <p className="max-w-[550px] text-xs sm:text-sm text-[#b9cac9] leading-relaxed">
               {locale === "es" 
@@ -517,7 +523,7 @@ export default function BecomeCreatorPage({ initialProfile, userEmail }: { initi
                     <Zap className="w-5 h-5 text-[#00fbfb]" />
                   </div>
                   <h3 className="font-display text-xl font-bold text-white">
-                    {locale === "es" ? "Chat de Conexión con Fans" : "Fan Connection Chatter"}
+                    {locale === "fr" ? "Discussion & Connexion Fans" : locale === "es" ? "Chat de Conexión con Fans" : "Fan Connection Chatter"}
                   </h3>
                   <p className="text-xs text-[#b9cac9] leading-relaxed">
                     {locale === "es" 
@@ -526,9 +532,9 @@ export default function BecomeCreatorPage({ initialProfile, userEmail }: { initi
                   </p>
                 </div>
                 <div className="flex flex-wrap gap-2 text-[9px] font-mono text-[#00fbfb]/80">
-                  <span className="bg-[#00fbfb]/5 border border-[#00fbfb]/20 px-2.5 py-1 rounded-full">{locale === "es" ? "DMs 24/7" : "24/7 DMs"}</span>
-                  <span className="bg-[#00fbfb]/5 border border-[#00fbfb]/20 px-2.5 py-1 rounded-full">{locale === "es" ? "Etiquetas de Bot Transparentes" : "Bot Transparency Labels"}</span>
-                  <span className="bg-[#00fbfb]/5 border border-[#00fbfb]/20 px-2.5 py-1 rounded-full">{locale === "es" ? "Pausas Adaptativas de Nivel" : "Adaptive Level Breaks"}</span>
+                  <span className="bg-[#00fbfb]/5 border border-[#00fbfb]/20 px-2.5 py-1 rounded-full">{locale === "fr" ? "DMs 24/7" : locale === "es" ? "DMs 24/7" : "24/7 DMs"}</span>
+                  <span className="bg-[#00fbfb]/5 border border-[#00fbfb]/20 px-2.5 py-1 rounded-full">{locale === "fr" ? "Labels de Transparence Bot" : locale === "es" ? "Etiquetas de Bot Transparentes" : "Bot Transparency Labels"}</span>
+                  <span className="bg-[#00fbfb]/5 border border-[#00fbfb]/20 px-2.5 py-1 rounded-full">{locale === "fr" ? "Paliers d'Échange Adaptatifs" : locale === "es" ? "Pausas Adaptativas de Nivel" : "Adaptive Level Breaks"}</span>
                 </div>
               </div>
             </div>
@@ -541,7 +547,7 @@ export default function BecomeCreatorPage({ initialProfile, userEmail }: { initi
                     <Scale className="w-5 h-5 text-[#ffabf3]" />
                   </div>
                   <h3 className="font-display text-xl font-bold text-white">
-                    {locale === "es" ? "Copiloto Legal de Contratos" : "Legal Contract Copilot"}
+                    {locale === "fr" ? "Copilote Légal de Contrats" : locale === "es" ? "Copiloto Legal de Contratos" : "Legal Contract Copilot"}
                   </h3>
                   <p className="text-xs text-[#b9cac9] leading-relaxed">
                     {locale === "es" 
@@ -550,8 +556,8 @@ export default function BecomeCreatorPage({ initialProfile, userEmail }: { initi
                   </p>
                 </div>
                 <div className="flex flex-wrap gap-2 text-[9px] font-mono text-[#ffabf3]/80">
-                  <span className="bg-[#ffabf3]/5 border border-[#ffabf3]/20 px-2.5 py-1 rounded-full">{locale === "es" ? "Análisis de Contratos" : "Contract Screening"}</span>
-                  <span className="bg-[#ffabf3]/5 border border-[#ffabf3]/20 px-2.5 py-1 rounded-full">{locale === "es" ? "Protección de Imagen" : "Likeness Protection"}</span>
+                  <span className="bg-[#ffabf3]/5 border border-[#ffabf3]/20 px-2.5 py-1 rounded-full">{locale === "fr" ? "Audit de Contrats" : locale === "es" ? "Análisis de Contratos" : "Contract Screening"}</span>
+                  <span className="bg-[#ffabf3]/5 border border-[#ffabf3]/20 px-2.5 py-1 rounded-full">{locale === "fr" ? "Protection d'Image" : locale === "es" ? "Protección de Imagen" : "Likeness Protection"}</span>
                 </div>
               </div>
             </div>
@@ -564,7 +570,7 @@ export default function BecomeCreatorPage({ initialProfile, userEmail }: { initi
                     <ShieldCheck className="w-5 h-5 text-[#ffabf3]" />
                   </div>
                   <h3 className="font-display text-xl font-bold text-white">
-                    {locale === "es" ? "Protección de Contenido DRM" : "DRM Content Guard"}
+                    {locale === "fr" ? "Bouclier de Contenu DRM" : locale === "es" ? "Protección de Contenido DRM" : "DRM Content Guard"}
                   </h3>
                   <p className="text-xs text-[#b9cac9] leading-relaxed">
                     {locale === "es" 
@@ -573,8 +579,8 @@ export default function BecomeCreatorPage({ initialProfile, userEmail }: { initi
                   </p>
                 </div>
                 <div className="flex flex-wrap gap-2 text-[9px] font-mono text-[#ffabf3]/80">
-                  <span className="bg-[#ffabf3]/5 border border-[#ffabf3]/20 px-2.5 py-1 rounded-full">{locale === "es" ? "Retiros Automáticos" : "Auto-Takedowns"}</span>
-                  <span className="bg-[#ffabf3]/5 border border-[#ffabf3]/20 px-2.5 py-1 rounded-full">{locale === "es" ? "Rastreo de Filtraciones Web" : "Web Leak Sweeps"}</span>
+                  <span className="bg-[#ffabf3]/5 border border-[#ffabf3]/20 px-2.5 py-1 rounded-full">{locale === "fr" ? "Retraits Automatiques" : locale === "es" ? "Retiros Automáticos" : "Auto-Takedowns"}</span>
+                  <span className="bg-[#ffabf3]/5 border border-[#ffabf3]/20 px-2.5 py-1 rounded-full">{locale === "fr" ? "Surveillance des Fuites Web" : locale === "es" ? "Rastreo de Filtraciones Web" : "Web Leak Sweeps"}</span>
                 </div>
               </div>
             </div>
@@ -587,7 +593,7 @@ export default function BecomeCreatorPage({ initialProfile, userEmail }: { initi
                     <UserCheck className="w-5 h-5 text-[#00fbfb]" />
                   </div>
                   <h3 className="font-display text-xl font-bold text-white">
-                    {locale === "es" ? "Creadores Patrocinados con Match" : "Match-Gated Sponsored Creators"}
+                    {locale === "fr" ? "Créateurs Sponsorisés avec Match" : locale === "es" ? "Creadores Patrocinados con Match" : "Match-Gated Sponsored Creators"}
                   </h3>
                   <p className="text-xs text-[#b9cac9] leading-relaxed">
                     {locale === "es" 
@@ -596,9 +602,9 @@ export default function BecomeCreatorPage({ initialProfile, userEmail }: { initi
                   </p>
                 </div>
                 <div className="flex flex-wrap gap-2 text-[9px] font-mono text-[#00fbfb]/80">
-                  <span className="bg-[#00fbfb]/5 border border-[#00fbfb]/20 px-2.5 py-1 rounded-full">{locale === "es" ? "Matching de Sinergia" : "Synergy Matching"}</span>
-                  <span className="bg-[#00fbfb]/5 border border-[#00fbfb]/20 px-2.5 py-1 rounded-full">{locale === "es" ? "Baja Deserción" : "Low Subscriber Churn"}</span>
-                  <span className="bg-[#00fbfb]/5 border border-[#00fbfb]/20 px-2.5 py-1 rounded-full">{locale === "es" ? "Compatibilidad de Vibe" : "Vibe Compatibility"}</span>
+                  <span className="bg-[#00fbfb]/5 border border-[#00fbfb]/20 px-2.5 py-1 rounded-full">{locale === "fr" ? "Matching de Synergie" : locale === "es" ? "Matching de Sinergia" : "Synergy Matching"}</span>
+                  <span className="bg-[#00fbfb]/5 border border-[#00fbfb]/20 px-2.5 py-1 rounded-full">{locale === "fr" ? "Faible Taux de Désabonnement" : locale === "es" ? "Baja Deserción" : "Low Subscriber Churn"}</span>
+                  <span className="bg-[#00fbfb]/5 border border-[#00fbfb]/20 px-2.5 py-1 rounded-full">{locale === "fr" ? "Compatibilité de Vibe" : locale === "es" ? "Compatibilidad de Vibe" : "Vibe Compatibility"}</span>
                 </div>
               </div>
             </div>
@@ -614,7 +620,7 @@ export default function BecomeCreatorPage({ initialProfile, userEmail }: { initi
           {/* Blur Copy */}
           <div className="col-span-12 lg:col-span-7 space-y-4 sm:space-y-6 text-left min-w-0">
             <span className="text-[10px] font-mono font-bold text-[#00fbfb] bg-[#00fbfb]/5 border border-[#00fbfb]/20 px-3 py-1 rounded-full uppercase tracking-wider">
-              {locale === "es" ? "Control Total del Creador" : "Total Creator Control"}
+              {locale === "fr" ? "Contrôle Total du Créateur" : locale === "es" ? "Control Total del Creador" : "Total Creator Control"}
             </span>
             <h2 className="font-display text-2xl sm:text-3xl md:text-5xl font-black text-white tracking-tight">
               {locale === "es" ? "Cifrado Difuminado Facial" : "Face Blur Encryption"}
@@ -629,13 +635,13 @@ export default function BecomeCreatorPage({ initialProfile, userEmail }: { initi
                 <div className="w-5 h-5 rounded-full bg-[#00fbfb]/10 border border-[#00fbfb]/30 flex items-center justify-center shrink-0 mt-0.5 sm:mt-0">
                   <Check className="w-3.5 h-3.5 text-[#00fbfb]" />
                 </div>
-                <span className="break-words">{locale === "es" ? "Mantente anónimo/a en el feed público y en las búsquedas" : "Stay anonymous to the public feed and search results"}</span>
+                <span className="break-words">{locale === "fr" ? "Restez anonyme sur le feed public et les recherches grâce au flou facial propulsé par l'IA." : locale === "es" ? "Mantente anónimo/a en el feed público y en las búsquedas" : "Stay anonymous to the public feed and search results"}</span>
               </div>
               <div className="flex items-start sm:items-center gap-3">
                 <div className="w-5 h-5 rounded-full bg-[#00fbfb]/10 border border-[#00fbfb]/30 flex items-center justify-center shrink-0 mt-0.5 sm:mt-0">
                   <Check className="w-3.5 h-3.5 text-[#00fbfb]" />
                 </div>
-                <span className="break-words">{locale === "es" ? "Muestra tu contenido selectivamente solo al generar confianza" : "Selectively reveal your content only when trust is established"}</span>
+                <span className="break-words">{locale === "fr" ? "Révélez sélectivement votre contenu uniquement lorsque la confiance est établie avec les membres vérifiés." : locale === "es" ? "Muestra tu contenido selectivamente solo al generar confianza" : "Selectively reveal your content only when trust is established"}</span>
               </div>
               <div className="flex items-start sm:items-center gap-3">
                 <div className="w-5 h-5 rounded-full bg-[#00fbfb]/10 border border-[#00fbfb]/30 flex items-center justify-center shrink-0 mt-0.5 sm:mt-0">
@@ -670,12 +676,12 @@ export default function BecomeCreatorPage({ initialProfile, userEmail }: { initi
                     {isFaceBlurred ? (
                       <>
                         <Lock className="w-3.5 h-3.5 text-[#ffabf3] shrink-0" />
-                        <span className="text-[8px] sm:text-[9px] font-mono font-bold text-[#ffabf3] uppercase tracking-wider truncate">{locale === "es" ? "Cifrado Difuminado Activo" : "Blur Encryption Active"}</span>
+                        <span className="text-[8px] sm:text-[9px] font-mono font-bold text-[#ffabf3] uppercase tracking-wider truncate">{locale === "fr" ? "Chiffrement Flou Actif" : locale === "es" ? "Cifrado Difuminado Activo" : "Blur Encryption Active"}</span>
                       </>
                     ) : (
                       <>
                         <Unlock className="w-3.5 h-3.5 text-[#00fbfb] shrink-0" />
-                        <span className="text-[8px] sm:text-[9px] font-mono font-bold text-[#00fbfb] uppercase tracking-wider truncate">{locale === "es" ? "Descifrado (Confianza L4)" : "Decrypted (L4 Trust)"}</span>
+                        <span className="text-[8px] sm:text-[9px] font-mono font-bold text-[#00fbfb] uppercase tracking-wider truncate">{locale === "fr" ? "Déchiffré (Confiance L4)" : locale === "es" ? "Descifrado (Confianza L4)" : "Decrypted (L4 Trust)"}</span>
                       </>
                     )}
                   </div>
@@ -685,7 +691,7 @@ export default function BecomeCreatorPage({ initialProfile, userEmail }: { initi
                 <div className="flex justify-between items-center border-t border-white/5 pt-3 sm:pt-4">
                   <div className="text-left">
                     <h4 className="text-xs font-bold text-white">Siena Vibe</h4>
-                    <span className="text-[9px] font-mono text-[#b9cac9]">{locale === "es" ? "Vibe de Artista Exclusiva" : "Exclusive Artist Vibe"}</span>
+                    <span className="text-[9px] font-mono text-[#b9cac9]">{locale === "fr" ? "Vibe d'Artiste Exclusive" : locale === "es" ? "Vibe de Artista Exclusiva" : "Exclusive Artist Vibe"}</span>
                   </div>
                   
                   <button 
@@ -718,8 +724,8 @@ export default function BecomeCreatorPage({ initialProfile, userEmail }: { initi
         {/* Visibility & Attractiveness Advisor */}
         <div className="max-w-[840px] mx-auto mt-16 pt-12 border-t border-white/5 space-y-6 text-center overflow-visible relative">
           <div className="space-y-2">
-            <span className="text-[9px] font-mono text-[#ffabf3] uppercase font-bold tracking-wider">{locale === "es" ? "Optimización de Crecimiento" : "Growth Optimization"}</span>
-            <h3 className="text-xl font-bold text-white uppercase tracking-wider">{locale === "es" ? "Asesor de Visibilidad y Atractivo" : "Visibility & Attractiveness Advisor"}</h3>
+            <span className="text-[9px] font-mono text-[#ffabf3] uppercase font-bold tracking-wider">{locale === "fr" ? "Optimisation de Croissance" : locale === "es" ? "Optimización de Crecimiento" : "Growth Optimization"}</span>
+            <h3 className="text-xl font-bold text-white uppercase tracking-wider">{locale === "fr" ? "Conseiller de Visibilité et d'Attractivité" : locale === "es" ? "Asesor de Visibilidad y Atractivo" : "Visibility & Attractiveness Advisor"}</h3>
             <p className="text-xs text-[#b9cac9] max-w-lg mx-auto">
               {locale === "es" 
                 ? "¿Cómo afectarán tus decisiones de privacidad a tu rendimiento de suscriptores? Cambia los modos de configuración a continuación para ver cómo nuestros sistemas de revelación equilibran la privacidad con la atracción del match." 
@@ -739,12 +745,12 @@ export default function BecomeCreatorPage({ initialProfile, userEmail }: { initi
             <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-[#00fbfb]/30 bg-[#00fbfb]/5 backdrop-blur-md">
               <Sparkles className="w-3.5 h-3.5 text-[#00fbfb] animate-pulse" />
               <span className="text-[10px] font-mono font-bold text-[#00fbfb] uppercase tracking-[0.2em]">
-                {locale === "es" ? "Puerta de Registro de Creadores" : "Creator Registration Gate"}
+                {locale === "fr" ? "Portail d'Inscription Créateurs" : locale === "es" ? "Puerta de Registro de Creadores" : "Creator Registration Gate"}
               </span>
             </div>
             
             <h2 className="font-display text-3xl sm:text-4xl md:text-5xl font-black text-white tracking-tight">
-              {locale === "es" ? "Solicita tu Acceso Exclusivo de Creador" : "Apply for Creator Early Access"}
+              {locale === "fr" ? "Postulez pour l'Accès Anticipé Créateur" : locale === "es" ? "Solicita tu Acceso Exclusivo de Creador" : "Apply for Creator Early Access"}
             </h2>
             
             <p className="max-w-[620px] mx-auto text-xs sm:text-sm text-[#b9cac9] leading-relaxed">
@@ -770,11 +776,11 @@ export default function BecomeCreatorPage({ initialProfile, userEmail }: { initi
                   <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#00fbfb]/10 border border-[#00fbfb]/30 text-[#00fbfb]">
                     <Sparkles className="w-3.5 h-3.5 animate-pulse" />
                     <span className="text-[9px] font-mono font-bold uppercase tracking-[0.2em]">
-                      {locale === "es" ? "ACCESO EN REVISIÓN VIP" : "VIP ACCESS IN REVIEW"}
+                      {locale === "fr" ? "ACCÈS VIP EN COURS D'EXAMEN" : locale === "es" ? "ACCESO EN REVISIÓN VIP" : "VIP ACCESS IN REVIEW"}
                     </span>
                   </div>
                   <h3 className="font-display text-2xl sm:text-4xl font-black text-white tracking-tight">
-                    {locale === "es" ? "¡Estás en la lista!" : "You're on the Inside!"}
+                    {locale === "fr" ? "Vous êtes sur la liste !" : locale === "es" ? "¡Estás en la lista!" : "You're on the Inside!"}
                   </h3>
                   <p className="text-xs sm:text-base text-[#b9cac9] max-w-lg mx-auto leading-relaxed font-medium">
                     {locale === "es"
@@ -785,22 +791,22 @@ export default function BecomeCreatorPage({ initialProfile, userEmail }: { initi
 
                 <div className="p-5 bg-white/[0.04] border border-white/10 rounded-2xl max-w-md mx-auto text-left text-xs font-mono space-y-2 text-[#b9cac9] backdrop-blur-md">
                   <div className="flex justify-between">
-                    <span className="text-white/40">{locale === "es" ? "Creador/a:" : "Creator:"}</span>
+                    <span className="text-white/40">{locale === "fr" ? "Créateur/trice :" : locale === "es" ? "Creador/a:" : "Creator:"}</span>
                     <span className="text-white font-bold">{formData.fullName}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-white/40">{locale === "es" ? "Email Autorizado:" : "Whitelisted Email:"}</span>
+                    <span className="text-white/40">{locale === "fr" ? "E-mail Autorisé :" : locale === "es" ? "Email Autorizado:" : "Whitelisted Email:"}</span>
                     <span className="text-[#00fbfb] font-bold">{formData.email}</span>
                   </div>
                   {formData.city && (
                     <div className="flex justify-between">
-                      <span className="text-white/40">{locale === "es" ? "Ciudad Hub:" : "Hub City:"}</span>
+                      <span className="text-white/40">{locale === "fr" ? "Ville Hub :" : locale === "es" ? "Ciudad Hub:" : "Hub City:"}</span>
                       <span className="text-[#ffabf3] font-bold">{formData.city}</span>
                     </div>
                   )}
                   <div className="flex justify-between pt-1 border-t border-white/5">
-                    <span className="text-white/40">{locale === "es" ? "Pack IA 1er Año:" : "Year 1 AI Pack:"}</span>
-                    <span className="text-[#39FF14] font-bold">{locale === "es" ? "RECLAMADO (0 € / 90% NET)" : "CLAIMED (0 € / 90% NET)"}</span>
+                    <span className="text-white/40">{locale === "fr" ? "Pack IA 1ère Année :" : locale === "es" ? "Pack IA 1er Año:" : "Year 1 AI Pack:"}</span>
+                    <span className="text-[#39FF14] font-bold">{locale === "fr" ? "ACTIVÉ (0 € / 90% NET)" : locale === "es" ? "RECLAMADO (0 € / 90% NET)" : "CLAIMED (0 € / 90% NET)"}</span>
                   </div>
                 </div>
 
@@ -808,7 +814,7 @@ export default function BecomeCreatorPage({ initialProfile, userEmail }: { initi
                 <div className="pt-2 max-w-md mx-auto space-y-3">
                   <div className="p-3.5 bg-white/[0.03] border border-[#00fbfb]/20 rounded-2xl space-y-2 text-center">
                     <span className="text-[10px] font-mono text-[#00fbfb] font-bold uppercase tracking-wider block">
-                      {locale === "es" ? "⚡ Acelerador de Aprobación VIP" : "⚡ Fast-Track VIP Approval"}
+                      {locale === "fr" ? "⚡ Approbation VIP Express" : locale === "es" ? "⚡ Acelerador de Aprobación VIP" : "⚡ Fast-Track VIP Approval"}
                     </span>
                     <p className="text-[11px] text-[#b9cac9]">
                       {locale === "es"
@@ -846,9 +852,11 @@ export default function BecomeCreatorPage({ initialProfile, userEmail }: { initi
                     className="w-full py-3.5 px-6 rounded-xl bg-gradient-to-r from-[#00fbfb] to-[#00d2d2] text-black font-mono text-xs font-black uppercase tracking-wider hover:shadow-[0_0_25px_rgba(0,251,251,0.5)] transition-all duration-300 flex items-center justify-center gap-2 shadow-lg cursor-pointer"
                   >
                     <span>
-                      {locale === "es"
-                        ? "⚡ Consultar Estado / Acceso Creator Studio (Sin Contraseña)"
-                        : "⚡ Check Status / Creator Studio Login (Passwordless)"}
+                      {locale === "fr"
+    ? "⚡ Vérifier le Statut / Accès Creator Studio (Connexion OTP)"
+    : locale === "es"
+    ? "⚡ Consultar Estado / Acceso Creator Studio (Sin Contraseña)"
+    : "⚡ Check Status / Creator Studio Login (Passwordless)"}
                     </span>
                     <ArrowUpRight className="w-4 h-4" />
                   </Link>
@@ -877,7 +885,7 @@ export default function BecomeCreatorPage({ initialProfile, userEmail }: { initi
                     }}
                     className="text-xs text-white/50 hover:text-white underline font-mono"
                   >
-                    {locale === "es" ? "Enviar otra solicitud" : "Submit another application"}
+                    {locale === "fr" ? "Envoyer une autre candidature" : locale === "es" ? "Enviar otra solicitud" : "Submit another application"}
                   </button>
                 </div>
               </motion.div>
@@ -895,7 +903,7 @@ export default function BecomeCreatorPage({ initialProfile, userEmail }: { initi
                   {/* Full Name */}
                   <div className="space-y-1.5">
                     <label className="block text-[11px] font-mono font-bold uppercase tracking-wider text-[#b9cac9]">
-                      {locale === "es" ? "Nombre de Creador / Nombre Completo *" : "Creator / Full Name *"}
+                      {locale === "fr" ? "Nom de créateur / Nom complet *" : locale === "es" ? "Nombre de Creador / Nombre Completo *" : "Creator / Full Name *"}
                     </label>
                     <input
                       type="text"
@@ -913,7 +921,7 @@ export default function BecomeCreatorPage({ initialProfile, userEmail }: { initi
                   {/* Email */}
                   <div className="space-y-1.5">
                     <label className="block text-[11px] font-mono font-bold uppercase tracking-wider text-[#b9cac9]">
-                      {locale === "es" ? "Correo Electrónico *" : "Email Address *"}
+                      {locale === "fr" ? "Adresse e-mail *" : locale === "es" ? "Correo Electrónico *" : "Email Address *"}
                     </label>
                     <input
                       type="email"
@@ -934,10 +942,10 @@ export default function BecomeCreatorPage({ initialProfile, userEmail }: { initi
                   <div className="space-y-1.5">
                     <div className="flex justify-between items-center">
                       <label className="block text-[11px] font-mono font-bold uppercase tracking-wider text-[#b9cac9]">
-                        {locale === "es" ? "WhatsApp / Teléfono" : "WhatsApp / Phone"}
+                        {locale === "fr" ? "WhatsApp / Téléphone" : locale === "es" ? "WhatsApp / Teléfono" : "WhatsApp / Phone"}
                       </label>
                       <span className="text-[9px] text-[#00fbfb]/70 font-mono">
-                        {locale === "es" ? "(Opcional)" : "(Optional)"}
+                        {locale === "fr" ? "(Optionnel)" : locale === "fr" ? "(Optionnel)" : locale === "es" ? "(Opcional)" : "(Optional)"}
                       </span>
                     </div>
                     <input
@@ -954,7 +962,7 @@ export default function BecomeCreatorPage({ initialProfile, userEmail }: { initi
                   <div className="space-y-1.5">
                     <div className="flex justify-between items-center">
                       <label className="block text-[11px] font-mono font-bold uppercase tracking-wider text-[#b9cac9]">
-                        {locale === "es" ? "Usuario de Telegram (@tag)" : "Telegram Handle (@tag)"}
+                        {locale === "fr" ? "Identifiant Telegram (@tag)" : locale === "es" ? "Usuario de Telegram (@tag)" : "Telegram Handle (@tag)"}
                       </label>
                       <span className="text-[9px] text-[#ffabf3]/70 font-mono">
                         {locale === "es" ? "(Opcional)" : "(Optional)"}
@@ -981,10 +989,10 @@ export default function BecomeCreatorPage({ initialProfile, userEmail }: { initi
                 <div className="space-y-2">
                   <div className="flex justify-between items-center">
                     <label className="block text-[11px] font-mono font-bold uppercase tracking-wider text-[#b9cac9]">
-                      {locale === "es" ? "Ubicación / Ciudad Principal *" : "Primary Location / City *"}
+                      {locale === "fr" ? "Emplacement / Ville principale *" : locale === "es" ? "Ubicación / Ciudad Principal *" : "Primary Location / City *"}
                     </label>
                     <span className="text-[9px] text-[#00fbfb] font-mono font-bold">
-                      {locale === "es" ? "🌍 Streams & Contenido Activos a Nivel Mundial" : "🌍 Streams & Content Live Worldwide"}
+                      {locale === "fr" ? "🌍 Streams & Contenus Diffusés dans le Monde Entier" : locale === "es" ? "🌍 Streams & Contenido Activos a Nivel Mundial" : "🌍 Streams & Content Live Worldwide"}
                     </span>
                   </div>
 
@@ -995,11 +1003,11 @@ export default function BecomeCreatorPage({ initialProfile, userEmail }: { initi
                     className="w-full px-4 py-3 rounded-xl bg-black/50 border border-white/10 focus:border-[#00fbfb] text-white text-xs focus:outline-none transition"
                   >
                     <option value="" className="bg-[#0F0F1A] text-white/50">
-                      {locale === "es" ? "-- Selecciona tu ubicación --" : "-- Select your location --"}
+                      {locale === "fr" ? "-- Sélectionnez votre ville / pays --" : locale === "es" ? "-- Selecciona tu ubicación --" : "-- Select your location --"}
                     </option>
                     {CITIES.map((c) => (
                       <option key={c.value} value={c.value} className="bg-[#0F0F1A] text-white">
-                        {locale === "es" ? c.labelEs : c.label}
+                        {locale === "fr" ? (c.labelFr || c.label) : locale === "es" ? c.labelEs : c.label}
                       </option>
                     ))}
                   </select>
@@ -1028,10 +1036,10 @@ export default function BecomeCreatorPage({ initialProfile, userEmail }: { initi
                 <div className="space-y-3 pt-2">
                   <div className="flex justify-between items-center">
                     <label className="block text-[11px] font-mono font-bold uppercase tracking-wider text-[#b9cac9]">
-                      {locale === "es" ? "Perfiles de Creador / Redes Sociales *" : "Creator Handles / Social Links *"}
+                      {locale === "fr" ? "Réseaux Sociaux / Liens de Créateur *" : locale === "es" ? "Perfiles de Creador / Redes Sociales *" : "Creator Handles / Social Links *"}
                     </label>
                     <span className="text-[9px] text-[#00fbfb] font-mono font-semibold">
-                      {locale === "es" ? "✨ Acepta @usuario o enlaces" : "✨ Accepts @handle or full links"}
+                      {locale === "fr" ? "✨ Accepte @identifiant ou liens complets" : locale === "es" ? "✨ Acepta @usuario o enlaces" : "✨ Accepts @handle or full links"}
                     </span>
                   </div>
                   
@@ -1041,7 +1049,7 @@ export default function BecomeCreatorPage({ initialProfile, userEmail }: { initi
                       name="link1"
                       value={formData.link1}
                       onChange={handleInputChange}
-                      placeholder={locale === "es" ? "@tuusuario o enlace (Instagram / TikTok / OF) *" : "@yourhandle or link (Instagram / TikTok / OF) *"}
+                      placeholder={locale === "fr" ? "@votreidentifiant ou lien (Instagram / TikTok / OF) *" : locale === "es" ? "@tuusuario o enlace (Instagram / TikTok / OF) *" : "@yourhandle or link (Instagram / TikTok / OF) *"}
                       className={`w-full px-4 py-3 rounded-xl bg-black/50 border ${errors.link1 ? "border-rose-500" : "border-white/10 focus:border-[#00fbfb]"} text-white text-xs placeholder-white/20 focus:outline-none transition font-sans`}
                     />
                     {errors.link1 && (
@@ -1062,7 +1070,7 @@ export default function BecomeCreatorPage({ initialProfile, userEmail }: { initi
                       name="link3"
                       value={formData.link3}
                       onChange={handleInputChange}
-                      placeholder={locale === "es" ? "Tercer perfil (Opcional, ej. Twitch / YouTube / Web)" : "Third handle/link (Optional, e.g. Twitch / YouTube / Web)"}
+                      placeholder={locale === "fr" ? "Troisième lien (Optionnel, ex. Twitch / YouTube / Site web)" : locale === "es" ? "Tercer perfil (Opcional, ej. Twitch / YouTube / Web)" : "Third handle/link (Optional, e.g. Twitch / YouTube / Web)"}
                       className="w-full px-4 py-3 rounded-xl bg-black/50 border border-white/10 focus:border-[#00fbfb] text-white text-xs placeholder-white/20 focus:outline-none transition font-sans"
                     />
                   </div>
@@ -1075,11 +1083,13 @@ export default function BecomeCreatorPage({ initialProfile, userEmail }: { initi
                   </div>
                   <p className="text-[11px] text-[#b9cac9] leading-tight">
                     <strong className="text-white font-semibold">
-                      {locale === "es" ? "Sin tarjeta ni DNI para comenzar: " : "No ID or credit card needed to apply: "}
+                      {locale === "fr" ? "Aucune pièce d'identité ni carte bancaire requise pour postuler : " : locale === "es" ? "Sin tarjeta ni DNI para comenzar: " : "No ID or credit card needed to apply: "}
                     </strong>
-                    {locale === "es" 
-                      ? "Explora el Studio y prueba las herramientas de IA en 30 segundos. La verificación oficial solo se realiza cuando decidas retirar fondos." 
-                      : "Explore the Studio and test-drive AI tools in 30 seconds. Official ID check is only required when you are ready for payouts."}
+                    {locale === "fr"
+    ? "Explorez le Studio et testez les outils d'IA en 30 secondes."
+    : locale === "es"
+    ? "Explora el Studio y prueba las herramientas de IA en 30 segundos. La verificación oficial solo se realiza cuando decidas retirar fondos."
+    : "Explore the Studio and test-drive AI tools in 30 seconds. Official ID check is only required when you are ready for payouts."}
                   </p>
                 </div>
 
@@ -1095,9 +1105,9 @@ export default function BecomeCreatorPage({ initialProfile, userEmail }: { initi
                   />
                   <label htmlFor="claimOffer" className="text-xs text-[#b9cac9] leading-relaxed cursor-pointer select-none">
                     <strong className="text-white">
-                      {locale === "es" ? "Reclamar Pack Asistente IA 1er Año Gratis" : "Claim 1-Year Free AI Assistant Pack"}
+                      {locale === "fr" ? "Réclamer le Pack Assistant IA 1 An Gratuit" : locale === "es" ? "Reclamar Pack Asistente IA 1er Año Gratis" : "Claim 1-Year Free AI Assistant Pack"}
                     </strong>{" "}
-                    ({locale === "es" ? "Ahorro de 4.000 €/mes en costes de agencia, 90% retención neta en pre-launch." : "Save €4,000/mo in agency fees, 90% net revenue split during pre-launch."})
+                    ({locale === "fr" ? " €/mois" : locale === "es" ? "Ahorro de 4.000 €/mes en costes de agencia, 90% retención neta en pre-launch." : "Save €4,000/mo in agency fees, 90% net revenue split during pre-launch."})
                   </label>
                 </div>
 
@@ -1110,11 +1120,11 @@ export default function BecomeCreatorPage({ initialProfile, userEmail }: { initi
                   {formStep === "submitting" ? (
                     <>
                       <Loader2 className="w-4 h-4 animate-spin text-black" />
-                      <span>{locale === "es" ? "ENVIANDO SOLICITUD..." : "SUBMITTING APPLICATION..."}</span>
+                      <span>{locale === "fr" ? "ENVOI DE LA CANDIDATURE..." : locale === "es" ? "ENVIANDO SOLICITUD..." : "SUBMITTING APPLICATION..."}</span>
                     </>
                   ) : (
                     <>
-                      <span>{locale === "es" ? "ENVIAR SOLICITUD DE CREADOR" : "SUBMIT CREATOR APPLICATION"}</span>
+                      <span>{locale === "fr" ? "ENVOYER MA CANDIDATURE CRÉATEUR" : locale === "es" ? "ENVIAR SOLICITUD DE CREADOR" : "SUBMIT CREATOR APPLICATION"}</span>
                       <ArrowUpRight className="w-4 h-4" />
                     </>
                   )}
@@ -1124,7 +1134,7 @@ export default function BecomeCreatorPage({ initialProfile, userEmail }: { initi
                 <div className="p-4 bg-white/[0.02] border border-white/5 rounded-2xl space-y-2 text-left backdrop-blur-md">
                   <div className="flex items-center gap-2 text-white font-mono text-[10px] font-bold uppercase tracking-wider">
                     <ShieldCheck className="w-3.5 h-3.5 text-[#39FF14]" />
-                    <span>{locale === "es" ? "Garantía de Privacidad y Anonimato" : "Discreet Privacy & Safety Guarantee"}</span>
+                    <span>{locale === "fr" ? "Garantie de Discrétion & Sécurité" : locale === "es" ? "Garantía de Privacidad y Anonimato" : "Discreet Privacy & Safety Guarantee"}</span>
                   </div>
                   
                   <ul className="space-y-1.5 text-[10px] text-[#b9cac9] font-sans">
@@ -1134,7 +1144,7 @@ export default function BecomeCreatorPage({ initialProfile, userEmail }: { initi
                     </li>
                     <li className="flex items-center gap-2">
                       <span className="w-1.5 h-1.5 rounded-full bg-[#00fbfb]" />
-                      <span>{locale === "es" ? "Cifrado Difuminado Facial activo por defecto en feeds públicos." : "Face Blur Encryption active by default on public discovery feeds."}</span>
+                      <span>{locale === "fr" ? "Chiffrement Flou Facial" : locale === "es" ? "Cifrado Difuminado Facial activo por defecto en feeds públicos." : "Face Blur Encryption active by default on public discovery feeds."}</span>
                     </li>
                     <li className="flex items-center gap-2">
                       <span className="w-1.5 h-1.5 rounded-full bg-[#ffabf3]" />
@@ -1154,10 +1164,10 @@ export default function BecomeCreatorPage({ initialProfile, userEmail }: { initi
           
           <div className="text-center space-y-3">
             <span className="text-[10px] font-mono font-bold text-[#ffabf3] bg-[#ffabf3]/5 border border-[#ffabf3]/25 px-3 py-1 rounded-full uppercase tracking-wider">
-              {locale === "es" ? "¿Tienes Dudas?" : "Have Questions?"}
+              {locale === "fr" ? "Des questions ?" : locale === "es" ? "¿Tienes Dudas?" : "Have Questions?"}
             </span>
             <h2 className="font-display text-3xl md:text-5xl font-black text-white tracking-tight">
-              {locale === "es" ? "Preguntas Frecuentes de Campaña de Creadores" : "Creator Campaign FAQ"}
+              {locale === "fr" ? "FAQ de la Campagne Créateurs" : locale === "es" ? "Preguntas Frecuentes de Campaña de Creadores" : "Creator Campaign FAQ"}
             </h2>
           </div>
 
@@ -1185,9 +1195,11 @@ export default function BecomeCreatorPage({ initialProfile, userEmail }: { initi
                 {locale === "es" ? "¿Qué es la oferta del Pack Creador Fundador (90% Comisión + 1 Año IA Gratis)?" : "What is the Founding Creator Pack (90% Revenue Split + 1-Year Free AI)?"}
               </h4>
               <p className="text-xs text-[#b9cac9] leading-relaxed pl-6">
-                {locale === "es"
-                  ? "Para los primeros 500 creadores de nuestra campaña de lanzamiento, ofrecemos el 90% de retención de ingresos netos y acceso total 100% gratuito a nuestro Asistente IA de Operaciones durante todo su primer año en SECCION. Tras el primer año, la tasa estándar de plataforma pasa al 20% (conservas el 80% de por vida) y el asistente IA cuesta solo 69 €/mes opcional."
-                  : "For the first 500 creators joining our launch campaign, we offer a 90% net revenue split and 100% free, complete access to our built-in AI Operations Assistant for their entire first year on SECCION. After Year 1, the standard platform rate transitions to 20% (you keep 80% lifetime) with optional AI assistant at just €69/month."}
+                {locale === "fr"
+    ? " €/mois"
+    : locale === "es"
+    ? "Para los primeros 500 creadores de nuestra campaña de lanzamiento, ofrecemos el 90% de retención de ingresos netos y acceso total 100% gratuito a nuestro Asistente IA de Operaciones durante todo su primer año en SECCION. Tras el primer año, la tasa estándar de plataforma pasa al 20% (conservas el 80% de por vida) y el asistente IA cuesta solo 69 €/mes opcional."
+    : "For the first 500 creators joining our launch campaign, we offer a 90% net revenue split and 100% free, complete access to our built-in AI Operations Assistant for their entire first year on SECCION. After Year 1, the standard platform rate transitions to 20% (you keep 80% lifetime) with optional AI assistant at just €69/month."}
               </p>
             </div>
 
@@ -1195,7 +1207,7 @@ export default function BecomeCreatorPage({ initialProfile, userEmail }: { initi
             <div className="p-5 bg-white/[0.02] border border-white/5 rounded-2xl text-left space-y-2.5">
               <h4 className="text-sm font-bold text-white flex items-center gap-2">
                 <HelpCircle className="w-4 h-4 text-[#00fbfb] shrink-0" />
-                {locale === "es" ? "¿Cómo reemplaza el Asistente IA a una agencia de gestión tradicional?" : "How does the AI Assistant replace a traditional management agency?"}
+                {locale === "fr" ? "Comment l'Assistant IA remplace-t-il une agence de gestion traditionnelle ?" : locale === "es" ? "¿Cómo reemplaza el Asistente IA a una agencia de gestión tradicional?" : "How does the AI Assistant replace a traditional management agency?"}
               </h4>
               <p className="text-xs text-[#b9cac9] leading-relaxed pl-6">
                 {locale === "es"
@@ -1208,7 +1220,7 @@ export default function BecomeCreatorPage({ initialProfile, userEmail }: { initi
             <div className="p-5 bg-white/[0.02] border border-white/5 rounded-2xl text-left space-y-2.5">
               <h4 className="text-sm font-bold text-white flex items-center gap-2">
                 <HelpCircle className="w-4 h-4 text-[#00fbfb] shrink-0" />
-                {locale === "es" ? "¿Cómo funciona el reparto de ingresos (90% Fundadores / 80% Estándar)?" : "How does the revenue split work (90% Founding / 80% Standard)?"}
+                {locale === "fr" ? "Comment fonctionne le partage des revenus (90% Fondateurs / 80% Standard) ?" : locale === "es" ? "¿Cómo funciona el reparto de ingresos (90% Fundadores / 80% Estándar)?" : "How does the revenue split work (90% Founding / 80% Standard)?"}
               </h4>
               <p className="text-xs text-[#b9cac9] leading-relaxed pl-6">
                 {locale === "es"
@@ -1235,12 +1247,14 @@ export default function BecomeCreatorPage({ initialProfile, userEmail }: { initi
             <div className="p-5 bg-white/[0.02] border border-white/5 rounded-2xl text-left space-y-2.5">
               <h4 className="text-sm font-bold text-white flex items-center gap-2">
                 <HelpCircle className="w-4 h-4 text-[#00fbfb] shrink-0" />
-                {locale === "es" ? "¿Cómo protege SECCION mi contenido contra filtraciones?" : "How does SECCION protect my content from leaks?"}
+                {locale === "fr" ? "Comment SECCION protège-t-il mes contenus contre les fuites ?" : locale === "es" ? "¿Cómo protege SECCION mi contenido contra filtraciones?" : "How does SECCION protect my content from leaks?"}
               </h4>
               <p className="text-xs text-[#b9cac9] leading-relaxed pl-6">
-                {locale === "es"
-                  ? "Mantenemos tus creaciones seguras con doble capa de protección. Primero, nuestro Cifrado Difuminado Facial mantiene tu rostro en privado en los feeds públicos, permitiéndote elegir exactamente quién te ve conforme construyes confianza. Segundo, tus fotos y videos compartidos desaparecen de nuestros servidores tan pronto se abren, y bloqueamos automáticamente los intentos de captura de pantalla tanto en iPhone como en Android. Lo que compartes se queda entre tú y tu match."
-                  : "We keep your creations safe with double-layer protection. First, our Face Blur Encryption keeps your face private on public feeds, letting you choose exactly who gets to see you as you build trust. Second, your shared photos and videos disappear from our servers immediately after they're opened, and we automatically stop screenshot attempts on both iPhones and Androids. What you share stays between you and your match."}
+                {locale === "fr"
+    ? "Chiffrement Flou Facial"
+    : locale === "es"
+    ? "Mantenemos tus creaciones seguras con doble capa de protección. Primero, nuestro Cifrado Difuminado Facial mantiene tu rostro en privado en los feeds públicos, permitiéndote elegir exactamente quién te ve conforme construyes confianza. Segundo, tus fotos y videos compartidos desaparecen de nuestros servidores tan pronto se abren, y bloqueamos automáticamente los intentos de captura de pantalla tanto en iPhone como en Android. Lo que compartes se queda entre tú y tu match."
+    : "We keep your creations safe with double-layer protection. First, our Face Blur Encryption keeps your face private on public feeds, letting you choose exactly who gets to see you as you build trust. Second, your shared photos and videos disappear from our servers immediately after they're opened, and we automatically stop screenshot attempts on both iPhones and Androids. What you share stays between you and your match."}
               </p>
             </div>
 
@@ -1248,12 +1262,14 @@ export default function BecomeCreatorPage({ initialProfile, userEmail }: { initi
             <div className="p-5 bg-white/[0.02] border border-white/5 rounded-2xl text-left space-y-2.5">
               <h4 className="text-sm font-bold text-white flex items-center gap-2">
                 <HelpCircle className="w-4 h-4 text-[#00fbfb] shrink-0" />
-                {locale === "es" ? "¿Tengo el control de quién ve mi contenido?" : "Am I in control of who sees my content?"}
+                {locale === "fr" ? "Suis-je maître de qui voit mon contenu ?" : locale === "es" ? "¿Tengo el control de quién ve mi contenido?" : "Am I in control of who sees my content?"}
               </h4>
               <p className="text-xs text-[#b9cac9] leading-relaxed pl-6">
-                {locale === "es"
-                  ? "Por supuesto. Tienes el control total sobre la visibilidad de tu perfil. Puedes bloquear a usuarios específicos, restringir el acceso por ubicación geográfica (países, estados o ciudades), ocultar tu estado en línea y usar un alias de creador para proteger tu identidad personal."
-                  : "Absolutely. You have total control over your profile's visibility. You can block specific users, restrict access by geographic location (countries, states, or cities), hide your online status, and use a creator alias to protect your personal identity."}
+                {locale === "fr"
+    ? "Absolument. Vous avez un contrôle total sur la visibilité de votre profil. Vous pouvez bloquer des utilisateurs spécifiques, restreindre l'accès par zone géographique (pays, régions ou villes), masquer votre statut en ligne et utiliser un pseudonyme de créateur pour protéger votre identité civile."
+    : locale === "es"
+    ? "Por supuesto. Tienes el control total sobre la visibilidad de tu perfil. Puedes bloquear a usuarios específicos, restringir el acceso por ubicación geográfica (países, estados o ciudades), ocultar tu estado en línea y usar un alias de creador para proteger tu identidad personal."
+    : "Absolutely. You have total control over your profile's visibility. You can block specific users, restrict access by geographic location (countries, states, or cities), hide your online status, and use a creator alias to protect your personal identity."}
               </p>
             </div>
 
@@ -1261,12 +1277,14 @@ export default function BecomeCreatorPage({ initialProfile, userEmail }: { initi
             <div className="p-5 bg-white/[0.02] border border-white/5 rounded-2xl text-left space-y-2.5">
               <h4 className="text-sm font-bold text-white flex items-center gap-2">
                 <HelpCircle className="w-4 h-4 text-[#00fbfb] shrink-0" />
-                {locale === "es" ? "¿Tengo que completar una Verificación de Identidad inmediatamente?" : "Do I have to complete an Identity Check immediately?"}
+                {locale === "fr" ? "Dois-je effectuer une vérification d'identité immédiatement ?" : locale === "es" ? "¿Tengo que completar una Verificación de Identidad inmediatamente?" : "Do I have to complete an Identity Check immediately?"}
               </h4>
               <p className="text-xs text-[#b9cac9] leading-relaxed pl-6">
-                {locale === "es"
-                  ? "No. Para hacer el Tour Demo y explorar la plataforma, solo necesitas compartir tu email, usuario de Telegram y número de WhatsApp. Una Verificación de Identidad estricta (documento oficial y prueba de vida) solo se requiere para Creadores cuando están listos para publicar contenido premium, configurar su espacio público y procesar pagos. Los Miembros no necesitan verificación de ID para navegar o hacer match."
-                  : "No. To take the Demo Tour and explore the platform, you only need to share your email, Telegram username, and WhatsApp number. A strict Identity Check (government-issued ID and liveness check) is only required for Creators when they are ready to publish premium content, set up their public space, and process payouts. Members are not required to complete ID checks for standard browsing or matching."}
+                {locale === "fr"
+    ? "Non. Pour visiter la Démo et explorer la plateforme, vous avez seulement besoin de votre e-mail, identifiant Telegram et numéro WhatsApp. Une vérification d'identité stricte (pièce d'identité officielle et test de vivacité) n'est requise que lorsque vous êtes prêt(e) à publier du contenu premium, ouvrir votre studio et recevoir vos paiements. Les membres simples n'ont pas besoin de vérification d'identité pour naviguer ou matcher."
+    : locale === "es"
+    ? "No. Para hacer el Tour Demo y explorar la plataforma, solo necesitas compartir tu email, usuario de Telegram y número de WhatsApp. Una Verificación de Identidad estricta (documento oficial y prueba de vida) solo se requiere para Creadores cuando están listos para publicar contenido premium, configurar su espacio público y procesar pagos. Los Miembros no necesitan verificación de ID para navegar o hacer match."
+    : "No. To take the Demo Tour and explore the platform, you only need to share your email, Telegram username, and WhatsApp number. A strict Identity Check (government-issued ID and liveness check) is only required for Creators when they are ready to publish premium content, set up their public space, and process payouts. Members are not required to complete ID checks for standard browsing or matching."}
               </p>
             </div>
 
@@ -1274,12 +1292,14 @@ export default function BecomeCreatorPage({ initialProfile, userEmail }: { initi
             <div className="p-5 bg-white/[0.02] border border-white/5 rounded-2xl text-left space-y-2.5">
               <h4 className="text-sm font-bold text-white flex items-center gap-2">
                 <HelpCircle className="w-4 h-4 text-[#00fbfb] shrink-0" />
-                {locale === "es" ? "¿Cómo mantiene SECCION una plataforma segura y que cumpla la normativa?" : "How does SECCION keep the platform safe and compliant?"}
+                {locale === "fr" ? "Comment SECCION garantit-il la sécurité et la conformité légale ?" : locale === "es" ? "¿Cómo mantiene SECCION una plataforma segura y que cumpla la normativa?" : "How does SECCION keep the platform safe and compliant?"}
               </h4>
               <p className="text-xs text-[#b9cac9] leading-relaxed pl-6">
-                {locale === "es"
-                  ? "SECCION se construye sobre la seguridad y la protección legal. Cumplimos con las regulaciones de contenido digital, las leyes de seguridad del creador independiente y los estándares de seguridad de contenido para proteger tanto a creadores como a miembros. Brindamos un espacio seguro, profesional y normativo donde puedes construir tu marca con total tranquilidad."
-                  : "SECCION is built on safety and legal protection. We adhere to digital content regulations, independent creator safety laws, and content safety standards to protect creators and members alike. We provide a secure, professional, and compliant space where you can build your brand with peace of mind."}
+                {locale === "fr"
+    ? "SECCION est fondé sur la sécurité juridique et la protection des personnes. Nous appliquons rigoureusement les réglementations sur les contenus numériques, les lois de protection des créateurs indépendants (notamment l'article 18 U.S.C. § 2257 et le RGPD) et les normes de sécurité les plus strictes. Vous bâtissez votre marque dans un écosystème haut de gamme et parfaitement sécurisé."
+    : locale === "es"
+    ? "SECCION se construye sobre la seguridad y la protección legal. Cumplimos con las regulaciones de contenido digital, las leyes de seguridad del creador independiente y los estándares de seguridad de contenido para proteger tanto a creadores como a miembros. Brindamos un espacio seguro, profesional y normativo donde puedes construir tu marca con total tranquilidad."
+    : "SECCION is built on safety and legal protection. We adhere to digital content regulations, independent creator safety laws, and content safety standards to protect creators and members alike. We provide a secure, professional, and compliant space where you can build your brand with peace of mind."}
               </p>
             </div>
 
@@ -1297,7 +1317,7 @@ export default function BecomeCreatorPage({ initialProfile, userEmail }: { initi
           onClick={() => setIsQuickApplyOpen(true)}
           className="flex-1 py-3 px-4 rounded-xl bg-gradient-to-r from-[#00fbfb] to-[#00d2d2] text-black font-mono font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(0,251,251,0.4)] cursor-pointer"
         >
-          <span>{locale === "es" ? "⚡ Aplicar en 30s (90% Ganancias)" : "⚡ Apply in 30s (90% Split)"}</span>
+          <span>{locale === "fr" ? "⚡ Postuler en 30s (90% Nets)" : locale === "es" ? "⚡ Aplicar en 30s (90% Ganancias)" : "⚡ Apply in 30s (90% Split)"}</span>
           <ArrowUpRight className="w-4 h-4" />
         </button>
       </div>
