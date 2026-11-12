@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sparkles, X, Send, Loader2, MessageSquare, Mic, MicOff, Volume2, VolumeX } from 'lucide-react';
+import { Sparkles, X, Send, Loader2, MessageSquare, Mic, MicOff, Volume2, VolumeX, RefreshCw } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { useTranslation } from '@/context/LanguageContext';
@@ -14,6 +14,137 @@ interface Message {
   timestamp: Date;
 }
 
+interface QuestionCategory {
+  starter: string[];
+  payouts: string[];
+  privacy: string[];
+  studio: string[];
+  general: string[];
+}
+
+const QUESTIONS_BANK: Record<'fr' | 'es' | 'en' | 'ar', QuestionCategory> = {
+  fr: {
+    starter: [
+      'Comment activer mon compte Créateur & Studio ?',
+      'Comment fonctionne le modèle à 90 % net ?',
+      'Comment fonctionne la vérification KYC privée en 60s ?',
+    ],
+    payouts: [
+      'Quels sont les moyens de retrait (USDT, virement bancaire) ?',
+      "Y a-t-il des frais cachés ou commissions d'agence ?",
+      "Comment fonctionne l'autofacturation B2B légale ?",
+      'Puis-je retirer mes gains vers un compte au Maroc (RIB) ?',
+    ],
+    privacy: [
+      "Comment activer le blocage Maroc 'MA' en 1 clic ?",
+      "C'est quoi le flou facial progressif et le DRM forensique ?",
+      'Est-ce que mes proches ou collègues peuvent voir mon profil ?',
+      'Comment fonctionne le protocole Zero-Knowledge de DIDIT ?',
+    ],
+    studio: [
+      'Comment fixer les prix des abonnements VIP et des PPV ?',
+      'Comment mon Copilot IA répond-il à ma place 24/7 ?',
+      'Comment lancer un live stream interactif privé ?',
+      "Quels sont les avantages d'un compte Fondateur Certifié ?",
+    ],
+    general: [
+      'Quelle est la différence entre SECCION et OnlyFans ?',
+      'Comment fonctionne le matchmaking IA par affinités ?',
+      'Comment obtenir mes premiers abonnés et commandes privées ?',
+    ],
+  },
+  es: {
+    starter: [
+      '¿Cómo activo mi cuenta de Creador y entro al Studio?',
+      '¿Cómo configuro mis tarifas VIP, PPV y retiros (90%)?',
+      '¿Cómo funciona la verificación KYC privada de 60 segundos?',
+    ],
+    payouts: [
+      '¿Cuáles son los métodos de retiro (USDT Polygon, Binance, banco)?',
+      '¿Hay comisiones ocultas o contratos perpetuos de agencia?',
+      '¿Cómo funciona la autofacturación digital B2B para creadores?',
+      '¿Puedo cobrar en dólares digitales sin retención de impuestos?',
+    ],
+    privacy: [
+      '¿Cómo activo el bloqueo geográfico por país en 1 clic?',
+      '¿Qué es el desenfoque facial progresivo y marcas de agua DRM?',
+      '¿Mis contactos o familiares pueden ver mi cuenta?',
+      '¿Cómo protege DIDIT mi identidad con Zero-Knowledge Proofs?',
+    ],
+    studio: [
+      '¿Cómo fijar los precios de mis pases VIP y mensajes de pago?',
+      '¿Cómo me ayuda el Copilot IA a responder mensajes 24/7?',
+      '¿Cómo iniciar una transmisión en vivo privada con propinas?',
+      '¿Qué ventajas tiene el estatus de Creador Fundador?',
+    ],
+    general: [
+      '¿En qué se diferencia SECCION de OnlyFans o Fansly?',
+      '¿Cómo funciona el matchmaking algorítmico por química?',
+      '¿Cómo conseguir mis primeros patrocinadores y miembros VIP?',
+    ],
+  },
+  en: {
+    starter: [
+      'How do I activate my Creator account and enter Studio?',
+      'How should I price my VIP pass, PPV & set up 90% payouts?',
+      'How does the 60-second private KYC verification work?',
+    ],
+    payouts: [
+      'What payout rails are supported (USDT, USDC, bank wire)?',
+      'Are there any hidden agency cuts or perpetual contracts?',
+      'How does automated B2B self-billing work for creators?',
+      'Can I cash out instantly to crypto wallets or local accounts?',
+    ],
+    privacy: [
+      'How does 1-click domestic geo-blocking work?',
+      'What is progressive face-blur and dynamic canvas DRM?',
+      'Can people in my home city or country discover my profile?',
+      'How does DIDIT Zero-Knowledge proof protect my real ID?',
+    ],
+    studio: [
+      'How should I price my VIP memberships and PPV vault?',
+      'How does my 24/7 AI Copilot handle messages without bot slop?',
+      'How do I host private interactive live broadcasts?',
+      'What are the exclusive perks of the Founding Creator tier?',
+    ],
+    general: [
+      'How does SECCION compare to OnlyFans and Patreon?',
+      'How does the synergy matchmaking engine find genuine fans?',
+      'How do I get my first high-ticket custom content orders?',
+    ],
+  },
+  ar: {
+    starter: [
+      'Kifash n-9ad l-compte dyali w n-dkhol l-Studio?',
+      'Kifash n-stafed men 90% net w n-bloquer l-Maroc?',
+      'Kifash kheddam l-KYC biometrique f 60 seconde?',
+    ],
+    payouts: [
+      'Kifash n-jbed l-flous dyali (USDT, Binance P2P, Paxum)?',
+      'Wach kaynin chi kti6a3at mkhabyin dyal l-agences?',
+      'Kifash n-hawel l-flous direct l-compte CIH / Attijariwafa?',
+      'Wach l-flous kay-woslo b dolardigital bla drayeb?',
+    ],
+    privacy: [
+      "Kifash n-bloqui l-Maghrib 'MA' b clic wahed bach matban l-hta wahed?",
+      'Chno houwa l-flou dyal l-wejh w l-DRM li kay-hmi les photos?',
+      'Wach l-3a2ila wla shabi f l-Maghrib y9dro ychoufouni?',
+      'Kifash Zero-Knowledge KYC kay-hmi la carte nationale dyali?',
+    ],
+    studio: [
+      'Kifash n-7aded taman dyal VIP Pass w les vidéos privés?',
+      'Kifash l-AI Copilot kay-jaweb f blasti 24/7 bla ma n3ya?',
+      'Kifash n-dir live stream interactif m3a les membres?',
+      'Chno homa les avantages dyal Creador Fondateur?',
+    ],
+    general: [
+      'Chno l-fer9 bin SECCION w OnlyFans?',
+      'Kifash l-matchmaking algorithmique kay-jib lia des vrais fans?',
+      'Kifash n-jib awel abonnements VIP f la plateforme?',
+    ],
+  },
+};
+
 export default function SeccionAgentBubble() {
   const pathname = usePathname();
   const { locale, t } = useTranslation();
@@ -23,6 +154,8 @@ export default function SeccionAgentBubble() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [askedQuestions, setAskedQuestions] = useState<string[]>([]);
+  const [suggestionOffset, setSuggestionOffset] = useState<number>(0);
   const [errorText, setErrorText] = useState<string | null>(null);
   const [isListening, setIsListening] = useState(false);
   const [voiceEnabled, setVoiceEnabled] = useState(true);
@@ -262,6 +395,7 @@ export default function SeccionAgentBubble() {
       if (!trimmed) return;
 
       setErrorText(null);
+      setAskedQuestions((prev) => (prev.includes(trimmed) ? prev : [...prev, trimmed]));
       const userMsg: Message = {
         id: `user-${Date.now()}`,
         sender: 'user',
@@ -524,18 +658,53 @@ export default function SeccionAgentBubble() {
     await sendQuestion(text);
   };
 
-  const quickQuestions =
-    locale === 'es'
-      ? [
-          '¿Cómo activo mi cuenta de Creador y entro al Studio?',
-          '¿Cómo configuro mis tarifas VIP, PPV y retiros (90%)?',
-          '¿Cómo funciona la verificación KYC de 60 segundos?',
-        ]
-      : [
-          'How do I activate my Creator account and enter Studio?',
-          'How should I price my VIP pass, PPV & set up 90% payouts?',
-          'How does the 60-second private KYC verification work?',
-        ];
+  // Starter questions for initial welcome state (localized and filtered)
+  const starterQuestions = useMemo(() => {
+    const langData = QUESTIONS_BANK[activeAgentLang] || QUESTIONS_BANK.fr;
+    const remaining = langData.starter.filter((q) => !askedQuestions.includes(q));
+    if (remaining.length > 0) return remaining;
+    return langData.general.filter((q) => !askedQuestions.includes(q)).slice(0, 3);
+  }, [activeAgentLang, askedQuestions]);
+
+  // Context-aware question suggestion algorithm for ongoing conversation
+  const activeSuggestions = useMemo(() => {
+    const langData = QUESTIONS_BANK[activeAgentLang] || QUESTIONS_BANK.fr;
+    const lastUserOrAgentMsg = messages[messages.length - 1]?.text?.toLowerCase() || '';
+
+    // Detect context from conversation
+    let contextualPool = langData.general;
+    if (/\b(payout|retrait|argent|payer|paiement|flous|jbed|dinero|cobro|precio|price|90%|crypto|usdt|rib|banco|bank)\b/i.test(lastUserOrAgentMsg)) {
+      contextualPool = langData.payouts;
+    } else if (/\b(privacy|confidentialité|flou|blur|drm|maroc|bloqu|geo|discret|famille|carte|id|kyc|zkp)\b/i.test(lastUserOrAgentMsg)) {
+      contextualPool = langData.privacy;
+    } else if (/\b(studio|live|stream|copilot|ia|ai|vip|pass|custom|commande|order)\b/i.test(lastUserOrAgentMsg)) {
+      contextualPool = langData.studio;
+    }
+
+    const combined = [
+      ...contextualPool,
+      ...langData.starter,
+      ...langData.general,
+      ...langData.payouts,
+      ...langData.privacy,
+      ...langData.studio,
+    ];
+
+    // Filter out already asked questions so users always see fresh ones
+    const unasked = Array.from(new Set(combined)).filter((q) => !askedQuestions.includes(q));
+    const poolToUse = unasked.length >= 2 ? unasked : Array.from(new Set(combined));
+
+    const startIdx = suggestionOffset % poolToUse.length;
+    const picked = poolToUse.slice(startIdx, startIdx + 3);
+    if (picked.length < 3 && poolToUse.length >= 3) {
+      return [...picked, ...poolToUse.slice(0, 3 - picked.length)];
+    }
+    return picked;
+  }, [activeAgentLang, messages, askedQuestions, suggestionOffset]);
+
+  const cycleSuggestions = () => {
+    setSuggestionOffset((prev) => prev + 2);
+  };
 
   return (
     <div className="fixed bottom-[calc(4.75rem+env(safe-area-inset-bottom,0px))] right-4 md:bottom-6 md:right-6 z-[9990] font-sans">
@@ -620,19 +789,36 @@ export default function SeccionAgentBubble() {
                 </div>
               ))}
 
-              {messages.length <= 1 && !isTyping && (
+              {messages.length <= 1 && !isTyping && starterQuestions.length > 0 && (
                 <div className="pt-2 space-y-1.5">
-                  <span className="text-[9px] font-mono uppercase tracking-wider text-white/40 block px-1">
-                    {locale === 'es' ? 'Preguntas frecuentes:' : 'Quick questions:'}
-                  </span>
-                  {quickQuestions.map((q, idx) => (
+                  <div className="flex items-center justify-between px-1">
+                    <span className="text-[9px] font-mono uppercase tracking-wider text-white/40 block">
+                      {activeAgentLang === 'fr'
+                        ? 'Questions fréquentes :'
+                        : activeAgentLang === 'es'
+                        ? 'Preguntas frecuentes:'
+                        : activeAgentLang === 'ar'
+                        ? 'الأسئلة الشائعة:'
+                        : 'Quick questions:'}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={cycleSuggestions}
+                      className="text-[9px] font-mono text-[#00fbfb]/70 hover:text-[#00fbfb] flex items-center gap-1 transition cursor-pointer"
+                    >
+                      <RefreshCw className="w-2.5 h-2.5" />
+                      <span>{activeAgentLang === 'fr' ? 'Changer' : activeAgentLang === 'es' ? 'Cambiar' : 'Shuffle'}</span>
+                    </button>
+                  </div>
+                  {starterQuestions.map((q, idx) => (
                     <button
                       key={idx}
                       type="button"
                       onClick={() => sendQuestion(q)}
-                      className="w-full text-left px-3 py-2 rounded-xl bg-white/[0.04] hover:bg-[#00fbfb]/15 border border-white/10 hover:border-[#00fbfb]/40 text-[11px] text-white/80 hover:text-white transition cursor-pointer"
+                      className="w-full text-left px-3 py-2 rounded-xl bg-white/[0.04] hover:bg-[#00fbfb]/15 border border-white/10 hover:border-[#00fbfb]/40 text-[11px] text-white/80 hover:text-white transition cursor-pointer flex items-center justify-between group"
                     >
-                      💬 {q}
+                      <span>💬 {q}</span>
+                      <span className="text-white/20 group-hover:text-[#00fbfb] transition text-[10px]">↵</span>
                     </button>
                   ))}
                 </div>
@@ -655,6 +841,45 @@ export default function SeccionAgentBubble() {
 
               <div ref={messagesEndRef} />
             </div>
+
+            {/* Dynamic Persistent Suggestion Bar (Available throughout the entire conversation) */}
+            {!isTyping && activeSuggestions.length > 0 && (
+              <div className="px-3 py-2 border-t border-white/10 bg-white/[0.03] backdrop-blur-md shrink-0 flex items-center gap-1.5 overflow-x-auto scrollbar-none">
+                <span className="text-[9px] font-mono font-bold uppercase tracking-wider text-[#00fbfb] shrink-0 flex items-center gap-1 pl-1">
+                  <Sparkles className="w-2.5 h-2.5 text-[#00fbfb]" />
+                  {activeAgentLang === 'fr'
+                    ? 'Suggestions :'
+                    : activeAgentLang === 'es'
+                    ? 'Sugerencias:'
+                    : activeAgentLang === 'ar'
+                    ? 'اقتراحات:'
+                    : 'Suggestions:'}
+                </span>
+
+                <div className="flex items-center gap-1.5 flex-nowrap">
+                  {activeSuggestions.map((q, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => sendQuestion(q)}
+                      className="shrink-0 px-2.5 py-1 rounded-full bg-white/[0.05] hover:bg-[#00fbfb]/20 border border-white/10 hover:border-[#00fbfb]/50 text-[10.5px] text-white/90 hover:text-white transition whitespace-nowrap cursor-pointer flex items-center gap-1.5 shadow-sm"
+                    >
+                      <span className="text-[10px] text-[#00fbfb]">💬</span>
+                      <span>{q}</span>
+                    </button>
+                  ))}
+
+                  <button
+                    type="button"
+                    onClick={cycleSuggestions}
+                    className="shrink-0 w-6 h-6 rounded-full bg-white/[0.05] hover:bg-white/15 border border-white/10 flex items-center justify-center text-white/50 hover:text-[#00fbfb] transition cursor-pointer"
+                    title={activeAgentLang === 'fr' ? 'Plus de questions' : activeAgentLang === 'es' ? 'Más preguntas' : 'More questions'}
+                  >
+                    <RefreshCw className="w-2.5 h-2.5" />
+                  </button>
+                </div>
+              </div>
+            )}
 
             {/* Input Form with Voice Dictation & Audio Readout */}
             <form onSubmit={handleSend} className="p-3 border-t border-white/10 bg-black/40 shrink-0">
