@@ -16,7 +16,7 @@ export const metadata: Metadata = {
     "what is a warm paywall",
     "OnlyFans alternative 90% payout",
     "creator economy unit economics",
-    "AI dating chemistry meter",
+    "AI matchmaking chemistry meter",
     "creator tax and legal tools"
   ],
   alternates: {

@@ -352,7 +352,7 @@ export default function BecomeCreatorPage({ initialProfile, userEmail }: { initi
                     </div>
                     <div className="p-3 bg-white/[0.04] border border-white/5 rounded-2xl flex flex-row justify-between items-center gap-2">
                       <span className="text-[10px] sm:text-xs text-white/70 font-medium shrink-0">
-                        {locale === "fr" ? "Chiffrement Flou Facial" : locale === "fr" ? "Chiffrement Flou Facial" : locale === "es" ? "Cifrado Difuminado Facial" : "Face Blur Encryption"}
+                        {locale === "fr" ? "Chiffrement Face Blur" : locale === "es" ? "Cifrado Difuminado Facial" : "Face Blur Encryption"}
                       </span>
                       <span className="text-[8px] sm:text-[9px] font-mono text-[#00fbfb] bg-[#00fbfb]/10 border border-[#00fbfb]/30 px-2.5 py-0.5 rounded-full uppercase shrink-0 font-bold">
                         {locale === "fr" ? "Actif" : locale === "es" ? "Activo" : "Active"}
@@ -947,7 +947,7 @@ export default function BecomeCreatorPage({ initialProfile, userEmail }: { initi
                         {locale === "fr" ? "WhatsApp / Téléphone" : locale === "es" ? "WhatsApp / Teléfono" : "WhatsApp / Phone"}
                       </label>
                       <span className="text-[9px] text-[#00fbfb]/70 font-mono">
-                        {locale === "fr" ? "(Optionnel)" : locale === "fr" ? "(Optionnel)" : locale === "es" ? "(Opcional)" : "(Optional)"}
+                        {locale === "fr" ? "(Optionnel)" : locale === "es" ? "(Opcional)" : "(Optional)"}
                       </span>
                     </div>
                     <input

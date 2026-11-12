@@ -760,7 +760,7 @@ export default function VibeRadarPage() {
               {locale === "fr" ? "Découvrez Votre Coach IA" : locale === "es" ? "Conoce a Tu Coach IA" : "Meet Your AI Coach"}
             </span>
             <h2 className="font-display text-3xl md:text-5xl font-black text-white tracking-tight">
-              {locale === "fr" ? "Le Dating Coach & Assistant IA" : locale === "es" ? "El Dating Coach & Asistente IA" : "The AI Dating Coach & Assistant"}
+              {locale === "fr" ? "Le Coach Connexion & Assistant IA" : locale === "es" ? "El Coach de Conexión & Asistente IA" : "The AI Connection Coach & Assistant"}
             </h2>
             <p className="text-xs sm:text-sm text-[#b9cac9] max-w-xl mx-auto leading-relaxed">
               {locale === "fr" ? "Sans phrases d'accroche génériques ni réponses robotiques. Notre coach relationnel intégré agit discrètement dans vos discussions pour fluidifier vos échanges et concrétiser vos affinités." : locale === "es" ? "Sin fórmulas de ligue genéricas ni frases robóticas. Nuestro coach de relaciones integrado opera discretamente en tus chats para optimizar la fluidez de conversación y ayudarte a establecer conexiones." : "No generic pick-up formulas or robotic lines. Our built-in relationship coach operates silently in your chats to optimize conversation flow and help establish connections."}
