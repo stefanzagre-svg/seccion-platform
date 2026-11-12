@@ -120,14 +120,14 @@ type InterestKey =
   | "aitech";
 
 const PORTRAITS = {
-  liam: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=400&q=80",
-  elena: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&crop=faces&w=400&h=500&q=80",
-  marco: "https://images.unsplash.com/photo-1577219491135-ce391730fb2c?w=400&q=80",
-  sofia: "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=500&q=80",
-  kai: "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=400&q=80",
-  valeria: "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=500&q=80",
-  david: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&q=80",
-  sarah: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&q=80",
+  liam: "/assets/landing/liam.jpg",
+  elena: "/assets/landing/elena.jpg",
+  marco: "/assets/landing/marco.jpg",
+  sofia: "/assets/landing/sofia.jpg",
+  kai: "/assets/landing/kai.jpg",
+  valeria: "/assets/landing/valeria.jpg",
+  david: "/assets/landing/david.jpg",
+  sarah: "/assets/landing/sarah.jpg",
 };
 
 interface ConnectPreviewData {
@@ -505,7 +505,7 @@ export default function LandingPageHook({
                     selectedInterest === "education" ? "romance" : "education"
                   )
                 }
-                className="relative col-span-1 h-40 sm:h-48 lg:h-52 rounded-2xl overflow-hidden border border-[#00fbfb] shadow-[0_8px_24px_rgba(0,251,251,0.18)] cursor-pointer group transition-transform hover:-translate-y-0.5"
+                className="relative col-span-1 h-[146px] sm:h-[170px] rounded-2xl overflow-hidden border border-[#00fbfb] shadow-[0_8px_24px_rgba(0,251,251,0.18)] cursor-pointer group transition-transform hover:-translate-y-0.5"
               >
                 <div className="w-full h-full grid grid-cols-2">
                   <img
@@ -519,12 +519,12 @@ export default function LandingPageHook({
                     className="w-full h-full object-cover object-[center_18%]"
                   />
                 </div>
-                <div className="absolute inset-0 bg-gradient-to-b from-black/25 via-transparent to-[#05050c]/90 p-2 sm:p-2.5 flex flex-col justify-between">
+                <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-[#05050c]/95 p-2 sm:p-2.5 flex flex-col justify-between">
                   <span className="self-start text-[8px] sm:text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-[#00fbfb]/25 text-[#00fbfb] border border-[#00fbfb]">
                     {t("landing.reelConnectTechChip", "Connect · Tech")}
                   </span>
                   <div className="text-left">
-                    <div className="text-[11px] sm:text-xs font-black text-white leading-tight mb-1 drop-shadow-[0_2px_6px_rgba(0,0,0,0.95)]">
+                    <div className="text-[10.5px] sm:text-[11.5px] font-black text-white leading-tight mb-1 drop-shadow-[0_2px_6px_rgba(0,0,0,0.95)]">
                       {activeConnect.pairTitle}
                     </div>
                     <div className="flex items-center justify-between gap-1">
@@ -542,7 +542,7 @@ export default function LandingPageHook({
               {/* Card 2: Connect #2 (Male Fitness Coach + Female Member Interested in Fitness — Closely Linked in One Card) */}
               <div
                 onClick={() => setSelectedInterest("fitness")}
-                className="relative col-span-1 h-40 sm:h-48 lg:h-52 rounded-2xl overflow-hidden border border-emerald-400/60 shadow-[0_8px_20px_rgba(16,185,129,0.14)] cursor-pointer group transition-transform hover:-translate-y-0.5"
+                className="relative col-span-1 h-[146px] sm:h-[170px] rounded-2xl overflow-hidden border border-emerald-400/60 shadow-[0_8px_20px_rgba(16,185,129,0.14)] cursor-pointer group transition-transform hover:-translate-y-0.5"
               >
                 <div className="w-full h-full grid grid-cols-2">
                   <img
@@ -556,12 +556,12 @@ export default function LandingPageHook({
                     className="w-full h-full object-cover object-[center_18%]"
                   />
                 </div>
-                <div className="absolute inset-0 bg-gradient-to-b from-black/25 via-transparent to-[#05050c]/90 p-2 sm:p-2.5 flex flex-col justify-between">
+                <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-[#05050c]/95 p-2 sm:p-2.5 flex flex-col justify-between">
                   <span className="self-start text-[8px] sm:text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/25 text-emerald-300 border border-emerald-400">
                     {t("landing.reelConnectFitnessChip", "Connect · Fitness")}
                   </span>
                   <div className="text-left">
-                    <div className="text-[11px] sm:text-xs font-black text-white leading-tight mb-1 drop-shadow-[0_2px_6px_rgba(0,0,0,0.95)]">
+                    <div className="text-[10.5px] sm:text-[11.5px] font-black text-white leading-tight mb-1 drop-shadow-[0_2px_6px_rgba(0,0,0,0.95)]">
                       Liam & Sarah
                     </div>
                     <div className="flex items-center justify-between gap-1">
@@ -579,22 +579,22 @@ export default function LandingPageHook({
               {/* Card 3: Stream (Single Live Host Portrait Adjusted for Desktop & Mobile) */}
               <Link
                 href="/now-streaming"
-                className="relative col-span-1 h-40 sm:h-48 lg:h-52 rounded-2xl overflow-hidden border border-white/15 hover:border-[#00fbfb] shadow-[0_8px_20px_rgba(239,68,68,0.14)] cursor-pointer group transition-all hover:-translate-y-0.5 block"
+                className="relative col-span-1 h-[146px] sm:h-[170px] rounded-2xl overflow-hidden border border-white/15 hover:border-[#00fbfb] shadow-[0_8px_20px_rgba(239,68,68,0.14)] cursor-pointer group transition-all hover:-translate-y-0.5 block"
               >
                 <img
                   src={PORTRAITS.sofia}
                   alt="Sofia Live Stream"
-                  className="w-full h-full object-cover object-[center_16%] sm:object-[62%_16%]"
+                  className="w-full h-full object-cover object-[center_18%]"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#05050c]/95 via-transparent to-black/30 p-2 sm:p-2.5 flex flex-col justify-between">
+                <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-[#05050c]/95 p-2 sm:p-2.5 flex flex-col justify-between">
                   <span className="self-start text-[8px] sm:text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-red-500/90 text-white shadow-[0_0_10px_rgba(239,68,68,0.5)]">
                     {t("landing.reelStreamChip", "● Stream")}
                   </span>
                   <div className="text-left">
-                    <div className="text-[11px] sm:text-xs font-black text-white leading-tight drop-shadow-[0_2px_6px_rgba(0,0,0,0.95)]">
+                    <div className="text-[10.5px] sm:text-[11.5px] font-black text-white leading-tight drop-shadow-[0_2px_6px_rgba(0,0,0,0.95)]">
                       {t("landing.reelStreamTitle", "Sofia Live")}
                     </div>
-                    <div className="text-[8.5px] sm:text-[10px] text-slate-200 leading-snug mt-0.5 font-semibold drop-shadow-[0_2px_4px_rgba(0,0,0,0.95)]">
+                    <div className="text-[8.5px] sm:text-[9px] text-slate-200 leading-snug mt-0.5 font-semibold drop-shadow-[0_2px_4px_rgba(0,0,0,0.95)]">
                       {t(
                         "landing.reelStreamSub",
                         "🌐 75+ Lang Voice AI · Interactive Rooms"
@@ -608,24 +608,24 @@ export default function LandingPageHook({
               <div
                 onClick={() => setStudioBlurred((prev) => !prev)}
                 title="Tap to preview SECCION Smart Face-Blur"
-                className="relative col-span-1 h-40 sm:h-48 lg:h-52 rounded-2xl overflow-hidden border border-white/15 hover:border-[#ffabf3] shadow-[0_8px_20px_rgba(255,171,243,0.14)] cursor-pointer group transition-all hover:-translate-y-0.5"
+                className="relative col-span-1 h-[146px] sm:h-[170px] rounded-2xl overflow-hidden border border-white/15 hover:border-[#ffabf3] shadow-[0_8px_20px_rgba(255,171,243,0.14)] cursor-pointer group transition-all hover:-translate-y-0.5"
               >
                 <img
                   src={PORTRAITS.valeria}
                   alt="Creator Studio"
-                  className={`w-full h-full object-cover object-[center_14%] sm:object-[center_12%] transition-all duration-300 ${
+                  className={`w-full h-full object-cover object-[center_18%] transition-all duration-300 ${
                     studioBlurred ? "blur-md scale-105" : ""
                   }`}
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#05050c]/95 via-transparent to-black/30 p-2 sm:p-2.5 flex flex-col justify-between">
+                <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-[#05050c]/95 p-2 sm:p-2.5 flex flex-col justify-between">
                   <span className="self-start text-[8px] sm:text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-[#ffabf3]/25 text-[#ffabf3] border border-[#ffabf3]">
                     {t("landing.reelStudioChip", "Studio")}
                   </span>
                   <div className="text-left">
-                    <div className="text-[11px] sm:text-xs font-black text-white leading-tight drop-shadow-[0_2px_6px_rgba(0,0,0,0.95)]">
+                    <div className="text-[10.5px] sm:text-[11.5px] font-black text-white leading-tight drop-shadow-[0_2px_6px_rgba(0,0,0,0.95)]">
                       {t("landing.reelStudioTitle", "Creator Studio")}
                     </div>
-                    <div className="text-[8.5px] sm:text-[10px] text-slate-200 leading-snug mt-0.5 font-semibold drop-shadow-[0_2px_4px_rgba(0,0,0,0.95)]">
+                    <div className="text-[8.5px] sm:text-[9px] text-slate-200 leading-snug mt-0.5 font-semibold drop-shadow-[0_2px_4px_rgba(0,0,0,0.95)]">
                       {t(
                         "landing.reelStudioSub",
                         "🛡️ Face-Blur Privacy · Custom Skill Orders"

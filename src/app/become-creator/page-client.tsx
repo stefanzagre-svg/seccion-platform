@@ -35,6 +35,8 @@ import CreatorQuickApplyModal from "@/components/creator/CreatorQuickApplyModal"
 
 const CITIES = [
   { value: "global_other", label: "🌍 Global / Worldwide (Any City or Country)", labelEs: "🌍 Global / Internacional (Cualquier Ciudad o País)" },
+  { value: "marrakech", label: "🇲🇦 Marrakech (Morocco)", labelEs: "🇲🇦 Marrakech (Marruecos)" },
+  { value: "casablanca", label: "🇲🇦 Casablanca / Rabat (Morocco)", labelEs: "🇲🇦 Casablanca / Rabat (Marruecos)" },
   { value: "medellin", label: "🇨🇴 Medellín (Soft Launch Hub)", labelEs: "🇨🇴 Medellín (Hub de Lanzamiento)" },
   { value: "bogota", label: "🇨🇴 Bogotá", labelEs: "🇨🇴 Bogotá" },
   { value: "cali", label: "🇨🇴 Cali", labelEs: "🇨🇴 Cali" },

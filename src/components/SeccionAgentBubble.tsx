@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sparkles, X, Send, Loader2, MessageSquare } from 'lucide-react';
+import { Sparkles, X, Send, Loader2, MessageSquare, Mic, MicOff, Volume2, VolumeX } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { useTranslation } from '@/context/LanguageContext';
@@ -24,8 +24,81 @@ export default function SeccionAgentBubble() {
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [errorText, setErrorText] = useState<string | null>(null);
+  const [isListening, setIsListening] = useState(false);
+  const [voiceEnabled, setVoiceEnabled] = useState(true);
+  const [isSpeaking, setIsSpeaking] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const recognitionRef = useRef<any>(null);
+
+  // Play text-to-speech voice response
+  const speakText = useCallback(
+    (textToSpeak: string) => {
+      if (typeof window === 'undefined' || !('speechSynthesis' in window) || !voiceEnabled) {
+        return;
+      }
+      try {
+        window.speechSynthesis.cancel();
+        // Crucial pronunciation filter: SECCION is spelled SECCION in text, but phonetically pronounced "Session"
+        // Replace SECCION/Seccion with Session in spoken audio so speech synthesis never says "Section"
+        const phoneticText = textToSpeak.replace(/\bSECCION\b/gi, 'Session');
+        const cleanText = phoneticText.replace(/[#*_`]/g, '').slice(0, 300);
+        const utterance = new SpeechSynthesisUtterance(cleanText);
+
+        const searchParams = new URLSearchParams(window.location.search);
+        const langParam = searchParams.get('lang')?.toLowerCase();
+        const isMorocco = searchParams.get('ref') === 'morocco' || searchParams.get('country') === 'ma';
+
+        if (isMorocco && (langParam === 'darija' || langParam === 'ar')) {
+          utterance.lang = 'ar-MA';
+        } else if (isMorocco || locale === 'fr' || langParam === 'fr') {
+          utterance.lang = 'fr-FR';
+        } else if (locale === 'es') {
+          utterance.lang = 'es-ES';
+        } else {
+          utterance.lang = 'en-US';
+        }
+
+        // Configure Steve's voice strictly as a warm, authoritative MALE voice
+        utterance.pitch = 0.9; // Lower pitch for clear masculine timbre
+        utterance.rate = 1.0;
+
+        // Select a male voice from the browser's available voice roster
+        const voices = window.speechSynthesis.getVoices();
+        if (voices.length > 0) {
+          const maleVoice = voices.find((v) => {
+            const name = v.name.toLowerCase();
+            const langMatches = v.lang.startsWith(utterance.lang.slice(0, 2));
+            const isMaleKeyword =
+              name.includes('male') ||
+              name.includes('david') ||
+              name.includes('george') ||
+              name.includes('thomas') ||
+              name.includes('antoine') ||
+              name.includes('paul') ||
+              name.includes('nicolas') ||
+              name.includes('tarik') ||
+              name.includes('jamal') ||
+              name.includes('guy') ||
+              name.includes('henri');
+            return langMatches && isMaleKeyword;
+          }) || voices.find((v) => v.lang.startsWith(utterance.lang.slice(0, 2)));
+
+          if (maleVoice) {
+            utterance.voice = maleVoice;
+          }
+        }
+        utterance.onstart = () => setIsSpeaking(true);
+        utterance.onend = () => setIsSpeaking(false);
+        utterance.onerror = () => setIsSpeaking(false);
+
+        window.speechSynthesis.speak(utterance);
+      } catch (e) {
+        console.error('Speech synthesis error:', e);
+      }
+    },
+    [voiceEnabled, locale]
+  );
 
   const sendQuestion = useCallback(
     async (questionText: string) => {
@@ -54,13 +127,15 @@ export default function SeccionAgentBubble() {
           throw new Error(data.error || 'Connection error. Please try again.');
         }
 
+        const replyText = data.reply || data.response || t('agent.fallback');
         const agentMsg: Message = {
           id: `agent-${Date.now()}`,
           sender: 'agent',
-          text: data.reply || data.response || t('agent.fallback'),
+          text: replyText,
           timestamp: new Date(),
         };
         setMessages((prev) => [...prev, agentMsg]);
+        speakText(replyText);
       } catch (err: any) {
         console.error(err);
         setErrorText(err.message || 'Connecting error. Please try again.');
@@ -68,8 +143,82 @@ export default function SeccionAgentBubble() {
         setIsTyping(false);
       }
     },
-    [locale, t]
+    [locale, t, speakText]
   );
+
+  // Toggle Voice Dictation (Microphone input)
+  const toggleSpeechRecognition = useCallback(() => {
+    if (typeof window === 'undefined') return;
+
+    const SpeechRecognition =
+      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+
+    if (!SpeechRecognition) {
+      setErrorText('Voice input is not supported in this browser. Please type your question.');
+      return;
+    }
+
+    if (isListening) {
+      if (recognitionRef.current) {
+        recognitionRef.current.stop();
+      }
+      setIsListening(false);
+      return;
+    }
+
+    try {
+      const recognition = new SpeechRecognition();
+      recognition.continuous = false;
+      recognition.interimResults = false;
+
+      const searchParams = new URLSearchParams(window.location.search);
+      const langParam = searchParams.get('lang')?.toLowerCase();
+      const isMorocco = searchParams.get('ref') === 'morocco' || searchParams.get('country') === 'ma';
+
+      if (isMorocco && (langParam === 'darija' || langParam === 'ar')) {
+        recognition.lang = 'ar-MA';
+      } else if (isMorocco || locale === 'fr' || langParam === 'fr') {
+        recognition.lang = 'fr-FR';
+      } else if (locale === 'es') {
+        recognition.lang = 'es-ES';
+      } else {
+        recognition.lang = 'en-US';
+      }
+
+      recognition.onstart = () => {
+        setIsListening(true);
+        setErrorText(null);
+      };
+
+      recognition.onresult = (event: any) => {
+        const transcript = event.results[0][0].transcript;
+        if (transcript) {
+          setInput(transcript);
+          setIsListening(false);
+          sendQuestion(transcript);
+        }
+      };
+
+      recognition.onerror = (event: any) => {
+        console.error('Speech recognition error:', event);
+        setIsListening(false);
+        if (event.error !== 'no-speech') {
+          setErrorText('Microphone permission or network error. Please try again or type.');
+        }
+      };
+
+      recognition.onend = () => {
+        setIsListening(false);
+      };
+
+      recognitionRef.current = recognition;
+      recognition.start();
+    } catch (err: any) {
+      console.error(err);
+      setIsListening(false);
+      setErrorText('Could not access microphone.');
+    }
+  }, [isListening, locale, sendQuestion]);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -319,16 +468,52 @@ export default function SeccionAgentBubble() {
               <div ref={messagesEndRef} />
             </div>
 
-            {/* Input Form */}
+            {/* Input Form with Voice Dictation & Audio Readout */}
             <form onSubmit={handleSend} className="p-3 border-t border-white/10 bg-black/40 shrink-0">
               <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={toggleSpeechRecognition}
+                  className={`w-9 h-9 rounded-xl flex items-center justify-center transition border shrink-0 cursor-pointer ${
+                    isListening
+                      ? 'bg-rose-500/20 border-rose-500 text-rose-400 animate-pulse'
+                      : 'bg-white/[0.04] border-white/10 text-white/70 hover:text-[#00fbfb] hover:border-[#00fbfb]/40'
+                  }`}
+                  aria-label="Speak to Steve (Voice Dictation)"
+                  title={isListening ? "Listening... (click to stop)" : "Speak to Steve"}
+                >
+                  {isListening ? <MicOff className="w-4 h-4 text-rose-400" /> : <Mic className="w-4 h-4" />}
+                </button>
+
                 <input
                   type="text"
-                  placeholder={t('agent.placeholder')}
+                  placeholder={isListening ? "Listening... speak now" : t('agent.placeholder')}
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
-                  className="flex-1 bg-white/[0.04] border border-white/10 rounded-xl py-2 px-4 outline-none focus:border-[#00fbfb]/50 focus:bg-white/[0.08] transition text-xs text-white placeholder-white/30"
+                  className="flex-1 bg-white/[0.04] border border-white/10 rounded-xl py-2 px-3 outline-none focus:border-[#00fbfb]/50 focus:bg-white/[0.08] transition text-xs text-white placeholder-white/30"
                 />
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (isSpeaking) {
+                      window.speechSynthesis?.cancel();
+                      setIsSpeaking(false);
+                    } else {
+                      setVoiceEnabled(!voiceEnabled);
+                    }
+                  }}
+                  className={`w-8 h-8 rounded-xl flex items-center justify-center transition shrink-0 cursor-pointer ${
+                    voiceEnabled
+                      ? 'text-[#00fbfb] hover:bg-[#00fbfb]/10'
+                      : 'text-white/30 hover:text-white/60'
+                  }`}
+                  aria-label="Toggle voice output"
+                  title={voiceEnabled ? "Voice response enabled (Click to mute)" : "Voice response muted"}
+                >
+                  {voiceEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
+                </button>
+
                 <button
                   type="submit"
                   disabled={isTyping || !input.trim()}
