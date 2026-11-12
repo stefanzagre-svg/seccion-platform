@@ -824,7 +824,9 @@ export default function BecomeCreatorPage({ initialProfile, userEmail }: { initi
                     <div className="grid grid-cols-2 gap-2 pt-1">
                       <a
                         href={`https://wa.me/34662907153?text=${encodeURIComponent(
-                          locale === "es"
+                          locale === "fr"
+                            ? `Bonjour l'équipe SECCION ! Je viens d'envoyer ma candidature créateur : ${formData.fullName} (${formData.email}). Pouvons-nous examiner mon profil pour activer mon Pack Créateur Fondateur à 90 % ?`
+                            : locale === "es"
                             ? `¡Hola equipo SECCION! Acabo de enviar mi solicitud como creador/a: ${formData.fullName} (${formData.email}). ¿Podemos revisar mi perfil para activar mi Pack 90% Creador Fundador?`
                             : `Hi SECCION Team! I just submitted my creator application: ${formData.fullName} (${formData.email}). Can we fast-track my approval for the 90% Founding Creator Pack?`
                         )}`}
@@ -1026,7 +1028,9 @@ export default function BecomeCreatorPage({ initialProfile, userEmail }: { initi
                   )}
 
                   <p className="text-[10px] text-white/50 leading-relaxed font-mono pt-1">
-                    {locale === "es"
+                    {locale === "fr"
+                      ? "💡 Vous pouvez diffuser en direct et monétiser avec des membres du monde entier, quel que soit votre pays. Votre localisation nous aide à prioriser les radars de fans locaux."
+                      : locale === "es"
                       ? "💡 Puedes transmitir en vivo y monetizar con miembros de todo el mundo sin importar tu país. Tu ubicación nos ayuda a activar los radares locales de fans."
                       : "💡 You can broadcast live and monetize with members worldwide regardless of your country. Your location helps us prioritize local fan radars."}
                   </p>
@@ -1182,7 +1186,9 @@ export default function BecomeCreatorPage({ initialProfile, userEmail }: { initi
                   : "Can I join as a Creator if I am not located in Medellín or a pre-launch city?"}
               </h4>
               <p className="text-xs text-[#b9cac9] leading-relaxed pl-6">
-                {locale === "es"
+                {locale === "fr"
+                  ? "Oui, absolument ! Alors que les fonctionnalités de rencontres en personne se déploient ville par ville, les diffusions en direct, les déblocages digitaux premium, les espaces VIP, les pourboires directs et les outils d'Opérations IA sont actifs à 100 % dans le monde entier dès le Jour 1. Les créateurs de n'importe quel pays peuvent s'inscrire aujourd'hui, sécuriser leur rétention nette de 90 % en tant que Créateur Fondateur et monétiser une audience mondiale."
+                  : locale === "es"
                   ? "¡Sí, por supuesto! Mientras que las funciones de citas presenciales se despliegan ciudad por ciudad, las transmisiones en vivo, el contenido premium, los espacios VIP, las propinas y el Asistente IA están 100% activos a nivel mundial desde el Día 1. Creadores de cualquier país pueden registrarse hoy, asegurar su 90% de comisión neta de Creador Fundador y monetizar una audiencia global."
                   : "Yes, absolutely! While in-person dating cohorts are expanding city by city, all Live Streaming, premium digital unlocks, VIP workspaces, direct tips, and AI Operations tools are 100% active worldwide from Day 1. Creators from any country can join today, secure the 90% Founding Creator revenue split, and monetize a global audience."}
               </p>
@@ -1237,7 +1243,9 @@ export default function BecomeCreatorPage({ initialProfile, userEmail }: { initi
                 {locale === "fr" ? "Que sont les \"Créateurs Sponsorisés\" et comment fonctionne le matchmaking ?" : locale === "es" ? "¿Qué son los \"Creadores Patrocinados\" y cómo funciona el matchmaking?" : "What are \"Sponsored Creators\" and how does matchmaking work?"}
               </h4>
               <p className="text-xs text-[#b9cac9] leading-relaxed pl-6">
-                {locale === "es"
+                {locale === "fr"
+                  ? "Au lieu de créer une page publique et de vendre à des inconnus, SECCION mise sur des connexions de qualité. Les membres matchent avec vous selon vos centres d'intérêt partagés et votre compatibilité de vibe. Une fois le match établi, ils peuvent rejoindre votre cercle de Créateurs Sponsorisés pour débloquer votre espace premium. Ce processus de matching tisse des liens de haute confiance, fidélisant des fans réguliers et assurant des revenus stables."
+                  : locale === "es"
                   ? "En lugar de tener una página pública y vender a desconocidos, SECCION se enfoca en conexiones de calidad. Los miembros hacen match contigo según intereses comunes y compatibilidad de vibe. Una vez hecho el match, pueden unirse a tu círculo de Creadores Patrocinados para desbloquear tu espacio premium. Este proceso de matching construye relaciones de alta confianza, generando fans felices a largo plazo y unos ingresos estables."
                   : "Instead of setting up a public page and selling to strangers, SECCION focuses on quality connections. Members match with you based on shared interests and vibe compatibility. Once a match is made, they can join your Sponsored Creators circle to unlock your premium space. This matching process builds high-trust relationships, resulting in happy, long-term fans and a steady income."}
               </p>
