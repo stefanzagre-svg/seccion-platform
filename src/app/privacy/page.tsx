@@ -3,21 +3,22 @@ import { cookies } from "next/headers";
 import { SupportedLocale } from "@/context/LanguageContext";
 import en from "@/locales/en.json";
 import es from "@/locales/es.json";
+import fr from "@/locales/fr.json";
 import ClientPage from "./page-client";
 
 export async function generateMetadata(): Promise<Metadata> {
   const cookieStore = await cookies();
   const savedLocale = (cookieStore.get("seccion_user_locale")?.value || "en") as SupportedLocale;
-  const dict = savedLocale === "es" ? es : en;
+  const dict = savedLocale === "fr" ? fr : savedLocale === "es" ? es : en;
 
   return {
-    title: savedLocale === "es" ? "Privacidad | SECCION" : "Privacy Policy | SECCION",
+    title: savedLocale === "fr" ? "Politique de Confidentialité | SECCION" : savedLocale === "es" ? "Privacidad | SECCION" : "Privacy Policy | SECCION",
     description: dict.metadata.description,
     alternates: {
       canonical: "https://seccion.ai/privacy",
     },
     openGraph: {
-      title: savedLocale === "es" ? "Privacidad | SECCION" : "Privacy Policy | SECCION",
+      title: savedLocale === "fr" ? "Politique de Confidentialité | SECCION" : savedLocale === "es" ? "Privacidad | SECCION" : "Privacy Policy | SECCION",
       description: dict.metadata.description,
       url: "https://seccion.ai/privacy",
     }
