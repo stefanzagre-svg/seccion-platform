@@ -75,7 +75,7 @@ export function SoftwareAppSchema() {
     "@type": "SoftwareApplication",
     "name": "SECCION",
     "operatingSystem": "Web, iOS, Android (PWA)",
-    "applicationCategory": "SocialNetworkingApplication, DatingApplication, MultimediaApplication",
+    "applicationCategory": "SocialNetworkingApplication, CreatorEconomyApplication, MultimediaApplication",
     "offers": {
       "@type": "Offer",
       "price": "0",
@@ -196,7 +196,7 @@ export default function JsonLdSuite() {
   const defaultFaqs = [
     {
       question: "What is SECCION and how does the Warm Paywall work?",
-      answer: "SECCION is the first fusion platform combining high-chemistry AI dating matchmaking with a creator live streaming economy. Its Warm Paywall philosophy provides 100% free matching, swiping, radar discovery, and messaging for members, funded entirely by creator ecosystem monetization (VIP passes, tips, and custom requests)."
+      answer: "SECCION is the first fusion platform combining high-chemistry AI matchmaking and multi-sphere social connection with a creator live streaming economy. Its Warm Paywall philosophy provides 100% free matching, swiping, radar discovery, and messaging for members, funded entirely by creator ecosystem monetization (VIP passes, tips, and custom requests)."
     },
     {
       question: "What is the revenue split for content creators on SECCION?",

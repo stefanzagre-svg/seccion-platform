@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import ClientPage from "./page-client";
 
 export const metadata: Metadata = {
-  title: "Early Access — Founding Members | SECCION",
+  title: "Early Access — Founding Members",
   description: "Join the SECCION Founding Members waitlist. Get early access to AI matchmaking and creator discovery for real connections.",
   alternates: {
     canonical: "https://seccion.ai/early-access",

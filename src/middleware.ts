@@ -41,7 +41,17 @@ const PUBLIC_API_ROUTES = [
 ];
 
 // Routes that require authentication (explicitly excluded from PUBLIC_ROUTES)
-const PROTECTED_ROUTES = ['/stream-demo', '/dashboard', '/studio', '/feed', '/messages', '/profile', '/top-profile'];
+const PROTECTED_ROUTES = [
+  '/stream-demo',
+  '/dashboard',
+  '/studio',
+  '/feed',
+  '/messages',
+  '/profile',
+  '/top-profile',
+  '/settings',
+  '/pulse'
+];
 // Routes that authenticated users should be redirected away from
 const AUTH_ROUTES = ['/onboarding', '/onboarding/step-2'];
 
@@ -51,6 +61,16 @@ const ONBOARDING_DONE_COOKIE = 'sb_ob';
 export async function middleware(request: NextRequest) {
   try {
     let supabaseResponse = NextResponse.next({ request });
+
+    // Canonical apex domain enforcement (301 Permanent Redirect www -> apex)
+    const host = request.headers.get('host') || request.nextUrl.hostname;
+    if (host.startsWith('www.seccion.ai')) {
+      const url = request.nextUrl.clone();
+      url.host = 'seccion.ai';
+      url.protocol = 'https:';
+      url.port = '';
+      return NextResponse.redirect(url, 301);
+    }
 
     const { pathname } = request.nextUrl;
  
@@ -136,12 +156,9 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(url);
     }
 
-    // 3. If accessing non-public site route (exempting API routes and public creator vanity URLs)
-    if (!isPublicPage && !isPotentialVanityPath && !pathname.startsWith('/api/') && pathname !== '/') {
-      const url = request.nextUrl.clone();
-      url.pathname = '/onboarding';
-      return NextResponse.redirect(url);
-    }
+    // 3. For any other unauthenticated route (public pages, vanity creator profiles, or non-existent URLs),
+    // pass through to Next.js routing so valid pages render normally and invalid paths return a proper 404
+    // instead of creating redirect loops or inflating /onboarding traffic for search crawlers.
   } else {
     // H1 FIX: Read the lightweight onboarding-complete cookie first.
     // This avoids a cold Supabase DB query (100-400ms) on EVERY authenticated request.

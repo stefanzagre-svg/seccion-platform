@@ -35,7 +35,13 @@ export default function robots(): MetadataRoute.Robots {
           'PerplexityBot',
           'Google-Extended',
           'Applebot-Extended',
-          'Bingbot'
+          'Bingbot',
+          'Twitterbot',
+          'Meta-ExternalAgent',
+          'FacebookBot',
+          'CCBot',
+          'cohere-ai',
+          'Diffbot'
         ],
         allow: [
           '/',
@@ -53,8 +59,19 @@ export default function robots(): MetadataRoute.Robots {
           '/creator-hub/onlyfans-alternative',
           '/vibe-radar',
           '/early-access',
+          '/now-streaming',
           '/rules',
+          '/privacy',
           '/hit-us-up'
+        ],
+        disallow: [
+          '/admin/',
+          '/api/',
+          '/dashboard/',
+          '/settings/',
+          '/profile/',
+          '/messages/',
+          '/auth/'
         ],
       }
     ],

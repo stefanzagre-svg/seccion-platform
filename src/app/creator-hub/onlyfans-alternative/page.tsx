@@ -8,7 +8,7 @@ import {
 } from "./faq-schema-data";
 
 export const metadata: Metadata = {
-  title: "Best Creator Platform 2026: OnlyFans & Fansly Alternative | SECCION",
+  title: "Best Creator Platform 2026: OnlyFans & Fansly Alternative",
   description:
     "Looking for the best OnlyFans alternative in 2026? SECCION gives creators a 90% net payout, 24/7 AI DM Copilot, automated DRM protection, and stealth Face Blur.",
   keywords: [
@@ -18,7 +18,7 @@ export const metadata: Metadata = {
     "Patreon alternative with lower fees",
     "Fansly alternative with AI",
     "safe alternative to chaturbate and webcam sites",
-    "Tinder alternative for creators",
+    "direct fan engagement platform for creators",
     "SECCION vs OnlyFans vs Fansly vs Patreon vs Chaturbate",
     "90 percent creator payout split",
     "warm paywall creator economy",

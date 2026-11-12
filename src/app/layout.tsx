@@ -26,7 +26,15 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://seccion.ai"),
-  alternates: {},
+  alternates: {
+    canonical: "https://seccion.ai",
+    languages: {
+      en: "https://seccion.ai",
+      es: "https://seccion.ai",
+      fr: "https://seccion.ai",
+      "x-default": "https://seccion.ai",
+    },
+  },
   title: {
     // Page-level titles should NOT include "| SECCION" — this template appends it automatically
     default: "SECCION — AI-Powered Creator Platform | 90% Payout, AI Copilot & DRM Protection",

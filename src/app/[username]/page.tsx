@@ -15,7 +15,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   if (!isValidUsernameFormat(cleanUsername) || isReservedUsername(cleanUsername)) {
     return {
-      title: 'Creator Not Found | SECCION',
+      title: 'Creator Not Found',
       description: 'The requested creator profile does not exist on SECCION.',
     };
   }
@@ -49,7 +49,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   if (!creator) {
     return {
-      title: 'Creator Not Found | SECCION',
+      title: 'Creator Not Found',
       description: 'The requested creator profile does not exist on SECCION.',
     };
   }
