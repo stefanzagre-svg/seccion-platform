@@ -995,6 +995,15 @@ export function getTaxFormatForResidence(residence: string): TaxFormat {
       hint: 'Format: SIREN (9 digits), SIRET (14 digits), or Numéro Fiscal (13 digits)'
     };
   }
+
+  if (r.includes('morocco') || r.includes('maroc') || r.includes('marruecos') || r.includes('casablanca') || r.includes('marrakech') || r === 'ma' || r.includes('ma')) {
+    return {
+      label: 'ICE / IF / CNIE (Morocco Tax ID & Auto-Entrepreneur)',
+      placeholder: 'e.g. 001234567000089 (ICE 15 digits) or AB123456 (CNIE)',
+      regex: /^\d{15}$|^\d{7,8}$|^[A-Z]{1,2}\d{5,6}$/i,
+      hint: 'Format: ICE (15 digits), IF (7-8 digits), or CNIE (1-2 letters + 5-6 numbers)'
+    };
+  }
   
   if (r.includes('united kingdom') || r.includes('uk') || r.includes('gb') || r.includes('london')) {
     return {

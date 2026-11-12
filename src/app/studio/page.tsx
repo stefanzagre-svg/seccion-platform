@@ -13,6 +13,7 @@ import {
 import { getUsernameCooldownStatus, USERNAME_CHANGE_COOLDOWN_DAYS } from '@/lib/reserved-usernames';
 import UploadSafetyNotice from '@/components/UploadSafetyNotice';
 import { calculateMatch, type UserProfile, type MatchResult, getTaxFormatForResidence } from '@/lib/match-engine';
+import { validateMoroccanRib, formatMoroccanRib } from '@/lib/morocco-banking';
 import { type ArchetypeId, type MoodId, type PassionId } from '@/lib/constants';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
@@ -709,6 +710,10 @@ export default function CreatorStudio() {
   const [paxumEmail, setPaxumEmail] = useState<string>('');
   const [cryptoWalletAddress, setCryptoWalletAddress] = useState<string>('');
   const [cryptoNetwork, setCryptoNetwork] = useState<'USDT_TRC20' | 'USDT_POLYGON' | 'USDC_POLYGON' | 'BTC'>('USDT_TRC20');
+  const [moroccoRib, setMoroccoRib] = useState<string>('');
+  const [moroccoBankName, setMoroccoBankName] = useState<string>('');
+  const [moroccoSwiftBic, setMoroccoSwiftBic] = useState<string>('');
+  const [moroccoRibValidation, setMoroccoRibValidation] = useState<{ isValid: boolean; bankName?: string; bic?: string; error?: string } | null>(null);
   const [creatorResidence, setCreatorResidence] = useState<string>('');
   const taxFormat = getTaxFormatForResidence(creatorResidence);
 
@@ -939,6 +944,15 @@ export default function CreatorStudio() {
                 setPaxumEmail(privData.paxum_email || '');
                 setCryptoWalletAddress(privData.crypto_wallet_address || '');
                 setCryptoNetwork(privData.crypto_network || 'USDT_TRC20');
+                if (privData.morocco_rib) {
+                  setMoroccoRib(privData.morocco_rib);
+                  const check = validateMoroccanRib(privData.morocco_rib);
+                  if (check.isValid) {
+                    setMoroccoRibValidation({ isValid: true, bankName: check.bankInfo?.shortName, bic: check.bankInfo?.bic });
+                    setMoroccoBankName(check.bankInfo?.name || '');
+                    setMoroccoSwiftBic(check.bankInfo?.bic || '');
+                  }
+                }
               } else {
                 setLegalBusinessName(privacy.legal_business_name || '');
                 setTaxIdNumber(privacy.tax_id_number || '');
@@ -1243,6 +1257,9 @@ export default function CreatorStudio() {
             paxum_email: paxumEmail,
             crypto_wallet_address: cryptoWalletAddress,
             crypto_network: cryptoNetwork,
+            morocco_rib: moroccoRib || null,
+            morocco_bank_name: moroccoBankName || null,
+            morocco_swift_bic: moroccoSwiftBic || null,
             updated_at: new Date().toISOString()
           });
       } catch (privErr) {
@@ -3764,6 +3781,70 @@ export default function CreatorStudio() {
                             onChange={(e) => setVatGstNumber(e.target.value)}
                             className="w-full px-4 py-3 bg-black/40 border border-white/10 rounded-xl text-xs text-white placeholder-white/20 focus:border-primary focus:outline-none transition font-mono"
                           />
+                        </div>
+
+                        {/* Moroccan Bank (RIB 24 Digits & SWIFT BIC) */}
+                        <div className="space-y-3 pt-3 border-t border-white/5">
+                          <div className="flex justify-between items-center">
+                            <label className="text-[9px] uppercase tracking-widest font-black text-[#00fbfb] flex items-center gap-1.5">
+                              <span>🇲🇦</span>
+                              <span>Moroccan Bank RIB (Direct Wire / Attijariwafa, CIH, BMCE, BCP)</span>
+                            </label>
+                            <span className="text-[7px] font-mono font-bold bg-[#00fbfb]/10 text-[#00fbfb] border border-[#00fbfb]/30 px-2 py-0.5 rounded-full uppercase">
+                              Formule 5 (70% Devises)
+                            </span>
+                          </div>
+
+                          <div className="space-y-2">
+                            <div className="flex justify-between items-center">
+                              <span className="text-[8px] text-white/40 uppercase font-black tracking-widest">
+                                24-Digit RIB Number
+                              </span>
+                              {moroccoRibValidation?.bankName && (
+                                <span className="text-[8.5px] font-mono font-bold text-[#00fbfb] flex items-center gap-1">
+                                  <span>🇲🇦</span>
+                                  <span>{moroccoRibValidation.bankName} · {moroccoRibValidation.bic}</span>
+                                </span>
+                              )}
+                            </div>
+                            <input 
+                              type="text" 
+                              placeholder="e.g. 007 780 0001234567890123 96" 
+                              value={moroccoRib}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                setMoroccoRib(val);
+                                const check = validateMoroccanRib(val);
+                                if (check.isValid) {
+                                  setMoroccoRibValidation({ isValid: true, bankName: check.bankInfo?.shortName, bic: check.bankInfo?.bic });
+                                  setMoroccoBankName(check.bankInfo?.name || '');
+                                  setMoroccoSwiftBic(check.bankInfo?.bic || '');
+                                } else {
+                                  setMoroccoRibValidation(val.length >= 24 ? { isValid: false, error: check.error } : null);
+                                }
+                              }}
+                              className={`w-full px-4 py-2.5 bg-black/60 border rounded-xl text-xs font-mono transition ${
+                                moroccoRibValidation?.isValid
+                                  ? 'border-[#00fbfb] text-[#00fbfb]'
+                                  : moroccoRibValidation?.error
+                                  ? 'border-red-500/50 text-red-300'
+                                  : 'border-white/10 text-white placeholder-white/20 focus:border-[#00fbfb]'
+                              }`}
+                            />
+                            {moroccoRibValidation?.error ? (
+                              <span className="text-[8px] font-bold text-red-400 font-mono block">
+                                ⚠️ {moroccoRibValidation.error}
+                              </span>
+                            ) : moroccoRibValidation?.isValid && moroccoSwiftBic ? (
+                              <span className="text-[8px] font-mono text-[#39FF14] block">
+                                ✓ SWIFT BIC Automatique: {moroccoSwiftBic} · 0% Retenue IRNR (Convention Espagne-Maroc Art. 14)
+                              </span>
+                            ) : (
+                              <p className="text-[8px] text-white/40 uppercase tracking-widest leading-none">
+                                Invoiced as B2B Digital Export Services. Fully compliant with Bank Al-Maghrib and Office des Changes circulars.
+                              </p>
+                            )}
+                          </div>
                         </div>
 
                         <div className="space-y-2">
