@@ -35,6 +35,24 @@ export default function EarlyAccessPage() {
       <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-[#00fbfb]/5 rounded-full blur-[120px] pointer-events-none" />
 
       <div className="w-full max-w-3xl relative z-10 pt-36 md:pt-40 pb-16 flex-grow flex flex-col justify-center space-y-10">
+        {/* Semantic Page Header (H1) */}
+        <header className="text-center space-y-3">
+          <h1 className="font-display text-3xl sm:text-5xl font-black text-white tracking-tight uppercase leading-tight">
+            {isFr
+              ? "Accès Anticipé Fondateurs SECCION"
+              : isEs
+              ? "Acceso Anticipado Fundadores SECCION"
+              : "SECCION Founding Early Access"}
+          </h1>
+          <p className="text-xs sm:text-sm text-[#b9cac9] max-w-xl mx-auto leading-relaxed">
+            {isFr
+              ? "Rejoignez la liste prioritaire pour découvrir des connexions authentiques et les salles VIP avant l'ouverture publique."
+              : isEs
+              ? "Únete a la lista prioritaria para descubrir conexiones reales y salas VIP en vivo antes de la apertura general."
+              : "Reserve your spot for priority access to AI-assisted human discovery, live VIP rooms, and Founding Creator tools."}
+          </p>
+        </header>
+
         {/* Early Access form */}
         <WaitlistSignup variant="card" />
 

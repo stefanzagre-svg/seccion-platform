@@ -16,6 +16,7 @@ export type BlogCategory =
 export interface BlogPost {
   slug: string;
   title: string;
+  metaTitle?: string;
   titleEs?: string;
   titleFr?: string;
   description: string;
@@ -64,6 +65,7 @@ export const BLOG_POSTS: BlogPost[] = [
   {
     slug: 'seccion-vs-passes-vs-fanvue-vs-fansly-2026',
     title: 'SECCION vs. Passes vs. Fanvue vs. Fansly (2026): Best OnlyFans Alternative Compared',
+    metaTitle: 'SECCION vs Passes, Fanvue & Fansly (2026)',
     titleEs: 'SECCION vs. Passes vs. Fanvue vs. Fansly (2026): Comparativa Real para Creadores',
     titleFr: 'SECCION vs Passes vs Fanvue vs Fansly (2026) : Quelle Alternative à OnlyFans Choisir ?',
     description: 'Comparing Passes, Fanvue, Fansly & SECCION in 2026: payout splits (90% vs 80%), content rules, voice-trained AI Copilot, DRM vault, and EUR/USDC cashouts.',
@@ -373,6 +375,7 @@ export const BLOG_POSTS: BlogPost[] = [
   {
     slug: 'creator-platform-90-percent-payout-comparison-2026',
     title: 'Creator Platform Payout Comparison 2026: Who Lets You Keep the Most?',
+    metaTitle: 'Creator Platform Payout Comparison 2026 (90% Split)',
     titleEs: 'Comparativa de Pagos para Creadores 2026: ¿Quién te Deja Ganar Más?',
     titleFr: 'Comparatif des Rémunérations Créateurs 2026 : Quelle Plateforme Vous Rémunère le Mieux ?',
     description: 'An empirical breakdown of creator platform take-rates, processing fees, agency cuts, and why SECCION’s 90% Founding Offer (+ Free AI Copilot) transforms creator unit economics.',
@@ -530,6 +533,7 @@ export const BLOG_POSTS: BlogPost[] = [
   {
     slug: 'what-is-a-warm-paywall-creator-economy',
     title: 'What Is a Warm Paywall? Why Chemistry-First Monetization Beats Cold Paywalls',
+    metaTitle: 'What Is a Warm Paywall? Creator Monetization Guide',
     titleEs: '¿Qué es un Warm Paywall? Por Qué la Monetización por Química Supera a los Paywalls Fríos',
     titleFr: 'Qu’est-ce qu’un Warm Paywall ? Pourquoi la Monétisation par la Complicité Surpasse les Paywalls Froids',
     description: 'Explore the Warm Paywall paradigm: how chemistry-first access, 8-level relationship mechanics, and anti-situationship progression eliminate 30%+ subscriber churn and maximize creator LTV.',

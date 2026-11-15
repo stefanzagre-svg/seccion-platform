@@ -475,9 +475,9 @@ export default function LoginPage() {
                 alt="SECCION"
                 className="h-8 mx-auto object-contain drop-shadow-[0_0_20px_rgba(0,251,251,0.4)]"
               />
-              <p className="text-[11px] font-mono font-bold text-[#00fbfb] uppercase tracking-wider">
+              <h1 className="text-[11px] font-mono font-bold text-[#00fbfb] uppercase tracking-wider">
                 {t("onboarding.prelaunchGates.singleEmailTagline", "Instant Creator Studio & VIP Access (Passwordless)")}
-              </p>
+              </h1>
               <p className="text-[11px] text-[#b9cac9] leading-relaxed">
                 {t(
                   "onboarding.prelaunchGates.singleEmailDesc",

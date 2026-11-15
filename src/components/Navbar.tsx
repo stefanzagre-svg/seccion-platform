@@ -19,8 +19,9 @@ export default function Navbar() {
   const [searchQuery, setSearchQuery] = useState('');
   const [unreadCount, setUnreadCount] = useState(0);
 
-  // Exclude navbar in onboarding, auth callback, admin pages, or landing page when user is not logged in
+  // Exclude authenticated app navbar on public pages and whenever user is unauthenticated (including SSR)
   const isExcludedPage = 
+    !user ||
     pathname?.startsWith('/early-access') ||
     pathname?.startsWith('/onboarding') || 
     pathname?.startsWith('/auth') || 
@@ -35,7 +36,8 @@ export default function Navbar() {
     pathname?.startsWith('/hit-us-up') ||
     pathname?.startsWith('/login') ||
     pathname?.startsWith('/blog') ||
-    (pathname === '/' && !user && !isLoading);
+    pathname?.startsWith('/vip') ||
+    pathname === '/';
 
   // Sync search query from URL on load/pathname change
   useEffect(() => {

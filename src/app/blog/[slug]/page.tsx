@@ -36,7 +36,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   }
 
   return {
-    title: post.title,
+    title: post.metaTitle || post.title,
     description: post.description,
     keywords: post.tags,
     authors: [{ name: post.author.name, url: post.author.twitter }],

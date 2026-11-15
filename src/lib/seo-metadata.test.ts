@@ -50,6 +50,8 @@ import { metadata as feedMeta } from '../app/feed/page';
 import { metadata as messagesMeta } from '../app/messages/page';
 import { metadata as pulseMeta } from '../app/pulse/page';
 import { metadata as pulseLiveMeta } from '../app/pulse/live/[id]/page';
+import { generateMetadata as blogPostGen } from '../app/blog/[slug]/page';
+import { getAllBlogPosts } from './blog-data';
 import robots from '../app/robots';
 
 function extractTitleString(title: Metadata['title']): string {
@@ -150,8 +152,17 @@ describe('Bing & Search Engine Metadata Hygiene', () => {
     expect(botRule).toBeDefined();
     if (!botRule || typeof botRule !== 'object') return;
     const disallowed = Array.isArray(botRule.disallow) ? botRule.disallow : [botRule.disallow];
-    for (const path of ['/login', '/onboarding', '/studio', '/dashboard/', '/admin/']) {
+    for (const path of ['/onboarding', '/studio', '/dashboard/', '/admin/']) {
       expect(disallowed).toContain(path);
+    }
+    expect(disallowed).not.toContain('/login');
+  });
+
+  it('keeps blog post metadata <title> including template within 70 characters', async () => {
+    for (const post of getAllBlogPosts()) {
+      const meta = await blogPostGen({ params: Promise.resolve({ slug: post.slug }) });
+      const titleStr = extractTitleString(meta.title).trim();
+      expect(`${titleStr} | SECCION`.length, `${post.slug} full <title>`).toBeLessThanOrEqual(70);
     }
   });
 });

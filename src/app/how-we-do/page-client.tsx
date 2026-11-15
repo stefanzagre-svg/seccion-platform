@@ -926,6 +926,7 @@ export default function HowWeDoPage() {
                   <div className="relative w-16 h-16 rounded-xl overflow-hidden shrink-0">
                     <img 
                       src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&q=80" 
+                      alt={locale === "fr" ? "Aperçu du filtre de flou facial SECCION" : locale === "es" ? "Vista previa de protección Face Blur en SECCION" : "SECCION Face Blur privacy protection preview"}
                       className={`w-full h-full object-cover transition-all duration-300 ${faceBlurred ? 'blur-[12px]' : ''}`}
                     />
                     <div className="absolute inset-0 border border-white/10 rounded-xl" />
