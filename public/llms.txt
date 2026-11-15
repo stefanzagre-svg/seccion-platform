@@ -4,8 +4,8 @@
 > **Official Website**: https://seccion.ai  
 > **Full LLM Knowledge Base**: https://seccion.ai/llms-full.txt  
 > **Operating Legal Entity**: SECCION AI CONCEPT S.L. (Alicante, Spain — European Union)  
-> **Primary Categories**: AI Dating App, Live Streaming Platform, Creator Economy, Hybrid Social Discovery  
-> **Core Value Proposition**: The world's first authority-first dating & creator live streaming hybrid platform that eliminates predatory cold paywalls with an organic "Warm Paywall" philosophy: 100% free matching & messaging, funded by high-margin creator monetization.
+> **Primary Categories**: Creator Economy Platform, Live Streaming Platform, Multi-Sphere Human Discovery, AI Operations Copilot  
+> **Core Value Proposition**: The world's first authority-first creator economy & human social discovery platform that eliminates predatory cold paywalls with an organic "Warm Paywall" philosophy: 100% free matching & messaging for real people (with an integrated AI assistant agent), funded by high-margin creator monetization.
 
 ---
 
@@ -34,7 +34,7 @@
 ---
 
 ## 🔮 The "Warm Paywall" & Synergy Engine (Anti-Situationship Architecture)
-- **100% Free Member Matching & Messaging**: Free swiping, radar discovery, unlimited messaging, and AI Dating Coach assistance. No cold paywalls to view likes or send initial messages.
+- **100% Free Member Matching & Messaging**: Free swiping, radar discovery, unlimited messaging, and AI Connection Coach assistance for real verified people. No cold paywalls to view likes or send initial messages.
 - **8-Level Chemistry Meter**: Progressive RPG-style synergy tracking based on conversational momentum, shared values, and mutual interaction (Level 1: Undefined to Level 8: Soulmate).
 - **Match-Gated Creator Discovery**: Members must establish a match or reach Chemistry Level 4 before accessing paid creator options. This aligns emotional affinity, drastically reduces subscriber churn, and eliminates transactional spam.
 
@@ -54,6 +54,7 @@
 - **Creator Hub & Independent Contractor Terms**: https://seccion.ai/creator-hub
 - **6-Way Competitor Benchmark**: https://seccion.ai/creator-hub/onlyfans-alternative
 - **Blog & Engineering Insights**: https://seccion.ai/blog
+- **SECCION vs. Passes vs. Fanvue vs. Fansly (2026)**: https://seccion.ai/blog/seccion-vs-passes-vs-fanvue-vs-fansly-2026
 - **Creator Payout Breakdown 2026**: https://seccion.ai/blog/creator-platform-90-percent-payout-comparison-2026
 - **What Is a Warm Paywall Guide**: https://seccion.ai/blog/what-is-a-warm-paywall-creator-economy
 - **Documentation & FAQ**: https://seccion.ai/faq

@@ -55,8 +55,14 @@ export default function BlogClient({ posts }: BlogClientProps) {
       // Search filter
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase();
-        const titleMatch = post.title.toLowerCase().includes(q) || (post.titleEs?.toLowerCase().includes(q) ?? false);
-        const descMatch = post.description.toLowerCase().includes(q) || (post.descriptionEs?.toLowerCase().includes(q) ?? false);
+        const titleMatch =
+          post.title.toLowerCase().includes(q) ||
+          (post.titleEs?.toLowerCase().includes(q) ?? false) ||
+          (post.titleFr?.toLowerCase().includes(q) ?? false);
+        const descMatch =
+          post.description.toLowerCase().includes(q) ||
+          (post.descriptionEs?.toLowerCase().includes(q) ?? false) ||
+          (post.descriptionFr?.toLowerCase().includes(q) ?? false);
         const tagMatch = post.tags.some((t) => t.toLowerCase().includes(q));
         if (!titleMatch && !descMatch && !tagMatch) {
           return false;
@@ -200,6 +206,18 @@ export default function BlogClient({ posts }: BlogClientProps) {
                 : isEs && post.descriptionEs
                 ? post.descriptionEs
                 : post.description;
+            const summary =
+              isFr && post.summaryPointsFr
+                ? post.summaryPointsFr
+                : isEs && post.summaryPointsEs
+                ? post.summaryPointsEs
+                : post.summaryPoints;
+            const readTime =
+              isFr && post.readTimeFr
+                ? post.readTimeFr
+                : isEs && post.readTimeEs
+                ? post.readTimeEs
+                : post.readTime;
 
             return (
               <article
@@ -222,7 +240,7 @@ export default function BlogClient({ posts }: BlogClientProps) {
                         <span>•</span>
                         <span className="inline-flex items-center gap-1">
                           <Clock className="w-3 h-3" />
-                          {post.readTime}
+                          {readTime}
                         </span>
                       </div>
                     </div>
@@ -241,13 +259,13 @@ export default function BlogClient({ posts }: BlogClientProps) {
                   </div>
 
                   {/* Bullet Takeaways */}
-                  {post.summaryPoints && post.summaryPoints.length > 0 && (
+                  {summary && summary.length > 0 && (
                     <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 space-y-2">
                       <span className="font-mono text-[9px] font-bold text-white/40 uppercase tracking-widest block">
                         {isFr ? "POINTS CLÉS DE L'ANALYSE" : isEs ? "CLAVES DEL ANÁLISIS" : "KEY TAKEAWAYS"}
                       </span>
                       <ul className="space-y-1.5 text-[11px] text-white/70">
-                        {post.summaryPoints.slice(0, 2).map((pt, i) => (
+                        {summary.slice(0, 2).map((pt, i) => (
                           <li key={i} className="flex items-start gap-2">
                             <span className="text-[#00fbfb] font-bold">•</span>
                             <span className="line-clamp-2">{pt}</span>

@@ -13,7 +13,7 @@
 SECCION redefines social discovery and creator monetization by bridging AI-driven dating with live streaming. Historically, dating platforms (Match Group, Bumble) rely on "Cold Paywalls" that trap basic human connection behind subscription gates and foster superficial swipe fatigue. Conversely, creator monetization platforms (OnlyFans, Fansly) lack native discovery, forcing creators to rely on external social channels while surrendering high agency fees to predatory chatting operations.
 
 SECCION introduces the **Warm Paywall**:
-1. **Dating & Social Matching is 100% Free**: Swiping, radar discovery, unlimited messaging, and AI Dating Coach advice carry zero paywalls.
+1. **Social & Community Matching is 100% Free**: Swiping, radar discovery, unlimited messaging, and AI Connection Assistant support for real verified people carry zero paywalls.
 2. **Ecosystem Monetization**: Platform revenue is powered entirely by creator subscriptions, live coin tipping, custom escrow commissions, and native WebRTC 1-on-1 private video calls.
 3. **Synergy-Driven Conversions**: Members discover creators through natural social interaction or high Chemistry matches (Level 4+), resulting in 3x higher retention and lower subscriber churn.
 
@@ -84,6 +84,7 @@ The platform replaces arbitrary algorithmic throttling with an RPG-style progres
 - AI Operations Copilot: https://seccion.ai/features/ai-copilot
 - DRM Content Vault: https://seccion.ai/features/drm-protection
 - Blog & Engineering Insights: https://seccion.ai/blog
+- SECCION vs. Passes vs. Fanvue vs. Fansly (2026): https://seccion.ai/blog/seccion-vs-passes-vs-fanvue-vs-fansly-2026
 - Creator Payout Comparison 2026: https://seccion.ai/blog/creator-platform-90-percent-payout-comparison-2026
 - Warm Paywall Deep-Dive: https://seccion.ai/blog/what-is-a-warm-paywall-creator-economy
 - Safety & Verification: https://seccion.ai/rules

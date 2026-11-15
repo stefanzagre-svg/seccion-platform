@@ -24,6 +24,8 @@ export interface BlogPost {
   date: string;
   lastModified?: string;
   readTime: string;
+  readTimeEs?: string;
+  readTimeFr?: string;
   category: BlogCategory;
   tags: string[];
   author: BlogAuthor;
@@ -34,8 +36,11 @@ export interface BlogPost {
   };
   canonical: string;
   summaryPoints: string[];
+  summaryPointsEs?: string[];
+  summaryPointsFr?: string[];
   contentHtml: string;
   contentHtmlEs?: string;
+  contentHtmlFr?: string;
 }
 
 export const BLOG_CATEGORIES: BlogCategory[] = [
@@ -56,6 +61,315 @@ export const AUTHORS: Record<string, BlogAuthor> = {
 };
 
 export const BLOG_POSTS: BlogPost[] = [
+  {
+    slug: 'seccion-vs-passes-vs-fanvue-vs-fansly-2026',
+    title: 'SECCION vs. Passes vs. Fanvue vs. Fansly (2026): Best OnlyFans Alternative Compared',
+    titleEs: 'SECCION vs. Passes vs. Fanvue vs. Fansly (2026): Comparativa Real para Creadores',
+    titleFr: 'SECCION vs Passes vs Fanvue vs Fansly (2026) : Quelle Alternative à OnlyFans Choisir ?',
+    description: 'Comparing the top OnlyFans alternatives in 2026: Passes 90% payout restrictions, Fanvue 20% fee & synthetic AI personas, Fansly 80% split, and why SECCION combines 90% Founding payouts, a free voice-trained AI Copilot for real creators, DRM anti-leak protection, and instant EUR/USDC payouts.',
+    descriptionEs: 'Comparamos las mejores alternativas a OnlyFans en 2026: las restricciones de Passes al 90%, el corte del 20% y avatares sintéticos de Fanvue, el 80% de Fansly y por qué SECCION une 90% neto para Fundadores, AI Copilot gratis en tu voz para creadores reales, Vault DRM y pagos EUR/USDC.',
+    descriptionFr: 'Comparatif 2026 des alternatives à OnlyFans : restrictions éditoriales de Passes à 90 %, commission de 20 % et modèles synthétiques sur Fanvue, split à 80 % sur Fansly, et pourquoi SECCION réunit 90 % Fondateurs, AI Copilot offert pour créateurs réels, Vault DRM et paiements EUR/USDC.',
+    date: '2026-11-15',
+    lastModified: '2026-11-15',
+    readTime: '10 min read',
+    readTimeEs: '10 min de lectura',
+    readTimeFr: '10 min de lecture',
+    category: 'Creator Economy',
+    tags: [
+      'OnlyFans Alternative',
+      'Passes Alternative',
+      'Fanvue Alternative',
+      'Fansly Alternative',
+      '90% Payout',
+      'AI Copilot',
+      'DRM Vault',
+      'Creator Economy'
+    ],
+    author: AUTHORS.stefan,
+    coverGradient: {
+      from: 'from-[#00fbfb]/20',
+      to: 'to-[#ffabf3]/15',
+      accent: '#00fbfb'
+    },
+    canonical: 'https://seccion.ai/blog/seccion-vs-passes-vs-fanvue-vs-fansly-2026',
+    summaryPoints: [
+      'Passes charges 10% (90% creator split) with anti-piracy tools, but targets mainstream lifestyle influencers and restricts adult/sensual monetization.',
+      'Fanvue embraces AI tools, yet charges a 20% standard platform fee (80% split) and permits synthetic AI avatars that dilute human creator trust.',
+      'Fansly and OnlyFans both take 20% with zero native AI DM automation, pushing creators toward expensive 40%–50% chatting agencies.',
+      'SECCION unifies a 90% Founding Creator payout (80% baseline thereafter), a Free Year-1 voice-trained AI Copilot strictly for KYC-verified real human creators, 24/7 DRM web-sweeping + Face Blur, Warm Paywall discovery, and instant SEPA/USDC payouts.'
+    ],
+    summaryPointsEs: [
+      'Passes ofrece 90% (comisión del 10%) y protección antipiratería, pero está limitado a creadores mainstream/lifestyle y restringe contenido sensual o adulto.',
+      'Fanvue apuesta por herramientas IA, pero mantiene un 20% estándar de comisión (80% para el creator) y admite perfiles sintéticos generados por IA que diluyen el valor humano.',
+      'Fansly y OnlyFans retienen el 20% sin AI Copilot nativo para mensajes, empujando a muchos creators hacia agencias que cobran 40%–50% extra.',
+      'SECCION reúne 90% neto para Fundadores (80% estándar permanente después), AI Copilot gratuito el primer año entrenado en tu voz solo para creators reales verificados por KYC, Vault DRM 24/7 + Face Blur, descubrimiento Warm Paywall y retiros por SEPA/USDC.'
+    ],
+    summaryPointsFr: [
+      'Passes propose 90 % (10 % de commission) et du watermarking antipiratage, mais vise le lifestyle mainstream et restreint les contenus sensuels ou adultes.',
+      'Fanvue mise sur les outils IA, mais prélève 20 % en standard (80 % créateur) et autorise les avatars synthétiques IA qui brouillent la confiance humaine.',
+      'Fansly et OnlyFans prélèvent tous deux 20 % sans AI Copilot natif pour les DM, poussant les créateurs vers des agences facturant 40 % à 50 %.',
+      'SECCION réunit 90 % nets Fondateurs (80 % ensuite), un AI Copilot offert la 1re année entraîné sur votre voix réservé aux créateurs humains vérifiés par KYC, un Vault DRM 24/7 + Face Blur, la découverte Warm Paywall et des retraits SEPA/USDC.'
+    ],
+    contentHtml: `
+<h2>Why Creators Are Leaving 80/20 Platforms and Predatory Agencies in 2026</h2>
+<p>In 2026, independent creators no longer just ask who can host paywalled photos. The real decision comes down to four unit-economics questions: <strong>how much money reaches your account, who handles 24/7 fan DMs without stealing 40% of your revenue, how fast leaks are taken down, and whether real human creators get drowned out by synthetic AI clones.</strong></p>
+<p>Three names dominate search comparisons for <strong>OnlyFans alternatives in 2026</strong>: <strong>Passes</strong> (known for a 10% platform fee), <strong>Fanvue</strong> (known for AI tools), and <strong>Fansly</strong> (known for 80/20 adult monetization). Yet every single one forces a painful trade-off. <strong>SECCION</strong> was built from first principles to remove that compromise.</p>
+
+<div class="my-8 overflow-x-auto">
+  <table class="w-full text-left border-collapse border border-white/10 rounded-2xl overflow-hidden bg-white/[0.02]">
+    <thead>
+      <tr class="bg-white/5 border-b border-white/10 text-[#00fbfb] font-mono text-xs uppercase tracking-wider">
+        <th class="p-4">Platform (2026)</th>
+        <th class="p-4">Creator Payout</th>
+        <th class="p-4">Built-in AI DM Copilot</th>
+        <th class="p-4">Human-Only Guarantee</th>
+        <th class="p-4">Privacy &amp; DRM</th>
+        <th class="p-4">Adult / Sensual Policy</th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-white/5 text-sm">
+      <tr class="bg-[#00fbfb]/10 border-l-4 border-l-[#00fbfb] font-medium text-white">
+        <td class="p-4 font-black text-[#00fbfb]">SECCION (Founding)</td>
+        <td class="p-4 font-mono font-black text-[#39FF14]">90% Net (80% Std)</td>
+        <td class="p-4 text-[#39FF14]">Free 1-Yr Voice-Trained AI</td>
+        <td class="p-4 text-[#39FF14]">100% Real (DIDIT ZKP KYC)</td>
+        <td class="p-4 text-white/90">24/7 DRM Sweeper + Face Blur</td>
+        <td class="p-4 text-[#39FF14]">SFW + 18+ Compliant Dual-Rail</td>
+      </tr>
+      <tr class="hover:bg-white/[0.02] transition">
+        <td class="p-4 font-semibold text-white">Passes</td>
+        <td class="p-4 font-mono font-bold text-white/90">90% (10% fee)</td>
+        <td class="p-4 text-white/60">Auto-DM sequences only</td>
+        <td class="p-4 text-white/80">Creator focused</td>
+        <td class="p-4 text-white/80">Watermarking &amp; screenshot block</td>
+        <td class="p-4 text-red-400">Mainstream / No 18+ explicit</td>
+      </tr>
+      <tr class="hover:bg-white/[0.02] transition">
+        <td class="p-4 font-semibold text-white">Fanvue</td>
+        <td class="p-4 font-mono font-bold text-white/80">80% Std (20% fee)</td>
+        <td class="p-4 text-white/80">AI messaging &amp; agency API</td>
+        <td class="p-4 text-red-400">Allows synthetic AI clones</td>
+        <td class="p-4 text-white/50">Standard takedowns</td>
+        <td class="p-4 text-white/80">Permitted</td>
+      </tr>
+      <tr class="hover:bg-white/[0.02] transition">
+        <td class="p-4 font-semibold text-white">Fansly</td>
+        <td class="p-4 font-mono font-bold text-white/80">80% (20% fee)</td>
+        <td class="p-4 text-red-400">None (3rd-party / manual)</td>
+        <td class="p-4 text-white/80">Bans photorealistic AI</td>
+        <td class="p-4 text-white/60">Manual leak reports</td>
+        <td class="p-4 text-white/80">Permitted</td>
+      </tr>
+      <tr class="hover:bg-white/[0.02] transition">
+        <td class="p-4 font-semibold text-white">OnlyFans</td>
+        <td class="p-4 font-mono font-bold text-white/80">80% (20% fee)</td>
+        <td class="p-4 text-red-400">None (40–50% agencies)</td>
+        <td class="p-4 text-white/80">KYC verified creators</td>
+        <td class="p-4 text-white/50">External paid DMCA tools</td>
+        <td class="p-4 text-white/80">Permitted</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<h2>1. SECCION vs. Passes: You Shouldn't Lose 90% Payouts Because of Your Niche</h2>
+<p><strong>Passes</strong> became popular for taking a 10% platform fee (leaving creators 90% before processing nuances) and adding 1-on-1 calls and watermarking. For mainstream fitness coaches or gaming influencers, that works well.</p>
+<p><strong>The Catch:</strong> Passes enforces strict mainstream content guidelines that exclude sensual and 18+ creator business models. Creators who migrate are often forced back onto 20%-fee sites the moment their content pushes past PG-13.</p>
+<p><strong>The SECCION Advantage:</strong> SECCION brings <strong>90% net payouts to the first 500 Founding Creators</strong> (and 80% permanent baseline thereafter) while running a legally audited dual-rail compliance architecture (Sightengine AI + DIDIT Zero-Knowledge KYC + EU AI Act / DSA / 18 U.S.C. § 2257 readiness). Lifestyle, fitness, education, sensual, and 18+ creators all monetize on one roof without sudden niche purges.</p>
+
+<h2>2. SECCION vs. Fanvue: AI Assistant for Real Humans vs. Synthetic Avatar Marketplaces</h2>
+<p><strong>Fanvue</strong> leaned early into AI workflows, offering AI messaging helpers and agency integrations—which sounds appealing until you inspect the business model:</p>
+<ul>
+  <li><strong>Still a 20% Standard Cut:</strong> Outside temporary promotional windows, Fanvue takes 20% of creator earnings, leaving 80%.</li>
+  <li><strong>Real Creators vs. Synthetic Bots:</strong> Fanvue officially allows fully synthetic AI-generated models on its platform. For real human creators, competing inside a directory flooded with infinite synthetic avatars erodes subscriber trust and triggers buyer skepticism in DMs.</li>
+</ul>
+<p><strong>The SECCION Advantage:</strong> On SECCION, <strong>AI never replaces the creator—AI works exclusively as your private operations agent</strong>. Every creator passes biometric 3D liveness &amp; ZKP identity verification via DIDIT. Fans know 100% of profiles are real people, while your <strong>Free Year-1 AI Copilot</strong> handles 24/7 multilingual DM engagement, PPV previews, and FAQ triage in your exact tone—saving you the <strong>40% to 50% agency tax</strong> without sacrificing authenticity.</p>
+
+<h2>3. SECCION vs. Fansly &amp; OnlyFans: Breaking the Cold Paywall &amp; Agency Trap</h2>
+<p>Both <strong>OnlyFans</strong> and <strong>Fansly</strong> take a 20% cut (80% payout) and lack a native voice-trained AI Copilot. Worse, OnlyFans provides <strong>zero internal discovery</strong>, locking creators behind a cold paywall where strangers must pay $10–$20 before even knowing your vibe.</p>
+<p>SECCION replaces cold friction with three structural upgrades:</p>
+<ol>
+  <li><strong>The Warm Paywall &amp; Vibe Radar:</strong> Members discover creators organically across shared interests, vibes, and live streams for free, building mutual momentum before unlocking VIP tiers or custom orders.</li>
+  <li><strong>Stealth ZKP Face Blur + Automated DRM Vault:</strong> Need privacy in your home country or region? SECCION lets you gate facial visibility until mutual Chemistry Level 4 or verified VIP access, while autonomous DRM crawlers hunt leaks and dispatch DMCA/DSA takedowns 24/7.</li>
+  <li><strong>Bank + Instant USDC Settlements:</strong> Withdraw cleanly via European SEPA Instant or non-custodial Circle <code>USDC</code> / crypto rails instead of losing 3–4% to high-risk FX banking spreads.</li>
+</ol>
+
+<h2>Ready to Lock In 90% and Own Your Stack?</h2>
+<p>The <strong>90% Founding Creator Cohort</strong> (plus <strong>1 Year Free AI Operations Copilot</strong>) is strictly capped at the first 500 approved creators. Explore the <a href="/creator-hub/onlyfans-alternative" class="text-[#00fbfb] underline font-semibold">Full 6-Way Competitor Benchmark</a> or <a href="/become-creator#apply" class="text-[#39FF14] underline font-semibold">apply as a Founding Creator today</a>.</p>
+`,
+    contentHtmlEs: `
+<h2>Por Qué los Creators Están Dejando las Plataformas 80/20 y las Agencias del 40% en 2026</h2>
+<p>En 2026 elegir plataforma ya no va solo de subir fotos bajo suscripción. La ecuación real se resume en cuatro puntos: <strong>cuánto dinero neto llega a tu cuenta, quién responde tus DMs 24/7 sin quitarte el 40%, qué tan rápido tumban las filtraciones y si los fans saben que hablan con una persona real y no con un avatar sintético.</strong></p>
+<p>Al buscar la <strong>mejor alternativa a OnlyFans en 2026</strong> destacan tres nombres: <strong>Passes</strong> (conocida por su 10% de comisión), <strong>Fanvue</strong> (enfocada en herramientas IA) y <strong>Fansly</strong> (estándar 80/20 adulto). Todas obligan a sacrificar algo clave. <strong>SECCION</strong> nació para eliminar ese sacrificio.</p>
+
+<div class="my-8 overflow-x-auto">
+  <table class="w-full text-left border-collapse border border-white/10 rounded-2xl overflow-hidden bg-white/[0.02]">
+    <thead>
+      <tr class="bg-white/5 border-b border-white/10 text-[#00fbfb] font-mono text-xs uppercase tracking-wider">
+        <th class="p-4">Plataforma (2026)</th>
+        <th class="p-4">Pago al Creator</th>
+        <th class="p-4">AI Copilot Nativo</th>
+        <th class="p-4">Garantía 100% Real</th>
+        <th class="p-4">Privacidad y DRM</th>
+        <th class="p-4">Política de Contenido</th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-white/5 text-sm">
+      <tr class="bg-[#00fbfb]/10 border-l-4 border-l-[#00fbfb] font-medium text-white">
+        <td class="p-4 font-black text-[#00fbfb]">SECCION (Fundadores)</td>
+        <td class="p-4 font-mono font-black text-[#39FF14]">90% Neto (80% Base)</td>
+        <td class="p-4 text-[#39FF14]">1 Año Gratis con tu Voz</td>
+        <td class="p-4 text-[#39FF14]">100% Humanos (DIDIT ZKP)</td>
+        <td class="p-4 text-white/90">DRM 24/7 + Face Blur</td>
+        <td class="p-4 text-[#39FF14]">SFW + 18+ Regulado Dual-Rail</td>
+      </tr>
+      <tr class="hover:bg-white/[0.02] transition">
+        <td class="p-4 font-semibold text-white">Passes</td>
+        <td class="p-4 font-mono font-bold text-white/90">90% (10% fee)</td>
+        <td class="p-4 text-white/60">Secuencias automáticas básicas</td>
+        <td class="p-4 text-white/80">Enfocado en creators</td>
+        <td class="p-4 text-white/80">Marca de agua y bloqueo captura</td>
+        <td class="p-4 text-red-400">Solo mainstream / Sin 18+</td>
+      </tr>
+      <tr class="hover:bg-white/[0.02] transition">
+        <td class="p-4 font-semibold text-white">Fanvue</td>
+        <td class="p-4 font-mono font-bold text-white/80">80% Estándar (20% fee)</td>
+        <td class="p-4 text-white/80">Asistente IA y API agencias</td>
+        <td class="p-4 text-red-400">Permite clones IA sintéticos</td>
+        <td class="p-4 text-white/50">DMCA estándar</td>
+        <td class="p-4 text-white/80">Permitido</td>
+      </tr>
+      <tr class="hover:bg-white/[0.02] transition">
+        <td class="p-4 font-semibold text-white">Fansly</td>
+        <td class="p-4 font-mono font-bold text-white/80">80% (20% fee)</td>
+        <td class="p-4 text-red-400">Ninguno (manual o externos)</td>
+        <td class="p-4 text-white/80">Prohíbe IA fotorrealista</td>
+        <td class="p-4 text-white/60">Reportes manuales</td>
+        <td class="p-4 text-white/80">Permitido</td>
+      </tr>
+      <tr class="hover:bg-white/[0.02] transition">
+        <td class="p-4 font-semibold text-white">OnlyFans</td>
+        <td class="p-4 font-mono font-bold text-white/80">80% (20% fee)</td>
+        <td class="p-4 text-red-400">Ninguno (agencias 40%–50%)</td>
+        <td class="p-4 text-white/80">Verificación KYC</td>
+        <td class="p-4 text-white/50">Herramientas externas de pago</td>
+        <td class="p-4 text-white/80">Permitido</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<h2>1. SECCION vs. Passes: No Renuncies al 90% por tu Tipo de Contenido</h2>
+<p><strong>Passes</strong> ganó tracción cobrando un 10% (90% para el creator) con llamadas 1 a 1 y marcas de agua, lo cual funciona bien para lifestyle o fitness general.</p>
+<p><strong>El Problema:</strong> Sus políticas mainstream restringen monetización sensual y 18+, obligando a muchos creators a volver a plataformas del 20% cuando cruzan cierto umbral.</p>
+<p><strong>La Diferencia SECCION:</strong> Los primeros 500 <strong>Creadores Fundadores aseguran el 90% neto</strong> (y 80% permanente después) sobre una arquitectura dual verificada (Sightengine + KYC Zero-Knowledge con DIDIT + cumplimiento DSA / EU AI Act). Lifestyle, educación, fitness, sensual y +18 conviven con reglas claras.</p>
+
+<h2>2. SECCION vs. Fanvue: AI Copilot para Personas Reales vs. Avatares Sintéticos</h2>
+<p><strong>Fanvue</strong> integró flujos IA temprano, pero su modelo tiene dos fricciones claras para creators humanos:</p>
+<ul>
+  <li><strong>Comisión estándar del 20%:</strong> Tras ventanas promocionales puntuales, el creator conserva el 80%.</li>
+  <li><strong>Competencia contra bots sintéticos:</strong> Fanvue admite modelos generados por IA, lo que erosiona la confianza de los suscriptores cuando buscan conexión real.</li>
+</ul>
+<p><strong>La Diferencia SECCION:</strong> En SECCION <strong>la IA nunca sustituye a la persona</strong>; funciona como tu asistente privado integrado en <a href="/features/ai-copilot" class="text-[#00fbfb] underline">Creator Studio</a>. Cada perfil verifica identidad biométrica real con DIDIT, mientras tu <strong>AI Copilot gratuito el primer año</strong> atiende DMs 24/7 en tu idioma y tono sin entregar el 40%–50% a una agencia.</p>
+
+<h2>3. SECCION vs. Fansly y OnlyFans: Warm Paywall, Face Blur y Pagos Instantáneos</h2>
+<p>Tanto <strong>OnlyFans</strong> como <strong>Fansly</strong> retienen el 20% y carecen de AI Copilot propio. Además, el muro frío de OnlyFans exige pagar sin haber conectado antes.</p>
+<ul>
+  <li><strong>Warm Paywall y Vibe Radar:</strong> Descubrimiento gratuito por afinidad e intereses reales antes de desbloquear pases VIP o encargos.</li>
+  <li><strong>Face Blur ZKP y Vault DRM 24/7:</strong> Protege tu rostro en feeds públicos hasta alcanzar confianza mutua y activa rastreo continuo antipiratería en <a href="/features/drm-protection" class="text-[#00fbfb] underline">DRM Vault</a>.</li>
+  <li><strong>Cobros por SEPA o Circle USDC:</strong> Evita comisiones cambiarias abusivas del 3%–4%.</li>
+</ul>
+
+<h2>Asegura tu Cupo de Creador Fundador (90% Neto)</h2>
+<p>La cohorte Fundadora al 90% (+ 1 año gratis de AI Copilot) está limitada a los primeros 500 creators aprobados. Revisa la <a href="/creator-hub/onlyfans-alternative" class="text-[#00fbfb] underline font-semibold">comparativa completa de 6 plataformas</a> o <a href="/become-creator#apply" class="text-[#39FF14] underline font-semibold">aplica ahora como Creator</a>.</p>
+`,
+    contentHtmlFr: `
+<h2>Pourquoi les Créateurs Quittent les Plateformes 80/20 et les Agences à 40 % en 2026</h2>
+<p>En 2026, choisir sa plateforme ne se résume plus à héberger des médias privés. La vraie équation tient en quatre critères : <strong>le revenu net réellement encaissé, qui gère vos DM 24/7 sans prendre 40 % à 50 % de commission, la réactivité face aux fuites DRM, et la certitude pour vos fans d’échanger avec de vraies personnes plutôt qu’avec des avatars synthétiques.</strong></p>
+<p>Trois noms dominent les recherches d’<strong>alternatives à OnlyFans en 2026</strong> : <strong>Passes</strong> (affiché à 10 % de frais), <strong>Fanvue</strong> (orienté outils IA) et <strong>Fansly</strong> (standard 80/20 adulte). Chacun impose un compromis majeur. <strong>SECCION</strong> a été conçu pour tous les lever.</p>
+
+<div class="my-8 overflow-x-auto">
+  <table class="w-full text-left border-collapse border border-white/10 rounded-2xl overflow-hidden bg-white/[0.02]">
+    <thead>
+      <tr class="bg-white/5 border-b border-white/10 text-[#00fbfb] font-mono text-xs uppercase tracking-wider">
+        <th class="p-4">Plateforme (2026)</th>
+        <th class="p-4">Part Créateur</th>
+        <th class="p-4">AI Copilot Natif</th>
+        <th class="p-4">Garantie 100 % Humain</th>
+        <th class="p-4">Confidentialité &amp; DRM</th>
+        <th class="p-4">Politique de Contenu</th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-white/5 text-sm">
+      <tr class="bg-[#00fbfb]/10 border-l-4 border-l-[#00fbfb] font-medium text-white">
+        <td class="p-4 font-black text-[#00fbfb]">SECCION (Fondateurs)</td>
+        <td class="p-4 font-mono font-black text-[#39FF14]">90 % Net (80 % Std)</td>
+        <td class="p-4 text-[#39FF14]">1 An Offert (Votre Voix)</td>
+        <td class="p-4 text-[#39FF14]">100 % Réel (DIDIT ZKP)</td>
+        <td class="p-4 text-white/90">Vault DRM 24/7 + Face Blur</td>
+        <td class="p-4 text-[#39FF14]">SFW + 18+ Conforme Dual-Rail</td>
+      </tr>
+      <tr class="hover:bg-white/[0.02] transition">
+        <td class="p-4 font-semibold text-white">Passes</td>
+        <td class="p-4 font-mono font-bold text-white/90">90 % (10 % frais)</td>
+        <td class="p-4 text-white/60">Séquences DM basiques</td>
+        <td class="p-4 text-white/80">Créateurs lifestyle</td>
+        <td class="p-4 text-white/80">Watermarking &amp; anti-capture</td>
+        <td class="p-4 text-red-400">Mainstream / Pas de 18+</td>
+      </tr>
+      <tr class="hover:bg-white/[0.02] transition">
+        <td class="p-4 font-semibold text-white">Fanvue</td>
+        <td class="p-4 font-mono font-bold text-white/80">80 % Std (20 % frais)</td>
+        <td class="p-4 text-white/80">Messagerie IA &amp; API agences</td>
+        <td class="p-4 text-red-400">Autorise les clones IA</td>
+        <td class="p-4 text-white/50">Retraits DMCA standards</td>
+        <td class="p-4 text-white/80">Autorisé</td>
+      </tr>
+      <tr class="hover:bg-white/[0.02] transition">
+        <td class="p-4 font-semibold text-white">Fansly</td>
+        <td class="p-4 font-mono font-bold text-white/80">80 % (20 % frais)</td>
+        <td class="p-4 text-red-400">Aucun (manuel / tiers)</td>
+        <td class="p-4 text-white/80">Interdit l’IA photoréaliste</td>
+        <td class="p-4 text-white/60">Signalement manuel</td>
+        <td class="p-4 text-white/80">Autorisé</td>
+      </tr>
+      <tr class="hover:bg-white/[0.02] transition">
+        <td class="p-4 font-semibold text-white">OnlyFans</td>
+        <td class="p-4 font-mono font-bold text-white/80">80 % (20 % frais)</td>
+        <td class="p-4 text-red-400">Aucun (agences 40–50 %)</td>
+        <td class="p-4 text-white/80">Créateurs vérifiés KYC</td>
+        <td class="p-4 text-white/50">Services externes payants</td>
+        <td class="p-4 text-white/80">Autorisé</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<h2>1. SECCION vs Passes : Gardez 90 % sans Bridage Éditorial</h2>
+<p><strong>Passes</strong> séduit par sa commission de 10 % (90 % créateur), ses appels vidéo 1-à-1 et son watermarking, adaptés au fitness et au lifestyle grand public.</p>
+<p><strong>La Limite :</strong> Dès qu’un créateur développe un univers sensuel ou 18+, les règles mainstream de Passes l’excluent et le renvoient vers les plateformes à 20 %.</p>
+<p><strong>L’Avantage SECCION :</strong> Les 500 premiers <strong>Créateurs Fondateurs verrouillent 90 % de revenus nets</strong> (80 % en tarif standard permanent ensuite) sur une infrastructure à double rail vérifiée (Sightengine + KYC Zero-Knowledge DIDIT + conformité DSA / EU AI Act). Créateurs lifestyle, coaching, sensuels ou 18+ évoluent en toute transparence.</p>
+
+<h2>2. SECCION vs Fanvue : Un Assistant IA pour de Vrais Créateurs, Pas des Clones Synthétiques</h2>
+<p><strong>Fanvue</strong> mise beaucoup sur l’IA, mais avec deux faiblesses majeures pour les créateurs humains :</p>
+<ul>
+  <li><strong>Une commission standard de 20 % :</strong> Passées certaines promos de lancement, la plateforme conserve 20 % des gains.</li>
+  <li><strong>Concurrence des avatars IA :</strong> Fanvue autorise officiellement les modèles 100 % générés par IA, ce qui crée de la méfiance côté abonnés dans les DM.</li>
+</ul>
+<p><strong>L’Avantage SECCION :</strong> Chez SECCION, <strong>l’IA ne remplace jamais l’humain — elle agit uniquement comme votre agent opérationnel privé</strong> dans <a href="/features/ai-copilot" class="text-[#00fbfb] underline">Creator Studio</a>. Chaque profil passe une vérification biométrique réelle via DIDIT, pendant que votre <strong>AI Copilot offert la 1re année</strong> gère vos DM 24/7 dans votre style exact — en supprimant les 40 % à 50 % pris par les agences.</p>
+
+<h2>3. SECCION vs Fansly &amp; OnlyFans : Warm Paywall, Face Blur et Retraits EUR/USDC</h2>
+<p><strong>OnlyFans</strong> et <strong>Fansly</strong> prélèvent 20 % sans AI Copilot natif, et les paywalls froids exigent de payer avant même d’avoir échangé.</p>
+<ul>
+  <li><strong>Warm Paywall &amp; Vibe Radar :</strong> Les membres se découvrent gratuitement par affinités et centres d’intérêt avant de débloquer les accès VIP.</li>
+  <li><strong>Face Blur ZKP &amp; Vault DRM 24/7 :</strong> Masquez votre visage sur le feed public jusqu’au niveau d’affinité mutuelle ou VIP, avec surveillance antipiratage continue via le <a href="/features/drm-protection" class="text-[#00fbfb] underline">DRM Vault</a>.</li>
+  <li><strong>Virements SEPA Instant ou Circle USDC :</strong> Évitez les 3 à 4 % de marges bancaires cachées sur les devises.</li>
+</ul>
+
+<h2>Réclamez Votre Place de Créateur Fondateur (90 % Net)</h2>
+<p>La cohorte Fondateurs à 90 % (+ 1 an d’AI Copilot offert) est limitée aux 500 premiers créateurs validés. Consultez notre <a href="/creator-hub/onlyfans-alternative" class="text-[#00fbfb] underline font-semibold">comparatif détaillé de 6 plateformes</a> ou <a href="/become-creator#apply" class="text-[#39FF14] underline font-semibold">déposez votre candidature Creator</a>.</p>
+`
+  },
   {
     slug: 'creator-platform-90-percent-payout-comparison-2026',
     title: 'Creator Platform Payout Comparison 2026: Who Lets You Keep the Most?',
