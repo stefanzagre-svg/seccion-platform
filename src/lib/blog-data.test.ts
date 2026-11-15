@@ -11,14 +11,37 @@ import robots from '../app/robots';
 import { generateStaticParams, generateMetadata } from '../app/blog/[slug]/page';
 
 describe('SECCION Blog Core Data & Content Pillar Integrity', () => {
-  it('loads all blog posts and ensures at least the 3 cornerstone pillar articles exist', () => {
+  it('loads all blog posts and ensures at least the 4 cornerstone pillar articles exist', () => {
     const posts = getAllBlogPosts();
-    expect(posts.length).toBeGreaterThanOrEqual(3);
+    expect(posts.length).toBeGreaterThanOrEqual(4);
 
     const slugs = posts.map((p) => p.slug);
+    expect(slugs).toContain('replace-40-percent-onlyfans-agency-with-ai-copilot-2026');
     expect(slugs).toContain('seccion-vs-passes-vs-fanvue-vs-fansly-2026');
     expect(slugs).toContain('creator-platform-90-percent-payout-comparison-2026');
     expect(slugs).toContain('what-is-a-warm-paywall-creator-economy');
+  });
+
+  it('verifies Brief #2 (EN/ES/FR): Replace 40% OnlyFans Agency with AI Copilot 2026', () => {
+    const post = getBlogPostBySlug('replace-40-percent-onlyfans-agency-with-ai-copilot-2026');
+    expect(post).toBeDefined();
+    if (!post) return;
+
+    expect(post.title).toContain('Replace a 40% OnlyFans Chatting Agency');
+    expect(post.titleEs).toContain('Agencia de OnlyFans del 40%');
+    expect(post.titleFr).toContain('Agence OnlyFans à 40 %');
+    expect(post.description).toContain('$4,000 vs $9,000');
+    expect(post.descriptionEs).toContain('$4,000 vs $9,000');
+    expect(post.descriptionFr).toContain('4 000 $ vs 9 000 $');
+    expect(post.summaryPoints.length).toBeGreaterThanOrEqual(3);
+    expect(post.summaryPointsEs?.length).toBeGreaterThanOrEqual(3);
+    expect(post.summaryPointsFr?.length).toBeGreaterThanOrEqual(3);
+    expect(post.contentHtml).toContain('$9,000 / mo (90%)');
+    expect(post.contentHtml).toContain('NLP Contract');
+    expect(post.contentHtml).toContain('/features/ai-copilot');
+    expect(post.contentHtmlEs).toContain('$9,000 / mes (90%)');
+    expect(post.contentHtmlFr).toContain('9 000 $ / mois (90 %)');
+    expect(post.canonical).toBe('https://seccion.ai/blog/replace-40-percent-onlyfans-agency-with-ai-copilot-2026');
   });
 
   it('verifies Article 3 (EN/ES/FR): SECCION vs. Passes vs. Fanvue vs. Fansly 2026', () => {
@@ -100,7 +123,8 @@ describe('SECCION Blog Core Data & Content Pillar Integrity', () => {
 describe('SECCION Blog Next.js Static & Metadata Generation', () => {
   it('generates static params matching all published slugs', async () => {
     const params = await generateStaticParams();
-    expect(params.length).toBeGreaterThanOrEqual(3);
+    expect(params.length).toBeGreaterThanOrEqual(4);
+    expect(params).toContainEqual({ slug: 'replace-40-percent-onlyfans-agency-with-ai-copilot-2026' });
     expect(params).toContainEqual({ slug: 'seccion-vs-passes-vs-fanvue-vs-fansly-2026' });
     expect(params).toContainEqual({ slug: 'creator-platform-90-percent-payout-comparison-2026' });
     expect(params).toContainEqual({ slug: 'what-is-a-warm-paywall-creator-economy' });
@@ -132,6 +156,7 @@ describe('SECCION SEO & Crawler Discovery Verification', () => {
     const urls = map.map((entry) => entry.url);
 
     expect(urls).toContain('https://seccion.ai/blog');
+    expect(urls).toContain('https://seccion.ai/blog/replace-40-percent-onlyfans-agency-with-ai-copilot-2026');
     expect(urls).toContain('https://seccion.ai/blog/seccion-vs-passes-vs-fanvue-vs-fansly-2026');
     expect(urls).toContain('https://seccion.ai/blog/creator-platform-90-percent-payout-comparison-2026');
     expect(urls).toContain('https://seccion.ai/blog/what-is-a-warm-paywall-creator-economy');
@@ -158,12 +183,14 @@ describe('SECCION SEO & Crawler Discovery Verification', () => {
 
     const llmsTxt = await fs.readFile(path.join(process.cwd(), 'public/llms.txt'), 'utf-8');
     expect(llmsTxt).toContain('https://seccion.ai/blog');
+    expect(llmsTxt).toContain('replace-40-percent-onlyfans-agency-with-ai-copilot-2026');
     expect(llmsTxt).toContain('seccion-vs-passes-vs-fanvue-vs-fansly-2026');
     expect(llmsTxt).toContain('creator-platform-90-percent-payout-comparison-2026');
     expect(llmsTxt).toContain('what-is-a-warm-paywall-creator-economy');
 
     const llmsFullTxt = await fs.readFile(path.join(process.cwd(), 'public/llms-full.txt'), 'utf-8');
     expect(llmsFullTxt).toContain('https://seccion.ai/blog');
+    expect(llmsFullTxt).toContain('replace-40-percent-onlyfans-agency-with-ai-copilot-2026');
     expect(llmsFullTxt).toContain('seccion-vs-passes-vs-fanvue-vs-fansly-2026');
     expect(llmsFullTxt).toContain('creator-platform-90-percent-payout-comparison-2026');
     expect(llmsFullTxt).toContain('what-is-a-warm-paywall-creator-economy');
