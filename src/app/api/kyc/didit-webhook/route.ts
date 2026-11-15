@@ -72,11 +72,16 @@ export async function POST(req: NextRequest) {
       switch (status) {
         case 'Approved': {
           // 1. Fetch existing profile first so we enforce DB idempotency and server-authoritative role resolution
-          const { data: existingProfile } = await adminDb
+          // Note: `profiles` has no `email` column; email is resolved below via Auth Admin when needed.
+          const { data: existingProfile, error: existingProfileError } = await adminDb
             .from('profiles')
-            .select('id, username, email, role, is_kyc_verified, connection_points, privacy_settings')
+            .select('id, username, role, is_kyc_verified, connection_points, privacy_settings')
             .eq('id', vendorData)
             .maybeSingle();
+
+          if (existingProfileError) {
+            console.warn('[DIDIT Webhook] Existing profile lookup warning:', existingProfileError.message);
+          }
 
           const existingPrivacy =
             existingProfile?.privacy_settings && typeof existingProfile.privacy_settings === 'object'
@@ -103,8 +108,8 @@ export async function POST(req: NextRequest) {
             return new Response('ok', { status: 200 });
           }
 
-          // Resolve email from profile or auth user to check creator_applications approval strictly on server
-          let userEmail = existingProfile?.email || null;
+          // Resolve email from Auth user to check creator_applications approval strictly on server
+          let userEmail: string | null = null;
           if (!userEmail) {
             const { data: authData } = await adminDb.auth.admin.getUserById(vendorData).catch(() => ({ data: null }));
             userEmail = authData?.user?.email || null;
@@ -185,7 +190,7 @@ export async function POST(req: NextRequest) {
           const isCreatorVerified = resolvedRole === 'creator';
           const msg =
             `🛡️ *${isCreatorVerified ? 'CREATOR' : 'MEMBER 18+'} KYC VERIFIED (DIDIT)*\n\n` +
-            `👤 *User:* @${profile?.username || existingProfile?.username || 'User'} (${profile?.email || userEmail || vendorData})\n` +
+            `👤 *User:* @${profile?.username || existingProfile?.username || 'User'} (${userEmail || vendorData})\n` +
             `🎭 *Role:* ${resolvedRole.toUpperCase()}\n` +
             `✅ *Decision:* Approved\n` +
             `🆔 *Session:* ${payload.session_id || 'N/A'}\n` +

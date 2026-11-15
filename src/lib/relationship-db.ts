@@ -98,6 +98,28 @@ async function filterVisibleSwipeProfiles(
 }
 
 /**
+ * Fetch user IDs blocked by or blocking `userId`. Degrades gracefully if `blocked_users` is unavailable.
+ */
+async function fetchBlockedUserIds(userId: string): Promise<string[]> {
+  try {
+    const { data: blocks, error: blockError } = await supabase
+      .from('blocked_users')
+      .select('blocker_id, blocked_id')
+      .or(`blocker_id.eq.${userId},blocked_id.eq.${userId}`);
+
+    if (blockError) {
+      console.warn('[relationship-db] blocked_users lookup skipped:', blockError.message);
+      return [];
+    }
+
+    return (blocks || []).map((b) => (b.blocker_id === userId ? b.blocked_id : b.blocker_id));
+  } catch (err) {
+    console.warn('[relationship-db] blocked_users lookup error:', err);
+    return [];
+  }
+}
+
+/**
  * Fetch profiles available for the current user to swipe on.
  * Excludes the current user, prior interactions, blocks, geoblocked visitors, and unready profiles.
  */
@@ -121,16 +143,8 @@ export async function fetchSwipeableProfiles(currentUserId: string): Promise<Pro
 
     if (intError) throw intError;
 
-    // Fetch blocked users (where user is blocker or blocked)
-    const { data: blocks, error: blockError } = await supabase
-      .from('blocked_users')
-      .select('blocker_id, blocked_id')
-      .or(`blocker_id.eq.${currentUserId},blocked_id.eq.${currentUserId}`);
-      
-    if (blockError) throw blockError;
-
     const interactedIds = (interactions || []).map(i => i.target_id);
-    const blockedIds = (blocks || []).map(b => b.blocker_id === currentUserId ? b.blocked_id : b.blocker_id);
+    const blockedIds = await fetchBlockedUserIds(currentUserId);
     
     const excludedIds = Array.from(new Set([...interactedIds, ...blockedIds, currentUserId]));
 
@@ -248,13 +262,7 @@ export async function recordInteraction(
  */
 export async function fetchMatches(userId: string): Promise<MatchInfo[]> {
   try {
-    const { data: blocks, error: blockError } = await supabase
-      .from('blocked_users')
-      .select('blocker_id, blocked_id')
-      .or(`blocker_id.eq.${userId},blocked_id.eq.${userId}`);
-      
-    if (blockError) throw blockError;
-    const blockedIds = (blocks || []).map(b => b.blocker_id === userId ? b.blocked_id : b.blocker_id);
+    const blockedIds = await fetchBlockedUserIds(userId);
 
     let query = supabase
       .from('relationships')
