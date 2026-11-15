@@ -47,3 +47,7 @@ next-env.d.ts
 .wrangler
 .dev.vars*
 !.dev.vars.example
+
+# generated test/audit reports and Supabase CLI temp files
+/reports/ux-audit-reports/
+/supabase/.temp/
