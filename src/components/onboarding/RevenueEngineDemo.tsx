@@ -73,11 +73,11 @@ export default function RevenueEngineDemo({ onComplete }: RevenueEngineDemoProps
               <span className="text-[10px] font-black uppercase tracking-wider">SECCION Model</span>
             </div>
             <p className="text-[10px] text-white/50 leading-relaxed font-medium">
-              We charge a flat 20% platform fee. AI replaces the management agency for DMs and scheduling at $0 cost.
+              Founding Creators keep 90% Year 1 (80% standard afterwards). AI replaces the management agency for DMs and scheduling at €0 cost.
             </p>
           </div>
 
-          {/* SVG Progress Ring for Creator share (80%) */}
+          {/* SVG Progress Ring for Creator share (90% Founding) */}
           <div className="flex justify-center py-2 relative">
             <svg className="w-24 h-24 transform -rotate-90">
               <circle cx="48" cy="48" r="38" className="stroke-white/5" strokeWidth="6" fill="transparent" />
@@ -90,18 +90,18 @@ export default function RevenueEngineDemo({ onComplete }: RevenueEngineDemoProps
                 fill="transparent"
                 strokeDasharray={2 * Math.PI * 38}
                 initial={{ strokeDashoffset: 2 * Math.PI * 38 }}
-                animate={{ strokeDashoffset: 2 * Math.PI * 38 * (1 - 0.8) }}
+                animate={{ strokeDashoffset: 2 * Math.PI * 38 * (1 - 0.9) }}
                 transition={{ duration: 1.5, ease: "easeOut" }}
               />
             </svg>
             <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <span className="text-xl font-black font-mono text-glow text-white">80%</span>
+              <span className="text-xl font-black font-mono text-glow text-white">90%</span>
               <span className="text-[8px] uppercase tracking-widest text-white/40">Your Share</span>
             </div>
           </div>
 
           <div className="text-[9px] text-primary font-mono text-center">
-            You keep 80% of all earnings. Always.
+            You keep 90% in Year 1 (80% standard lifetime).
           </div>
         </div>
       </div>

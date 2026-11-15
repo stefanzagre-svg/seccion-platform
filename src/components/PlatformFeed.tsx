@@ -22,6 +22,12 @@ import { cn } from '@/lib/utils';
 import FeedFilterBar, { type AdvancedFilterState } from '@/components/feed/FeedFilterBar';
 import FeedPaywallModal from '@/components/feed/FeedPaywallModal';
 import FeedCardSwiper from '@/components/feed/FeedCardSwiper';
+import {
+  buildPublicMediaCountMap,
+  fetchVisitorCountryCode,
+  isCountryBlocked,
+  isProfileReadyForDiscovery,
+} from '@/lib/profile-visibility';
 
 // Dynamic imports for heavy modals (loaded on-demand when opened)
 const ProfileDetailsModal = dynamic(() => import('@/components/ProfileDetailsModal'), { ssr: false });
@@ -49,7 +55,25 @@ const MOCK_LIVE_STREAMS = [
   { id: 'live-3', creator: 'Sofia', viewers: '2.1k', image: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=400&q=80', title: 'Workout with Me', isVIP: false, profile: { hobbies: ['Fitness', 'Yoga'], lifestyle: { workout: 'Every Day', 'healthy eating': 'Every Day', socializing: 'Sometimes', sleep: 'Every Day', 'pet lover': 'Often' }, relationshipGoal: 'Long-term', relationshipType: 'Monogamous', sexualPreferences: ['Heterosexual'], familyGoals: 'Want children' } },
 ];
 
-const MOCK_RECENT_CONTENT = [
+const MOCK_RECENT_CONTENT: Array<{
+  id: string;
+  creator: string;
+  type: string;
+  content: string;
+  image: string;
+  timestamp: string;
+  locked: boolean;
+  relationship: string;
+  media_type?: 'video' | 'album' | 'photo';
+  video_duration?: string;
+  album_name?: string;
+  album_count?: number;
+  teaser_type?: 'none' | 'video_clip' | 'main_photo' | 'custom';
+  video_start_time?: number;
+  thumbnail_url?: string;
+  thumbnail_type?: 'photo' | 'video';
+  profile: Record<string, unknown>;
+}> = [
   { id: 'mock-1', creator: 'Valentina', type: 'public', content: 'Excited for tonight! 🌙', image: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=800&q=80', timestamp: '2h ago', locked: false, relationship: 'matched', media_type: 'photo', teaser_type: 'none', profile: { hobbies: ['Music', 'Art'], lifestyle: { partying: 'Often', traveling: 'Every Day', socializing: 'Often' }, relationshipGoal: 'Short-term', relationshipType: 'Open Relationship', sexualPreferences: ['Heterosexual'], familyGoals: 'Open to children' } },
   { id: 'mock-2', creator: 'Elena', type: 'vip', content: 'Exclusive VIP Album: Midnight Pulse', image: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=800&q=80', timestamp: '5h ago', locked: true, relationship: 'subscribed', media_type: 'album', album_name: 'Midnight Pulse', album_count: 8, teaser_type: 'none', profile: { hobbies: ['Tech', 'Music'], lifestyle: { workout: 'Every Day', traveling: 'Often', socializing: 'Often' }, relationshipGoal: 'Long-term', relationshipType: 'Monogamous', sexualPreferences: ['Heterosexual'], familyGoals: 'Want children' } },
   { id: 'mock-3', creator: 'Elena', type: 'public', content: 'Sneak peek at the new set! 📷', image: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=800&q=80', timestamp: '1h ago', locked: false, relationship: 'subscribed', media_type: 'video', video_duration: '0:15', teaser_type: 'none', profile: { hobbies: ['Tech', 'Music'], lifestyle: { workout: 'Every Day', traveling: 'Often', socializing: 'Often' }, relationshipGoal: 'Long-term', relationshipType: 'Monogamous', sexualPreferences: ['Heterosexual'], familyGoals: 'Want children' } },
@@ -131,6 +155,7 @@ export default function PlatformFeed() {
   const [pendingMatches, setPendingMatches] = useState<any[]>([]);
   const [feedContent, setFeedContent] = useState<any[]>([]);
   const [subscriptions, setSubscriptions] = useState<any[]>([]);
+  const [unlockedPpvIds, setUnlockedPpvIds] = useState<Set<string>>(new Set());
   const [ratingsMap, setRatingsMap] = useState<Record<string, number[]>>({});
   const [loading, setLoading] = useState(true);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -227,16 +252,35 @@ export default function PlatformFeed() {
 
   const loadDatePlans = async () => {
     try {
-      const { data, error } = await supabase
-        .from('session_intent_plans')
-        .select(`
-          *,
-          poster_profile:profiles!session_intent_plans_poster_user_uuid_fkey(*)
-        `)
-        .order('created_at', { ascending: false });
+      const [{ data, error }, visitorCountry] = await Promise.all([
+        supabase
+          .from('session_intent_plans')
+          .select(`
+            *,
+            poster_profile:profiles!session_intent_plans_poster_user_uuid_fkey(*)
+          `)
+          .order('created_at', { ascending: false }),
+        fetchVisitorCountryCode(),
+      ]);
 
       if (error) throw error;
-      setDatePlans(data || []);
+      const plans = data || [];
+      const posterIds = plans.map((p: any) => p.poster_profile?.id || p.poster_user_uuid);
+      const mediaMap = await buildPublicMediaCountMap(supabase, posterIds);
+
+      const visiblePlans = plans.filter((plan: any) => {
+        const poster = plan.poster_profile;
+        const posterId = poster?.id || plan.poster_user_uuid;
+        if (currentUser?.id && posterId === currentUser.id) return true;
+        if (!poster) return false;
+        if (isCountryBlocked(poster.privacy_settings, visitorCountry)) return false;
+        return isProfileReadyForDiscovery(poster, {
+          publicMediaCount: mediaMap.get(posterId) || 0,
+          requireCreatorKyc: true,
+        });
+      });
+
+      setDatePlans(visiblePlans);
     } catch (err) {
       console.error('Error loading date plans:', err);
     }
@@ -244,26 +288,53 @@ export default function PlatformFeed() {
 
   const loadFeedContent = async () => {
     try {
-      const { data: content, error: contentError } = await supabase
-        .from('platform_content')
-        .select(`
-          *,
-          creator_profile:profiles!platform_content_creator_id_fkey(*)
-        `)
-        .order('created_at', { ascending: false });
+      const [{ data: content }, { data: publicAlbums }, visitorCountry] = await Promise.all([
+        supabase
+          .from('platform_content')
+          .select(`
+            *,
+            creator_profile:profiles!platform_content_creator_id_fkey(*)
+          `)
+          .order('created_at', { ascending: false }),
+        // Phase 14: Surface members with public albums in the feed
+        supabase
+          .from('member_albums')
+          .select('*, profile:profiles(*)')
+          .eq('visibility', 'public')
+          .order('created_at', { ascending: false })
+          .limit(3),
+        fetchVisitorCountryCode(),
+      ]);
 
-      let baseContent = content && content.length > 0 ? content : [];
+      const rawContent = content && content.length > 0 ? content : [];
+      const rawAlbums = publicAlbums && publicAlbums.length > 0 ? publicAlbums : [];
 
-      // Phase 14: Surface members with public albums in the feed
-      const { data: publicAlbums } = await supabase
-        .from('member_albums')
-        .select('*, profile:profiles(*)')
-        .eq('visibility', 'public')
-        .order('created_at', { ascending: false })
-        .limit(3);
+      const authorIds = [
+        ...rawContent.map((item: any) => item.creator_profile?.id || item.creator_id),
+        ...rawAlbums.map((album: any) => album.profile?.id || album.member_id),
+      ];
+      const mediaMap = await buildPublicMediaCountMap(supabase, authorIds);
 
-      if (publicAlbums && publicAlbums.length > 0) {
-        const albumPosts = publicAlbums.map((album: any) => ({
+      const isVisibleAuthor = (authorProfile: any, authorId: string | null | undefined) => {
+        if (currentUser?.id && authorId && authorId === currentUser.id) return true;
+        if (!authorProfile || !authorId) return false;
+        if (isCountryBlocked(authorProfile.privacy_settings, visitorCountry)) return false;
+        return isProfileReadyForDiscovery(authorProfile, {
+          publicMediaCount: mediaMap.get(authorId) || 0,
+          requireCreatorKyc: true,
+        });
+      };
+
+      let baseContent = rawContent.filter((item: any) =>
+        isVisibleAuthor(item.creator_profile, item.creator_profile?.id || item.creator_id)
+      );
+
+      const visibleAlbums = rawAlbums.filter((album: any) =>
+        isVisibleAuthor(album.profile, album.profile?.id || album.member_id)
+      );
+
+      if (visibleAlbums.length > 0) {
+        const albumPosts = visibleAlbums.map((album: any) => ({
           id: `album-${album.id}`,
           creator_id: album.member_id,
           creator: album.profile?.username || 'Member',
@@ -281,7 +352,7 @@ export default function PlatformFeed() {
           face_blur_active: album.profile?.face_blur_active,
           avatar_face_coordinates: album.profile?.avatar_face_coordinates
         }));
-        
+
         baseContent = [...albumPosts, ...baseContent];
       }
 
@@ -603,7 +674,7 @@ export default function PlatformFeed() {
     return () => clearInterval(timer);
   }, []);
 
-  // Pay-Per-View Unlock Handler
+  // Pay-Per-View Unlock Handler (called ONLY after verified UnifiedPaymentGate / /api/matrix/spend settlement)
   const handleUnlockPpv = async (postId: string) => {
     if (!currentUser) {
       setLiveToast({
@@ -615,27 +686,24 @@ export default function PlatformFeed() {
     }
 
     try {
-      // 1. Simulate transaction
-      localStorage.setItem(`unlocked_ppv_${postId}`, 'true');
+      setUnlockedPpvIds((prev) => {
+        const next = new Set(prev);
+        next.add(postId);
+        return next;
+      });
 
-      // 2. Award connection points / XP to the user
-      await awardXp(currentUser.id, 250);
-
-      // 3. Show live Toast notification
       setLiveToast({
         message: 'PPV Post Unlocked! 🔓',
-        subMessage: 'Content decrypted in-place. +250 XP earned!',
+        subMessage: 'Content decrypted in-place via verified wallet/crypto payment.',
         type: 'post'
       });
 
-      // 4. Force state reload in-place
       setFeedContent(prev => prev.map(post => {
         if (post.id === postId) {
-          return { ...post }; 
+          return { ...post };
         }
         return post;
       }));
-
     } catch (err) {
       console.error('Error unlocking PPV post:', err);
     }
@@ -686,13 +754,29 @@ export default function PlatformFeed() {
         const myMatches = await fetchMatches(currentUser.id);
         setMatches(myMatches.length > 0 ? myMatches : MOCK_MATCHED_USERS);
 
-        // 2. Fetch Active Subscriptions
-        const { data: subs } = await supabase
-          .from('subscriptions')
-          .select('*')
-          .eq('subscriber_id', currentUser.id)
-          .eq('is_active', true);
-        
+        // 2. Fetch Active Subscriptions & Completed PPV Unlocks
+        const [{ data: subs }, { data: ppvTx }] = await Promise.all([
+          supabase
+            .from('subscriptions')
+            .select('*')
+            .eq('subscriber_id', currentUser.id)
+            .eq('is_active', true),
+          supabase
+            .from('matrix_transactions')
+            .select('metadata')
+            .eq('user_id', currentUser.id)
+            .in('transaction_type', ['spend_ppv_teaser', 'spend_unlock', 'checkout_unlock', 'crypto_unlock'])
+            .eq('status', 'completed'),
+        ]);
+
+        const unlockedIds = new Set<string>();
+        (ppvTx || []).forEach((tx: any) => {
+          const pid = tx?.metadata?.postId || tx?.metadata?.post_id;
+          if (typeof pid === 'string' && pid.length > 0) {
+            unlockedIds.add(pid);
+          }
+        });
+        setUnlockedPpvIds(unlockedIds);
         setSubscriptions(subs || []);
         
         if (subs && subs.length > 0) {
@@ -762,8 +846,7 @@ export default function PlatformFeed() {
     let isLocked = false;
     if (!isSelf && item.tier !== 'none') {
       if (item.tier === 'ppv') {
-        const isUnlocked = typeof window !== 'undefined' && localStorage.getItem(`unlocked_ppv_${item.id}`) === 'true';
-        if (!isUnlocked) {
+        if (!unlockedPpvIds.has(item.id)) {
           isLocked = true;
         }
       } else {
@@ -783,7 +866,7 @@ export default function PlatformFeed() {
       avatar_url: creatorProf?.avatar_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&q=80',
       type: item.tier === 'none' ? 'public' : item.tier,
       content: cleanDesc,
-      image: item.media_url,
+      image: isLocked ? '' : item.media_url,
       timestamp: new Date(item.created_at).toLocaleDateString(),
       matchScore: matchProb,
       matchResult,
@@ -792,7 +875,7 @@ export default function PlatformFeed() {
       relationship: activeSub ? 'subscribed' : isMatched ? 'matched' : 'none',
       ratingScore: calculateCreatorRating(creatorProf, ratingsMap[item.creator_id] || []),
       face_blur_active: creatorProf?.face_blur_active || false,
-      avatar_face_coordinates: creatorProf?.avatar_face_coordinates || null,
+      avatar_face_coordinates: creatorProf?.avatar_face_coordinates || undefined,
       media_type: item.media_type || (item.media_url?.includes('mp4') || item.media_url?.includes('video') ? 'video' : 'photo'),
       video_duration: item.video_duration || null,
       album_name: item.album_name || null,
@@ -800,7 +883,7 @@ export default function PlatformFeed() {
       teaser_type: teaser.teaser_type || 'none',
       video_start_time: teaser.video_start_time || 0,
       thumbnail_url: teaser.thumbnail_url || null,
-      thumbnail_type: teaser.thumbnail_type || null,
+      thumbnail_type: teaser.thumbnail_type || undefined,
       specialization: creatorProf?.specialization || null
     };
   });
@@ -811,10 +894,10 @@ export default function PlatformFeed() {
     : MOCK_RECENT_CONTENT.map(item => {
         const matchResult = calculateMatch(currentUserProfile, item.profile as unknown as UserProfile);
         const isFaceBlurCreator = ['Valentina', 'Elena', 'Sofia'].includes(item.creator);
-        const isUnlocked = typeof window !== 'undefined' && localStorage.getItem(`unlocked_ppv_${item.id}`) === 'true';
-        const isLocked = item.locked && (item.type === 'ppv' ? !isUnlocked : true);
+        const isLocked = item.locked && (item.type === 'ppv' ? !unlockedPpvIds.has(item.id) : true);
         return {
           ...item,
+          image: isLocked ? '' : item.image,
           avatar_url: item.image,
           creator_id: item.id,
           isMatched: item.relationship === 'matched',
@@ -822,7 +905,7 @@ export default function PlatformFeed() {
           matchResult,
           ratingScore: calculateCreatorRating(item.profile, ratingsMap[item.id] || []),
           face_blur_active: isFaceBlurCreator,
-          avatar_face_coordinates: isFaceBlurCreator ? { x: 0.5, y: 0.35, r: 0.18 } : null,
+          avatar_face_coordinates: isFaceBlurCreator ? { x: 0.5, y: 0.35, r: 0.18 } : undefined,
           locked: isLocked,
           specialization: (item as any).specialization || (item.profile as any).specialization || null
         };
@@ -1476,6 +1559,7 @@ export default function PlatformFeed() {
                             <div className="w-10 h-10 rounded-2xl bg-white/10 border border-white/10 overflow-hidden shadow-inner relative">
                               <BlurredFaceImage
                                 src={posterProf?.avatar_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&q=80'}
+                                profileId={posterProf?.avatar_url ? posterProf.id : undefined}
                                 alt="Avatar"
                                 sharedScore={matchScore}
                                 isEnabledByOwner={posterProf?.face_blur_active}

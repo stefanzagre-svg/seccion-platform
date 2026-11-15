@@ -115,7 +115,8 @@ export async function updateRelationshipScorePrivileged(
  */
 export async function checkUserQuota(
   userId: string,
-  role: 'member' | 'creator'
+  role: 'member' | 'creator',
+  client: any = supabase
 ): Promise<{ allowed: boolean; count: number }> {
   try {
     // 1. Creators are exempt from limits
@@ -125,7 +126,7 @@ export async function checkUserQuota(
 
     // 2. Query active VIP or Master subscriptions for this user
     const nowIso = new Date().toISOString();
-    const { data: activeSubs, error: subError } = await supabase
+    const { data: activeSubs, error: subError } = await client
       .from('subscriptions')
       .select('id')
       .eq('subscriber_id', userId)
@@ -144,7 +145,7 @@ export async function checkUserQuota(
     startOfMonth.setUTCDate(1);
     startOfMonth.setUTCHours(0, 0, 0, 0);
 
-    const { count, error: countError } = await supabase
+    const { count, error: countError } = await client
       .from('session_intent_plans')
       .select('plan_id', { count: 'exact', head: true })
       .eq('poster_user_uuid', userId)
@@ -167,9 +168,12 @@ export async function checkUserQuota(
  * Checks if a user has exceeded their active Date Plan creation quota.
  * Prevents users from spamming active plans (max 3 active plans per user).
  */
-export async function checkUserPlanQuota(userId: string): Promise<{ allowed: boolean; count: number }> {
+export async function checkUserPlanQuota(
+  userId: string,
+  client: any = supabase
+): Promise<{ allowed: boolean; count: number }> {
   try {
-    const { count, error } = await supabase
+    const { count, error } = await client
       .from('session_intent_plans')
       .select('plan_id', { count: 'exact', head: true })
       .eq('poster_user_uuid', userId)
@@ -192,7 +196,10 @@ export async function checkUserPlanQuota(userId: string): Promise<{ allowed: boo
 /**
  * Persists a new Date Plan into the database.
  */
-export async function createDatePlan(payload: DatePlanInsertPayload): Promise<DatePlan> {
+export async function createDatePlan(
+  payload: DatePlanInsertPayload,
+  client: any = supabase
+): Promise<DatePlan> {
   // Format PostGIS geography point if provided
   const dbPayload: Record<string, unknown> = {
     poster_user_uuid: payload.poster_user_uuid,
@@ -210,7 +217,7 @@ export async function createDatePlan(payload: DatePlanInsertPayload): Promise<Da
     dbPayload.plan_scope_geo_point = `POINT(${lng} ${lat})`;
   }
 
-  const { data, error } = await supabase
+  const { data, error } = await client
     .from('session_intent_plans')
     .insert(dbPayload)
     .select()
@@ -241,10 +248,11 @@ export async function respondToDatePlanApplication(
   planId: string,
   applierId: string,
   status: 'accept' | 'deny',
-  posterId: string
+  posterId: string,
+  client: any = supabase
 ): Promise<void> {
   // 1. Retrieve the plan details
-  const { data: plan, error: fetchError } = await supabase
+  const { data: plan, error: fetchError } = await client
     .from('session_intent_plans')
     .select('*')
     .eq('plan_id', planId)
@@ -264,7 +272,7 @@ export async function respondToDatePlanApplication(
     }
 
     // 2. Set plan to booked and clear list
-    const { error: updateError } = await supabase
+    const { error: updateError } = await client
       .from('session_intent_plans')
       .update({
         plan_status: 'Booked',
@@ -287,7 +295,7 @@ export async function respondToDatePlanApplication(
   } else if (status === 'deny') {
     // 2. Remove user from waitlist
     const newList = waitingList.filter(id => id !== applierId);
-    const { error: updateError } = await supabase
+    const { error: updateError } = await client
       .from('session_intent_plans')
       .update({
         applicants_waiting_list: newList,

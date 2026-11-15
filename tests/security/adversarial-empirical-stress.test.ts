@@ -2,10 +2,13 @@ import { describe, it, expect } from 'vitest';
 import { NextRequest } from 'next/server';
 import crypto from 'crypto';
 import { middleware } from '../../src/middleware';
-import { GET as blurGet, isPrivateOrBlockedHost } from '../../src/app/api/media/blur/route';
+import { GET as blurGet } from '../../src/app/api/media/blur/route';
+import { isPrivateOrBlockedHost } from '../../src/lib/media-url-guard';
 import { POST as cryptoWebhookPost } from '../../src/app/api/billing/crypto/webhook/route';
-import { POST as segpayPostbackPost, verifySegpaySignature } from '../../src/app/api/billing/segpay-postback/route';
-import { POST as diditWebhookPost, verifyDiditSignature, shortenFloats, sortKeys } from '../../src/app/api/kyc/didit-webhook/route';
+import { POST as segpayPostbackPost } from '../../src/app/api/billing/segpay-postback/route';
+import { verifySegpaySignature } from '../../src/lib/segpay-verify';
+import { POST as diditWebhookPost } from '../../src/app/api/kyc/didit-webhook/route';
+import { verifyDiditSignature, shortenFloats, sortKeys } from '../../src/lib/didit';
 import { nowPayments } from '../../src/lib/nowpayments';
 
 describe('CHALLENGER EMPIRICAL VERIFICATION & STRESS HARNESS', () => {

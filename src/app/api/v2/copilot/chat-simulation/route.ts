@@ -7,6 +7,10 @@ import { scrubPIIBeforeLLM } from '@/lib/ai/pii-scrubber';
 import { classifyMessageIntent } from '@/lib/ai/intent-classifier';
 import { analyzeMemberFriction } from '@/lib/ai/whale-friction-detector';
 import { resolveRampDirective, calculateTypingCadence } from '@/lib/ai/conversion-engine';
+import {
+  formatProvenanceMemoryBlock,
+  loadActiveCopilotMemories,
+} from '@/lib/ai/copilot-memory';
 
 /**
  * Sandbox / Development convenience:
@@ -24,6 +28,12 @@ const IS_DEV = process.env.NODE_ENV === 'development';
 
 export async function POST(req: NextRequest) {
   try {
+    const authClient = await createServerClient();
+    const { data: { user }, error: authError } = await authClient.auth.getUser();
+    if (authError || !user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     let body: any;
     try {
       body = await req.json();
@@ -39,9 +49,16 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    if (user.id !== creatorId) {
+      return NextResponse.json(
+        { error: 'Forbidden — copilot is restricted to the creator account' },
+        { status: 403 }
+      );
+    }
+
     const hasServiceKey = !!process.env.SUPABASE_SERVICE_ROLE_KEY;
     const sandboxMode = IS_DEV && !hasServiceKey;
-    const supabase: any = hasServiceKey ? createAdminClient() : await createServerClient();
+    const supabase: any = hasServiceKey ? createAdminClient() : authClient;
 
     // ── 1. Fetch Creator Profile & Global Emergency Halt Check ───────────────
     const { data: creatorProfile, error: profileError } = await supabase
@@ -92,7 +109,19 @@ export async function POST(req: NextRequest) {
     const scrubbed = scrubPIIBeforeLLM(messageContext || '');
 
     // ── 4. Whale & Member Sentiment Friction Detector ─────────────────────────
-    const friction = analyzeMemberFriction(scrubbed.sanitizedText);
+    let lifetimeSpendCents = 0;
+    try {
+      const { data: spendSubs } = await supabase
+        .from('subscriptions')
+        .select('price_paid')
+        .eq('subscriber_id', targetId)
+        .eq('creator_id', creatorId);
+      const subEur = (spendSubs || []).reduce((acc: number, row: any) => acc + Number(row.price_paid || 0), 0);
+      lifetimeSpendCents = Math.round(subEur * 100);
+    } catch {
+      // Non-fatal spend lookup fallback
+    }
+    const friction = analyzeMemberFriction(scrubbed.sanitizedText, lifetimeSpendCents);
     if (friction.requiresHumanEscalation) {
       // Log escalation and halt automated generation
       supabase
@@ -204,13 +233,13 @@ export async function POST(req: NextRequest) {
 
     const currentLevel = scoreToLevel(sharedScore);
 
-    // ── 8. Hard block: Level 4 Close Friend ──────────────────────────────────
-    if (currentLevel.key === 'close') {
+    // ── 8. Hard block: Level 4 Close Friend & higher (Levels 4-8 Human Only) ──
+    if (['close', 'intimate', 'passionate', 'committed', 'soulmate'].includes(currentLevel.key)) {
       return NextResponse.json(
         {
           error:
-            'Human mode active. Relationship has reached "Close Friend" status. ' +
-            'Genuine human connection is required for this connection level.',
+            `Human mode active. Relationship has reached "${currentLevel.key}" status. ` +
+            'Genuine human connection is required from Close Friend onwards.',
           isBlocked: true,
           resolvedLevel: currentLevel.key,
           ...(sandboxMode && { _sandboxMode: true, devGaugeScore: sharedScore }),
@@ -253,6 +282,10 @@ export async function POST(req: NextRequest) {
 
     const rampDirective = resolveRampDirective(activeGoalType, currentRampStep);
 
+    // ── 9b. Load Provenance-Backed Brand & VIP Memory (Active Only) ──────────
+    const activeMemories = await loadActiveCopilotMemories(supabase, creatorId, targetId, 6);
+    const memoryBlock = formatProvenanceMemoryBlock(activeMemories, 6);
+
     // ── 10. Generate Reply with Gemini 2.5 Flash ──────────────────────────────
     const geminiKey   = process.env.GEMINI_API_KEY;
     const creatorName = creatorProfile?.display_name || creatorProfile?.username || 'Creator';
@@ -267,7 +300,7 @@ Tone guidelines: Speak casually, brief 1-2 sentences maximum.
 
 CONVERSATION GOAL & RAMP DIRECTIVE:
 ${rampDirective.instruction}
-
+${memoryBlock ? `\n${memoryBlock}\n` : ''}
 STRICT SAFETY CONSTRAINTS:
 1. NEVER arrange or agree to in-person rendezvous.
 2. NEVER give investment or financial advice.

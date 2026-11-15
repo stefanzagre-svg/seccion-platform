@@ -1,8 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin-client';
 
 export async function POST(req: NextRequest) {
   try {
+    const authClient = await createClient();
+    const { data: { user }, error: authError } = await authClient.auth.getUser();
+    if (authError || !user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     let body: any;
     try {
       body = await req.json();
@@ -17,7 +24,7 @@ export async function POST(req: NextRequest) {
 
     const supabase = createAdminClient();
 
-    // 1. Fetch message details to get the media URL
+    // 1. Fetch message details and enforce recipient ownership
     const { data: message, error: fetchError } = await supabase
       .from('messages')
       .select('*')
@@ -25,21 +32,11 @@ export async function POST(req: NextRequest) {
       .single();
 
     if (fetchError || !message) {
-      console.warn('DB Fetch failed (ephemeral message):', fetchError?.message || 'Not found');
-      // If we are in development mode, fall back to successful simulated response to allow testing
-      if (process.env.NODE_ENV === 'development') {
-        const response = NextResponse.json({
-          success: true,
-          message: 'Ephemeral media viewed and purged (Sandbox Fallback).',
-          storageDeleted: false,
-          _sandbox: true
-        });
-        response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
-        response.headers.set('Pragma', 'no-cache');
-        response.headers.set('Expires', '0');
-        return response;
-      }
       return NextResponse.json({ error: 'Message not found' }, { status: 404 });
+    }
+
+    if (message.receiver_id !== user.id) {
+      return NextResponse.json({ error: 'Forbidden — only the recipient can view and purge ephemeral media' }, { status: 403 });
     }
 
     if (!message.is_ephemeral) {

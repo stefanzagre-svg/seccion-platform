@@ -4,11 +4,11 @@ import { z } from 'zod';
 import { validateMoroccanRib } from '@/lib/morocco-banking';
 
 const cashoutSettingsSchema = z.object({
-  preferredRail: z.enum(['sepa', 'crypto_usdt', 'wise', 'cosmo_card', 'morocco_bank']),
+  preferredRail: z.enum(['sepa', 'crypto_usdc', 'crypto_usdt', 'wise', 'cosmo_card', 'morocco_bank']),
   sepaIban: z.string().optional(),
   sepaBic: z.string().optional(),
   accountHolderName: z.string().optional(),
-  cryptoNetwork: z.enum(['solana', 'tron_trc20']).optional().default('solana'),
+  cryptoNetwork: z.enum(['polygon', 'solana', 'tron_trc20']).optional().default('polygon'),
   cryptoWalletAddress: z.string().optional(),
   wiseEmail: z.string().email().optional().or(z.literal('')),
   cosmoAccountId: z.string().optional(),
@@ -119,7 +119,7 @@ export async function POST(req: NextRequest) {
       sepa_iban: derivedIban || sepaIban || null,
       sepa_bic: validatedMoroccoBic || sepaBic || null,
       account_holder_name: accountHolderName || null,
-      crypto_network: cryptoNetwork || 'solana',
+      crypto_network: cryptoNetwork || 'polygon',
       crypto_wallet_address: cryptoWalletAddress || null,
       wise_email: wiseEmail || null,
       cosmo_account_id: cosmoAccountId || null,

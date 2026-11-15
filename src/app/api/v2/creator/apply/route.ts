@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin-client";
 import { sendTelegramNotification } from "@/lib/telegram";
-import { sendCreatorWelcomeEmail } from "@/lib/email";
+import { sendCreatorWelcomeEmail, normalizeEmailLocale } from "@/lib/email";
 import { z } from "zod";
 
 // Helper to normalize any handle or URL to a valid web link
@@ -153,15 +153,22 @@ export async function POST(req: NextRequest) {
       console.warn("[Telegram Alert] Failed to dispatch:", tgErr);
     }
 
-    const visitorLocale = typeof (rawBody as any)?.locale === "string" ? (rawBody as any).locale : "es";
+    const visitorLocale = normalizeEmailLocale(
+      typeof (rawBody as any)?.locale === "string" ? (rawBody as any).locale : null,
+      req.headers.get("accept-language")
+    );
 
-    // Send automated welcome & next-steps email to creator via Resend
-    sendCreatorWelcomeEmail({
-      email: email.trim(),
-      fullName: fullName.trim(),
-      applicationId: data?.id,
-      locale: visitorLocale,
-    }).catch(() => {});
+    // Send automated welcome & next-steps email to creator via Resend (must be awaited in Cloudflare Worker)
+    try {
+      await sendCreatorWelcomeEmail({
+        email: email.trim(),
+        fullName: fullName.trim(),
+        applicationId: data?.id,
+        locale: visitorLocale,
+      });
+    } catch (emailErr) {
+      console.warn("[Creator Apply] Welcome email dispatch notice:", emailErr);
+    }
 
     return NextResponse.json(
       {

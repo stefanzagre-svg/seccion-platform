@@ -35,7 +35,7 @@ export async function POST(request: Request) {
     }
 
     // 3. Perform Monthly Quota Enforcement check
-    const quota = await checkUserQuota(user.id, profile.role);
+    const quota = await checkUserQuota(user.id, profile.role, supabase);
     if (!quota.allowed) {
       return NextResponse.json({
         success: false,
@@ -66,16 +66,19 @@ export async function POST(request: Request) {
     } = parsed.data;
 
     // 5. Create the Date Plan
-    const newPlan = await createDatePlan({
-      poster_user_uuid: user.id,
-      intent_type,
-      plan_scope,
-      start_timestamp_utc,
-      end_timestamp_utc,
-      max_applications_int,
-      plan_scope_geo_point,
-      allowed_move_tags_array
-    });
+    const newPlan = await createDatePlan(
+      {
+        poster_user_uuid: user.id,
+        intent_type,
+        plan_scope,
+        start_timestamp_utc,
+        end_timestamp_utc,
+        max_applications_int,
+        plan_scope_geo_point,
+        allowed_move_tags_array
+      },
+      supabase
+    );
 
     return NextResponse.json({
       success: true,

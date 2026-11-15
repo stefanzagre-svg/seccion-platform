@@ -2,32 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { createAdminClient } from '@/lib/supabase/admin-client';
-
-function extractHandleFromLink(link?: string | null, email?: string): string {
-  if (link) {
-    const cleaned = link.replace(/^https?:\/\/[^\/]+\/@?/, '').replace(/\./g, '_').replace(/[^a-zA-Z0-9_]/g, '');
-    if (cleaned.length >= 3) return cleaned.slice(0, 24).toLowerCase();
-  }
-  if (email) {
-    const fromEmail = email.split('@')[0].replace(/\./g, '_').replace(/[^a-zA-Z0-9_]/g, '');
-    if (fromEmail.length >= 3) return fromEmail.slice(0, 24).toLowerCase();
-  }
-  return `creator_${Math.floor(1000 + Math.random() * 9000)}`;
-}
-
-async function findAuthUserByEmail(adminClient: any, email: string) {
-  let page = 1;
-  const perPage = 1000;
-  while (page <= 5) {
-    const { data } = await adminClient.auth.admin.listUsers({ page, perPage });
-    if (!data?.users || data.users.length === 0) break;
-    const match = data.users.find((u: any) => u.email?.toLowerCase().trim() === email);
-    if (match) return match;
-    if (data.users.length < perPage) break;
-    page++;
-  }
-  return null;
-}
+import { extractHandleFromLink, findAuthUserByEmail } from '@/lib/auth-admin';
+import { isOnboardingProfileComplete } from '@/lib/profile-visibility';
 
 export async function POST(req: NextRequest) {
   try {
@@ -138,7 +114,7 @@ export async function POST(req: NextRequest) {
     // 3. Resolve & ensure profile exists with proper role
     const { data: profileRow } = await adminClient
       .from('profiles')
-      .select('id, username, display_name, role, platform_role, lifestyle_habits')
+      .select('id, username, display_name, role, platform_role, is_approved_founder_creator, avatar_url, bio, bio_prompt_answer, archetype, sexual_preference, lifestyle_habits')
       .eq('id', data.user.id)
       .maybeSingle();
 
@@ -203,13 +179,24 @@ export async function POST(req: NextRequest) {
       response.cookies.set(name, value, options);
     });
 
-    if (effectiveRole === 'creator' || profileRow?.lifestyle_habits) {
+    response.cookies.set('sb_uid', data.user.id, {
+      path: '/',
+      maxAge: 60 * 60 * 24 * 30,
+      sameSite: 'lax',
+      httpOnly: true,
+    });
+
+    const hasCompletedOnboarding = isFounder || isOnboardingProfileComplete(profileRow);
+
+    if (hasCompletedOnboarding) {
       response.cookies.set('sb_ob', '1', {
         path: '/',
         maxAge: 60 * 60 * 24 * 30,
         sameSite: 'lax',
         httpOnly: false,
       });
+    } else {
+      response.cookies.set('sb_ob', '', { path: '/', maxAge: 0, sameSite: 'lax' });
     }
 
     if (effectiveRole === 'creator') {

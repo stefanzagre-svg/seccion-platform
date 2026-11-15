@@ -1,224 +1,110 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
-import { 
-  Loader2, AlertCircle, ShieldCheck, Upload, Camera, FileText, 
-  Check, CheckCircle2, Lock, ArrowRight, Sparkles 
+import {
+  Loader2, AlertCircle, ShieldCheck, CheckCircle2, Sparkles, RefreshCw, ArrowRight,
 } from 'lucide-react';
 import { DiditVerifyButton } from '@/components/kyc/DiditVerifyButton';
 
 export default function CreatorKycPage() {
   const router = useRouter();
-  
-  // App/Auth States
+
   const [userId, setUserId] = useState<string | null>(null);
-  const [userProfile, setUserProfile] = useState<any>(null);
+  const [userProfile, setUserProfile] = useState<{ role?: string | null; is_kyc_verified?: boolean | null } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isCheckingStatus, setIsCheckingStatus] = useState(false);
+  const [sessionDone, setSessionDone] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
-  // Step / Progress States
-  const [step, setStep] = useState<'kyc-form' | 'success'>('kyc-form');
-  
-  // Verification states
-  const [idFile, setIdFile] = useState<File | null>(null);
-  const [idFileName, setIdFileName] = useState<string>('');
-  const [selfieFile, setSelfieFile] = useState<File | null>(null);
-  const [selfieFileName, setSelfieFileName] = useState<string>('');
-  
-  // Biometric Liveness check states
-  const [cameraActive, setCameraActive] = useState(false);
-  const [livenessVerified, setLivenessVerified] = useState(false);
-  const [livenessStep, setLivenessStep] = useState(0); // 0: idle, 1: straight, 2: left-turn, 3: blink, 4: matching, 5: success
-  const [livenessLog, setLivenessLog] = useState('');
-  const [videoStream, setVideoStream] = useState<MediaStream | null>(null);
-  
-  // Model Release States
-  const [legalName, setLegalName] = useState('');
-  const [acceptedTerms, setAcceptedTerms] = useState(false);
-  
-  // Check active user on mount
+  const [step, setStep] = useState<'kyc-form' | 'pending' | 'success'>('kyc-form');
+
+  const fetchVerificationStatus = useCallback(async (uid: string, returningFromDidit = false) => {
+    const { data: profile, error: profError } = await supabase
+      .from('profiles')
+      .select('role, is_kyc_verified')
+      .eq('id', uid)
+      .maybeSingle();
+
+    if (profError) {
+      throw profError;
+    }
+
+    if (profile) {
+      setUserProfile(profile);
+      if (profile.is_kyc_verified) {
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('is_creator_signup');
+        }
+        setStep('success');
+        return true;
+      }
+    }
+
+    if (returningFromDidit) {
+      setStep('pending');
+    }
+    return false;
+  }, []);
+
   useEffect(() => {
     async function checkAuth() {
       try {
         const params = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
-        const sessionDone = params?.get('session_done') === 'true';
+        const done = params?.get('session_done') === 'true';
+        setSessionDone(done);
 
         const { data: { session } } = await supabase.auth.getSession();
-        if (session?.user) {
-          setUserId(session.user.id);
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', session.user.id)
-            .single();
-          if (profile) {
-            setUserProfile(profile);
-            // If they are already verified or returning from DIDIT session, show success or redirect
-            if (profile.is_kyc_verified || sessionDone) {
-              if (sessionDone) {
-                setStep('success');
-                return;
-              }
-              router.push(profile.role === 'creator' ? '/studio' : '/feed');
-              return;
-            }
-          }
-        } else {
-          // If no session, send to login
+        if (!session?.user) {
           router.push('/login');
+          return;
         }
+
+        setUserId(session.user.id);
+        await fetchVerificationStatus(session.user.id, done);
       } catch (err) {
-        console.error("Auth check failed:", err);
-        setError("Unable to authenticate your session. Please log in.");
+        console.error('Auth/KYC status check failed:', err);
+        setError('Unable to check your verification status. Please refresh or log in again.');
       } finally {
         setIsLoading(false);
       }
     }
-    
+
     checkAuth();
-  }, []);
+  }, [fetchVerificationStatus, router]);
 
-  const handleIdUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      setIdFile(file);
-      setIdFileName(file.name);
-    }
-  };
-
-  const handleSelfieUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      setSelfieFile(file);
-      setSelfieFileName(file.name);
-    }
-  };
-
-  const startLivenessCheck = async () => {
-    try {
-      setCameraActive(true);
-      setLivenessVerified(false);
-      setLivenessStep(1);
-      setLivenessLog("Initializing secure biometrics session...");
-      await new Promise((r) => setTimeout(r, 1000));
-
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { width: 320, height: 320 },
-      });
-      setVideoStream(stream);
-
-      // Link stream to video element
-      setTimeout(() => {
-        const videoEl = document.getElementById("liveness-video") as HTMLVideoElement;
-        if (videoEl) {
-          videoEl.srcObject = stream;
-          videoEl.play().catch(e => console.error("Error playing video stream:", e));
+  // Poll briefly when user returns from DIDIT while webhook finishes processing
+  useEffect(() => {
+    if (step !== 'pending' || !userId) return;
+    let attempts = 0;
+    const interval = setInterval(async () => {
+      attempts += 1;
+      try {
+        const verified = await fetchVerificationStatus(userId, true);
+        if (verified || attempts >= 8) {
+          clearInterval(interval);
         }
-      }, 100);
-
-      setLivenessLog("Step 1: Look straight into the camera (Face Scan)");
-      await new Promise((r) => setTimeout(r, 2000));
-
-      setLivenessStep(2);
-      setLivenessLog("Step 2: Turn your head slightly to the left (3D Liveness check)");
-      await new Promise((r) => setTimeout(r, 2000));
-
-      setLivenessStep(3);
-      setLivenessLog("Step 3: Blink once (Deepfake & Spoof prevention)");
-      await new Promise((r) => setTimeout(r, 2000));
-
-      setLivenessStep(4);
-      setLivenessLog("Matching captures against uploaded ID photo...");
-
-      // Stop camera tracks
-      stream.getTracks().forEach((track) => track.stop());
-      setVideoStream(null);
-
-      await new Promise((r) => setTimeout(r, 1800));
-
-      setLivenessStep(5);
-      setLivenessVerified(true);
-      setLivenessLog("✓ Verified! Biometric liveness check passed successfully.");
-      setCameraActive(false);
-    } catch (err) {
-      console.error(err);
-      setError("Failed to access camera for liveness check. Please check permissions.");
-      setCameraActive(false);
-      setLivenessStep(0);
-    }
-  };
-
-  const handleKycSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!userId) return;
-    
-    if (!idFile) {
-      setError("Please upload your government-issued ID/Passport.");
-      return;
-    }
-    if (!selfieFile) {
-      setError("Please upload your selfie holding the government ID.");
-      return;
-    }
-    if (!livenessVerified) {
-      setError("Please complete the Biometric Liveness check.");
-      return;
-    }
-    if (!legalName.trim()) {
-      setError("Please enter your full legal name for the Model Release.");
-      return;
-    }
-    if (!acceptedTerms) {
-      setError("You must accept the Model Release agreement to proceed.");
-      return;
-    }
-
-    setIsSubmitting(true);
-    setError(null);
-
-    try {
-      // Determine whether this user is verifying as a Creator or as a Member (18+ Date Plan / Explicit gate)
-      const isCreatorIntent =
-        userProfile?.role === 'creator' ||
-        (typeof window !== 'undefined' && (
-          localStorage.getItem('is_creator_signup') === 'true' ||
-          new URLSearchParams(window.location.search).get('role') === 'creator'
-        ));
-      const targetRole = isCreatorIntent ? 'creator' : 'member';
-
-      // Submit verification credentials to server-side /api/kyc/verify (uses service_role to update trust columns)
-      const res = await fetch('/api/kyc/verify', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId,
-          legalName: legalName.trim(),
-          livenessVerified: true,
-          acceptedTerms: true,
-          idFileName,
-          selfieFileName,
-          targetRole,
-        }),
-      });
-
-      const data = await res.json().catch(() => null);
-      if (!res.ok) {
-        throw new Error(data?.error || 'Failed to verify KYC credentials.');
+      } catch {
+        clearInterval(interval);
       }
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [step, userId, fetchVerificationStatus]);
 
-      // Clear prelaunch creator signup flag in localStorage
-      localStorage.removeItem('is_creator_signup');
-
-      setStep('success');
-    } catch (err: any) {
-      console.error("KYC Submit error:", err);
-      setError(err.message || "Failed to submit KYC data. Please try again.");
+  const handleManualStatusRefresh = async () => {
+    if (!userId) return;
+    setIsCheckingStatus(true);
+    setError(null);
+    try {
+      const verified = await fetchVerificationStatus(userId, true);
+      if (!verified) {
+        setError('Verification is still being finalized by DIDIT. Please check again in a few seconds.');
+      }
+    } catch {
+      setError('Could not refresh verification status. Please try again.');
     } finally {
-      setIsSubmitting(false);
+      setIsCheckingStatus(false);
     }
   };
 
@@ -227,7 +113,9 @@ export default function CreatorKycPage() {
       <div className="min-h-screen bg-[#0A0A0C] text-white flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <Loader2 className="w-10 h-10 animate-spin text-primary" />
-          <p className="text-xs font-mono uppercase tracking-[0.2em] text-white/50">Initializing Secure Portal...</p>
+          <p className="text-xs font-mono uppercase tracking-[0.2em] text-white/50">
+            Initializing Secure Portal...
+          </p>
         </div>
       </div>
     );
@@ -235,47 +123,31 @@ export default function CreatorKycPage() {
 
   return (
     <div className="min-h-screen bg-[#0A0A0C] text-white flex flex-col relative overflow-hidden py-16 px-4">
-      {/* Dynamic Glowing background orbits */}
       <div className="absolute top-[-10%] right-[-10%] w-[600px] h-[600px] bg-[#00fbfb]/5 blur-[150px] rounded-full pointer-events-none" />
       <div className="absolute bottom-[-10%] left-[-10%] w-[600px] h-[600px] bg-purple-500/5 blur-[150px] rounded-full pointer-events-none" />
-      
-      {/* Cyber Grid background texture */}
-      <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
-        <div
-          className="absolute inset-0 opacity-[0.02]"
-          style={{
-            backgroundImage:
-              "linear-gradient(rgba(255,255,255,1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,1) 1px, transparent 1px)",
-            backgroundSize: "45px 45px",
-          }}
-        />
-      </div>
 
-      <div className="flex-1 w-full max-w-3xl mx-auto relative z-10 flex flex-col justify-center">
+      <div className="flex-1 w-full max-w-2xl mx-auto relative z-10 flex flex-col justify-center">
         <AnimatePresence mode="wait">
-          
           {step === 'kyc-form' && (
             <motion.div
               key="kyc-form"
-              initial={{ opacity: 0, y: 30 }}
+              initial={{ opacity: 0, y: 24 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -30 }}
+              exit={{ opacity: 0, y: -24 }}
               className="space-y-8"
             >
-              {/* Header Title */}
               <div className="text-center space-y-3">
                 <div className="inline-flex p-3 bg-[#00fbfb]/10 border border-[#00fbfb]/20 rounded-2xl text-primary mb-2 shadow-[0_0_20px_rgba(0,251,251,0.2)]">
                   <ShieldCheck className="w-8 h-8" />
                 </div>
                 <h1 className="text-4xl font-black tracking-tighter uppercase text-glow">
-                  Creator Legal & Identity Verification
+                  Identity & 18+ Verification
                 </h1>
                 <p className="text-sm text-white/50 font-bold uppercase tracking-wider max-w-lg mx-auto leading-relaxed">
-                  Complete required verification to activate your Founding Creator status and unlock public streams.
+                  Complete zero-knowledge biometric ID & liveness verification via DIDIT to unlock Creator Studio & compliance features.
                 </p>
               </div>
 
-              {/* Error Banner */}
               {error && (
                 <div className="p-4 bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-bold rounded-2xl flex items-start gap-3">
                   <AlertCircle className="w-5 h-5 shrink-0" />
@@ -283,10 +155,7 @@ export default function CreatorKycPage() {
                 </div>
               )}
 
-              {/* ─── Fast-Track: DIDIT Instant KYC Gateway ─── */}
               <div className="relative p-8 rounded-3xl border border-[#00fbfb]/30 bg-gradient-to-br from-[#00fbfb]/10 via-purple-500/5 to-transparent shadow-[0_0_40px_rgba(0,251,251,0.15)] space-y-5 overflow-hidden">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-[#00fbfb]/10 blur-2xl rounded-full pointer-events-none" />
-                
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div className="flex items-center gap-3">
                     <div className="p-3 bg-[#00fbfb]/20 border border-[#00fbfb]/40 rounded-2xl text-[#00fbfb]">
@@ -294,21 +163,28 @@ export default function CreatorKycPage() {
                     </div>
                     <div>
                       <div className="inline-block px-2.5 py-0.5 bg-[#00fbfb]/20 border border-[#00fbfb]/40 text-[9px] font-mono font-black text-[#00fbfb] uppercase tracking-widest rounded-full mb-1">
-                        Recommended • Fast Track
+                        Official Gateway
                       </div>
-                      <h3 className="text-lg font-black uppercase tracking-wider text-white">
-                        Instant Identity Check via DIDIT™
-                      </h3>
+                      <h2 className="text-lg font-black uppercase tracking-wider text-white">
+                        DIDIT™ Zero-Knowledge KYC
+                      </h2>
                     </div>
                   </div>
-                  
+
                   <DiditVerifyButton
-                    onSuccess={() => setStep('success')}
+                    returnTo="/onboarding/kyc?session_done=true"
+                    onError={(msg) => setError(msg)}
+                    onSuccess={() => {
+                      setStep('pending');
+                      if (userId) {
+                        void fetchVerificationStatus(userId, true);
+                      }
+                    }}
                   />
                 </div>
 
                 <p className="text-xs text-[#b9cac9] leading-relaxed font-sans">
-                  Verify your government-issued ID and 3D facial biometrics securely in under 60 seconds with our zero-knowledge identity partner <strong>DIDIT</strong>. Once approved, your account is automatically upgraded to Creator status.
+                  Verify your government-issued ID and 3D facial liveness securely in under 60 seconds with our compliance partner <strong>DIDIT</strong>. Your verification status updates automatically once DIDIT confirms your check.
                 </p>
 
                 <div className="flex flex-wrap items-center gap-4 text-[10px] font-mono text-white/50 pt-1 border-t border-white/5">
@@ -319,225 +195,59 @@ export default function CreatorKycPage() {
                     <CheckCircle2 className="w-3.5 h-3.5" /> 220+ Countries Supported
                   </span>
                   <span className="flex items-center gap-1.5 text-emerald-400">
-                    <CheckCircle2 className="w-3.5 h-3.5" /> Instant Payout Unlock
+                    <CheckCircle2 className="w-3.5 h-3.5" /> 18 U.S.C. § 2257 & DSA Ready
                   </span>
                 </div>
               </div>
+            </motion.div>
+          )}
 
-              {/* Divider */}
-              <div className="flex items-center gap-4 my-6">
-                <div className="flex-1 h-px bg-white/10" />
-                <span className="text-[10px] font-mono uppercase tracking-widest text-white/30 font-bold">
-                  Or Complete Manual Verification Below
-                </span>
-                <div className="flex-1 h-px bg-white/10" />
+          {step === 'pending' && (
+            <motion.div
+              key="pending"
+              initial={{ opacity: 0, scale: 0.96 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="max-w-md mx-auto text-center space-y-6 py-12 px-8 glass-card border border-[#00fbfb]/25 bg-[#00fbfb]/5 rounded-[2.5rem]"
+            >
+              <div className="inline-flex p-5 bg-[#00fbfb]/10 border border-[#00fbfb]/20 rounded-full text-[#00fbfb]">
+                <Loader2 className="w-12 h-12 animate-spin" />
               </div>
 
-              {/* KYC Form Block */}
-              <form onSubmit={handleKycSubmit} className="space-y-6">
-                
-                {/* 1. Passport/ID Document Upload Card */}
-                <div className="glass-card p-8 rounded-3xl border border-white/5 bg-white/[0.02] space-y-4">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-primary/10 rounded-lg text-primary">
-                      <FileText className="w-5 h-5" />
-                    </div>
-                    <h3 className="text-base font-black uppercase tracking-wider">
-                      Step 1: Government-Issued Photo ID
-                    </h3>
-                  </div>
-                  <p className="text-xs text-white/40 leading-relaxed font-medium">
-                    Upload a high-resolution, uncropped color scan of your government photo ID card, driver's license, or passport. Must include legal name, date of birth, and expiry date.
-                  </p>
-                  
-                  <div className="relative border-2 border-dashed border-white/10 hover:border-primary/40 rounded-2xl p-8 transition flex flex-col items-center justify-center bg-black/20 hover:bg-black/30 group">
-                    <input 
-                      type="file" 
-                      accept="image/*,application/pdf"
-                      onChange={handleIdUpload}
-                      className="absolute inset-0 opacity-0 cursor-pointer"
-                    />
-                    <Upload className="w-8 h-8 text-white/30 group-hover:text-primary transition mb-3" />
-                    <span className="text-xs font-bold text-white uppercase tracking-wider mb-1">
-                      {idFileName ? 'ID Uploaded ✓' : 'Drag & Drop ID here or browse'}
-                    </span>
-                    <span className="text-[10px] text-white/30">
-                      {idFileName || 'Supports JPEG, PNG, PDF up to 10MB'}
-                    </span>
-                  </div>
+              <div className="space-y-2">
+                <h2 className="text-2xl font-black uppercase tracking-tight">
+                  Confirming Verification
+                </h2>
+                <p className="text-xs text-white/60 leading-relaxed">
+                  {sessionDone
+                    ? 'DIDIT submitted your verification. Waiting for cryptographic webhook confirmation...'
+                    : 'Your DIDIT session is in progress. Status will unlock automatically once approved.'}
+                </p>
+              </div>
+
+              {error && (
+                <div className="p-3 bg-amber-500/10 border border-amber-500/20 text-amber-300 text-xs rounded-xl">
+                  {error}
                 </div>
+              )}
 
-                {/* 2. Selfie Holding ID Card */}
-                <div className="glass-card p-8 rounded-3xl border border-white/5 bg-white/[0.02] space-y-4">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-primary/10 rounded-lg text-primary">
-                      <Camera className="w-5 h-5" />
-                    </div>
-                    <h3 className="text-base font-black uppercase tracking-wider">
-                      Step 2: Selfie Holding Your ID
-                    </h3>
-                  </div>
-                  <p className="text-xs text-white/40 leading-relaxed font-medium">
-                    Upload a clear selfie showing your face while holding your government-issued ID card directly next to your face. Make sure all texts and photo on the ID are fully legible.
-                  </p>
-                  
-                  <div className="relative border-2 border-dashed border-white/10 hover:border-primary/40 rounded-2xl p-8 transition flex flex-col items-center justify-center bg-black/20 hover:bg-black/30 group">
-                    <input 
-                      type="file" 
-                      accept="image/*"
-                      onChange={handleSelfieUpload}
-                      className="absolute inset-0 opacity-0 cursor-pointer"
-                    />
-                    <Camera className="w-8 h-8 text-white/30 group-hover:text-primary transition mb-3" />
-                    <span className="text-xs font-bold text-white uppercase tracking-wider mb-1">
-                      {selfieFileName ? 'Selfie Uploaded ✓' : 'Drag & Drop Selfie here or browse'}
-                    </span>
-                    <span className="text-[10px] text-white/30">
-                      {selfieFileName || 'Please make sure all ID information is readable.'}
-                    </span>
-                  </div>
-                </div>
-
-                {/* 3. Webcam Biometric Liveness Check */}
-                <div className="glass-card p-8 rounded-3xl border border-white/5 bg-white/[0.02] space-y-5">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-primary/10 rounded-lg text-primary">
-                      <ShieldCheck className="w-5 h-5" />
-                    </div>
-                    <h3 className="text-base font-black uppercase tracking-wider">
-                      Step 3: Biometric Liveness Scan
-                    </h3>
-                  </div>
-                  <p className="text-xs text-white/40 leading-relaxed font-medium">
-                    To satisfy compliance standards and prevent AI spoofing or deepfakes, complete a quick 3D liveness scan matching your face structure.
-                  </p>
-
-                  <div className="p-6 bg-black/40 border border-white/5 rounded-2xl space-y-4 flex flex-col items-center">
-                    {cameraActive && (
-                      <div className="relative w-64 h-64 rounded-full overflow-hidden border-4 border-primary/50 shadow-[0_0_30px_rgba(0,251,251,0.3)] bg-black">
-                        <video 
-                          id="liveness-video" 
-                          className="w-full h-full object-cover scale-x-[-1]"
-                          playsInline 
-                          muted 
-                        />
-                        {livenessStep > 0 && livenessStep < 4 && (
-                          <div className="absolute inset-0 border-[6px] border-dashed border-primary/30 animate-[spin_20s_linear_infinite] rounded-full pointer-events-none" />
-                        )}
-                      </div>
-                    )}
-
-                    {livenessStep > 0 && (
-                      <div className="text-center w-full max-w-sm space-y-2">
-                        <div className="h-1 bg-white/5 rounded-full overflow-hidden">
-                          <div 
-                            className="h-full bg-primary shadow-[0_0_10px_rgba(0,251,251,0.5)] transition-all duration-300"
-                            style={{ width: `${(livenessStep / 5) * 100}%` }}
-                          />
-                        </div>
-                        <p className="text-[10px] font-mono text-primary uppercase tracking-widest leading-relaxed animate-pulse">
-                          {livenessLog}
-                        </p>
-                      </div>
-                    )}
-
-                    {!cameraActive && !livenessVerified && (
-                      <button
-                        type="button"
-                        onClick={startLivenessCheck}
-                        className="w-full max-w-xs py-4 bg-primary/10 hover:bg-primary/20 border border-primary/20 hover:border-primary/40 text-primary font-black uppercase tracking-widest rounded-xl transition text-[10px] flex items-center justify-center gap-2"
-                      >
-                        <Camera className="w-4 h-4" /> Start Liveness Scan
-                      </button>
-                    )}
-
-                    {livenessVerified && (
-                      <div className="p-4 bg-green-500/10 border border-green-500/30 rounded-xl flex items-center gap-3 w-full justify-center">
-                        <CheckCircle2 className="w-5 h-5 text-green-400" />
-                        <span className="text-[10px] uppercase font-black tracking-widest text-green-400">
-                          Biometric Scan Verified (99.4% Match)
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* 4. 18 U.S.C. § 2257 Model Release Agreement */}
-                <div className="glass-card p-8 rounded-3xl border border-white/5 bg-white/[0.02] space-y-5">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-primary/10 rounded-lg text-primary">
-                      <Lock className="w-5 h-5" />
-                    </div>
-                    <h3 className="text-base font-black uppercase tracking-wider">
-                      Step 4: Model Release & Content Agreement
-                    </h3>
-                  </div>
-
-                  {/* Scrollable Terms Agreement Box */}
-                  <div className="h-40 overflow-y-auto p-4 rounded-xl bg-black/40 border border-white/10 text-[10px] text-white/50 leading-relaxed font-medium space-y-3 custom-scrollbar">
-                    <p className="font-bold text-white uppercase">18 U.S.C. § 2257 Record-Keeping Compliance & Model Consent Agreement</p>
-                    <p>
-                      This agreement is entered into by and between the verified Content Creator (referred to as the "Producer") and **SECCION S.L. (in formation)**, a platform incorporated under the laws of Spain (referred to as the "Platform").
-                    </p>
-                    <p>
-                      The Producer explicitly warrants and represents that they are at least 18 years of age at the time of executing this document and that all content uploaded, live-streamed, or otherwise broadcasted on the Platform will strictly feature individuals who are at least 18 years of age.
-                    </p>
-                    <p>
-                      The Producer acknowledges and agrees that they must provide a valid government-issued photo identification as proof of age. The Platform reserves the right to suspend or terminate the Producer's access to the Platform if there is any suspicion of identity fraud, representation of minors, or violation of the Platform's safety guidelines.
-                    </p>
-                    <p>
-                      By checking the box below, you digitally sign this Model Release Agreement, consenting to the platform storing the uploaded verification documents in an encrypted secure vault, in compliance with GDPR safety regulations and regulatory requirements.
-                    </p>
-                  </div>
-
-                  {/* Agreement Form Controls */}
-                  <div className="space-y-4">
-                    <div className="flex flex-col gap-2">
-                      <label className="text-[9px] uppercase tracking-widest font-black text-white/40">
-                        Full Legal Name (Matches ID)
-                      </label>
-                      <input
-                        type="text"
-                        placeholder="e.g. Elena Rostova"
-                        value={legalName}
-                        onChange={(e) => setLegalName(e.target.value)}
-                        className="w-full px-4 py-3 bg-black/50 border border-white/10 rounded-xl text-xs text-white placeholder-white/20 focus:border-primary focus:outline-none transition-all"
-                      />
-                    </div>
-
-                    <label className="flex items-start gap-3 cursor-pointer select-none">
-                      <input
-                        type="checkbox"
-                        checked={acceptedTerms}
-                        onChange={(e) => setAcceptedTerms(e.target.checked)}
-                        className="mt-1 w-4 h-4 bg-black/50 border border-white/10 rounded accent-primary cursor-pointer focus:outline-none"
-                      />
-                      <span className="text-[10px] text-white/50 font-medium leading-normal">
-                        I hereby declare under penalty of perjury that I am 18 years or older, the legal owner of the uploaded documents, and I digitally sign and execute this Model Consent Agreement with **SECCION S.L. (in formation)**.
-                      </span>
-                    </label>
-                  </div>
-                </div>
-
-                {/* Submit Action Button */}
+              <div className="flex flex-col gap-3">
                 <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="w-full py-5 bg-gradient-to-r from-primary to-purple-500 text-black font-black uppercase tracking-[0.2em] rounded-2xl hover:shadow-[0_0_30px_rgba(0,251,251,0.3)] transition-all duration-300 disabled:opacity-50 flex items-center justify-center gap-2 text-xs"
+                  type="button"
+                  onClick={handleManualStatusRefresh}
+                  disabled={isCheckingStatus}
+                  className="w-full py-3.5 bg-[#00fbfb] text-black font-black uppercase tracking-wider rounded-xl text-xs flex items-center justify-center gap-2 disabled:opacity-50"
                 >
-                  {isSubmitting ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin text-black" />
-                      Uploading & Processing KYC Credentials...
-                    </>
-                  ) : (
-                    <>
-                      Complete Creator KYC & Enter Platform
-                      <ArrowRight className="w-4 h-4" />
-                    </>
-                  )}
+                  <RefreshCw className={`w-4 h-4 ${isCheckingStatus ? 'animate-spin' : ''}`} />
+                  Check Verification Status
                 </button>
-              </form>
+                <button
+                  type="button"
+                  onClick={() => setStep('kyc-form')}
+                  className="w-full py-3 bg-white/5 hover:bg-white/10 border border-white/10 text-white/70 font-bold uppercase tracking-wider rounded-xl text-[11px]"
+                >
+                  Re-launch DIDIT Session
+                </button>
+              </div>
             </motion.div>
           )}
 
@@ -565,28 +275,25 @@ export default function CreatorKycPage() {
                   KYC Verified
                 </h2>
                 <div className="inline-block px-3 py-1 bg-green-500/10 border border-green-500/20 text-[9px] font-black text-green-400 uppercase tracking-widest rounded-full">
-                  Status: Active Creator
+                  {userProfile?.role === 'creator' ? 'Status: Verified Creator' : 'Status: 18+ Verified Member'}
                 </div>
                 <p className="text-xs text-white/50 leading-relaxed font-medium max-w-xs mx-auto">
-                  Welcome to SECCION. Your identity credentials and signed release have been verified and secured. Your profile is now set to Creator Mode.
+                  {userProfile?.role === 'creator'
+                    ? 'Your identity credentials have been verified by DIDIT. Your Creator Studio and payout controls are now unlocked.'
+                    : 'Your 18+ biometric verification has been confirmed by DIDIT.'}
                 </p>
               </div>
 
               <button
-                onClick={() => {
-                  const isCreator =
-                    userProfile?.role === 'creator' ||
-                    (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('role') === 'creator');
-                  router.push(isCreator ? '/studio' : '/feed');
-                }}
+                type="button"
+                onClick={() => router.push(userProfile?.role === 'creator' ? '/studio' : '/feed')}
                 className="w-full py-5 bg-gradient-to-r from-primary to-purple-500 text-black font-black uppercase tracking-[0.3em] rounded-2xl hover:shadow-[0_0_30px_rgba(0,251,251,0.4)] transition-all duration-300 flex items-center justify-center gap-2 text-xs"
               >
-                {userProfile?.role === 'member' ? 'Return to Platform Feed' : 'Enter Creator Studio'}
-                <Sparkles className="w-4 h-4" />
+                {userProfile?.role === 'creator' ? 'Enter Creator Studio' : 'Return to Platform Feed'}
+                <ArrowRight className="w-4 h-4" />
               </button>
             </motion.div>
           )}
-          
         </AnimatePresence>
       </div>
     </div>

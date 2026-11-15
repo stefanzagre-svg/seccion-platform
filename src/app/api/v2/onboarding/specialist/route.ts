@@ -25,9 +25,8 @@ export async function POST(req: NextRequest) {
     const targetLanguageDesc = langInfo.targetLanguageDesc;
     const historyTurns = sanitizeHistory(body.history);
 
-    const fallbackKey = Buffer.from('QVEuQWI4Uk42S2NNWWdIZGI3Z3J5Rmo1RU43UVpsWTVYZjJXSmpQT0hQOU82UHVJWGc3SEE=', 'base64').toString('utf-8');
     const apiKeys = Array.from(
-      new Set([process.env.GEMINI_API_KEY?.trim(), fallbackKey.trim()].filter((k): k is string => Boolean(k)))
+      new Set([process.env.GEMINI_API_KEY?.trim()].filter((k): k is string => Boolean(k)))
     );
     const configuredPrimaryModel = process.env.KATE_GEMINI_MODEL?.trim() || process.env.GEMINI_MODEL?.trim();
 

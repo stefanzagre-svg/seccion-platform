@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Loader2, UserCheck, UserX, AlertTriangle, ShieldCheck, Heart } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
-import { respondToDatePlanApplication } from '@/lib/date-plan-db';
 import { calculateMatch, UserProfile } from '@/lib/match-engine';
 import BlurredFaceImage from '@/components/BlurredFaceImage';
 
@@ -66,7 +65,15 @@ export default function ManageApplicantsModal({
     setProcessingId(applierId);
     setModalError(null);
     try {
-      await respondToDatePlanApplication(planId, applierId, status, posterId);
+      const res = await fetch('/api/v1/intent/respond', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ planId, applierId, action: status }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data?.error || `Failed to ${status} applicant.`);
+      }
       
       // Update local profiles list state on decline
       if (status === 'deny') {

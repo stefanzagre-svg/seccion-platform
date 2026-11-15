@@ -2,6 +2,9 @@ import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { NextResponse, type NextRequest } from 'next/server';
 import { type EmailOtpType } from '@supabase/supabase-js';
+import { createAdminClient } from '@/lib/supabase/admin-client';
+import { isOnboardingProfileComplete } from '@/lib/profile-visibility';
+import { VIP_INVITE_COOKIE, redeemVipInviteForUser } from '@/lib/vip-invites';
 
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);
@@ -67,20 +70,84 @@ export async function GET(request: NextRequest) {
     let resolvedRole: 'creator' | 'member' = 'member';
     let isCompleted = false;
 
-    // Schema fix: Select existing columns (lifestyle_habits, bio_prompt_answer) instead of non-existent onboarding_completed
+    // Schema fix: Select existing columns instead of non-existent onboarding_completed
     const { data: profile } = await supabase
       .from('profiles')
-      .select('role, lifestyle_habits, bio_prompt_answer')
+      .select('role, is_approved_founder_creator, avatar_url, bio, bio_prompt_answer, archetype, sexual_preference, lifestyle_habits')
       .eq('id', authenticatedUser.id)
       .maybeSingle();
 
-    if (profile?.role === 'creator' || profile?.role === 'admin') {
+    const cleanEmail = authenticatedUser.email?.toLowerCase().trim() || '';
+    const isFounder = cleanEmail === 'stefan.zagre@gmail.com';
+    let hasApprovedCreatorApp = false;
+    const vipCode = searchParams.get('vip') || cookieStore.get(VIP_INVITE_COOKIE)?.value || null;
+    let vipRedeemed = false;
+    let vipErrorReason: string | null = null;
+
+    if (vipCode && cleanEmail) {
+      const adminDb = createAdminClient();
+      const fullName =
+        typeof authenticatedUser.user_metadata?.full_name === 'string'
+          ? authenticatedUser.user_metadata.full_name
+          : null;
+      const vipRes = await redeemVipInviteForUser(adminDb, {
+        code: vipCode,
+        userId: authenticatedUser.id,
+        email: cleanEmail,
+        fullName,
+      });
+      if (vipRes.ok) {
+        hasApprovedCreatorApp = true;
+        vipRedeemed = true;
+        if (!targetPath) {
+          targetPath = '/studio?vip=welcome';
+        }
+      } else {
+        vipErrorReason = vipRes.reason;
+      }
+    }
+
+    if (!hasApprovedCreatorApp && profile?.role !== 'creator' && profile?.role !== 'admin' && !isFounder && cleanEmail) {
+      const adminDb = createAdminClient();
+      const { data: creatorApp } = await adminDb
+        .from('creator_applications')
+        .select('status')
+        .eq('email', cleanEmail)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      hasApprovedCreatorApp = creatorApp?.status === 'approved';
+    }
+
+    if (profile?.role === 'creator' || profile?.role === 'admin' || isFounder || hasApprovedCreatorApp) {
       resolvedRole = 'creator';
     } else {
       resolvedRole = 'member';
     }
-    if (profile?.lifestyle_habits || profile?.bio_prompt_answer) {
+    if (isFounder || isOnboardingProfileComplete(profile)) {
       isCompleted = true;
+    }
+
+    const isPasswordRecovery = type === 'recovery' || explicitNext?.startsWith('/auth/update-password');
+    const isApprovedPrelaunchAccess =
+      isPasswordRecovery || resolvedRole === 'creator' || isCompleted;
+
+    if (!isApprovedPrelaunchAccess) {
+      // Close OAuth/MagicLink self-signup bypass during Member waitlist stage
+      await supabase.auth.signOut();
+      const waitlistDest = vipCode && vipErrorReason
+        ? `/vip/${encodeURIComponent(vipCode)}?error=${encodeURIComponent(vipErrorReason)}`
+        : explicitNext?.includes('role=creator')
+        ? '/become-creator#apply'
+        : '/early-access';
+      const deniedResponse = NextResponse.redirect(`${origin}${waitlistDest}`);
+      stagedCookies.forEach(({ name, value, options }) => {
+        deniedResponse.cookies.set(name, value, options);
+      });
+      if (vipErrorReason && ['not_found', 'revoked', 'expired', 'already_claimed'].includes(vipErrorReason)) {
+        deniedResponse.cookies.set(VIP_INVITE_COOKIE, '', { path: '/', maxAge: 0, sameSite: 'lax' });
+      }
+      return deniedResponse;
     }
 
     if (!targetPath) {
@@ -97,10 +164,19 @@ export async function GET(request: NextRequest) {
     stagedCookies.forEach(({ name, value, options }) => {
       response.cookies.set(name, value, options);
     });
-    response.cookies.set('sb_role', resolvedRole, { path: '/', maxAge: 86400 * 30, sameSite: 'lax' });
-    if (isCompleted || resolvedRole === 'creator') {
+    if (vipRedeemed) {
+      response.cookies.set(VIP_INVITE_COOKIE, '', { path: '/', maxAge: 0, sameSite: 'lax' });
       response.cookies.set('sb_ob', '1', { path: '/', maxAge: 86400 * 30, sameSite: 'lax' });
       response.cookies.set('sb_onboarding_completed', 'true', { path: '/', maxAge: 86400 * 30, sameSite: 'lax' });
+    }
+    response.cookies.set('sb_uid', authenticatedUser.id, { path: '/', maxAge: 86400 * 30, sameSite: 'lax', httpOnly: true });
+    response.cookies.set('sb_role', resolvedRole, { path: '/', maxAge: 86400 * 30, sameSite: 'lax' });
+    if (isCompleted) {
+      response.cookies.set('sb_ob', '1', { path: '/', maxAge: 86400 * 30, sameSite: 'lax' });
+      response.cookies.set('sb_onboarding_completed', 'true', { path: '/', maxAge: 86400 * 30, sameSite: 'lax' });
+    } else if (!vipRedeemed) {
+      response.cookies.set('sb_ob', '', { path: '/', maxAge: 0, sameSite: 'lax' });
+      response.cookies.set('sb_onboarding_completed', '', { path: '/', maxAge: 0, sameSite: 'lax' });
     }
     return response;
   }

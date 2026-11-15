@@ -10,26 +10,44 @@ import crypto from 'crypto';
 export async function POST(req: NextRequest) {
   try {
     const rawBody = await req.text();
-    const signatureHeader = req.headers.get('Webhook-Signature');
-    const webhookSecret = process.env.CLOUDFLARE_STREAM_WEBHOOK_SECRET;
+    const signatureHeader = req.headers.get('Webhook-Signature') || req.headers.get('webhook-signature');
+    const webhookSecret =
+      process.env.CLOUDFLARE_WEBHOOK_SECRET || process.env.CLOUDFLARE_STREAM_WEBHOOK_SECRET;
 
-    // Verify webhook signature if secret is configured
-    if (webhookSecret && signatureHeader) {
-      const parts = signatureHeader.split(',');
-      const timePart = parts.find((p) => p.startsWith('t='))?.split('=')[1];
-      const sigPart = parts.find((p) => p.startsWith('v1='))?.split('=')[1];
+    if (!webhookSecret) {
+      console.error('Cloudflare Stream Webhook: Webhook secret not configured.');
+      return NextResponse.json({ error: 'Webhook secret not configured' }, { status: 500 });
+    }
 
-      if (timePart && sigPart) {
-        const hmac = crypto
-          .createHmac('sha256', webhookSecret)
-          .update(`${timePart}.${rawBody}`)
-          .digest('hex');
+    if (!signatureHeader) {
+      return NextResponse.json({ error: 'Missing webhook signature' }, { status: 401 });
+    }
 
-        if (hmac !== sigPart) {
-          console.error('Cloudflare Stream Webhook: Signature mismatch.');
-          return NextResponse.json({ error: 'Invalid webhook signature' }, { status: 401 });
-        }
-      }
+    const parts = signatureHeader.split(',');
+    const timePart = parts.find((p) => p.trim().startsWith('t='))?.split('=')[1]?.trim();
+    const sigPart = parts.find((p) => p.trim().startsWith('v1='))?.split('=')[1]?.trim();
+
+    if (!timePart || !sigPart) {
+      return NextResponse.json({ error: 'Malformed webhook signature' }, { status: 401 });
+    }
+
+    // Reject stale timestamps (> 5 minutes skew)
+    const sigTs = Number(timePart);
+    if (!Number.isFinite(sigTs) || Math.abs(Date.now() / 1000 - sigTs) > 300) {
+      return NextResponse.json({ error: 'Stale webhook timestamp' }, { status: 401 });
+    }
+
+    const expectedHmac = crypto
+      .createHmac('sha256', webhookSecret)
+      .update(`${timePart}.${rawBody}`)
+      .digest('hex');
+
+    if (
+      sigPart.length !== expectedHmac.length ||
+      !crypto.timingSafeEqual(Buffer.from(expectedHmac.toLowerCase()), Buffer.from(sigPart.toLowerCase()))
+    ) {
+      console.error('Cloudflare Stream Webhook: Signature mismatch.');
+      return NextResponse.json({ error: 'Invalid webhook signature' }, { status: 401 });
     }
 
     const body = JSON.parse(rawBody);

@@ -1,5 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { supabase } from '@/lib/supabase';
+import UnifiedPaymentGate from '@/components/monetization/UnifiedPaymentGate';
 import { 
   CheckCircle2, 
   Clock, 
@@ -63,89 +65,7 @@ interface Template {
   deliveryDays: number;
 }
 
-const MOCK_ORDERS: Order[] = [
-  { 
-    id: '1', 
-    clientName: 'Jordan P.', 
-    title: 'Custom workout video', 
-    budget: 150, 
-    status: 'in_progress', 
-    deadline: '2023-11-15',
-    category: 'VIP Custom Video',
-    primaryObjective: 'Build strength and improve squat form.',
-    secondaryObjective: 'Focus on correct warm-up routines.',
-    paymentStatus: 'Held in Escrow',
-    proposedBy: 'member',
-    isAcceptedByCreator: true,
-    isAcceptedByMember: true,
-    description: 'A 15-minute video demonstrating squat form correction and daily mobility exercises.',
-    coPerformers: [
-      {
-        name: 'Sofia V.',
-        type: 'registered',
-        userId: 'u2',
-        avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&q=80',
-        status: 'pending'
-      }
-    ],
-    attachments: [
-      { name: 'squat_warmup_guide.pdf', size: '240 KB', type: 'application/pdf' },
-      { name: 'reference_stance.png', size: '1.8 MB', type: 'image/png' }
-    ]
-  },
-  { 
-    id: '2', 
-    clientName: 'Alex R.', 
-    title: 'Shoutout for friend', 
-    budget: 50, 
-    status: 'pending', 
-    deadline: '2023-11-10',
-    category: 'Personal Shoutout',
-    primaryObjective: 'Wish my friend Happy 30th Birthday and mention inside jokes.',
-    paymentStatus: 'Unpaid',
-    proposedBy: 'member',
-    isAcceptedByCreator: false,
-    isAcceptedByMember: true,
-    description: 'A short birthday shoutout for my friend who is a huge fan of yours.',
-    attachments: []
-  },
-  { 
-    id: '3', 
-    clientName: 'Sam T.', 
-    title: 'Photography tips critique', 
-    budget: 75, 
-    status: 'review', 
-    deadline: '2023-11-12',
-    category: 'Direct Message Q&A',
-    primaryObjective: 'Review portfolio of sunset photos and edit colors.',
-    secondaryObjective: 'Provide lighting correction advice.',
-    paymentStatus: 'Held in Escrow',
-    proposedBy: 'member',
-    isAcceptedByCreator: true,
-    isAcceptedByMember: true,
-    description: 'Review my 5 recent sunset landscape photos and suggest post-processing edits.',
-    attachments: [
-      { name: 'sunset_landscape_critique.png', size: '3.4 MB', type: 'image/png' }
-    ]
-  },
-  { 
-    id: '4', 
-    clientName: 'Taylor M.', 
-    title: '1-on-1 diet plan', 
-    budget: 200, 
-    status: 'completed', 
-    deadline: '2023-11-01',
-    category: '1-on-1 Coaching',
-    primaryObjective: 'Lose 5kg in 2 months with high-protein meal prep.',
-    secondaryObjective: 'Vegetarian recipes preferred.',
-    paymentStatus: 'Released',
-    proposedBy: 'member',
-    isAcceptedByCreator: true,
-    isAcceptedByMember: true,
-    description: 'Detailed meal prep guide for a 2-month fat loss cycle.',
-    attachments: []
-  },
-];
+const INITIAL_ORDERS: Order[] = [];
 
 const STATUS_CONFIG: Record<OrderStatus, { label: string; icon: any; color: string; border: string; bg: string; dot: string }> = {
   pending:    { label: 'New Request',   icon: Inbox,        color: 'text-cyan-400',    border: 'border-cyan-400/40',    bg: 'bg-cyan-400/8',    dot: 'bg-cyan-400' },
@@ -164,11 +84,30 @@ const PAYMENT_CONFIG: Record<string, { color: string; bg: string; border: string
   'Authorized':       { color: 'text-cyan-400',     bg: 'bg-cyan-500/15',    border: 'border-cyan-500/30' },
 };
 
-const MOCK_TEMPLATES: Template[] = [
+const DEFAULT_TEMPLATES: Template[] = [
   { id: 't1', name: 'Personalized Workout Routine', basePrice: 150, deliveryDays: 7 },
   { id: 't2', name: 'Private Q&A Session (Video)', basePrice: 100, deliveryDays: 3 },
-  { id: 't3', name: 'Social Media Shoutout', basePrice: 50, deliveryDays: 2 },
+  { id: 't3', name: 'Personal Shoutout', basePrice: 50, deliveryDays: 2 },
 ];
+
+function mapDbEscrowStatus(rawStatus: string): { status: OrderStatus; paymentStatus: Order['paymentStatus'] } {
+  switch (rawStatus) {
+    case 'held_in_escrow':
+      return { status: 'in_progress', paymentStatus: 'Held in Escrow' };
+    case 'delivered':
+    case 'pending_review':
+      return { status: 'review', paymentStatus: 'Held in Escrow' };
+    case 'released':
+    case 'completed':
+      return { status: 'completed', paymentStatus: 'Released' };
+    case 'refunded':
+    case 'declined':
+    case 'cancelled':
+      return { status: 'declined', paymentStatus: 'Refunded' };
+    default:
+      return { status: 'pending', paymentStatus: 'Authorized' };
+  }
+}
 
 type FilterStatus = 'all' | OrderStatus;
 type PanelView = 'orders' | 'templates';
@@ -180,9 +119,78 @@ interface CreatorOrdersPanelProps {
 export default function CreatorOrdersPanel({ customRequestPermission = 'anyone' }: CreatorOrdersPanelProps) {
   const [panelView, setPanelView] = useState<PanelView>('orders');
   const [filterStatus, setFilterStatus] = useState<FilterStatus>('all');
-  const [orders, setOrders] = useState<Order[]>(MOCK_ORDERS);
-  const [templates, setTemplates] = useState<Template[]>(MOCK_TEMPLATES);
-  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(orders[0]?.id ?? null);
+  const [orders, setOrders] = useState<Order[]>(INITIAL_ORDERS);
+  const [templates, setTemplates] = useState<Template[]>(DEFAULT_TEMPLATES);
+  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
+  const [isLoadingOrders, setIsLoadingOrders] = useState(true);
+
+  useEffect(() => {
+    let active = true;
+    async function loadOrders() {
+      setIsLoadingOrders(true);
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user || !active) return;
+
+        const { data: rows, error } = await supabase
+          .from('matrix_escrow_orders')
+          .select('id, fan_id, creator_id, title, description, category, red_pills_amount, status, deadline_at, created_at')
+          .or(`creator_id.eq.${user.id},fan_id.eq.${user.id}`)
+          .order('created_at', { ascending: false })
+          .limit(50);
+
+        if (error || !rows || !active) return;
+
+        const fanIds = Array.from(new Set(rows.map((r: any) => r.fan_id).filter(Boolean)));
+        const fanNameMap = new Map<string, string>();
+        if (fanIds.length > 0) {
+          const { data: profiles } = await supabase
+            .from('profiles')
+            .select('id, display_name, username')
+            .in('id', fanIds);
+          for (const p of profiles || []) {
+            fanNameMap.set(p.id, p.display_name || p.username || 'Member');
+          }
+        }
+
+        const mapped: Order[] = rows.map((row: any) => {
+          const { status, paymentStatus } = mapDbEscrowStatus(row.status);
+          return {
+            id: row.id,
+            clientName: fanNameMap.get(row.fan_id) || 'Verified Member',
+            title: row.title || 'Custom Request',
+            budget: Number(row.red_pills_amount || 0),
+            status,
+            deadline: row.deadline_at
+              ? new Date(row.deadline_at).toISOString().split('T')[0]
+              : new Date(row.created_at || Date.now()).toISOString().split('T')[0],
+            category: row.category || 'Custom Order',
+            primaryObjective: row.description || row.title || 'Custom fulfillment',
+            paymentStatus,
+            proposedBy: 'member',
+            isAcceptedByCreator: status !== 'pending',
+            isAcceptedByMember: true,
+            description: row.description || undefined,
+            attachments: [],
+          };
+        });
+
+        if (active) {
+          setOrders(mapped);
+          setSelectedOrderId((prev) => prev ?? (mapped[0]?.id || null));
+        }
+      } catch (err) {
+        console.error('[CreatorOrdersPanel] Failed loading live orders:', err);
+      } finally {
+        if (active) setIsLoadingOrders(false);
+      }
+    }
+
+    loadOrders();
+    return () => {
+      active = false;
+    };
+  }, []);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isGeneratingTeaser, setIsGeneratingTeaser] = useState<string | null>(null);
   const [editingOrder, setEditingOrder] = useState<Order | null>(null);
@@ -218,6 +226,19 @@ export default function CreatorOrdersPanel({ customRequestPermission = 'anyone' 
       else if (newStatus === 'declined') payStatus = 'Refunded';
       return { ...o, status: newStatus, paymentStatus: payStatus };
     }));
+
+    const isUuid = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(orderId);
+    if (isUuid && newStatus === 'declined') {
+      try {
+        await fetch('/api/escrow/order/refund', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ orderId, reason: 'Declined by creator in Studio' }),
+        });
+      } catch (err) {
+        console.error('[CreatorOrdersPanel] Escrow refund failed:', err);
+      }
+    }
 
     if (newStatus === 'completed') {
       const target = orders.find(o => o.id === orderId);
@@ -293,7 +314,7 @@ export default function CreatorOrdersPanel({ customRequestPermission = 'anyone' 
       ...o, status: 'in_progress', paymentStatus: 'Held in Escrow',
       isAcceptedByCreator: true, isAcceptedByMember: true,
     }));
-    toast(`Payment of $${checkoutOrder.budget} secured in Escrow! Order is now in production.`);
+    toast(`Payment of €${checkoutOrder.budget} secured in Escrow! Order is now in production.`);
     setCheckoutOrder(null);
   };
 
@@ -728,7 +749,7 @@ export default function CreatorOrdersPanel({ customRequestPermission = 'anyone' 
           onClick={() => { setEditingActor('member'); setIsFormOpen(true); }}
           className="flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-primary to-accent text-black font-black text-[9px] uppercase tracking-widest rounded-xl hover:shadow-[0_0_15px_rgba(102,252,241,0.35)] transition shrink-0"
         >
-          <Plus className="w-3.5 h-3.5" /> New Request Mock
+          <Plus className="w-3.5 h-3.5" /> New Custom Request
         </button>
       </div>
 
@@ -739,7 +760,12 @@ export default function CreatorOrdersPanel({ customRequestPermission = 'anyone' 
           {/* LEFT: Order list */}
           <div className="lg:col-span-2 space-y-2 max-h-[70vh] overflow-y-auto scrollbar-hide pr-1">
             <AnimatePresence mode="popLayout">
-              {filteredOrders.length > 0 ? (
+              {isLoadingOrders ? (
+                <div className="h-36 flex flex-col items-center justify-center gap-2 text-center border border-white/5 rounded-2xl bg-white/[0.01]">
+                  <Clock className="w-5 h-5 text-primary animate-spin" />
+                  <p className="text-[9px] uppercase tracking-widest font-black text-white/30">Syncing escrow orders...</p>
+                </div>
+              ) : filteredOrders.length > 0 ? (
                 filteredOrders.map(order => <OrderListItem key={order.id} order={order} />)
               ) : (
                 <motion.div
@@ -825,90 +851,35 @@ export default function CreatorOrdersPanel({ customRequestPermission = 'anyone' 
         </div>
       )}
 
-      {/* ── Checkout Modal ───────────────────────────────── */}
+      {/* ── Checkout Modal (V3.1 Real Dual-Ledger + MiCA USDC / VAT Gate) ── */}
       <AnimatePresence>
         {checkoutOrder && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-md">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-md overflow-y-auto">
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="w-full max-w-md bg-[#0d0d0f] border border-white/10 rounded-[2rem] overflow-hidden relative"
+              className="w-full max-w-md relative my-auto"
             >
-              <div className="absolute top-0 right-0 w-56 h-56 bg-emerald-500/8 blur-[80px] rounded-full pointer-events-none" />
-              <div className="relative z-10 p-7 space-y-5 text-left">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <span className="inline-flex items-center gap-1 px-3 py-1 bg-emerald-500/15 text-emerald-400 border border-emerald-500/25 text-[8px] font-black uppercase tracking-widest rounded-full mb-3">
-                      <Lock className="w-2.5 h-2.5" /> Secure Checkout
-                    </span>
-                    <h2 className="text-lg font-black uppercase tracking-tighter text-white">Member Payment Escrow</h2>
-                  </div>
-                  <button onClick={() => setCheckoutOrder(null)} className="text-white/40 hover:text-white p-2 rounded-full hover:bg-white/5 transition text-lg">&times;</button>
-                </div>
-
-                <div className="p-4 bg-white/[0.03] border border-white/5 rounded-2xl space-y-2.5 text-xs">
-                  {[
-                    { l: 'Request', v: checkoutOrder.title },
-                    { l: 'Category', v: checkoutOrder.category, accent: true },
-                  ].map(row => (
-                    <div key={row.l} className="flex justify-between">
-                      <span className="text-white/50 font-bold uppercase tracking-wide">{row.l}</span>
-                      <span className={`font-semibold ${row.accent ? 'text-primary font-black uppercase tracking-wider' : 'text-white'} truncate max-w-[60%]`}>{row.v}</span>
-                    </div>
-                  ))}
-                  <hr className="border-white/5" />
-                  <div className="flex justify-between text-sm">
-                    <span className="text-white/50 font-bold uppercase tracking-wide">Subtotal</span>
-                    <span className="text-white font-bold">${checkoutOrder.budget}.00</span>
-                  </div>
-                  <div className="flex justify-between text-[10px] text-white/30">
-                    <span className="font-bold uppercase tracking-wide">Platform Fee (5%)</span>
-                    <span className="font-bold">${(checkoutOrder.budget * 0.05).toFixed(2)}</span>
-                  </div>
-                  <hr className="border-white/10" />
-                  <div className="flex justify-between text-base font-black text-emerald-400">
-                    <span>Total Charged</span>
-                    <span>${(checkoutOrder.budget * 1.05).toFixed(2)}</span>
-                  </div>
-                </div>
-
-                <div className="space-y-3">
-                  <p className="text-[8px] font-black uppercase tracking-widest text-white/30">Card Details (Simulated)</p>
-                  <div className="bg-white/[0.03] border border-white/5 rounded-2xl p-4 space-y-3">
-                    {[
-                      { label: 'Cardholder', value: 'Alex Reed', type: 'text' },
-                    ].map(f => (
-                      <div key={f.label} className="space-y-1">
-                        <label className="text-[7px] font-black text-white/40 uppercase tracking-widest">{f.label}</label>
-                        <input disabled value={f.value} className="w-full bg-black/40 border border-white/5 rounded-xl px-3 py-2 text-xs text-white/60 outline-none" />
-                      </div>
-                    ))}
-                    <div className="space-y-1">
-                      <label className="text-[7px] font-black text-white/40 uppercase tracking-widest">Card Number</label>
-                      <div className="relative">
-                        <input disabled value="•••• •••• •••• 4242" className="w-full bg-black/40 border border-white/5 rounded-xl pl-9 pr-3 py-2 text-xs font-bold text-white/60 outline-none" />
-                        <CreditCard className="w-3.5 h-3.5 text-white/30 absolute left-3 top-1/2 -translate-y-1/2" />
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-3">
-                      {['12 / 28', '•••'].map((v, i) => (
-                        <div key={i} className="space-y-1">
-                          <label className="text-[7px] font-black text-white/40 uppercase tracking-widest">{i === 0 ? 'Expiry' : 'CVV'}</label>
-                          <input disabled value={v} className="w-full bg-black/40 border border-white/5 rounded-xl px-3 py-2 text-xs font-bold text-white/60 outline-none text-center" />
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex gap-3">
-                  <button onClick={() => setCheckoutOrder(null)} className="flex-1 py-3 bg-white/5 hover:bg-white/10 border border-white/10 text-white/60 text-[9px] font-black uppercase tracking-widest rounded-xl transition">Cancel</button>
-                  <button onClick={handleCheckoutSuccess} className="flex-[2] py-3 bg-gradient-to-r from-emerald-400 to-emerald-500 text-black text-[9px] font-black uppercase tracking-widest rounded-xl shadow-[0_0_20px_rgba(52,211,153,0.25)] hover:shadow-[0_0_30px_rgba(52,211,153,0.4)] transition">
-                    Authorize & Hold Escrow
-                  </button>
-                </div>
-              </div>
+              <button
+                type="button"
+                onClick={() => setCheckoutOrder(null)}
+                className="absolute top-4 right-4 z-20 text-white/50 hover:text-white p-2 rounded-full bg-white/10 hover:bg-white/20 transition text-lg leading-none cursor-pointer"
+              >
+                &times;
+              </button>
+              <UnifiedPaymentGate
+                amount={checkoutOrder.budget}
+                tier="CUSTOM_ORDER"
+                creatorName={checkoutOrder.title}
+                contentRating={
+                  checkoutOrder.category?.toLowerCase().includes('explicit') ||
+                  checkoutOrder.category?.toLowerCase().includes('18+')
+                    ? 'NSFW_18'
+                    : 'SFW'
+                }
+                onSuccess={handleCheckoutSuccess}
+              />
             </motion.div>
           </div>
         )}

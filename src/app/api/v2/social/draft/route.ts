@@ -1,12 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { pushSocialDraft, SocialDraftPayload } from '@/lib/social-scheduler';
+import { verifyAdminAuth, unauthorizedResponse } from '@/lib/admin-auth';
 
 /**
  * POST /api/v2/social/draft
- * API endpoint to push social media content drafts directly to Buffer or Metricool.
+ * Admin-only endpoint to push social media content drafts to Make.com scheduler.
  */
 export async function POST(req: NextRequest) {
   try {
+    const admin = await verifyAdminAuth(req, ['admin', 'super_admin']);
+    if (!admin) {
+      return unauthorizedResponse();
+    }
+
     let body: any;
     try {
       body = await req.json();

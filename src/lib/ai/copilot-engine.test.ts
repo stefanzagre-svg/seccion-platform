@@ -4,6 +4,12 @@ import { classifyMessageIntent } from '@/lib/ai/intent-classifier';
 import { analyzeMemberFriction } from '@/lib/ai/whale-friction-detector';
 import { resolveRampDirective, calculateTypingCadence } from '@/lib/ai/conversion-engine';
 import { extractWikilinks, buildVaultGraph } from '@/lib/vault/vault-graph-engine';
+import {
+  sanitizeAndPrepareMemoryInput,
+  detectMemoryTopicConflict,
+  formatProvenanceMemoryBlock,
+  type CopilotMemoryRecord,
+} from '@/lib/ai/copilot-memory';
 
 describe('AI Copilot 2.0 Security & Conversion Engine Suite', () => {
   describe('Ephemeral PII Scrubber', () => {
@@ -106,6 +112,93 @@ describe('AI Copilot 2.0 Security & Conversion Engine Suite', () => {
       expect(graph.nodes.some(n => n.id === 'Persona')).toBe(true);
       expect(graph.nodes.some(n => n.id === 'Pilates')).toBe(true);
       expect(graph.edges).toEqual([{ source: 'Persona', target: 'Pilates' }]);
+    });
+  });
+
+  describe('Provenance-Backed Copilot Memory Graph (Lean Plan E)', () => {
+    it('scrubs PII and extracts [[wikilinks]] before storage', () => {
+      const prepared = sanitizeAndPrepareMemoryInput({
+        title: 'VIP Lucas email@example.com Offer',
+        memoryType: 'vip_offer_decision',
+        summary: 'Prefers [[Fitness]] tips; card 4532 0152 4589 1234 rejected on [[VIP_Bundle]].',
+      });
+
+      expect(prepared.piiRedacted).toBe(true);
+      expect(prepared.summary).toContain('[REDACTED_CREDIT_CARD]');
+      expect(prepared.summary).not.toContain('4532 0152 4589 1234');
+      expect(prepared.title).toContain('[REDACTED_EMAIL]');
+      expect(prepared.wikilinks).toEqual(['Fitness', 'VIP_Bundle']);
+      expect(prepared.topic_slug).toContain('vip-lucas');
+    });
+
+    it('detects active same-topic conflicts for superseding without silent erasure', () => {
+      const existing: Pick<
+        CopilotMemoryRecord,
+        'id' | 'target_member_id' | 'topic_slug' | 'status' | 'memory_type'
+      >[] = [
+        {
+          id: 'mem-old-active',
+          target_member_id: 'vip-1',
+          topic_slug: 'vip-tier-pricing',
+          status: 'active',
+          memory_type: 'vip_offer_decision',
+        },
+        {
+          id: 'mem-other-vip',
+          target_member_id: 'vip-2',
+          topic_slug: 'vip-tier-pricing',
+          status: 'active',
+          memory_type: 'vip_offer_decision',
+        },
+        {
+          id: 'mem-already-old',
+          target_member_id: 'vip-1',
+          topic_slug: 'vip-tier-pricing',
+          status: 'superseded',
+          memory_type: 'vip_offer_decision',
+        },
+      ];
+
+      const conflicts = detectMemoryTopicConflict(existing, 'vip-1', 'VIP Tier Pricing');
+      expect(conflicts).toEqual(['mem-old-active']);
+    });
+
+    it('formats only active date-stamped provenance memories and excludes superseded items', () => {
+      const records: CopilotMemoryRecord[] = [
+        {
+          id: '1',
+          creator_id: 'c1',
+          target_member_id: null,
+          title: 'Brand Voice',
+          memory_type: 'brand_voice',
+          topic_slug: 'brand-voice',
+          summary: 'Playful peer tone, keep replies punchy.',
+          wikilinks: [],
+          status: 'active',
+          source_context: 'studio_cockpit',
+          checked_at: '2026-11-13T10:00:00Z',
+          recheck_when: 'Quarterly',
+        },
+        {
+          id: '2',
+          creator_id: 'c1',
+          target_member_id: 'vip-1',
+          title: 'Old Offer',
+          memory_type: 'vip_offer_decision',
+          topic_slug: 'vip-offer',
+          summary: 'SUPERSEDED 50% discount.',
+          wikilinks: [],
+          status: 'superseded',
+          source_context: 'studio_cockpit',
+          checked_at: '2026-10-01T10:00:00Z',
+          recheck_when: 'Never',
+        },
+      ];
+
+      const block = formatProvenanceMemoryBlock(records);
+      expect(block).toContain('[BRAND | brand_voice | Checked 2026-11-13] Brand Voice');
+      expect(block).not.toContain('SUPERSEDED 50% discount');
+      expect(block).toContain('MEMORY RULE:');
     });
   });
 });

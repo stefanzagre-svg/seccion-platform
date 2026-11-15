@@ -14,13 +14,18 @@ export async function GET(req: NextRequest) {
     const adminDb = createAdminClient();
     const { data: profile } = await adminDb
       .from('profiles')
-      .select('platform_role, role, username')
+      .select('platform_role, role')
       .eq('id', user.id)
       .single();
 
-    const isSuperAdmin = user.email === 'stefan.zagre@gmail.com' || 
-      profile?.username === 'stefan' || 
-      profile?.role === 'admin' || 
+    const isFounderEmail =
+      user.email?.toLowerCase() === 'stefan.zagre@gmail.com' &&
+      Boolean(user.email_confirmed_at || (user as { confirmed_at?: string }).confirmed_at);
+
+    const isSuperAdmin =
+      isFounderEmail ||
+      profile?.role === 'admin' ||
+      profile?.platform_role === 'admin' ||
       profile?.platform_role === 'super_admin';
 
     if (!isSuperAdmin) {
@@ -79,13 +84,18 @@ export async function PATCH(req: NextRequest) {
     const adminDb = createAdminClient();
     const { data: profile } = await adminDb
       .from('profiles')
-      .select('platform_role, role, username')
+      .select('platform_role, role')
       .eq('id', user.id)
       .single();
 
-    const isSuperAdmin = user.email === 'stefan.zagre@gmail.com' || 
-      profile?.username === 'stefan' || 
-      profile?.role === 'admin' || 
+    const isFounderEmail =
+      user.email?.toLowerCase() === 'stefan.zagre@gmail.com' &&
+      Boolean(user.email_confirmed_at || (user as { confirmed_at?: string }).confirmed_at);
+
+    const isSuperAdmin =
+      isFounderEmail ||
+      profile?.role === 'admin' ||
+      profile?.platform_role === 'admin' ||
       profile?.platform_role === 'super_admin';
 
     if (!isSuperAdmin) {
@@ -134,42 +144,36 @@ export async function PATCH(req: NextRequest) {
           console.warn('[Bug Bounty] Boost pass insertion fallback:', boostErr);
         }
 
-        // Grant AI Credits
+        // Grant Wingman AI Credits (uses atomic add_wingman_credits RPC)
         try {
-          const { data: creatorProfile } = await adminDb
-            .from('profiles')
-            .select('ai_credits')
-            .eq('id', reporterId)
-            .single();
-          const currentCredits = creatorProfile?.ai_credits || 0;
-          await adminDb
-            .from('profiles')
-            .update({ ai_credits: currentCredits + 50 })
-            .eq('id', reporterId);
+          await adminDb.rpc('add_wingman_credits', {
+            p_user_id: reporterId,
+            p_amount: 50,
+          });
         } catch (creditErr) {
-          console.warn('[Bug Bounty] AI Credits update fallback:', creditErr);
+          console.warn('[Bug Bounty] Wingman AI Credits update fallback:', creditErr);
         }
       } else {
-        // Member Reward: Grant Harmonic XP + 7-Day VIP Badge
+        // Member Reward: Grant Harmonic XP + 50 Wingman Credits
         try {
           const { data: memberProfile } = await adminDb
             .from('profiles')
-            .select('connection_points, is_vip, vip_expires_at')
+            .select('connection_points')
             .eq('id', reporterId)
             .single();
 
           const currentXp = memberProfile?.connection_points || 0;
           const newXp = currentXp + (report.reward_amount || 250);
-          const vipExpiry = new Date(Date.now() + 7 * 24 * 3600 * 1000).toISOString();
 
           await adminDb
             .from('profiles')
-            .update({
-              connection_points: newXp,
-              is_vip: true,
-              vip_expires_at: vipExpiry,
-            })
+            .update({ connection_points: newXp })
             .eq('id', reporterId);
+
+          await adminDb.rpc('add_wingman_credits', {
+            p_user_id: reporterId,
+            p_amount: 50,
+          });
         } catch (xpErr) {
           console.warn('[Bug Bounty] XP update fallback:', xpErr);
         }

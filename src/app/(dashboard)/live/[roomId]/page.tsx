@@ -9,8 +9,9 @@ import {
 } from '@livekit/components-react';
 import { useEffect, useState, useRef, use } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { Loader2, DollarSign, Clock, Zap, Video } from 'lucide-react';
+import { Loader2, DollarSign, Clock, Zap, Video, X } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import UnifiedPaymentGate from '@/components/monetization/UnifiedPaymentGate';
 
 export default function LiveRoomPage({ params }: { params: Promise<{ roomId: string }> }) {
   const resolvedParams = use(params);
@@ -25,6 +26,11 @@ export default function LiveRoomPage({ params }: { params: Promise<{ roomId: str
   const [timeLeft, setTimeLeft] = useState<number | null>(null);
   const [isExtending, setIsExtending] = useState(false);
   const [selectedExtDuration, setSelectedExtDuration] = useState<number>(5);
+  const [livePaymentModal, setLivePaymentModal] = useState<{
+    tier: 'PRIVATE_CALL' | 'TIP';
+    amount: number;
+    duration?: number;
+  } | null>(null);
   const [creatorRate, setCreatorRate] = useState<number>(10);
   
   const timerRef = useRef<NodeJS.Timeout | null>(null);
@@ -143,35 +149,19 @@ export default function LiveRoomPage({ params }: { params: Promise<{ roomId: str
     return Math.round(price * 100) / 100;
   };
 
-  const handlePayToExtend = async () => {
-    try {
-      const amount = calculatePrice(selectedExtDuration);
-      const resp = await fetch('/api/billing/checkout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          subscriberId: currentUserId,
-          creatorId: creatorId,
-          price: amount,
-          type: 'private_call',
-          callId: roomId.replace('call_', ''),
-          duration: selectedExtDuration
-        })
-      });
-      const data = await resp.json();
-      if (data.url) {
-        window.open(data.url, '_blank');
-      } else {
-        alert('Failed to generate extension link');
-      }
-    } catch (err) {
-      console.error(err);
-      alert('Error during checkout');
-    }
+  const handlePayToExtend = () => {
+    setLivePaymentModal({
+      tier: 'PRIVATE_CALL',
+      amount: calculatePrice(selectedExtDuration),
+      duration: selectedExtDuration,
+    });
   };
 
   const handleTip = () => {
-    alert('Thank you for the tip! Matrix Wallet instant tip dispatched.');
+    setLivePaymentModal({
+      tier: 'TIP',
+      amount: 10,
+    });
   };
 
   const formatTime = (seconds: number) => {
@@ -234,7 +224,7 @@ export default function LiveRoomPage({ params }: { params: Promise<{ roomId: str
                   onClick={handlePayToExtend}
                   className="px-6 py-2 bg-green-500 hover:bg-green-400 text-black font-black uppercase text-sm rounded-xl transition flex items-center gap-2 whitespace-nowrap"
                >
-                  <Zap className="w-4 h-4" /> Pay ${calculatePrice(selectedExtDuration)}
+                  <Zap className="w-4 h-4" /> Pay €{calculatePrice(selectedExtDuration)}
                </button>
             </div>
          </div>
@@ -261,6 +251,33 @@ export default function LiveRoomPage({ params }: { params: Promise<{ roomId: str
           )}
         </LiveKitRoom>
       </div>
+      {livePaymentModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-4">
+          <div className="relative max-w-md w-full">
+            <button
+              type="button"
+              onClick={() => setLivePaymentModal(null)}
+              className="absolute top-4 right-4 z-10 p-2 rounded-full bg-white/10 text-white/70 hover:text-white cursor-pointer"
+            >
+              <X className="w-4 h-4" />
+            </button>
+            <UnifiedPaymentGate
+              amount={livePaymentModal.amount}
+              tier={livePaymentModal.tier}
+              creatorName="Creator"
+              creatorId={creatorId}
+              itemType={livePaymentModal.tier === 'PRIVATE_CALL' ? 'private_call' : 'tip'}
+              callId={roomId.replace('call_', '')}
+              duration={livePaymentModal.duration}
+              contentRating="SFW"
+              onSuccess={() => {
+                setLivePaymentModal(null);
+                setIsExtending(false);
+              }}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

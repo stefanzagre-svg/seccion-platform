@@ -9,7 +9,7 @@ import {
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
-import { fetchSwipeableProfiles, recordInteraction, fetchProfileMedia, checkPublicPhotoRequirement, type ProfileMedia } from '@/lib/relationship-db';
+import { fetchSwipeableProfiles, recordInteraction, fetchProfileMediaBatch, checkPublicPhotoRequirement, type ProfileMedia } from '@/lib/relationship-db';
 import { awardXp } from '@/lib/xp-service';
 import { calculateMatch, type UserProfile, type MatchResult, calculateMockDistance } from '@/lib/match-engine';
 import { ARCHETYPE_PROFILES, type ArchetypeId, SWIPECARD_INTENT_THEMES, resolveProfileIntentTheme, type SwipecardIntentTheme } from '@/lib/constants';
@@ -258,7 +258,8 @@ export default function MatchSwiper({ filters }: MatchSwiperProps) {
   const [cards, setCards] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [hasMetPhotoReq, setHasMetPhotoReq] = useState<boolean | null>(null);
-  const [gaugeLevel, setGaugeLevel] = useState(1); // 1 = Gray, 8 = Crimson
+  const [gaugeLevels, setGaugeLevels] = useState<Record<string, number>>({}); // Per-card level: 1 = Gray, 8 = Crimson
+  const topCardGaugeLevel = cards[0] ? (gaugeLevels[cards[0].id] ?? 1) : 1;
   const [showInteraction, setShowInteraction] = useState<'heart' | 'broken_heart' | null>(null);
   
   // Media items states
@@ -395,28 +396,30 @@ export default function MatchSwiper({ filters }: MatchSwiperProps) {
     loadProfiles();
   }, [currentUser, filters]);
 
-  // Load media album for all swiper cards
+  // Load media album for all swiper cards in a single batch query
   useEffect(() => {
     if (cards.length === 0) return;
 
     const loadMediaForCards = async () => {
-      const newMedia: Record<string, ProfileMedia[]> = { ...cardsMedia };
-      let updated = false;
+      const missingIds = cards
+        .map((card) => card.id)
+        .filter((id) => !cardsMedia[id]);
+      if (missingIds.length === 0) return;
 
-      for (const card of cards) {
-        if (!newMedia[card.id]) {
-          try {
-            const media = await fetchProfileMedia(card.id);
-            newMedia[card.id] = media.length > 0 ? media : getMockMediaForCandidate(card.id);
-          } catch (err) {
-            console.error(`Error loading media for card ${card.id}:`, err);
-            newMedia[card.id] = getMockMediaForCandidate(card.id);
-          }
-          updated = true;
+      try {
+        const batched = await fetchProfileMediaBatch(missingIds);
+        const newMedia: Record<string, ProfileMedia[]> = { ...cardsMedia };
+        for (const id of missingIds) {
+          const media = batched[id] || [];
+          newMedia[id] = media.length > 0 ? media : getMockMediaForCandidate(id);
         }
-      }
-
-      if (updated) {
+        setCardsMedia(newMedia);
+      } catch (err) {
+        console.error('Error batch loading card media:', err);
+        const newMedia: Record<string, ProfileMedia[]> = { ...cardsMedia };
+        for (const id of missingIds) {
+          newMedia[id] = getMockMediaForCandidate(id);
+        }
         setCardsMedia(newMedia);
       }
     };
@@ -450,11 +453,11 @@ export default function MatchSwiper({ filters }: MatchSwiperProps) {
     const interactionType = direction === 'right' ? 'heart' : 'broken_heart';
 
     setShowInteraction(interactionType);
-    if (direction === 'right') {
-      setGaugeLevel(prev => Math.min(prev + 1, 8));
-    } else {
-      setGaugeLevel(prev => Math.max(prev - 1, 1));
-    }
+    setGaugeLevels(prev => {
+      const current = prev[topCard.id] ?? 1;
+      const next = direction === 'right' ? Math.min(current + 1, 8) : Math.max(current - 1, 1);
+      return { ...prev, [topCard.id]: next };
+    });
 
     // Save interaction to database
     const { matched } = await recordInteraction(currentUser.id, topCard.id, interactionType);
@@ -548,8 +551,8 @@ export default function MatchSwiper({ filters }: MatchSwiperProps) {
         <p className="text-sm text-white/60 mb-6">You need at least 2 public photos in your album to unlock matchmaking. This ensures our community remains active and genuine.</p>
         <button
           onClick={() => {
-            const role = (currentUserProfile as any)?.role === 'creator' ? 'creator' : 'member';
-            router.push(`/profile/${role}?tab=album`);
+            const isCreator = (currentUserProfile as any)?.role === 'creator';
+            router.push(isCreator ? '/studio?activeTab=content' : '/profile/member?tab=album');
           }}
           className="px-6 py-3 bg-[#dc143c] text-white font-bold uppercase tracking-wider text-xs rounded-full shadow-[0_0_15px_rgba(220,20,60,0.4)] hover:bg-[#ff1a4a] transition-colors cursor-pointer"
         >
@@ -570,12 +573,12 @@ export default function MatchSwiper({ filters }: MatchSwiperProps) {
       
       {/* Gauge Header */}
       <div className="w-full flex flex-col items-center mb-2 shrink-0">
-        <span className="text-[10px] md:text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5">Relationship Gauge (Level {gaugeLevel})</span>
+        <span className="text-[10px] md:text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5">Relationship Gauge (Level {topCardGaugeLevel})</span>
         <div className="w-full h-2.5 bg-white/10 rounded-full overflow-hidden">
           <motion.div 
-            className={`h-full ${getGaugeColor(gaugeLevel)}`}
+            className={`h-full ${getGaugeColor(topCardGaugeLevel)}`}
             initial={{ width: '12.5%' }}
-            animate={{ width: `${(gaugeLevel / 8) * 100}%` }}
+            animate={{ width: `${(topCardGaugeLevel / 8) * 100}%` }}
             transition={{ type: 'spring', stiffness: 300, damping: 20 }}
           />
         </div>
@@ -615,10 +618,11 @@ export default function MatchSwiper({ filters }: MatchSwiperProps) {
               const activeMedia = mediaList[activeIdx];
               const displayUrl = activeMedia ? activeMedia.media_url : (card.avatar_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=800&q=80');
 
-              const isCurrentlyLocked = activeMedia && !isMediaUnlocked(activeMedia, gaugeLevel, isSubscribed);
+              const cardGaugeLevel = gaugeLevels[card.id] ?? 1;
+              const isCurrentlyLocked = activeMedia && !isMediaUnlocked(activeMedia, cardGaugeLevel, isSubscribed);
               const requiredLevelObj = activeMedia ? RELATIONSHIP_LEVELS_METADATA.find(l => l.key === activeMedia.required_level) : null;
               const reqLabel = activeMedia?.required_level === 'subscriber' ? 'Subscription' : (requiredLevelObj?.name || 'Higher Level');
-              const lockedCount = mediaList.filter(m => !isMediaUnlocked(m, gaugeLevel, isSubscribed)).length;
+              const lockedCount = mediaList.filter(m => !isMediaUnlocked(m, cardGaugeLevel, isSubscribed)).length;
 
               const cardTheme = resolveProfileIntentTheme(card);
 
@@ -688,7 +692,7 @@ export default function MatchSwiper({ filters }: MatchSwiperProps) {
                     {activeMedia?.media_type === 'video' ? (
                       <div className="w-full h-full relative flex items-center justify-center">
                         <BlurredFaceImage
-                          sharedScore={gaugeLevel === 1 ? 2 : gaugeLevel === 2 ? 10 : gaugeLevel === 3 ? 20 : 35}
+                          sharedScore={cardGaugeLevel === 1 ? 2 : cardGaugeLevel === 2 ? 10 : cardGaugeLevel === 3 ? 20 : 35}
                           isEnabledByOwner={card.face_blur_active === true}
                           faceCoordinates={activeMedia?.face_coordinates || card.avatar_face_coordinates}
                           className="w-full h-full"
@@ -707,7 +711,7 @@ export default function MatchSwiper({ filters }: MatchSwiperProps) {
                       <BlurredFaceImage
                         src={displayUrl}
                         alt={card.display_name || card.username}
-                        sharedScore={gaugeLevel === 1 ? 2 : gaugeLevel === 2 ? 10 : gaugeLevel === 3 ? 20 : 35}
+                        sharedScore={cardGaugeLevel === 1 ? 2 : cardGaugeLevel === 2 ? 10 : cardGaugeLevel === 3 ? 20 : 35}
                         isEnabledByOwner={card.face_blur_active === true}
                         faceCoordinates={activeMedia?.face_coordinates || card.avatar_face_coordinates}
                         className="w-full h-full"
@@ -885,7 +889,7 @@ export default function MatchSwiper({ filters }: MatchSwiperProps) {
 
                             {/* Prompts */}
                             {card.bio_prompt_question && card.bio_prompt_answer && (() => {
-                              const isLocked1 = isPromptAnswerLockedForViewer(card, 'bio_prompt_answer', gaugeLevel);
+                              const isLocked1 = isPromptAnswerLockedForViewer(card, 'bio_prompt_answer', cardGaugeLevel);
                               const reqLevelName1 = getRequiredLevelName(card, 'bio_prompt_answer');
                               return (
                                 <div className="p-3.5 rounded-2xl bg-white/[0.02] border border-white/5">
@@ -909,7 +913,7 @@ export default function MatchSwiper({ filters }: MatchSwiperProps) {
                             })()}
 
                             {card.bio_prompt_question_2 && card.bio_prompt_answer_2 && (() => {
-                              const isLocked2 = isPromptAnswerLockedForViewer(card, 'bio_prompt_answer_2', gaugeLevel);
+                              const isLocked2 = isPromptAnswerLockedForViewer(card, 'bio_prompt_answer_2', cardGaugeLevel);
                               const reqLevelName2 = getRequiredLevelName(card, 'bio_prompt_answer_2');
                               return (
                                 <div className="p-3.5 rounded-2xl bg-white/[0.02] border border-white/5">
@@ -1006,7 +1010,7 @@ export default function MatchSwiper({ filters }: MatchSwiperProps) {
                                   <p className="text-[9px] font-black uppercase tracking-widest text-white/40">Profile Traits</p>
                                   <div className="grid grid-cols-2 gap-2">
                                     {filledTraits.map(({ key, label, value }) => {
-                                      const locked = isFieldLocked(card, key, gaugeLevel);
+                                      const locked = isFieldLocked(card, key, cardGaugeLevel);
                                       return locked ? (
                                         <div key={key} className="p-2.5 bg-red-950/5 border border-red-500/10 rounded-xl flex items-center justify-between gap-2.5 text-left">
                                           <div className="flex flex-col min-w-0">
@@ -1206,7 +1210,7 @@ export default function MatchSwiper({ filters }: MatchSwiperProps) {
       <SuggestionMovesModal 
         isOpen={isModalOpen} 
         onClose={() => setIsModalOpen(false)} 
-        gaugeLevel={gaugeLevel}
+        gaugeLevel={topCardGaugeLevel}
         isKycVerified={isKycVerified}
         userId={currentUser?.id}
         userRole={currentUser?.role || 'member'}

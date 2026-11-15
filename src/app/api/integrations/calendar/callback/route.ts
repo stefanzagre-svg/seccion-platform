@@ -1,23 +1,55 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { createHmac, timingSafeEqual } from 'node:crypto';
 
-export async function GET(request: Request) {
+function sanitizeReturnTo(raw: string | undefined): string {
+  if (!raw || !raw.startsWith('/') || raw.startsWith('//') || raw.includes('\\')) {
+    return '/studio';
+  }
+  return raw;
+}
+
+function verifySignedState(stateParam: string | null): { nonce: string; userId: string; returnTo: string } | null {
+  if (!stateParam) return null;
+  try {
+    const decoded = JSON.parse(Buffer.from(stateParam, 'base64url').toString('utf8'));
+    const { payload, sig } = decoded || {};
+    if (typeof payload !== 'string' || typeof sig !== 'string') return null;
+
+    const secret =
+      process.env.CALENDAR_OAUTH_SECRET?.trim() ||
+      process.env.SUPABASE_SERVICE_ROLE_KEY?.trim() ||
+      'dev_cal_secret';
+    const expected = createHmac('sha256', secret).update(payload).digest('hex');
+    if (sig.length !== expected.length || !timingSafeEqual(Buffer.from(sig), Buffer.from(expected))) {
+      return null;
+    }
+
+    const parsed = JSON.parse(payload);
+    if (!parsed?.nonce || !parsed?.userId) return null;
+    return {
+      nonce: String(parsed.nonce),
+      userId: String(parsed.userId),
+      returnTo: sanitizeReturnTo(parsed.returnTo),
+    };
+  } catch {
+    return null;
+  }
+}
+
+export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const code = searchParams.get('code');
   const stateStr = searchParams.get('state');
 
-  let state = 'default_state';
-  let returnTo = '/studio';
+  const verifiedState = verifySignedState(stateStr);
+  const cookieNonce = request.cookies.get('cal_oauth_nonce')?.value;
 
-  if (stateStr) {
-    try {
-      const parsed = JSON.parse(stateStr);
-      state = parsed.state || 'default_state';
-      returnTo = parsed.returnTo || '/studio';
-    } catch (e) {
-      state = stateStr;
-    }
+  if (!verifiedState || !cookieNonce || verifiedState.nonce !== cookieNonce) {
+    return NextResponse.json({ error: 'Invalid or expired OAuth state' }, { status: 403 });
   }
+
+  const returnTo = verifiedState.returnTo;
 
   if (!code) {
     return NextResponse.json({ error: 'Authorization code is missing' }, { status: 400 });
@@ -27,10 +59,13 @@ export async function GET(request: Request) {
   const { data: { user }, error: authError } = await supabase.auth.getUser();
 
   if (authError || !user) {
-    // If not authenticated, redirect to login page
     const loginUrl = new URL('/auth', request.url);
     loginUrl.searchParams.set('returnTo', returnTo);
     return NextResponse.redirect(loginUrl.toString());
+  }
+
+  if (verifiedState.userId !== user.id) {
+    return NextResponse.json({ error: 'OAuth state user mismatch' }, { status: 403 });
   }
 
   try {
@@ -39,7 +74,9 @@ export async function GET(request: Request) {
     let expiresAt = new Date();
     let googleEmail = '';
 
-    const isMock = code.startsWith('mock_') || !process.env.GOOGLE_CLIENT_ID;
+    const isMock =
+      process.env.NODE_ENV === 'development' &&
+      (code.startsWith('mock_') || !process.env.GOOGLE_CLIENT_ID);
 
     if (isMock) {
       // Sandbox Simulator Tokens

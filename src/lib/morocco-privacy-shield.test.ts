@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import en from '@/locales/en.json';
 import es from '@/locales/es.json';
 import fr from '@/locales/fr.json';
+import { buildMergedPrivacySettings } from '@/lib/profile-visibility';
 
 // Testable pure logic mirror of CreatorQuest checkIsMorocco
 export const checkIsMorocco = (val: string): boolean => {
@@ -54,23 +55,8 @@ export function detectUserCountryFromTz(userTz: string): string {
   return 'ES';
 }
 
-// Mirror of onboarding registration completion privacy settings merger
-export function buildPrivacySettingsPayload(
-  existingPrivacySettings: Record<string, any> = {},
-  moroccoShield: boolean,
-  blockedCountries: string[]
-): Record<string, any> {
-  if (!moroccoShield && (!blockedCountries || blockedCountries.length === 0)) {
-    return existingPrivacySettings;
-  }
-  return {
-    ...existingPrivacySettings,
-    blocked_countries: Array.from(
-      new Set([...(existingPrivacySettings?.blocked_countries || []), ...blockedCountries])
-    ),
-    morocco_domestic_shield: moroccoShield,
-  };
-}
+// Delegate directly to canonical onboarding privacy settings merger
+export const buildPrivacySettingsPayload = buildMergedPrivacySettings;
 
 describe('Moroccan Domestic Privacy Shield Invariants (Task 2)', () => {
   it('detects Moroccan timezone Africa/Casablanca accurately as MA', () => {

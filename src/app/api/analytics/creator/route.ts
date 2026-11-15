@@ -1,16 +1,24 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin-client';
+import { resolveCreatorSplitRatio } from '@/lib/escrow-dual-ledger';
 
 export async function GET(request: Request) {
   try {
-    const { searchParams } = new URL(request.url);
-    const creatorId = searchParams.get('creatorId');
-
-    if (!creatorId) {
-      return NextResponse.json({ error: 'creatorId query parameter is required' }, { status: 400 });
+    const authClient = await createClient();
+    const { data: { user }, error: authError } = await authClient.auth.getUser();
+    if (authError || !user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const supabase = await createClient();
+    const { searchParams } = new URL(request.url);
+    const creatorId = searchParams.get('creatorId') || user.id;
+
+    if (creatorId !== user.id) {
+      return NextResponse.json({ error: 'Forbidden — creator analytics are private' }, { status: 403 });
+    }
+
+    const supabase = createAdminClient();
 
     // 1. Fetch all subscriptions for the creator
     const { data: subs, error: subsError } = await supabase
@@ -154,9 +162,15 @@ export async function GET(request: Request) {
       }
     ];
 
-    // Revenue Split (80% creator escrow, 20% platform cut)
-    const creatorEscrow = grossRevenue * 0.8;
-    const platformCut = grossRevenue * 0.2;
+    // Revenue Split (90% Year-1 Founding Creator / 80% Standard thereafter)
+    const { data: creatorSplitProf } = await supabase
+      .from('profiles')
+      .select('is_approved_founder_creator, promo_90_approved_at, custom_creator_rate')
+      .eq('id', creatorId)
+      .maybeSingle();
+    const { creatorSplitRatio, platformSplitRatio } = resolveCreatorSplitRatio(creatorSplitProf);
+    const creatorEscrow = grossRevenue * creatorSplitRatio;
+    const platformCut = grossRevenue * platformSplitRatio;
 
     // Top Supporters aggregation
     const supportersMap: Record<string, { id: string; username: string; display_name: string; avatar_url: string; totalSpent: number }> = {};

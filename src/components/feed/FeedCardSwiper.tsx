@@ -84,10 +84,10 @@ export default function FeedCardSwiper({
 
   const handleUnlockClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (post.type === 'ppv') {
-      onUnlockPpv(post.id);
-    } else if (onOpenPaywallModal) {
+    if (onOpenPaywallModal) {
       onOpenPaywallModal(post);
+    } else if (post.type === 'ppv') {
+      onUnlockPpv(post.id);
     }
   };
 
@@ -123,6 +123,7 @@ export default function FeedCardSwiper({
             >
               <BlurredFaceImage
                 src={post.avatar_url}
+                profileId={post.avatar_url ? post.creator_id : undefined}
                 alt="Avatar"
                 sharedScore={post.matchScore}
                 isEnabledByOwner={post.face_blur_active}
@@ -268,9 +269,10 @@ export default function FeedCardSwiper({
                     />
                   )
                 )}
-                {(post.teaser_type === 'none' || !post.teaser_type) && (
+                {(post.teaser_type === 'none' || !post.teaser_type) && post.image ? (
                   <BlurredFaceImage
                     src={post.image}
+                    postId={post.id}
                     alt="Content"
                     sharedScore={post.matchScore}
                     isEnabledByOwner={post.face_blur_active}
@@ -278,7 +280,9 @@ export default function FeedCardSwiper({
                     className="w-full h-full"
                     imgClassName="w-full h-full blur-3xl opacity-30 grayscale transition duration-700"
                   />
-                )}
+                ) : (post.teaser_type === 'none' || !post.teaser_type) ? (
+                  <div className="w-full h-full bg-gradient-to-br from-slate-900 via-black to-slate-950" />
+                ) : null}
 
                 {/* Gated Lock Screen Overlay */}
                 <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-black/75 backdrop-blur-[12px] p-6 text-center border border-white/5 animate-fade-in">
@@ -314,6 +318,7 @@ export default function FeedCardSwiper({
               // Unlocked state (regular full view)
               <BlurredFaceImage
                 src={post.image}
+                postId={post.id}
                 alt="Content"
                 sharedScore={post.matchScore}
                 isEnabledByOwner={post.face_blur_active}

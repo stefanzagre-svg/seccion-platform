@@ -1,11 +1,32 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prepareSpeechText } from '@/lib/kate-specialist';
+import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin-client';
+import { checkEndpointRateLimit } from '@/lib/auth-admin';
 
-const FALLBACK_ELEVEN_KEY = Buffer.from('c2tfYWI1NGQ5ZWMwMWI1Mjk4N2MxOTdjNDU1M2QxNDM1YzJhZjFjMmZmNjViYTU3ZGZj', 'base64').toString('utf-8');
 const DEFAULT_KATE_VOICE_ID = 'Xb7hH8MSUJpSbSDYk0k2'; // Alice (British, clear, engaging, articulate)
+const ALLOWED_VOICE_IDS = new Set([DEFAULT_KATE_VOICE_ID]);
 
 export async function POST(req: NextRequest) {
   try {
+    const supabase = await createClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const adminClient = createAdminClient();
+    const isRateLimited = await checkEndpointRateLimit(
+      adminClient,
+      user.id,
+      'v2/voice/speak',
+      15,
+      60
+    );
+    if (isRateLimited) {
+      return NextResponse.json({ error: 'Rate limit exceeded' }, { status: 429 });
+    }
+
     const body = (await req.json().catch(() => ({}))) as any;
     const rawText = body?.text || '';
     if (!rawText || typeof rawText !== 'string') {
@@ -18,8 +39,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Text contains no speakable content' }, { status: 400 });
     }
 
-    const voiceId = body?.voiceId || DEFAULT_KATE_VOICE_ID;
-    const apiKey = process.env.ELEVENLABS_API_KEY || FALLBACK_ELEVEN_KEY;
+    const requestedVoiceId = typeof body?.voiceId === 'string' ? body.voiceId.trim() : '';
+    const voiceId = ALLOWED_VOICE_IDS.has(requestedVoiceId) ? requestedVoiceId : DEFAULT_KATE_VOICE_ID;
+    const apiKey = process.env.ELEVENLABS_API_KEY?.trim();
 
     if (!apiKey) {
       return NextResponse.json({ error: 'ElevenLabs not configured' }, { status: 503 });

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin-client';
 import { generateContentWithFailover } from '@/lib/gemini-failover';
 
 interface AnalyzeRequest {
@@ -123,8 +124,9 @@ Return ONLY a valid JSON object matching this schema:
       }
 
       try {
+        const adminDb = createAdminClient();
         // Update User -> Target relationship
-        const { data: rel1 } = await supabase
+        const { data: rel1 } = await adminDb
           .from('relationships')
           .select('gauge_score')
           .eq('user_id', userId)
@@ -133,7 +135,7 @@ Return ONLY a valid JSON object matching this schema:
 
         if (rel1) {
           const newScore = Math.max(0, Math.min(100, (rel1.gauge_score || 0) + bonusApplied));
-          await supabase
+          await adminDb
             .from('relationships')
             .update({
               gauge_score: newScore,
@@ -146,8 +148,8 @@ Return ONLY a valid JSON object matching this schema:
             .eq('target_id', targetId);
         }
 
-        // Update Target -> User relationship (symmetric update)
-        const { data: rel2 } = await supabase
+        // Update Target -> User relationship (symmetric update via service_role after auth verification)
+        const { data: rel2 } = await adminDb
           .from('relationships')
           .select('gauge_score')
           .eq('user_id', targetId)
@@ -156,7 +158,7 @@ Return ONLY a valid JSON object matching this schema:
 
         if (rel2) {
           const newScore = Math.max(0, Math.min(100, (rel2.gauge_score || 0) + bonusApplied));
-          await supabase
+          await adminDb
             .from('relationships')
             .update({
               gauge_score: newScore,

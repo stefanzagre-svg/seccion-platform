@@ -39,7 +39,7 @@ export default function CookieConsentBanner() {
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: 100, opacity: 0 }}
           transition={{ type: "spring", stiffness: 260, damping: 20 }}
-          className="fixed bottom-4 right-4 z-[100] p-4 pointer-events-none flex justify-end max-w-md w-full"
+          className="fixed bottom-4 left-4 right-4 sm:left-auto z-40 sm:p-4 pointer-events-none flex justify-end sm:max-w-md sm:w-full"
         >
           <div className="pointer-events-auto w-full bg-black/95 border border-primary/30 p-5 rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.9)] backdrop-blur-2xl flex flex-col gap-4">
             

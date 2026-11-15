@@ -81,6 +81,10 @@ export async function GET(request: Request) {
   const creatorId = searchParams.get('creatorId');
 
   const supabase = await createClient();
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  if (authError || !user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
 
   try {
     let query = supabase.from('calendar_events').select('*');
@@ -88,11 +92,14 @@ export async function GET(request: Request) {
     if (creatorId) {
       query = query.eq('creator_id', creatorId);
     } else if (userId) {
+      if (userId !== user.id) {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      }
       // Fetch creator IDs user is actively subscribed to
       const { data: subs } = await supabase
         .from('subscriptions')
         .select('creator_id')
-        .eq('subscriber_id', userId)
+        .eq('subscriber_id', user.id)
         .eq('is_active', true);
 
       const creatorIds = subs?.map(s => s.creator_id) || [];
@@ -117,32 +124,20 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const devUserId = request.headers.get('x-dev-user-id');
-  let supabase = await createClient();
-  if (process.env.NODE_ENV === 'development' && devUserId) {
-    try {
-      supabase = createAdminClient();
-    } catch (e) {
-      console.warn('Could not create admin client for testing:', e);
-    }
-  }
+  const supabase = await createClient();
 
   try {
-    const { userId, action, creatorId, title, description, startTime, endTime, type, eventId } = await request.json();
-    
-    // Auth Check
-    let user;
-    if (process.env.NODE_ENV === 'development' && devUserId) {
-      user = { id: devUserId };
-    } else {
-      const { data: { user: authUser }, error: authError } = await supabase.auth.getUser();
-      if (authError || !authUser) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-      }
-      user = authUser;
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    const { userId, action, creatorId, title, description, startTime, endTime, type, eventId } = await request.json();
+
     const activeCreatorId = creatorId || userId || user.id;
+    if (activeCreatorId !== user.id) {
+      return NextResponse.json({ error: 'Forbidden — cannot modify another creator calendar' }, { status: 403 });
+    }
 
     if (action === 'create') {
       if (!activeCreatorId || !title || !startTime || !endTime) {

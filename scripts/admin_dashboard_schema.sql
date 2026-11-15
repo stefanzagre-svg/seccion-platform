@@ -37,6 +37,7 @@ CREATE TABLE IF NOT EXISTS public.admin_audit_logs (
 ALTER TABLE public.admin_audit_logs ENABLE ROW LEVEL SECURITY;
 
 -- Only super_admin can SELECT audit logs via regular client
+DROP POLICY IF EXISTS "Super admins can view audit logs" ON public.admin_audit_logs;
 CREATE POLICY "Super admins can view audit logs"
 ON public.admin_audit_logs FOR SELECT
 USING (
@@ -77,6 +78,7 @@ CREATE TABLE IF NOT EXISTS public.content_moderation_queue (
 
 ALTER TABLE public.content_moderation_queue ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Admins can view moderation queue" ON public.content_moderation_queue;
 CREATE POLICY "Admins can view moderation queue"
 ON public.content_moderation_queue FOR SELECT
 USING (
@@ -86,6 +88,7 @@ USING (
   )
 );
 
+DROP POLICY IF EXISTS "Admins can update moderation queue" ON public.content_moderation_queue;
 CREATE POLICY "Admins can update moderation queue"
 ON public.content_moderation_queue FOR UPDATE
 USING (
@@ -96,6 +99,7 @@ USING (
 );
 
 -- Users can insert reports (flagging content)
+DROP POLICY IF EXISTS "Users can flag content" ON public.content_moderation_queue;
 CREATE POLICY "Users can flag content"
 ON public.content_moderation_queue FOR INSERT
 WITH CHECK (auth.uid() = reporter_id);
@@ -123,6 +127,7 @@ CREATE TABLE IF NOT EXISTS public.platform_settings (
 
 ALTER TABLE public.platform_settings ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Admins can view platform settings" ON public.platform_settings;
 CREATE POLICY "Admins can view platform settings"
 ON public.platform_settings FOR SELECT
 USING (
@@ -132,6 +137,7 @@ USING (
   )
 );
 
+DROP POLICY IF EXISTS "Super admins can update platform settings" ON public.platform_settings;
 CREATE POLICY "Super admins can update platform settings"
 ON public.platform_settings FOR UPDATE
 USING (

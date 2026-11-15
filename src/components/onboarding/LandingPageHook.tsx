@@ -268,7 +268,11 @@ export default function LandingPageHook({
     try {
       setIsOAuthLoading(provider);
       persistRoleSelection(regRole);
-      const nextTarget = regRole === "creator" ? "/onboarding?role=creator" : "/onboarding?role=member";
+      if (regRole !== "creator") {
+        router.push("/early-access");
+        return;
+      }
+      const nextTarget = "/onboarding?role=creator";
       const { error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
@@ -279,7 +283,7 @@ export default function LandingPageHook({
         router.push(nextTarget);
       }
     } catch {
-      router.push(regRole === "creator" ? "/onboarding?role=creator" : "/onboarding?role=member");
+      router.push(regRole === "creator" ? "/onboarding?role=creator" : "/early-access");
     } finally {
       setIsOAuthLoading(null);
     }
@@ -289,7 +293,11 @@ export default function LandingPageHook({
     e.preventDefault();
     persistRoleSelection(regRole);
     const cleanEmail = emailInput.trim();
-    const base = regRole === "creator" ? "/onboarding?role=creator" : "/onboarding?role=member";
+    if (regRole !== "creator") {
+      router.push(cleanEmail ? `/early-access?email=${encodeURIComponent(cleanEmail)}` : "/early-access");
+      return;
+    }
+    const base = "/onboarding?role=creator";
     const target = cleanEmail ? `${base}&email=${encodeURIComponent(cleanEmail)}` : base;
     router.push(target);
   };

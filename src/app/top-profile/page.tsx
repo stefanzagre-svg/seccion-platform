@@ -181,7 +181,7 @@ export default function TopProfilePage() {
                           )}
                         </div>
                         <div className="flex items-center gap-2 min-w-0">
-                          <Link href={`/profile/member/${member.member_id}`} className="font-bold text-sm sm:text-lg hover:text-primary transition tracking-tight truncate">
+                          <Link href={`/profile/${member.member_id}`} className="font-bold text-sm sm:text-lg hover:text-primary transition tracking-tight truncate">
                             @{member.username}
                           </Link>
                           {matchedIds.includes(member.member_id) && (

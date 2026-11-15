@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import PrelaunchModal from "@/components/PrelaunchModal";
 import { useTranslation } from "@/context/LanguageContext";
+import { isOnboardingProfileComplete } from "@/lib/profile-visibility";
 
 // Double bezel card wrapper
 function DoubleBezelCard({ children, className = "" }: { children: React.ReactNode; className?: string }) {
@@ -58,53 +59,60 @@ export default function LoginPage() {
   const [waitlistPosition, setWaitlistPosition] = useState<number | null>(null);
   const [joiningWaitlist, setJoiningWaitlist] = useState(false);
 
-  // Auto-fill email from URL query parameters (?email=...) and listen for auth callbacks
+  // Auto-fill email / URL error banner when params or locale change
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const params = new URLSearchParams(window.location.search);
-      const emailParam = params.get("email");
-      if (emailParam) {
-        setEmail(emailParam.trim());
-      }
-      if (params.get("mode") === "password") {
-        setShowPasswordMode(true);
-      }
-      if (params.get("error") === "auth_callback_failed") {
-        setErrorMsg(
-          isFr
-            ? "Le lien d'accès en 1 clic a expiré ou a été ouvert dans un autre navigateur. Entrez votre e-mail pour recevoir un code à 6 chiffres instantané."
-            : isEs
-            ? "El enlace de acceso directo expiró o se abrió en otro navegador. Introduce tu correo para recibir un código de 6 dígitos instantáneo."
-            : "The 1-click access link expired or was opened in another browser. Enter your email below to receive an instant 6-digit passcode."
-        );
-      }
-
-      // Catch any URL hash fragments (#access_token=...) from legacy email links
-      const supabase = createClient();
-      const {
-        data: { subscription },
-      } = supabase.auth.onAuthStateChange(async (event, session) => {
-        if (session?.user && (event === "SIGNED_IN" || event === "TOKEN_REFRESHED")) {
-          const { data: profile } = await supabase
-            .from("profiles")
-            .select("role")
-            .eq("id", session.user.id)
-            .maybeSingle();
-
-          const role = profile?.role === "creator" || profile?.role === "admin" ? "creator" : "member";
-          document.cookie = `sb_role=${role}; path=/; max-age=2592000; SameSite=Lax`;
-          document.cookie = "sb_ob=1; path=/; max-age=2592000; SameSite=Lax";
-          const explicitNext = params.get("next");
-          const destination = explicitNext || (role === "creator" ? "/studio" : "/early-access");
-          window.location.href = destination;
-        }
-      });
-
-      return () => {
-        subscription.unsubscribe();
-      };
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const emailParam = params.get("email");
+    if (emailParam) {
+      setEmail((prev) => prev || emailParam.trim());
     }
-  }, [locale]);
+    if (params.get("mode") === "password") {
+      setShowPasswordMode(true);
+    }
+    if (params.get("error") === "auth_callback_failed") {
+      setErrorMsg(
+        isFr
+          ? "Le lien d'accès en 1 clic a expiré ou a été ouvert dans un autre navigateur. Entrez votre e-mail pour recevoir un code à 6 chiffres instantané."
+          : isEs
+          ? "El enlace de acceso directo expiró o se abrió en otro navegador. Introduce tu correo para recibir un código de 6 dígitos instantáneo."
+          : "The 1-click access link expired or was opened in another browser. Enter your email below to receive an instant 6-digit passcode."
+      );
+    }
+  }, [isFr, isEs]);
+
+  // Mount-only Supabase auth listener so toggling UI language never re-subscribes
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const supabase = createClient();
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (session?.user && (event === "SIGNED_IN" || event === "TOKEN_REFRESHED")) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("role, avatar_url, bio, bio_prompt_answer, archetype, sexual_preference, lifestyle_habits")
+          .eq("id", session.user.id)
+          .maybeSingle();
+
+        const role = profile?.role === "creator" || profile?.role === "admin" ? "creator" : "member";
+        document.cookie = `sb_role=${role}; path=/; max-age=2592000; SameSite=Lax`;
+        if (isOnboardingProfileComplete(profile)) {
+          document.cookie = "sb_ob=1; path=/; max-age=2592000; SameSite=Lax";
+        } else {
+          document.cookie = "sb_ob=; path=/; max-age=0; SameSite=Lax";
+        }
+        const params = new URLSearchParams(window.location.search);
+        const explicitNext = params.get("next");
+        const destination = explicitNext || (role === "creator" ? "/studio" : "/early-access");
+        window.location.href = destination;
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
 
   const handleOneClickWaitlist = async () => {
     if (!email) return;
@@ -121,10 +129,23 @@ export default function LoginPage() {
         setWaitlistPosition(data.position || null);
         setPrelaunchState("waitlist_joined");
       } else {
-        setErrorMsg(data.error || "Could not join waitlist. Please try again.");
+        setErrorMsg(
+          data.error ||
+            (isFr
+              ? "Impossible de rejoindre la liste d'attente. Veuillez réessayer."
+              : isEs
+              ? "No pudimos unirte a la lista de espera. Inténtalo de nuevo."
+              : "Could not join waitlist. Please try again.")
+        );
       }
     } catch {
-      setErrorMsg("Network error while joining waitlist.");
+      setErrorMsg(
+        isFr
+          ? "Erreur réseau lors de l'inscription à la liste d'attente."
+          : isEs
+          ? "Error de red al unirte a la lista de espera."
+          : "Network error while joining waitlist."
+      );
     } finally {
       setJoiningWaitlist(false);
     }
@@ -149,10 +170,12 @@ export default function LoginPage() {
       const params = new URLSearchParams(window.location.search);
       let resolvedRole: "creator" | "member" = "creator";
 
+      let onboardingComplete = false;
+
       if (data?.user) {
         const { data: existingProfile } = await supabase
           .from("profiles")
-          .select("id, username, role")
+          .select("id, username, role, avatar_url, bio, bio_prompt_answer, archetype, sexual_preference, lifestyle_habits")
           .eq("id", data.user.id)
           .maybeSingle();
 
@@ -173,11 +196,17 @@ export default function LoginPage() {
             existingProfile.role === "creator" || existingProfile.role === "admin"
               ? "creator"
               : "member";
+          onboardingComplete = isOnboardingProfileComplete(existingProfile);
         }
 
-        document.cookie = "sb_ob=1; path=/; max-age=2592000; SameSite=Lax";
         document.cookie = `sb_role=${resolvedRole}; path=/; max-age=2592000; SameSite=Lax`;
-        document.cookie = "sb_onboarding_completed=true; path=/; max-age=2592000; SameSite=Lax";
+        if (onboardingComplete) {
+          document.cookie = "sb_ob=1; path=/; max-age=2592000; SameSite=Lax";
+          document.cookie = "sb_onboarding_completed=true; path=/; max-age=2592000; SameSite=Lax";
+        } else {
+          document.cookie = "sb_ob=; path=/; max-age=0; SameSite=Lax";
+          document.cookie = "sb_onboarding_completed=; path=/; max-age=0; SameSite=Lax";
+        }
         if (typeof window !== "undefined") {
           if (resolvedRole === "creator") {
             sessionStorage.setItem("_onboarding_creator_archive_choice", "creator");
@@ -294,7 +323,14 @@ export default function LoginPage() {
       setMagicLinkSent(true);
     } catch (err: any) {
       console.error("Magic link error:", err);
-      setErrorMsg(err.message || "Failed to send access code. Please try again.");
+      setErrorMsg(
+        err.message ||
+          (isFr
+            ? "Impossible d'envoyer le code d'accès. Veuillez réessayer."
+            : isEs
+            ? "No pudimos enviar el código de acceso. Por favor inténtalo de nuevo."
+            : "Failed to send access code. Please try again.")
+      );
     } finally {
       setLoading(false);
     }
@@ -338,7 +374,14 @@ export default function LoginPage() {
 
       const json = await res.json();
       if (!res.ok) {
-        throw new Error(json.error || "Failed to authenticate.");
+        throw new Error(
+          json.error ||
+            (isFr
+              ? "Échec de l'authentification."
+              : isEs
+              ? "No pudimos autenticar tu acceso."
+              : "Failed to authenticate.")
+        );
       }
 
       if (json.session?.access_token && json.session?.refresh_token) {

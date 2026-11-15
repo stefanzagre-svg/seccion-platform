@@ -1,11 +1,19 @@
 "use client";
 
-import React, { useState } from 'react';
-import { Image as ImageIcon, Plus, Trash2, Video, Eye, Lock, EyeOff } from 'lucide-react';
-import type { BaseProfileMedia } from '@/lib/profile-utils';
+import React from 'react';
+import { Image as ImageIcon, Plus, Trash2, Video, Lock } from 'lucide-react';
+
+export interface MemberMediaItem {
+  id?: string;
+  media_url?: string;
+  url?: string;
+  media_type?: 'image' | 'video';
+  type?: 'image' | 'video';
+  is_hidden?: boolean;
+}
 
 interface MemberMediaTabProps {
-  mediaItems: BaseProfileMedia[];
+  mediaItems: MemberMediaItem[];
   mediaUrlInput: string;
   setMediaUrlInput: (val: string) => void;
   mediaTypeInput: 'image' | 'video';
@@ -134,14 +142,17 @@ export const MemberMediaTab: React.FC<MemberMediaTabProps> = ({
           </div>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-            {mediaItems.map((item, idx) => (
+            {mediaItems.map((item, idx) => {
+              const resolvedType = item.media_type ?? item.type;
+              const resolvedUrl = item.media_url ?? item.url;
+              return (
               <div key={item.id || idx} className="group relative aspect-square rounded-2xl overflow-hidden border border-white/5 bg-black/40">
-                {item.type === 'video' ? (
+                {resolvedType === 'video' ? (
                   <div className="w-full h-full flex items-center justify-center bg-black/60">
                     <Video className="w-6 h-6 text-white/40" />
                   </div>
                 ) : (
-                  <img src={item.url} alt={`Media ${idx + 1}`} className="w-full h-full object-cover group-hover:scale-105 transition duration-500" />
+                  <img src={resolvedUrl} alt={`Media ${idx + 1}`} className="w-full h-full object-cover group-hover:scale-105 transition duration-500" />
                 )}
                 <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
                   <button
@@ -158,7 +169,8 @@ export const MemberMediaTab: React.FC<MemberMediaTabProps> = ({
                   </div>
                 )}
               </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

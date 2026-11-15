@@ -23,7 +23,7 @@ import { POST } from '@/app/api/livekit/token/route';
 let mockCurrentUser: { id: string } | null = null;
 let mockCreatorProfiles: Set<string> = new Set();
 let mockLiveStreams: Map<string, { creator_id: string }> = new Map();
-let mockCallRequests: Map<string, { member_id: string; creator_id: string }> = new Map();
+let mockCallRequests: Map<string, { member_id: string; creator_id: string; status: string }> = new Map();
 
 vi.mock('@/lib/supabase/server', () => ({
   createClient: vi.fn(async () => ({
@@ -94,7 +94,8 @@ describe('Adversarial Challenge: R4 LiveKit Signaling & Anti-Takeover', () => {
       ['stream_victim_uuid', { creator_id: 'creator_victim' }],
     ]);
     mockCallRequests = new Map([
-      ['req_call_100', { member_id: 'member_charlie', creator_id: 'creator_alice' }],
+      ['req_call_100', { member_id: 'member_charlie', creator_id: 'creator_alice', status: 'paid' }],
+      ['req_call_unpaid', { member_id: 'member_charlie', creator_id: 'creator_alice', status: 'pending' }],
     ]);
   });
 
@@ -262,6 +263,19 @@ describe('Adversarial Challenge: R4 LiveKit Signaling & Anti-Takeover', () => {
       expect(res.status).toBe(200);
       const payload = decodeJwtPayload(data.token);
       expect(payload.video.canPublish).toBe(true);
+    });
+
+    it('rejects participant when private call is not yet paid or in_progress', async () => {
+      mockCurrentUser = { id: 'member_charlie' };
+
+      const req = createNextRequest({
+        roomName: 'call_req_call_unpaid',
+        participantName: 'Charlie Member',
+        isCreator: false,
+      });
+
+      const res = await POST(req);
+      expect(res.status).toBe(403);
     });
   });
 

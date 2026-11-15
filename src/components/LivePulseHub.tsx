@@ -276,27 +276,47 @@ export default function LivePulseHub({ currentUser, candidateProfile, onLock }: 
   };
 
   const sendTip = async (name: string, cost: number, emoji: string) => {
+    if (!currentUser?.id || !candidateProfile?.id) return;
     const username = currentUser.username || 'Alex_N';
-    
-    setMessages(prev => [
-      ...prev,
-      { user: 'System', msg: `You sent a ${name} tip (${cost} pts)!`, type: 'system' }
-    ]);
-    triggerPulseBurst(emoji);
 
-    // Call database update interaction before broadcasting
     try {
-      await updateRelationshipScore(currentUser.id, candidateProfile.id, 'live_tip');
-    } catch (err) {
-      console.error('Failed to update relationship score for tip:', err);
-    }
-
-    if (channelRef.current) {
-      channelRef.current.send({
-        type: 'broadcast',
-        event: 'tip_sent',
-        payload: { user: username, name, cost, emoji }
+      const spendRes = await fetch('/api/matrix/spend', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          creatorId: candidateProfile.id,
+          redPillsAmount: Math.max(1, Math.round(cost)),
+          itemType: 'tip',
+          ledger: 'sfw_credits',
+          metadata: { tipName: name },
+        }),
       });
+      if (!spendRes.ok) {
+        const errData = await spendRes.json().catch(() => ({}));
+        setMessages((prev) => [
+          ...prev,
+          { user: 'System', msg: errData.message || 'Insufficient SFW Credits to send tip.', type: 'system' },
+        ]);
+        return;
+      }
+
+      setMessages(prev => [
+        ...prev,
+        { user: 'System', msg: `You sent a ${name} tip (${cost} credits)!`, type: 'system' }
+      ]);
+      triggerPulseBurst(emoji);
+
+      await updateRelationshipScore(currentUser.id, candidateProfile.id, 'live_tip');
+
+      if (channelRef.current) {
+        channelRef.current.send({
+          type: 'broadcast',
+          event: 'tip_sent',
+          payload: { user: username, name, cost, emoji }
+        });
+      }
+    } catch (err) {
+      console.error('Failed to process live tip:', err);
     }
   };
 

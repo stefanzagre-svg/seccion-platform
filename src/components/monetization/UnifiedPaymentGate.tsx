@@ -1,36 +1,106 @@
 'use client';
 
-import React, { useState } from 'react';
-import { ShieldCheck, Lock, CreditCard, Loader2, Landmark, Zap, Sparkles, ArrowRight, Check } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useEffect, useState } from 'react';
+import {
+  ShieldCheck,
+  Lock,
+  Landmark,
+  Coins,
+  CreditCard,
+  Wallet,
+  ExternalLink,
+  AlertCircle,
+  Loader2,
+  CheckCircle2,
+} from 'lucide-react';
 import { useTranslation } from '@/context/LanguageContext';
 
-export type PaymentMethodType = 'bank' | 'crypto' | 'card' | 'voucher';
+type PaymentMethodType = 'crypto' | 'wallet' | 'open_banking' | 'coinflow';
+
+interface VatPreviewSummary {
+  netBaseEur: number;
+  vatRate: number;
+  vatPercentageLabel: string;
+  vatAmountEur: number;
+  grossTotalEur: number;
+  effectiveCountry: string;
+  taxRegime: string;
+}
 
 interface UnifiedPaymentGateProps {
   amount: number;
-  tier: 'VIP' | 'MASTER' | 'TIP' | 'CUSTOM_ORDER';
+  tier: 'VIP' | 'MASTER' | 'TIP' | 'CUSTOM_ORDER' | 'PRIVATE_CALL' | 'PPV';
   creatorName: string;
   creatorId?: string;
   contentRating?: 'SFW' | 'NSFW_18';
+  itemType?: 'subscription' | 'private_call' | 'tip' | 'unlock';
+  callId?: string;
+  duration?: number;
   onSuccess?: () => void;
 }
 
-export default function UnifiedPaymentGate({ 
-  amount, 
-  tier, 
-  creatorName, 
+export default function UnifiedPaymentGate({
+  amount,
+  tier,
+  creatorName,
   creatorId,
   contentRating = 'SFW',
-  onSuccess 
+  itemType,
+  callId,
+  duration,
+  onSuccess,
 }: UnifiedPaymentGateProps) {
   const { locale } = useTranslation();
-  const [selectedMethod, setSelectedMethod] = useState<PaymentMethodType>('bank');
+  const isNsfwLocked = contentRating === 'NSFW_18' || tier === 'PPV';
+  const isTipAupRestricted = tier === 'TIP' || itemType === 'tip';
+
+  const [selectedMethod, setSelectedMethod] = useState<PaymentMethodType>('wallet');
+  const [usdcNetwork, setUsdcNetwork] = useState<'usdcpolygon' | 'usdcsol'>('usdcpolygon');
   const [isProcessing, setIsProcessing] = useState(false);
   const [cryptoInvoiceUrl, setCryptoInvoiceUrl] = useState<string | null>(null);
+  const [statusMessage, setStatusMessage] = useState<string | null>(null);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [vatPreview, setVatPreview] = useState<VatPreviewSummary | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    const loadVat = async () => {
+      try {
+        const res = await fetch(
+          `/api/billing/vat-preview?netBaseEur=${encodeURIComponent(amount)}&instrumentType=direct_service`
+        );
+        if (!res.ok) return;
+        const json = await res.json();
+        if (active && json?.preview) {
+          setVatPreview(json.preview);
+        }
+      } catch {
+        // Fallback silently if offline; server enforces authoritative VAT
+      }
+    };
+    if (amount > 0) loadVat();
+    return () => {
+      active = false;
+    };
+  }, [amount]);
+
+  const tx = (en: string, es: string, fr: string) =>
+    locale === 'es' ? es : locale === 'fr' ? fr : en;
+
+  const resolvedItemType: 'subscription' | 'private_call' | 'tip' | 'unlock' =
+    itemType ||
+    (tier === 'PRIVATE_CALL'
+      ? 'private_call'
+      : tier === 'TIP'
+        ? 'tip'
+        : tier === 'PPV'
+          ? 'unlock'
+          : 'subscription');
 
   const handleCheckout = async () => {
     setIsProcessing(true);
+    setErrorMsg(null);
+    setStatusMessage(null);
 
     try {
       if (selectedMethod === 'crypto') {
@@ -40,225 +110,390 @@ export default function UnifiedPaymentGate({
           body: JSON.stringify({
             creatorId,
             amount,
-            currency: 'usd',
-            payCurrency: 'usdttrc20',
-            orderType: tier.toLowerCase(),
-            description: `${tier} Support to ${creatorName}`
-          })
+            currency: 'eur',
+            payCurrency: usdcNetwork,
+            orderType: resolvedItemType,
+            ledger: isNsfwLocked ? 'sovereign_red_pills' : 'sfw_credits',
+            description: `${tier} · ${creatorName}`,
+          }),
         });
+
         const data = await res.json();
-        if (data.invoiceUrl) {
-          window.location.href = data.invoiceUrl;
-          return;
+        if (!res.ok) {
+          throw new Error(data.error || data.message || 'Crypto invoice creation failed');
         }
+
+        setCryptoInvoiceUrl(data.invoiceUrl);
+        if (typeof window !== 'undefined' && data.invoiceUrl) {
+          window.open(data.invoiceUrl, '_blank', 'noopener,noreferrer');
+        }
+        setStatusMessage(
+          tx(
+            'MiCA USDC invoice generated. Complete settlement in the opened window.',
+            'Factura MiCA USDC generada. Completa el pago en la ventana abierta.',
+            'Facture MiCA USDC générée. Finalisez le paiement dans la fenêtre ouverte.'
+          )
+        );
+        return;
       }
 
-      // Simulated Bank SCA or V3 Card / Voucher redirect for other methods
-      setTimeout(() => {
-        setIsProcessing(false);
-        if (onSuccess) onSuccess();
-      }, 1500);
-    } catch (err) {
-      console.error('Checkout error:', err);
+      if (!creatorId) {
+        throw new Error(
+          tx(
+            'Missing creator target identifier for checkout.',
+            'Falta el identificador de creador para procesar el pago.',
+            'Identifiant du créateur manquant pour le paiement.'
+          )
+        );
+      }
+
+      const res = await fetch('/api/billing/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          creatorId,
+          tier: isNsfwLocked ? 'nsfw_18' : tier.toLowerCase(),
+          price: amount,
+          type: resolvedItemType,
+          paymentMethod: selectedMethod,
+          callId,
+          duration,
+          rating: contentRating,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        if (res.status === 402) {
+          setSelectedMethod('crypto');
+        }
+        throw new Error(data.message || data.error || 'Checkout failed');
+      }
+
+      if (data.unlockedImmediately) {
+        setStatusMessage(
+          tx(
+            'Payment settled atomically from your wallet ledger!',
+            'Pago liquidado al instante desde tu cartera.',
+            'Paiement réglé instantanément depuis votre portefeuille.'
+          )
+        );
+        onSuccess?.();
+        return;
+      }
+
+      if (data.url && typeof window !== 'undefined') {
+        window.location.href = data.url;
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Checkout error';
+      setErrorMsg(msg);
+    } finally {
       setIsProcessing(false);
     }
   };
 
+  const displayVatRate = vatPreview?.vatPercentageLabel || '—';
+  const displayVatEur = vatPreview ? vatPreview.vatAmountEur.toFixed(2) : '0.00';
+  const displayGrossEur = vatPreview ? vatPreview.grossTotalEur.toFixed(2) : amount.toFixed(2);
+
   return (
-    <div className="w-full max-w-md mx-auto bg-black/80 border border-white/10 rounded-[2.5rem] p-6 sm:p-8 backdrop-blur-2xl relative overflow-hidden shadow-[0_24px_48px_-12px_rgba(0,0,0,0.8)]">
-      {/* Background Glow */}
-      <div className="absolute top-0 right-0 w-64 h-64 bg-[#00fbfb]/5 rounded-full blur-3xl pointer-events-none" />
+    <div className="bg-[#0e0e13] border border-white/10 rounded-[2rem] p-6 max-w-md w-full space-y-5 shadow-2xl relative overflow-hidden">
+      <div className="absolute -top-12 -right-12 w-32 h-32 bg-primary/10 rounded-full blur-3xl pointer-events-none" />
 
       {/* Header */}
-      <div className="flex items-center justify-between mb-6 pb-4 border-b border-white/10 relative z-10">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-[#00fbfb]/10 border border-[#00fbfb]/20 flex items-center justify-center">
-            <Lock className="w-5 h-5 text-[#00fbfb]" />
-          </div>
-          <div className="text-left">
-            <h3 className="text-white font-black text-sm uppercase tracking-wider">
-              {locale === 'es' ? 'Pago Seguro' : 'Secure Checkout'}
-            </h3>
-            <p className="text-white/40 text-[9px] uppercase tracking-widest font-mono">
-              {locale === 'es' ? 'Transparencia de Soporte' : 'Direct Support Impact'}
-            </p>
-          </div>
-        </div>
-        <ShieldCheck className="w-5 h-5 text-emerald-400 opacity-70" />
-      </div>
-
-      {/* Order Summary */}
-      <div className="p-4 bg-white/[0.03] border border-white/5 rounded-2xl space-y-2 mb-6 text-left">
-        <div className="flex justify-between items-center text-xs">
-          <span className="text-white/50">{locale === 'es' ? 'Apoyando a:' : 'Supporting:'}</span>
-          <span className="text-white font-bold">@{creatorName}</span>
-        </div>
-        <div className="flex justify-between items-center text-xs">
-          <span className="text-white/50">{locale === 'es' ? 'Tipo de Acceso:' : 'Access Tier:'}</span>
-          <span className="font-mono font-bold px-2 py-0.5 rounded text-[9px] uppercase tracking-wider bg-[#00fbfb]/15 text-[#00fbfb] border border-[#00fbfb]/20">
-            {tier}
+      <div className="flex items-start justify-between border-b border-white/10 pb-4">
+        <div>
+          <span
+            className={`inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest px-2.5 py-0.5 rounded-full border mb-2 ${
+              isNsfwLocked
+                ? 'bg-red-500/10 text-red-400 border-red-500/20'
+                : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+            }`}
+          >
+            {isNsfwLocked ? (
+              <ShieldCheck className="w-3 h-3" />
+            ) : (
+              <Lock className="w-3 h-3" />
+            )}
+            {isNsfwLocked
+              ? tx('18+ Sovereign Rail', '18+ Red Sovereign', '18+ Réseau Sovereign')
+              : tx('SFW Protected Rail', 'Canal SFW Protegido', 'Canal SFW Protégé')}
           </span>
+          <h3 className="text-lg font-black text-white">
+            {tier} · {creatorName}
+          </h3>
         </div>
-        <div className="flex justify-between items-center pt-2 border-t border-white/5">
-          <span className="text-white/70 font-black uppercase tracking-widest text-[10px]">{locale === 'es' ? 'Total:' : 'Total:'}</span>
-          <span className="text-2xl font-black text-white font-mono">${amount.toFixed(2)}</span>
+        <div className="text-right">
+          <div className="text-2xl font-black text-white">€{displayGrossEur}</div>
+          <div className="text-[10px] text-white/50 font-mono">
+            {tx('Net', 'Base', 'Net')} €{amount.toFixed(2)} + VAT ({displayVatRate}) €{displayVatEur}
+          </div>
         </div>
       </div>
 
-      {/* Payment Rail Selector */}
-      <div className="space-y-3 mb-6 text-left">
-        <label className="text-[9px] uppercase tracking-widest font-black text-white/50 block">
-          {locale === 'es' ? 'Selecciona Método de Pago:' : 'Select Payment Method:'}
-        </label>
+      {/* Transparent V3.1 Tax & Creator Protection Strip */}
+      <div className="px-3.5 py-2.5 rounded-2xl bg-white/[0.02] border border-white/5 text-[11px] text-white/65 flex items-center justify-between">
+        <span>
+          {tx(
+            'Creator keeps 90% Founding / 80% Std of Net Base',
+            'Creador recibe 90% Fundador / 80% Est. de Base Neta',
+            'Le créateur garde 90% Fondateur / 80% Std du Net'
+          )}
+        </span>
+        {vatPreview?.effectiveCountry && (
+          <span className="font-mono text-[10px] px-2 py-0.5 rounded bg-white/10 text-white/80">
+            {vatPreview.effectiveCountry}
+          </span>
+        )}
+      </div>
 
-        {/* 1. Direct Bank Transfer (Bizum / PSE / SEPA Instant) */}
-        <div 
-          onClick={() => setSelectedMethod('bank')}
-          className={`p-3.5 rounded-2xl border cursor-pointer transition-all duration-300 relative ${
-            selectedMethod === 'bank'
-              ? 'bg-[#00fbfb]/10 border-[#00fbfb] shadow-[0_0_20px_rgba(0,251,251,0.15)]'
+      {/* Payment Rail Selection */}
+      <div className="space-y-2.5">
+        {/* Option 1: Dual Wallet Instant Spend */}
+        <button
+          type="button"
+          onClick={() => {
+            setSelectedMethod('wallet');
+            setErrorMsg(null);
+          }}
+          className={`w-full flex items-center justify-between p-4 rounded-2xl border transition-all cursor-pointer text-left ${
+            selectedMethod === 'wallet'
+              ? 'bg-emerald-500/10 border-emerald-500/40 shadow-lg shadow-emerald-500/5'
               : 'bg-white/[0.02] border-white/5 hover:border-white/15'
           }`}
         >
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${selectedMethod === 'bank' ? 'bg-[#00fbfb] text-black' : 'bg-white/5 text-white/60'}`}>
-                <Landmark className="w-4 h-4" />
-              </div>
-              <div>
-                <p className="text-xs font-bold text-white flex items-center gap-1.5">
-                  {locale === 'es' ? 'Banco Directo (Bizum / PSE / SEPA)' : 'Pay by Bank (SEPA Instant / PSE / Bizum)'}
-                </p>
-                <span className="text-[9px] text-emerald-400 font-mono font-bold block mt-0.5">
-                  ⚡ {locale === 'es' ? '0% Desperdicio en Comisiones (Máximo Apoyo)' : '0% Card Fee Waste (Maximum Direct Support)'}
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 bg-emerald-500/20 text-emerald-400 rounded-xl">
+              <Wallet className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="text-sm font-bold text-white flex items-center gap-2">
+                {isNsfwLocked
+                  ? tx('Red Pills Wallet (💊)', 'Cartera Red Pills (💊)', 'Portefeuille Red Pills (💊)')
+                  : tx('SFW Studio Credits (✨)', 'Créditos Studio SFW (✨)', 'Crédits Studio SFW (✨)')}
+                <span className="text-[9px] bg-emerald-500 text-black font-black px-1.5 py-0.5 rounded uppercase">
+                  0% Fee
                 </span>
               </div>
+              <div className="text-[11px] text-white/50">
+                {tx(
+                  'Instant ledger unlock from balance',
+                  'Desbloqueo inmediato desde tu saldo',
+                  'Déblocage instantané depuis votre solde'
+                )}
+              </div>
             </div>
-            {selectedMethod === 'bank' && <Check className="w-4 h-4 text-[#00fbfb]" />}
           </div>
-        </div>
+        </button>
 
-        {/* 2. Crypto (USDT / BTC / SOL) */}
-        <div 
-          onClick={() => setSelectedMethod('crypto')}
-          className={`p-3.5 rounded-2xl border cursor-pointer transition-all duration-300 relative ${
+        {/* Option 2: Instant MiCA USDC (Polygon / Solana) */}
+        <div
+          className={`rounded-2xl border transition-all ${
             selectedMethod === 'crypto'
-              ? 'bg-[#ffabf3]/10 border-[#ffabf3] shadow-[0_0_20px_rgba(255,171,243,0.15)]'
+              ? 'bg-amber-500/10 border-amber-500/40 shadow-lg shadow-amber-500/5'
               : 'bg-white/[0.02] border-white/5 hover:border-white/15'
           }`}
         >
-          <div className="flex items-center justify-between">
+          <button
+            type="button"
+            onClick={() => {
+              setSelectedMethod('crypto');
+              setErrorMsg(null);
+            }}
+            className="w-full flex items-center justify-between p-4 cursor-pointer text-left"
+          >
             <div className="flex items-center gap-3">
-              <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${selectedMethod === 'crypto' ? 'bg-[#ffabf3] text-black' : 'bg-white/5 text-white/60'}`}>
-                <Zap className="w-4 h-4" />
+              <div className="p-2.5 bg-amber-500/20 text-amber-400 rounded-xl">
+                <Coins className="w-5 h-5" />
               </div>
               <div>
-                <p className="text-xs font-bold text-white flex items-center gap-1.5">
-                  {locale === 'es' ? 'Cripto (USDT / BTC / Matic)' : 'Crypto (USDT / BTC / Polygon)'}
-                </p>
-                <span className="text-[9px] text-[#ffabf3] font-mono font-bold block mt-0.5">
-                  💎 {locale === 'es' ? 'Instantáneo Global • 99.5% al Creador' : 'Instant Global • 99.5% to Creator'}
-                </span>
+                <div className="text-sm font-bold text-white flex items-center gap-2">
+                  {tx(
+                    'Instant USDC (MiCA Compliant)',
+                    'USDC Instantáneo (MiCA)',
+                    'USDC Instantané (MiCA)'
+                  )}
+                  <span className="text-[9px] bg-amber-500 text-black font-black px-1.5 py-0.5 rounded uppercase">
+                    0.5% Fee
+                  </span>
+                </div>
+                <div className="text-[11px] text-white/50">
+                  {tx(
+                    'Circle USDC · Polygon & Solana · Discreet & Direct',
+                    'Circle USDC · Polygon y Solana · Discreto y directo',
+                    'Circle USDC · Polygon & Solana · Discret & Direct'
+                  )}
+                </div>
               </div>
             </div>
-            {selectedMethod === 'crypto' && <Check className="w-4 h-4 text-[#ffabf3]" />}
-          </div>
+          </button>
+
+          {selectedMethod === 'crypto' && (
+            <div className="px-4 pb-3 flex gap-2">
+              {(['usdcpolygon', 'usdcsol'] as const).map((net) => (
+                <button
+                  key={net}
+                  type="button"
+                  onClick={() => setUsdcNetwork(net)}
+                  className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider border transition ${
+                    usdcNetwork === net
+                      ? 'bg-amber-400 text-black border-amber-400'
+                      : 'bg-black/40 text-white/60 border-white/10 hover:text-white'
+                  }`}
+                >
+                  {net === 'usdcpolygon' ? 'USDC Polygon' : 'USDC Solana'}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
-        {/* 3. Credit / Debit Card & Apple Pay (Coinflow / Wert / Nuvei 50-50 Split) */}
-        <div 
-          onClick={() => setSelectedMethod('card')}
-          className={`p-3.5 rounded-2xl border cursor-pointer transition-all duration-300 relative ${
-            selectedMethod === 'card'
-              ? 'bg-white/10 border-white/30 shadow-[0_0_20px_rgba(255,255,255,0.1)]'
-              : 'bg-white/[0.02] border-white/5 hover:border-white/15'
+        {/* Option 3: Open Banking A2A (SFW Only) */}
+        <button
+          type="button"
+          disabled={isNsfwLocked}
+          onClick={() => {
+            if (!isNsfwLocked) {
+              setSelectedMethod('open_banking');
+              setErrorMsg(null);
+            }
+          }}
+          className={`w-full flex items-center justify-between p-4 rounded-2xl border transition-all text-left ${
+            isNsfwLocked
+              ? 'opacity-40 cursor-not-allowed bg-white/[0.01] border-white/5'
+              : selectedMethod === 'open_banking'
+                ? 'bg-sky-500/10 border-sky-500/40 cursor-pointer'
+                : 'bg-white/[0.02] border-white/5 hover:border-white/15 cursor-pointer'
           }`}
         >
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${selectedMethod === 'card' ? 'bg-white text-black' : 'bg-white/5 text-white/60'}`}>
-                <CreditCard className="w-4 h-4" />
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 bg-sky-500/20 text-sky-400 rounded-xl">
+              <Landmark className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="text-sm font-bold text-white flex items-center gap-2">
+                {tx(
+                  'Open Banking A2A QR',
+                  'Open Banking A2A QR',
+                  'Open Banking A2A QR'
+                )}
+                {isNsfwLocked && (
+                  <span className="text-[9px] text-red-400 font-normal">
+                    ({tx('SFW Only', 'Solo SFW', 'SFW Uniquement')})
+                  </span>
+                )}
               </div>
-              <div>
-                <p className="text-xs font-bold text-white flex items-center gap-1.5">
-                  {locale === 'es' ? 'Apple Pay / Google Pay / Tarjeta' : 'Apple Pay / Google Pay / Card'}
-                </p>
-                <span className="text-[9px] text-white/50 font-mono block mt-0.5">
-                  {contentRating === 'NSFW_18'
-                    ? (locale === 'es' ? 'Liquidación USDC Instantánea (1.5% tarifa compartida • 0% Contracargos)' : 'Instant USDC Settlement (1.5% split fee • 100% Chargeback Protected)')
-                    : (locale === 'es' ? 'Créditos SFW Studio ✨ (1.25% tarifa compartida)' : 'SFW Studio Credits ✨ (1.25% split fee)')}
-                </span>
+              <div className="text-[11px] text-white/50">
+                {tx(
+                  'EU/UK PSD2 Instant Bank QR (~0.8% fee)',
+                  'QR Bancario Instantáneo PSD2 (~0.8% comisión)',
+                  'QR Bancaire Instantané PSD2 (~0.8% frais)'
+                )}
               </div>
             </div>
-            {selectedMethod === 'card' && <Check className="w-4 h-4 text-white" />}
           </div>
-        </div>
+        </button>
 
-        {/* 4. E-Voucher (PayPal / Klarna / Paysafecard via Rewarble) */}
-        <div 
-          onClick={() => setSelectedMethod('voucher')}
-          className={`p-3.5 rounded-2xl border cursor-pointer transition-all duration-300 relative ${
-            selectedMethod === 'voucher'
-              ? 'bg-emerald-500/10 border-emerald-400 shadow-[0_0_20px_rgba(16,185,129,0.15)]'
-              : 'bg-white/[0.02] border-white/5 hover:border-white/15'
+        {/* Option 4: Card / Apple Pay (Coinflow — Blocked for NSFW_18 & Tips per AUP) */}
+        <button
+          type="button"
+          disabled={isNsfwLocked || isTipAupRestricted}
+          onClick={() => {
+            if (!isNsfwLocked && !isTipAupRestricted) {
+              setSelectedMethod('coinflow');
+              setErrorMsg(null);
+            }
+          }}
+          className={`w-full flex items-center justify-between p-4 rounded-2xl border transition-all text-left ${
+            isNsfwLocked || isTipAupRestricted
+              ? 'opacity-40 cursor-not-allowed bg-white/[0.01] border-white/5'
+              : selectedMethod === 'coinflow'
+                ? 'bg-violet-500/10 border-violet-500/40 cursor-pointer'
+                : 'bg-white/[0.02] border-white/5 hover:border-white/15 cursor-pointer'
           }`}
         >
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${selectedMethod === 'voucher' ? 'bg-emerald-400 text-black' : 'bg-white/5 text-white/60'}`}>
-                <Sparkles className="w-4 h-4" />
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 bg-violet-500/20 text-violet-400 rounded-xl">
+              <CreditCard className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="text-sm font-bold text-white flex items-center gap-2">
+                {tx('Apple Pay / Card (SFW)', 'Apple Pay / Tarjeta (SFW)', 'Apple Pay / Carte (SFW)')}
+                {(isNsfwLocked || isTipAupRestricted) && (
+                  <span className="text-[9px] text-red-400 font-normal">
+                    ({tx('Use Wallet/USDC', 'Usa Cartera/USDC', 'Portefeuille/USDC')})
+                  </span>
+                )}
               </div>
-              <div>
-                <p className="text-xs font-bold text-white flex items-center gap-1.5">
-                  {locale === 'es' ? 'E-Voucher (PayPal / Klarna / Discreto)' : 'E-Voucher (PayPal / Klarna / Anonymous)'}
-                </p>
-                <span className="text-[9px] text-emerald-400 font-mono font-bold block mt-0.5">
-                  🔒 {locale === 'es' ? '100% Privado en tu Extracto Bancario' : '100% Private on Your Bank Statement'}
-                </span>
+              <div className="text-[11px] text-white/50">
+                {tx(
+                  '100% Chargeback Protected · Coaching & SFW Passes',
+                  'Protegido contra contracargos · Pases SFW',
+                  'Protégé anti-rétrofacturation · Pass SFW'
+                )}
               </div>
             </div>
-            {selectedMethod === 'voucher' && <Check className="w-4 h-4 text-emerald-400" />}
           </div>
-        </div>
+        </button>
       </div>
 
-      {/* CTA Button */}
-      <button 
+      {/* Feedback & Invoice Link */}
+      {errorMsg && (
+        <div className="p-3.5 bg-red-500/10 border border-red-500/30 rounded-xl text-xs text-red-200 flex items-start gap-2.5">
+          <AlertCircle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
+          <span>{errorMsg}</span>
+        </div>
+      )}
+
+      {statusMessage && (
+        <div className="p-3.5 bg-emerald-500/10 border border-emerald-500/30 rounded-xl text-xs text-emerald-200 flex items-start gap-2.5">
+          <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+          <span>{statusMessage}</span>
+        </div>
+      )}
+
+      {cryptoInvoiceUrl && (
+        <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl flex items-center justify-between text-xs text-amber-200">
+          <span>{tx('USDC Invoice Ready', 'Factura USDC Lista', 'Facture USDC Prête')}</span>
+          <a
+            href={cryptoInvoiceUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1 font-bold underline hover:text-amber-100"
+          >
+            {tx('Open Gateway', 'Abrir Pasarela', 'Ouvrir')} <ExternalLink className="w-3.5 h-3.5" />
+          </a>
+        </div>
+      )}
+
+      {/* Checkout Action */}
+      <button
+        type="button"
         onClick={handleCheckout}
         disabled={isProcessing}
-        className={`w-full py-4 rounded-2xl font-black uppercase text-xs tracking-widest transition-all flex items-center justify-center gap-2 cursor-pointer shadow-lg disabled:opacity-50 ${
-          selectedMethod === 'bank'
-            ? 'bg-[#00fbfb] text-black hover:shadow-[0_0_25px_rgba(0,251,251,0.5)]'
-            : selectedMethod === 'crypto'
-            ? 'bg-[#ffabf3] text-black hover:shadow-[0_0_25px_rgba(255,171,243,0.5)]'
-            : 'bg-white text-black hover:bg-white/90'
-        }`}
+        className="w-full py-4 rounded-xl bg-gradient-to-r from-primary to-amber-500 text-black font-black uppercase text-xs tracking-wider shadow-lg shadow-primary/20 hover:opacity-95 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
       >
         {isProcessing ? (
-          <>
-            <Loader2 className="w-4 h-4 animate-spin" />
-            <span>{locale === 'es' ? 'CONECTANDO CON PASARELA...' : 'CONNECTING TO GATEWAY...'}</span>
-          </>
+          <Loader2 className="w-4 h-4 animate-spin" />
         ) : (
-          <>
-            <span>
-              {selectedMethod === 'bank'
-                ? (locale === 'es' ? 'Pagar con Banco Directo →' : 'Pay via Direct Bank →')
-                : selectedMethod === 'crypto'
-                ? (locale === 'es' ? 'Pagar con Cripto (NOWPayments) →' : 'Pay with Crypto (NOWPayments) →')
-                : (locale === 'es' ? 'Pagar con Tarjeta →' : 'Pay via Credit Card →')}
-            </span>
-          </>
+          tx(
+            `Continue · €${displayGrossEur}`,
+            `Continuar · €${displayGrossEur}`,
+            `Continuer · €${displayGrossEur}`
+          )
         )}
       </button>
 
-      {/* Trust Badges */}
-      <div className="mt-5 flex justify-center items-center gap-3 text-white/30 text-[8px] uppercase tracking-widest font-mono">
-        <span>SCA / Bank 2FA</span>
-        <span>•</span>
-        <span>0% Chargeback Protected</span>
-        <span>•</span>
-        <span>PCI Encrypted</span>
+      <div className="flex items-center justify-center gap-2 text-[10px] text-white/40 pt-1">
+        <ShieldCheck className="w-3.5 h-3.5 text-primary/70" />
+        <span>
+          {tx(
+            'SECCION V3.1 · CJEU Fenix Compliant · Spanish S.L.U. Treasury',
+            'SECCION V3.1 · Cumplimiento TJUE Fenix · Tesorería S.L.U.',
+            'SECCION V3.1 · Conformité CJUE Fenix · Trésorerie S.L.U.'
+          )}
+        </span>
       </div>
     </div>
   );

@@ -1,8 +1,14 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin-client';
+import { verifyAdminAuth, unauthorizedResponse } from '@/lib/admin-auth';
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   try {
+    const admin = await verifyAdminAuth(request, ['admin', 'super_admin']);
+    if (!admin) {
+      return unauthorizedResponse();
+    }
+
     const supabaseAdmin = createAdminClient();
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get('page') || '1');
@@ -65,8 +71,13 @@ export async function GET(request: Request) {
   }
 }
 
-export async function PATCH(request: Request) {
+export async function PATCH(request: NextRequest) {
   try {
+    const admin = await verifyAdminAuth(request, ['admin', 'super_admin']);
+    if (!admin) {
+      return unauthorizedResponse();
+    }
+
     const supabaseAdmin = createAdminClient();
     const body = await request.json();
     const { id, status, outreach_stage, reviewer_notes } = body;

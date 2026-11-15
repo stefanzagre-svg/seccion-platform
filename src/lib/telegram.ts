@@ -1,9 +1,6 @@
-export const SECCION_TELEGRAM_BOT_TOKEN = "8779277391:AAFigbudbO_qKxt68TXgkLMRVs5d2wCNZ30";
-export const SECCION_TELEGRAM_CHAT_ID = "8717418370";
-
 export async function sendTelegramNotification(message: string): Promise<boolean> {
-  const botToken = process.env.TELEGRAM_BOT_TOKEN || SECCION_TELEGRAM_BOT_TOKEN;
-  const chatId = process.env.TELEGRAM_CHAT_ID || SECCION_TELEGRAM_CHAT_ID;
+  const botToken = process.env.TELEGRAM_BOT_TOKEN?.trim();
+  const chatId = process.env.TELEGRAM_CHAT_ID?.trim();
 
   if (!botToken || !chatId) {
     console.warn("[Telegram Alert] Missing credentials, skipped alert");

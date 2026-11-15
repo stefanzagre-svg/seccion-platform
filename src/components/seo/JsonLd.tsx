@@ -56,7 +56,7 @@ export function OrganizationSchema() {
       "https://instagram.com/seccion.ai",
       "https://youtube.com/@seccion-platform",
       "https://wa.me/34662907153",
-      "https://t.me/seccion_ai",
+      "https://t.me/seccionplatform",
       "https://medium.com/@seccionadmin"
     ]
   };

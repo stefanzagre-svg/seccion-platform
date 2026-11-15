@@ -209,13 +209,13 @@ SELECT pg_temp.safe_policy('member_waitlist', 'Public can join waitlist',
 SELECT pg_temp.safe_policy('member_waitlist', 'Service role manages waitlist',
   'CREATE POLICY "Service role manages waitlist" ON public.member_waitlist FOR ALL USING (auth.role() = ''service_role'')');
 SELECT pg_temp.safe_policy('admin_audit_logs', 'Admins can view audit logs',
-  'CREATE POLICY "Admins can view audit logs" ON public.admin_audit_logs FOR SELECT USING (EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND (role = ''admin'' OR username = ''stefan'')))');
+  'CREATE POLICY "Admins can view audit logs" ON public.admin_audit_logs FOR SELECT USING (EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND platform_role IN (''admin'', ''super_admin'')))');
 SELECT pg_temp.safe_policy('content_moderation_queue', 'Users can flag content',
   'CREATE POLICY "Users can flag content" ON public.content_moderation_queue FOR INSERT WITH CHECK (auth.uid() = reporter_id)');
 SELECT pg_temp.safe_policy('content_moderation_queue', 'Admins manage moderation queue',
-  'CREATE POLICY "Admins manage moderation queue" ON public.content_moderation_queue FOR ALL USING (EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND (role = ''admin'' OR username = ''stefan'')))');
+  'CREATE POLICY "Admins manage moderation queue" ON public.content_moderation_queue FOR ALL USING (EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND platform_role IN (''admin'', ''super_admin'')))');
 SELECT pg_temp.safe_policy('platform_settings', 'Admins manage platform settings',
-  'CREATE POLICY "Admins manage platform settings" ON public.platform_settings FOR ALL USING (EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND (role = ''admin'' OR username = ''stefan'')))');
+  'CREATE POLICY "Admins manage platform settings" ON public.platform_settings FOR ALL USING (EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND platform_role IN (''admin'', ''super_admin'')))');
 
 -- ============================================================================
 -- 10. PROTECT SERVER-ONLY TRUST & PRIVILEGE COLUMNS ON public.profiles
@@ -237,16 +237,38 @@ DECLARE
   );
   new_tier text;
   old_tier text;
+  old_wingman jsonb;
 BEGIN
   IF is_trusted_backend THEN
     RETURN NEW;
   END IF;
 
+  IF TG_OP = 'INSERT' AND LOWER(COALESCE(NEW.username, '')) = 'stefan' THEN
+    RAISE EXCEPTION 'Reserved username';
+  END IF;
+
+  IF TG_OP = 'UPDATE' AND LOWER(COALESCE(NEW.username, '')) = 'stefan'
+     AND LOWER(COALESCE(OLD.username, '')) <> 'stefan' THEN
+    RAISE EXCEPTION 'Reserved username';
+  END IF;
+
   IF TG_OP = 'INSERT' THEN
     NEW.is_kyc_verified := false;
-    IF NEW.platform_role IS DISTINCT FROM 'user' THEN
-      NEW.platform_role := 'user';
-    END IF;
+    NEW.platform_role := 'user';
+    NEW.role := 'member';
+    NEW.is_approved_founder_creator := false;
+    NEW.promo_90_approved_at := NULL;
+    NEW.custom_creator_rate := NULL;
+    NEW.creator_ultimate_pack := false;
+    NEW.creator_ultimate_pack_expires_at := NULL;
+    NEW.ai_free_until := NULL;
+    NEW.ai_agent_active := false;
+    NEW.content_ops_enabled := false;
+    NEW.legal_audit_enabled := false;
+    NEW.promo_status := 'none';
+    NEW.promo_reviewed_at := NULL;
+    NEW.connection_points := 0;
+    NEW.wingman_credits := LEAST(GREATEST(COALESCE(NEW.wingman_credits, 10), 0), 10);
     IF NEW.privacy_settings IS NOT NULL AND (NEW.privacy_settings ? 'age_verification') THEN
       new_tier := COALESCE(NEW.privacy_settings #>> '{age_verification,verificationTier}', 'declared');
       IF new_tier <> 'declared' THEN
@@ -258,12 +280,34 @@ BEGIN
         );
       END IF;
     END IF;
+    IF NEW.privacy_settings IS NOT NULL AND (NEW.privacy_settings ? 'wingman_credits') THEN
+      NEW.privacy_settings := jsonb_set(
+        NEW.privacy_settings,
+        '{wingman_credits}',
+        '10'::jsonb,
+        true
+      );
+    END IF;
     RETURN NEW;
   END IF;
 
   IF TG_OP = 'UPDATE' THEN
     NEW.is_kyc_verified := OLD.is_kyc_verified;
     NEW.platform_role := OLD.platform_role;
+    NEW.role := OLD.role;
+    NEW.is_approved_founder_creator := OLD.is_approved_founder_creator;
+    NEW.promo_90_approved_at := OLD.promo_90_approved_at;
+    NEW.custom_creator_rate := OLD.custom_creator_rate;
+    NEW.creator_ultimate_pack := OLD.creator_ultimate_pack;
+    NEW.creator_ultimate_pack_expires_at := OLD.creator_ultimate_pack_expires_at;
+    NEW.ai_free_until := OLD.ai_free_until;
+    NEW.ai_agent_active := OLD.ai_agent_active;
+    NEW.content_ops_enabled := OLD.content_ops_enabled;
+    NEW.legal_audit_enabled := OLD.legal_audit_enabled;
+    NEW.promo_status := OLD.promo_status;
+    NEW.promo_reviewed_at := OLD.promo_reviewed_at;
+    NEW.connection_points := OLD.connection_points;
+    NEW.wingman_credits := OLD.wingman_credits;
     IF NEW.privacy_settings IS NOT NULL AND (NEW.privacy_settings ? 'age_verification') THEN
       new_tier := COALESCE(NEW.privacy_settings #>> '{age_verification,verificationTier}', 'declared');
       old_tier := COALESCE(OLD.privacy_settings #>> '{age_verification,verificationTier}', 'declared');
@@ -272,6 +316,24 @@ BEGIN
           NEW.privacy_settings,
           '{age_verification,verificationTier}',
           to_jsonb(old_tier),
+          true
+        );
+      END IF;
+    END IF;
+    IF NEW.privacy_settings IS NOT NULL THEN
+      old_wingman := OLD.privacy_settings -> 'wingman_credits';
+      IF old_wingman IS NOT NULL THEN
+        NEW.privacy_settings := jsonb_set(
+          NEW.privacy_settings,
+          '{wingman_credits}',
+          old_wingman,
+          true
+        );
+      ELSIF (NEW.privacy_settings ? 'wingman_credits') THEN
+        NEW.privacy_settings := jsonb_set(
+          NEW.privacy_settings,
+          '{wingman_credits}',
+          '10'::jsonb,
           true
         );
       END IF;

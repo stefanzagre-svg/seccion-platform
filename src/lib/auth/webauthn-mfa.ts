@@ -11,7 +11,7 @@ export async function verifyBiometricPresence(actionDescription: string = 'Confi
   // Check if browser and operating system support WebAuthn
   if (!window.PublicKeyCredential) {
     console.warn('[WebAuthn] Hardware biometric authentication not supported on this platform.');
-    return true; // Graceful fallback on unsupported legacy browsers
+    return false;
   }
 
   try {
@@ -30,12 +30,7 @@ export async function verifyBiometricPresence(actionDescription: string = 'Confi
 
     return !!credential;
   } catch (err: any) {
-    // If the user cancelled or biometric failed
-    if (err.name === 'NotAllowedError') {
-      console.warn(`[WebAuthn] User cancelled biometric verification for: ${actionDescription}`);
-      return false;
-    }
-    console.warn('[WebAuthn] Hardware prompt bypassed or unsupported:', err.message);
-    return true; // Graceful non-blocking fallback in dev / non-HTTPS local environments
+    console.warn(`[WebAuthn] Biometric verification failed or cancelled for ${actionDescription}:`, err?.message);
+    return false;
   }
 }

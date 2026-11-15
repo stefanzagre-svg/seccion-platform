@@ -53,8 +53,7 @@ export default function EmailVerificationGuard({ children }: { children: React.R
         if (user) {
           const isExemptUser =
             Boolean(user.email_confirmed_at) ||
-            user.user_metadata?.email_verified === true ||
-            user.user_metadata?.role === 'creator';
+            user.user_metadata?.email_verified === true;
 
           if (!isExemptUser) {
             if (mounted) {
@@ -89,8 +88,7 @@ export default function EmailVerificationGuard({ children }: { children: React.R
       if (session?.user) {
         const isExemptUser =
           Boolean(session.user.email_confirmed_at) ||
-          session.user.user_metadata?.email_verified === true ||
-          session.user.user_metadata?.role === 'creator';
+          session.user.user_metadata?.email_verified === true;
 
         if (!isExemptUser) {
           setNeedsVerification(true);

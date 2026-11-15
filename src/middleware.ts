@@ -1,5 +1,6 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
+import { isOnboardingProfileComplete } from '@/lib/profile-visibility';
 
 // Routes that don't require authentication (explicit public pages)
 const PUBLIC_ROUTES = [
@@ -18,25 +19,29 @@ const PUBLIC_ROUTES = [
   '/now-streaming',
   '/onboarding',
   '/onboarding/step-2',
-  '/auth/callback'
+  '/auth/callback',
+  '/vip'
 ];
 
 // Explicit public API endpoints that do not require an active user session
 const PUBLIC_API_ROUTES = [
-  '/api/crypto/nowpayments-webhook',
   '/api/billing/crypto/webhook',
   '/api/billing/segpay-postback',
+  '/api/billing/cron/check-expirations',
   '/api/kyc/didit-webhook',
   '/api/webhooks/telegram',
+  '/api/stream/webhook',
+  '/api/v2/cloudflare/webhook',
   '/api/auth/callback',
+  '/api/v2/geo',
   '/api/v2/auth/register',
   '/api/v2/auth/prelaunch-access',
   '/api/v2/creator/apply',
+  '/api/v2/creator/vip-claim',
   '/api/v2/waitlist/join',
   '/api/admin/auth/founder-login',
   '/api/media/blur',
   '/api/v2/onboarding/specialist',
-  '/api/v2/voice/speak',
   '/api/creator/check-username'
 ];
 
@@ -166,33 +171,30 @@ export async function middleware(request: NextRequest) {
     // Fallback: if cookie is absent, query DB once (first login after onboarding, or cookie cleared).
     const onboardingCookie = request.cookies.get(ONBOARDING_DONE_COOKIE)?.value;
     const roleCookie = request.cookies.get('sb_role')?.value;
+    const uidCookie = request.cookies.get('sb_uid')?.value;
+    const cookieMatchesUser = Boolean(uidCookie && uidCookie === user.id);
     const isFounder = user?.email === 'stefan.zagre@gmail.com';
     let isCreatorRole = isFounder;
-    let onboardingCompleted = onboardingCookie === '1';
+    let onboardingCompleted = cookieMatchesUser && onboardingCookie === '1';
 
     // Purpose Eligibility Checker (60-Second Synergy Calibration Compatible)
     // Note: Progressive gates for Dating (2 Album Photos + City + Biometric/ZKP) and +18 Explicit
     // are enforced in-app via RequirementGateModal & CreateDatePlanModal, never via full-site redirect traps.
     const checkPurposeEligibility = (profile: any) => {
-      if (profile?.role === 'creator' || isCreatorRole) return true;
+      if (isFounder) return true;
       if (!profile) return false;
-
-      const hasArchetype = Boolean(profile.archetype);
-      const hasHabits = Boolean(profile.lifestyle_habits && Object.keys(profile.lifestyle_habits).length > 0);
-      const hasBioPrompt = Boolean(profile.bio_prompt_answer || profile.bio);
-
-      return hasArchetype || hasHabits || hasBioPrompt;
+      return isOnboardingProfileComplete(profile);
     };
 
     const isOnAuthRoute = AUTH_ROUTES.some(route => pathname === route);
-    // Security check: Never trust client-writable sb_role cookie for /studio access or pre-launch gating without server DB verification
-    const needsProfileCheck = !onboardingCompleted || (pathname.startsWith('/studio') && !isFounder) || (roleCookie === 'creator' && !isFounder);
+    // Security check: Never trust client-writable sb_role cookie without matching uidCookie & server DB verification
+    const needsProfileCheck = !cookieMatchesUser || !onboardingCompleted || (pathname.startsWith('/studio') && !isFounder) || (roleCookie === 'creator' && !isFounder);
 
     if (needsProfileCheck && supabaseClient) {
       // Fetch server profile to verify genuine role and onboarding status
       const { data: profile } = await supabaseClient
         .from('profiles')
-        .select('role, archetype, lifestyle_habits, bio, bio_prompt_answer, member_purposes')
+        .select('role, is_approved_founder_creator, avatar_url, archetype, lifestyle_habits, bio, bio_prompt_answer, sexual_preference, member_purposes')
         .eq('id', user.id)
         .single();
 
@@ -204,6 +206,13 @@ export async function middleware(request: NextRequest) {
 
       onboardingCompleted = checkPurposeEligibility(profile);
 
+      supabaseResponse.cookies.set('sb_uid', user.id, {
+        path: '/',
+        maxAge: 60 * 60 * 24 * 30,
+        sameSite: 'lax',
+        httpOnly: true,
+      });
+
       // Backfill the cookie when accessing non-onboarding routes so subsequent requests skip this query
       if (onboardingCompleted && !isOnAuthRoute) {
         supabaseResponse.cookies.set(ONBOARDING_DONE_COOKIE, '1', {
@@ -211,6 +220,12 @@ export async function middleware(request: NextRequest) {
           maxAge: 60 * 60 * 24 * 30, // 30 days
           sameSite: 'lax',
           httpOnly: false, // Must be readable by client JS on step-2 completion
+        });
+      } else if (!onboardingCompleted) {
+        supabaseResponse.cookies.set(ONBOARDING_DONE_COOKIE, '', {
+          path: '/',
+          maxAge: 0,
+          sameSite: 'lax',
         });
       }
       if (isCreatorRole) {

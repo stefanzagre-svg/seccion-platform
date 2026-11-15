@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import crypto from 'crypto';
 import { nowPayments } from '../../src/lib/nowpayments';
-import { verifySegpaySignature } from '../../src/app/api/billing/segpay-postback/route';
-import { verifyDiditSignature } from '../../src/app/api/kyc/didit-webhook/route';
+import { verifySegpaySignature } from '../../src/lib/segpay-verify';
+import { verifyDiditSignature } from '../../src/lib/didit';
 
 /**
  * Adversarial Fault Injection & Security Chaos Test Suite

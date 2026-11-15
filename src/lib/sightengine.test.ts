@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, afterEach } from 'vitest';
 import {
   verifyMemberSelfie,
   analyzeImage,
@@ -7,6 +7,11 @@ import {
 } from './sightengine';
 
 describe('Sightengine Service Module', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+    delete process.env.SIGHTENGINE_API_USER;
+    delete process.env.SIGHTENGINE_API_SECRET;
+  });
   it('handles missing credentials or invalid image gracefully without crashing', async () => {
     const verdict = await verifyMemberSelfie('https://invalid-non-existent-image-url.com/selfie.jpg');
     expect(verdict).toBeDefined();
@@ -79,6 +84,48 @@ describe('Sightengine Service Module', () => {
       );
       expect(allowed.rating).toBe('NSFW_18');
       expect(allowed.isBlockedForSfwLedger).toBe(false);
+    });
+
+    it('Stage 2 V3.1: tightens nudity.partial threshold to > 0.25 for SFW blocking', async () => {
+      process.env.SIGHTENGINE_API_USER = 'test_user';
+      process.env.SIGHTENGINE_API_SECRET = 'test_secret';
+      vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          status: 'success',
+          nudity: { raw: 0.05, partial: 0.30, safe: 0.65 },
+          weapon: 0.01,
+          drugs: 0.01,
+          gore: { prob: 0.01 },
+        }),
+      } as Response);
+
+      const res = await qualifyDeliveredMedia('https://cdn.seccion.ai/uploads/beach_teaser.jpg', 'SFW');
+      expect(res.rating).toBe('NSFW_18');
+      expect(res.requiredLedger).toBe('sovereign_red_pills');
+      expect(res.isBlockedForSfwLedger).toBe(true);
+      expect(res.isBlockedProhibited).toBe(false);
+    });
+
+    it('Stage 2 V3.1: blocks prohibited weapon/drugs/gore even on NSFW_18 ledger', async () => {
+      process.env.SIGHTENGINE_API_USER = 'test_user';
+      process.env.SIGHTENGINE_API_SECRET = 'test_secret';
+      vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          status: 'success',
+          nudity: { raw: 0.01, partial: 0.02, safe: 0.97 },
+          weapon: 0.82,
+          drugs: 0.02,
+          gore: { prob: 0.55 },
+        }),
+      } as Response);
+
+      const res = await qualifyDeliveredMedia('https://cdn.seccion.ai/uploads/danger.jpg', 'NSFW_18');
+      expect(res.isBlockedProhibited).toBe(true);
+      expect(res.contentSafetyPass).toBe(false);
+      expect(res.safetyFlags).toEqual(expect.arrayContaining(['weapon', 'gore']));
+      expect(res.isBlockedForSfwLedger).toBe(true);
     });
   });
 });

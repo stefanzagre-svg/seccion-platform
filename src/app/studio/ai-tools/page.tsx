@@ -21,7 +21,8 @@ import {
   Crown,
   BarChart3,
   Shield,
-  Network
+  Network,
+  Settings
 } from 'lucide-react';
 import Link from 'next/link';
 import VaultAndStrategyCockpit from '@/components/studio/VaultAndStrategyCockpit';
@@ -32,6 +33,8 @@ export default function AIToolsHub() {
   const [isLoading, setIsLoading] = useState(true);
   const [activeTool, setActiveTool] = useState<string | null>(null);
 
+  const isModeratorOrAdmin = ['moderator', 'admin', 'super_admin'].includes(profile?.platform_role || '');
+
   const renderDashboardBar = () => {
     const tabs = [
       { id: 'content', icon: LayoutGrid, label: 'Content' },
@@ -41,7 +44,7 @@ export default function AIToolsHub() {
       { id: 'goals', icon: Crown, label: 'Goals' },
       { id: 'analytics', icon: BarChart3, label: 'Vibe Insights' },
       { id: 'settings', icon: Settings, label: 'Profile Settings' },
-      { id: 'safety_ops', icon: Shield, label: 'Safety Patrol' },
+      ...(isModeratorOrAdmin ? [{ id: 'safety_ops', icon: Shield, label: 'Safety Patrol' }] : []),
       { id: 'ai_tools', icon: Zap, label: 'AI Tools' },
     ];
 
@@ -91,25 +94,47 @@ export default function AIToolsHub() {
     loadProfile();
   }, []);
 
-  const hasUltimatePack = profile?.creator_ultimate_pack && 
-    profile?.creator_ultimate_pack_expires_at && 
-    new Date(profile.creator_ultimate_pack_expires_at) > new Date();
-    
-  const hasPromo = profile?.promo_status === 'approved' && 
-    profile?.creator_ultimate_pack_expires_at && 
-    new Date(profile.creator_ultimate_pack_expires_at) > new Date();
+  const hasUltimatePack = Boolean(
+    profile?.creator_ultimate_pack &&
+    (!profile?.creator_ultimate_pack_expires_at ||
+      new Date(profile.creator_ultimate_pack_expires_at) > new Date())
+  );
 
-  const isUnlocked = hasUltimatePack || hasPromo;
+  const hasPromo = Boolean(
+    profile?.promo_status === 'approved' &&
+    profile?.creator_ultimate_pack_expires_at &&
+    new Date(profile.creator_ultimate_pack_expires_at) > new Date()
+  );
+
+  const hasVipAiAccess = Boolean(
+    (profile?.ai_free_until && new Date(profile.ai_free_until) > new Date()) ||
+    profile?.ai_agent_active
+  );
+
+  const isUnlocked = hasUltimatePack || hasPromo || hasVipAiAccess;
 
   const handleSubscribe = async () => {
     try {
-      const res = await fetch('/api/billing/ultimate-pack', { method: 'POST' });
+      const res = await fetch('/api/billing/ultimate-pack', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ paymentMethod: 'crypto' }),
+      });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Failed to subscribe');
-      alert('Subscription successful! You now have the Ultimate Pack.');
-      window.location.reload();
-    } catch (err: any) {
-      alert(err.message);
+      if (!res.ok) throw new Error(data.error || data.message || 'Failed to subscribe');
+      if (data.unlockedImmediately) {
+        alert('Subscription successful! You now have the Ultimate Pack.');
+        window.location.reload();
+        return;
+      }
+      if (data.url) {
+        window.location.href = data.url;
+        return;
+      }
+      throw new Error('Missing payment gateway URL');
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Subscription failed';
+      alert(msg);
     }
   };
 

@@ -363,7 +363,10 @@
       "livenessLock": "Zéro stockage de documents. Les données faciales sont effacées immédiatement.",
       "startCheck": "Démarrer la Vérification Faciale 3D avec DIDIT",
       "connectingCamera": "Connexion à la caméra...",
-      "nextStep": "Suivant : Prompts RelRelationnels",
+      "uploadingAlbum": "Optimisation et Envoi des Photos...",
+      "albumUploadError": "Impossible de traiter une ou plusieurs photos de l'album. Essayez une autre image.",
+      "checkDiditStatus": "Vérifier le Statut",
+      "nextStep": "Suivant : Prompts Relationnels",
       "bioPrompts": "Prompts Relationnels",
       "bioDesc": "Aidez notre Moteur de Synergie IA à cerner votre vibe. Répondez à 2 questions relationnelles pour enrichir votre carte de profil.",
       "promptStep": "Prompt {step} sur 2",
@@ -379,7 +382,29 @@
       "sexPrefTitle": "Préférence Sexuelle",
       "relGoalTitle": "Objectif Relationnel",
       "relTypeTitle": "Type de Relation",
-      "finalize": "Finaliser le Profil"
+      "finalize": "Finaliser le Profil",
+      "activePrompt": "Prompt Actif",
+      "previewProfile": "Prévisualiser le Profil",
+      "photoReqTitle": "Exigence Photos : 1 Avatar de Profil + 2 Photos d'Album Public",
+      "photoReqDesc": "Téléversez 1 avatar de profil (votre couverture principale visible partout) et 2 photos d'album public pour débloquer le Feed complet.",
+      "mainAvatarTitle": "1. Avatar Principal du Profil (Visible par Tous)",
+      "mainAvatarDesc": "Votre Avatar Principal est votre carte de présentation affichée dans le feed communautaire et le deck de matchs. Tous les membres voient cette photo en couverture.",
+      "uploadAvatar": "Téléverser la Photo d'Avatar Principal",
+      "replaceAvatar": "Changer la Photo d'Avatar Principal",
+      "mainAvatarReady": "Avatar Principal Prêt",
+      "imageLoadedComputer": "Image chargée depuis votre appareil",
+      "publicAlbumTitle": "2. Album Photo Public (Visible par Tous les Membres)",
+      "publicAlbumDesc": "Votre Album Public présente votre style de vie authentique et vos passions. Ajoutez 2 photos d'album public : elles sont visibles par tous et requises pour débloquer le Feed.",
+      "addPhotosAlbum": "Ajouter des Photos à l'Album Public",
+      "savePhotosContinue": "Enregistrer les Photos & Continuer →",
+      "writeResponse": "3. Rédigez Votre Réponse Narrative",
+      "minCharsReq": "Minimum 10 caractères requis",
+      "lengthValidated": "Longueur Validée",
+      "analyzeSavePrompt": "Analyser & Enregistrer le Prompt {step}",
+      "continueDashboard": "Continuer vers le Tableau de Bord →",
+      "selectAvatarErr": "Veuillez sélectionner ou téléverser une photo d'avatar.",
+      "promptMissingErr": "Veuillez sélectionner une catégorie, une question et écrire une réponse.",
+      "promptLengthErr": "Écrivez un peu plus pour que notre IA capte votre énergie (min. 10 caractères)."
     },
     "creatorExt": {
       "title": "Extension Créateur",
@@ -399,6 +424,7 @@
       "creatorNoticeTitle": "Êtes-vous un Créateur de Contenu ?",
       "creatorNoticeDesc": "Postulez au Creator Studio en pré-lancement pour débloquer 90% des revenus et votre Assistant IA offert la 1ère année.",
       "creatorApplyBtn": "Postuler comme Créateur →",
+      "smsDisabledPrelaunch": "L'inscription par SMS est suspendue en pré-lancement. Utilisez votre email de Creator approuvé ou rejoignez la liste VIP.",
       "whatIsApprovedTitle": "Qu'est-ce qu'un Créateur Approuvé ?",
       "whatIsApprovedDesc": "Les créateurs ayant validé leur dossier de pré-lancement reçoivent un accès direct au Studio sans liste d'attente.",
       "notApprovedYet": "Pas encore postulé ou en attente de validation ?",
@@ -601,14 +627,26 @@
     "bio": "Bio",
     "privacySettings": "Paramètres de Confidentialité",
     "matchPreferences": "Préférences de Match",
-    "saveChanges": "Enregistrer les Modifications"
+    "saveChanges": "Enregistrer les Modifications",
+    "activeCreatorGoals": "Objectifs Actifs du Creator",
+    "noLiveCreators": "Aucun creator vérifié disponible pour le moment — explorez le Feed pour matcher d’abord."
   },
   "secureMessaging": {
     "commsTitle": "COMMUNICATIONS SÉCURISÉES",
     "noMessages": "Aucun message pour l'instant.",
     "typeMessage": "Écrivez un message...",
     "send": "Envoyer",
-    "call": "Lancer un Appel"
+    "call": "Lancer un Appel",
+    "startChatPrompt": "Match confirmé — lancez la conversation",
+    "signInTitle": "Connectez-vous pour accéder à vos Messages",
+    "signInSubtitle": "Vos discussions privées et la traduction en direct sont liées à votre compte vérifié.",
+    "signInBtn": "Se connecter",
+    "emptyInboxTitle": "Aucune conversation pour l’instant",
+    "emptyInboxSubtitle": "Matchez avec des creators ou connectez-vous sur le Feed pour débloquer la messagerie.",
+    "exploreBtn": "Découvrir des profils",
+    "inboxTitle": "MESSAGES",
+    "sendFailed": "Impossible d’envoyer le message. Veuillez réessayer.",
+    "noMessagesYet": "Aucun message encore — dites bonjour !"
   },
   "profile": {
     "public_preview": "Aperçu Public du Profil",
@@ -775,6 +813,16 @@
         "title": "Ajouter un Avatar & une Bio Créateur",
         "desc": "Ajoutez votre photo principale et une courte bio dans les paramètres du Studio pour être découvert."
       }
+    },
+    "vipBanner": {
+      "badge": "VIP Fast-Track Actif · Créatrice Pré-Approuvée",
+      "splitLabel": "90% Net 1re Année Actif (80% Standard Ensuite)",
+      "daysLeft": "{days}j restants en 1re Année",
+      "aiFreeLabel": "AI Copilot & Content Ops Offerts Jusqu'au",
+      "moroccoShield": "Bouclier Domestique Maroc (MA) Actif",
+      "quickAvatarPhotos": "1 Avatar + 2 Photos",
+      "quickRatesGeo": "Tarifs & Géo-Bouclier",
+      "quickKyc": "KYC 18+ DIDIT"
     }
   },
   "chatTranslation": {

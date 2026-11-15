@@ -1470,6 +1470,63 @@ export const MEMBER_VIBE_CHIPS_ES: MemberVibeChipItem[] = [
   },
 ];
 
+export const MEMBER_VIBE_CHIPS_FR: MemberVibeChipItem[] = [
+  {
+    archetype: 'caregiver',
+    category: 'lifestyle',
+    question: 'Quel type d’énergie et de connexion recherchez-vous sur SECCION ?',
+    answer: 'Attiré par les échanges authentiques, une belle énergie et le soutien de créateurs sincères ✨',
+  },
+  {
+    archetype: 'rebel',
+    category: 'lifestyle',
+    question: 'Quel type d’énergie et de connexion recherchez-vous sur SECCION ?',
+    answer: 'Haute énergie, sans filtre et discussions nocturnes spontanées avec des créateurs audacieux 🔥',
+  },
+  {
+    archetype: 'dreamer',
+    category: 'lifestyle',
+    question: 'Quel type d’énergie et de connexion recherchez-vous sur SECCION ?',
+    answer: 'Captivé par l’art, la musique, les échanges profonds et les créateurs qui y mettent toute leur âme 🌙',
+  },
+  {
+    archetype: 'visionary',
+    category: 'lifestyle',
+    question: 'Quel type d’énergie et de connexion recherchez-vous sur SECCION ?',
+    answer: 'Esprit ambitieux — j’aime échanger avec des talents visionnaires et soutenir l’excellence 🚀',
+  },
+  {
+    archetype: 'protector',
+    category: 'lifestyle',
+    question: 'Quel type d’énergie et de connexion recherchez-vous sur SECCION ?',
+    answer: 'Loyal, posé et authentique — ici pour bâtir des liens de confiance et soutenir mes favoris 🛡️',
+  },
+  {
+    archetype: 'explorer',
+    category: 'lifestyle',
+    question: 'Quel type d’énergie et de connexion recherchez-vous sur SECCION ?',
+    answer: 'Toujours en quête de nouvelles perspectives, de cultures du monde et d’une alchimie sans frontières 🌍',
+  },
+  {
+    archetype: 'creator',
+    category: 'lifestyle',
+    question: 'Quel type d’énergie et de connexion recherchez-vous sur SECCION ?',
+    answer: 'Passionné par la création, les coulisses artistiques et les collaborations inspirantes 🎬',
+  },
+  {
+    archetype: 'alchemist',
+    category: 'lifestyle',
+    question: 'Quel type d’énergie et de connexion recherchez-vous sur SECCION ?',
+    answer: 'Axé sur le bien-être, la vitalité et des connexions de haute fréquence qui élèvent chacun 🧪',
+  },
+  {
+    archetype: 'hedonist',
+    category: 'lifestyle',
+    question: 'Quel type d’énergie et de connexion recherchez-vous sur SECCION ?',
+    answer: 'Amateur d’esthétique raffinée, d’énergie sensuelle et d’expériences VIP sans compromis 🥂',
+  },
+];
+
 export interface SynergyCalibrationBundle {
   archetype: ArchetypeId;
   core_passion: PassionId;

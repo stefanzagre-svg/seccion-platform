@@ -1,51 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin-client';
-import crypto from 'crypto';
-
-function extractHandleFromLink(link?: string | null, email?: string): string {
-  if (link) {
-    const cleaned = link.replace(/^https?:\/\/[^\/]+\/@?/, '').replace(/\./g, '_').replace(/[^a-zA-Z0-9_]/g, '');
-    if (cleaned.length >= 3) return cleaned.slice(0, 24).toLowerCase();
-  }
-  if (email) {
-    const fromEmail = email.split('@')[0].replace(/\./g, '_').replace(/[^a-zA-Z0-9_]/g, '');
-    if (fromEmail.length >= 3) return fromEmail.slice(0, 24).toLowerCase();
-  }
-  return `creator_${Math.floor(1000 + Math.random() * 9000)}`;
-}
-
-async function findAuthUserByEmail(supabaseAdmin: any, email: string) {
-  let page = 1;
-  const perPage = 1000;
-  while (page <= 5) {
-    const { data } = await supabaseAdmin.auth.admin.listUsers({ page, perPage });
-    if (!data?.users || data.users.length === 0) break;
-    const match = data.users.find((u: any) => u.email?.toLowerCase().trim() === email);
-    if (match) return match;
-    if (data.users.length < perPage) break;
-    page++;
-  }
-  return null;
-}
-
-async function checkRateLimit(supabaseAdmin: any, identifier: string): Promise<boolean> {
-  try {
-    const { data, error } = await supabaseAdmin.rpc('check_rate_limit', {
-      p_user_id: identifier,
-      p_endpoint: 'auth/prelaunch-access',
-      p_max_hits: 15,
-      p_window_s: 60,
-    });
-    if (error) {
-      console.warn('[RateLimit] RPC notice, allowing request:', error.message);
-      return false; // fail-open
-    }
-    return !(data?.allowed ?? true);
-  } catch (err) {
-    console.warn('[RateLimit] Unexpected error, allowing request:', err);
-    return false;
-  }
-}
+import { findAuthUserByEmail } from '@/lib/auth-admin';
+import { checkPublicIpRateLimit } from '@/lib/vip-invites';
 
 export async function POST(req: NextRequest) {
   try {
@@ -69,8 +25,13 @@ export async function POST(req: NextRequest) {
     const isFounder = cleanEmail === 'stefan.zagre@gmail.com';
     const supabaseAdmin = createAdminClient();
 
-    // Security First: Distributed IP rate limiting against email enumeration & brute force
-    const isRateLimited = await checkRateLimit(supabaseAdmin, `ip_${clientIp}`);
+    // Edge-safe IP rate limiting (avoids UUID-typed RPC error on anonymous callers)
+    const isRateLimited = checkPublicIpRateLimit(
+      clientIp,
+      'auth/prelaunch-access',
+      15,
+      60
+    );
     if (isRateLimited) {
       return NextResponse.json(
         { error: 'Too many requests. Please wait a moment and try again.' },
@@ -113,69 +74,20 @@ export async function POST(req: NextRequest) {
       existingProfile?.role === 'admin';
 
     if (isApprovedCreator) {
-      const fallbackHandle = extractHandleFromLink(creatorApp?.link1, cleanEmail);
-      const baseUsername = (
-        existingProfile?.username ||
-        fallbackHandle ||
-        existingAuthUser?.user_metadata?.username ||
-        cleanEmail.split('@')[0] ||
-        'creator'
-      )
-        .toLowerCase()
-        .replace(/[^a-z0-9_]/g, '')
-        .slice(0, 24) || `creator_${Math.floor(1000 + Math.random() * 9000)}`;
-
       const displayName =
         existingProfile?.display_name ||
         creatorApp?.full_name?.trim() ||
         existingAuthUser?.user_metadata?.full_name ||
         cleanEmail.split('@')[0];
 
-      let targetUserId = existingAuthUser?.id || null;
-
-      // Auto-provision auth.users record if approved in creator_applications but never created an auth user yet
-      if (!targetUserId) {
-        const randomPassword = crypto.randomBytes(24).toString('base64url') + 'A1!';
-        const { data: created } = await supabaseAdmin.auth.admin.createUser({
-          email: cleanEmail,
-          password: randomPassword,
-          email_confirm: true,
-          user_metadata: {
-            username: baseUsername,
-            full_name: displayName,
-            role: 'creator',
-            email_verified: true,
-          },
-        });
-        targetUserId = created?.user?.id || null;
-      } else if (!existingAuthUser?.email_confirmed_at) {
-        await supabaseAdmin.auth.admin.updateUserById(targetUserId, {
-          email_confirm: true,
-          user_metadata: {
-            ...existingAuthUser?.user_metadata,
-            role: 'creator',
-            email_verified: true,
-          },
-        });
-      }
-
-      if (targetUserId) {
-        await supabaseAdmin.from('profiles').upsert(
-          {
-            id: targetUserId,
-            username: baseUsername,
-            display_name: displayName,
-            role: 'creator',
-          },
-          { onConflict: 'id' }
-        );
-      }
-
+      // Strictly read-only pre-launch check: never mint auth users or set random passwords
+      // on an unauthenticated lookup endpoint (prevents OTP/password registration deadlock).
       return NextResponse.json({
         status: 'approved_creator',
         isFounder,
         email: cleanEmail,
         displayName,
+        hasAccount: Boolean(existingAuthUser),
       });
     }
 

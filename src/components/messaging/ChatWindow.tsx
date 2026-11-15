@@ -1,8 +1,10 @@
 'use client';
 
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { Send, Image as ImageIcon, Smile, DollarSign, Languages, Check, Loader2, Sparkles } from 'lucide-react';
+import { Send, Image as ImageIcon, Smile, DollarSign, Languages, Loader2, Sparkles } from 'lucide-react';
 import { useTranslation } from '@/context/LanguageContext';
+import { supabase } from '@/lib/supabase';
+import { fetchMessages, sendMessage as sendDbMessage } from '@/lib/relationship-db';
 import TipModal from './TipModal';
 
 interface Message {
@@ -15,23 +17,97 @@ interface Message {
 
 interface ChatWindowProps {
   conversationId: string;
+  targetUserId?: string;
   creatorName: string;
   creatorAvatar: string;
   currentUserId: string;
 }
 
-// Simulated starting data
-const MOCK_MESSAGES: Message[] = [
-  { id: 'm1', senderId: 'c1', text: 'Hey! Thanks for subscribing to my VIP tier! 🔥', timestamp: '10:00 AM' },
-  { id: 'm2', senderId: 'u1', text: 'Of course! Loving the content so far.', timestamp: '10:02 AM' },
-];
+function formatMsgTime(isoOrString?: string): string {
+  if (!isoOrString) return '';
+  const parsed = new Date(isoOrString);
+  if (Number.isNaN(parsed.getTime())) return isoOrString;
+  return parsed.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
 
-export default function ChatWindow({ conversationId, creatorName, creatorAvatar, currentUserId }: ChatWindowProps) {
+export default function ChatWindow({
+  conversationId,
+  targetUserId,
+  creatorName,
+  creatorAvatar,
+  currentUserId,
+}: ChatWindowProps) {
+  const partnerId = targetUserId || conversationId;
   const { t, locale } = useTranslation();
-  const [messages, setMessages] = useState<Message[]>(MOCK_MESSAGES);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(true);
+  const [isSending, setIsSending] = useState(false);
+  const [sendError, setSendError] = useState<string | null>(null);
   const [inputText, setInputText] = useState('');
   const [isTipModalOpen, setIsTipModalOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Load real conversation history and subscribe to new messages
+  useEffect(() => {
+    let active = true;
+    if (!currentUserId || !partnerId) {
+      setMessages([]);
+      setIsLoadingHistory(false);
+      return;
+    }
+
+    setIsLoadingHistory(true);
+    setSendError(null);
+
+    fetchMessages(currentUserId, partnerId)
+      .then((rows: any[]) => {
+        if (!active) return;
+        const mapped: Message[] = (rows || []).map((row) => ({
+          id: row.id,
+          senderId: row.sender_id,
+          text: row.text || '',
+          timestamp: formatMsgTime(row.created_at),
+        }));
+        setMessages(mapped);
+      })
+      .finally(() => {
+        if (active) setIsLoadingHistory(false);
+      });
+
+    const channel = supabase
+      .channel(`chat:${[currentUserId, partnerId].sort().join(':')}`)
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'messages' },
+        (payload) => {
+          const row: any = payload.new;
+          if (!row) return;
+          const isInThread =
+            (row.sender_id === currentUserId && row.receiver_id === partnerId) ||
+            (row.sender_id === partnerId && row.receiver_id === currentUserId);
+          if (!isInThread) return;
+
+          setMessages((prev) => {
+            if (prev.some((m) => m.id === row.id)) return prev;
+            return [
+              ...prev,
+              {
+                id: row.id,
+                senderId: row.sender_id,
+                text: row.text || '',
+                timestamp: formatMsgTime(row.created_at),
+              },
+            ];
+          });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      active = false;
+      supabase.removeChannel(channel);
+    };
+  }, [currentUserId, partnerId]);
 
   // Auto-translation state
   const [autoTranslate, setAutoTranslate] = useState(false);
@@ -91,37 +167,39 @@ export default function ChatWindow({ conversationId, creatorName, creatorAvatar,
     });
   }, [autoTranslate, messages, currentUserId, translatedMap, translatingIds, handleTranslateMessage]);
 
-  const handleSendMessage = (e: React.FormEvent) => {
+  const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!inputText.trim()) return;
+    const trimmed = inputText.trim();
+    if (!trimmed || !currentUserId || !partnerId || isSending) return;
 
-    const newMessage: Message = {
-      id: Date.now().toString(),
-      senderId: currentUserId,
-      text: inputText.trim(),
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-    };
-
-    setMessages(prev => [...prev, newMessage]);
+    setIsSending(true);
+    setSendError(null);
     setInputText('');
 
-    // Simulate counter-party reply (in Spanish or English to demonstrate translation)
-    setTimeout(() => {
-      const sampleReplies = [
-        '¡Muchísimas gracias por tu apoyo! ¿Qué tipo de contenido te gustaría ver hoy?',
-        'I am preparing our next VIP exclusive drop right now. Stay tuned! ✨',
-        'Me alegra que te guste. Recuerda que puedes enviarme sugerencias cuando quieras.'
-      ];
-      const randomReply = sampleReplies[Math.floor(Math.random() * sampleReplies.length)];
-
-      const reply: Message = {
-        id: (Date.now() + 1).toString(),
-        senderId: 'c1',
-        text: randomReply,
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      };
-      setMessages(prev => [...prev, reply]);
-    }, 1800);
+    try {
+      const result = await sendDbMessage(currentUserId, partnerId, trimmed);
+      if (result?.message) {
+        const saved = result.message as any;
+        setMessages((prev) => {
+          if (prev.some((m) => m.id === saved.id)) return prev;
+          return [
+            ...prev,
+            {
+              id: saved.id,
+              senderId: saved.sender_id || currentUserId,
+              text: saved.text || trimmed,
+              timestamp: formatMsgTime(saved.created_at) || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            },
+          ];
+        });
+      }
+    } catch (err) {
+      console.error('[ChatWindow] Failed to send message:', err);
+      setInputText(trimmed);
+      setSendError(t('secureMessaging.sendFailed', 'Message could not be delivered. Please try again.'));
+    } finally {
+      setIsSending(false);
+    }
   };
 
   const handleTipSent = (amount: number) => {
@@ -179,6 +257,17 @@ export default function ChatWindow({ conversationId, creatorName, creatorAvatar,
 
       {/* Messages Area */}
       <div className="flex-1 overflow-y-auto p-6 space-y-6 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
+        {isLoadingHistory ? (
+          <div className="h-full flex items-center justify-center">
+            <Loader2 className="w-6 h-6 animate-spin text-primary" />
+          </div>
+        ) : messages.length === 0 ? (
+          <div className="h-full flex flex-col items-center justify-center text-center opacity-50">
+            <p className="text-xs font-bold uppercase tracking-widest text-white/60">
+              {t('secureMessaging.noMessagesYet', 'No messages yet — say hello!')}
+            </p>
+          </div>
+        ) : null}
         {messages.map((msg) => {
           if (msg.isSystem) {
             return (
@@ -260,7 +349,10 @@ export default function ChatWindow({ conversationId, creatorName, creatorAvatar,
       </div>
 
       {/* Input Area */}
-      <div className="p-4 bg-black/50 backdrop-blur-xl border-t border-white/10 z-10">
+      <div className="p-4 bg-black/50 backdrop-blur-xl border-t border-white/10 z-10 space-y-2">
+        {sendError && (
+          <p className="text-[11px] text-red-400 font-medium px-1">{sendError}</p>
+        )}
         <form onSubmit={handleSendMessage} className="flex items-end gap-3">
           
           <button 

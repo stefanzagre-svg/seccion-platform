@@ -101,6 +101,13 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
   try {
     const supabase = await createClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    if (body.user_id !== user.id) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
 
     // 1. Fetch real user profile
     const { data: dbUser, error: userError } = await supabase
@@ -196,7 +203,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
         profile: mapDbProfileToEngine(cand),
         momentum: rel?.gauge_score ? Math.min(100, rel.gauge_score * 10) : (rel?.gravity_score ?? 0),
         their_gauge: rel?.gauge_score || 0,
-        shared_interests: (cand.hobbies || []).filter((h: string) => currentUser.hobbies.includes(h)),
+        shared_interests: (cand.hobbies || []).filter((h: string) => (currentUser.hobbies || []).includes(h)),
         complementary_desires: [cand.relationship_goals?.[0]].filter(Boolean)
       };
     });

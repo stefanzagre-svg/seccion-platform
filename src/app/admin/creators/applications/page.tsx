@@ -14,6 +14,7 @@ import {
   MessageCircle
 } from 'lucide-react';
 import DataTable, { Column } from '@/components/admin/DataTable';
+import VipFastTrackPanel from '@/components/admin/VipFastTrackPanel';
 import { cn } from '@/lib/utils';
 
 interface CreatorApplication {
@@ -412,6 +413,8 @@ export default function CreatorApplicationsQueue() {
           </div>
         </form>
       </div>
+
+      <VipFastTrackPanel />
 
       {/* Main Table */}
       <div className="glass-card p-6 min-h-[400px]">

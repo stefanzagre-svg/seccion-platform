@@ -1,8 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { generateContentWithFailover } from '@/lib/gemini-failover';
+import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin-client';
+import { checkEndpointRateLimit } from '@/lib/auth-admin';
 
 export async function POST(req: NextRequest) {
   try {
+    const supabase = await createClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const adminClient = createAdminClient();
+    if (await checkEndpointRateLimit(adminClient, user.id, 'v2/creator/generate-teaser', 10, 60)) {
+      return NextResponse.json({ error: 'Rate limit exceeded' }, { status: 429 });
+    }
+
     let body: any;
     try {
       body = await req.json();

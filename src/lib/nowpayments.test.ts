@@ -40,4 +40,41 @@ describe('NOWPayments Crypto Service', () => {
     expect(invoice.price_amount).toBe('25');
     expect(invoice.pay_currency).toBe('usdttrc20');
   });
+
+  it('defaults to MiCA-compliant USDC on Polygon (usdcpolygon) and EUR base currency', async () => {
+    const invoice = await service.createInvoice({
+      priceAmount: 121,
+      priceCurrency: 'eur',
+      orderId: 'test_order_mica_1',
+      orderDescription: 'MiCA USDC Invoice',
+    });
+
+    expect(invoice.pay_currency).toBe('usdcpolygon');
+    expect(invoice.price_currency).toBe('eur');
+  });
+
+  it('isolates collected EU VAT before splitting Net Base 90% Founding / 80% Standard in MiCA mode', () => {
+    const founderSplit = service.calculateMicaNetBaseSplit({
+      grossPaidEur: 121, // €100 Net + €21 Spanish 21% IVA
+      vatAmountEur: 21,
+      isFoundingCreator: true,
+    });
+
+    expect(founderSplit.vatRingFencedEur).toBe(21);
+    expect(founderSplit.netBaseEur).toBe(100);
+    expect(founderSplit.settlementAsset).toBe('USDC');
+    // 0.5% fee of 121 = 0.61 -> distributable net = 99.39 -> 90% = 89.45
+    expect(founderSplit.processorFee).toBe(0.61);
+    expect(founderSplit.netDistributableEur).toBe(99.39);
+    expect(founderSplit.creatorShare).toBe(89.45);
+    expect(founderSplit.platformShare).toBe(9.94);
+
+    const standardSplit = service.calculateMicaNetBaseSplit({
+      grossPaidEur: 60.5, // €50 Net + €10.50 VAT
+      vatAmountEur: 10.5,
+      isFoundingCreator: false,
+    });
+    expect(standardSplit.netBaseEur).toBe(50);
+    expect(standardSplit.creatorShare).toBe(39.76); // 80% of (50 - 0.30 = 49.70)
+  });
 });

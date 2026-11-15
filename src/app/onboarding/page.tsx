@@ -19,6 +19,7 @@ import { useTranslation } from "@/context/LanguageContext";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/lib/supabase";
 import { getResilientSession, getResilientProfile, safeSupabaseQuery } from "@/lib/supabase-safe";
+import { buildMergedPrivacySettings } from "@/lib/profile-visibility";
 import { compressImageFile } from "@/lib/image-compressor";
 import { useAvatarUpload } from "@/hooks/useAvatarUpload";
 import {
@@ -31,6 +32,7 @@ import {
   ARCHETYPE_AVATARS,
   MEMBER_VIBE_CHIPS,
   MEMBER_VIBE_CHIPS_ES,
+  MEMBER_VIBE_CHIPS_FR,
   normalizeArchetypeId,
   normalizePassionId,
   type MemberPurposeId
@@ -163,17 +165,31 @@ export default function OnboardingFlow() {
             updatePayload.relationship_types = [relationshipType];
           }
 
-          // Moroccan Domestic Privacy Shield (Task 2)
+          // Moroccan Domestic Privacy Shield (Task 2): Fetch and merge existing DB privacy_settings safely
           const moroccoShield = sessionStorage.getItem("_onboarding_creator_morocco_shield");
           const blockedCountriesStr = sessionStorage.getItem("_onboarding_creator_blocked_countries");
           if (moroccoShield === "true" || blockedCountriesStr) {
             try {
-              const blocked = blockedCountriesStr ? JSON.parse(blockedCountriesStr) : ["MA"];
-              updatePayload.privacy_settings = {
-                ...(updatePayload.privacy_settings || {}),
-                blocked_countries: Array.from(new Set([...(updatePayload.privacy_settings?.blocked_countries || []), ...blocked])),
-                morocco_domestic_shield: true,
-              };
+              const blocked: string[] = blockedCountriesStr
+                ? JSON.parse(blockedCountriesStr)
+                : moroccoShield === "true"
+                  ? ["MA"]
+                  : [];
+              const existingProf = await safeSupabaseQuery(
+                supabase
+                  .from("profiles")
+                  .select("privacy_settings")
+                  .eq("id", currentUserId)
+                  .maybeSingle(),
+                { data: null } as any,
+                2000
+              );
+              const existingSettings = existingProf?.data?.privacy_settings || updatePayload.privacy_settings || {};
+              updatePayload.privacy_settings = buildMergedPrivacySettings(
+                existingSettings,
+                moroccoShield === "true",
+                blocked
+              );
             } catch {}
           }
         }
@@ -205,7 +221,7 @@ export default function OnboardingFlow() {
     if (isCreator) {
       OnboardingLogger.log('registration', 'step_enter', 'routing creator directly to studio', currentUserId);
       if (typeof window !== "undefined") {
-        document.cookie = "sb_ob=1; path=/; max-age=2592000; SameSite=Lax";
+        document.cookie = "sb_ob=; path=/; max-age=0; SameSite=Lax";
         document.cookie = "sb_role=creator; path=/; max-age=2592000; SameSite=Lax";
         window.location.href = "/studio";
         return;
@@ -243,6 +259,8 @@ export default function OnboardingFlow() {
 
   // Album photos state & Profile Preview modal
   const [albumPhotos, setAlbumPhotos] = useState<string[]>([]);
+  const [isUploadingAlbum, setIsUploadingAlbum] = useState(false);
+  const albumFileInputRef = useRef<HTMLInputElement>(null);
   const [showPreviewModal, setShowPreviewModal] = useState(false);
 
   // Creator Extension states
@@ -292,18 +310,127 @@ export default function OnboardingFlow() {
     }
   };
 
+  const handleAlbumFilesUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+
+    setIsUploadingAlbum(true);
+    setFormError(null);
+
+    try {
+      const { data: { user: activeUser } } = await supabase.auth.getUser().catch(() => ({ data: { user: null } }));
+      const activeUid = activeUser?.id || userId || 'user';
+      const uploadedUrls: string[] = [];
+
+      for (const file of files) {
+        const { blob, dataUrl } = await compressImageFile(file, 1200, 0.82);
+        const fileName = `${activeUid}_album_${Date.now()}_${Math.random().toString(36).slice(2, 8)}.jpg`;
+
+        const { error: uploadErr } = await supabase.storage
+          .from('avatars')
+          .upload(fileName, blob, {
+            contentType: blob.type || 'image/jpeg',
+            upsert: true,
+          });
+
+        if (!uploadErr) {
+          const { data: publicUrlData } = supabase.storage
+            .from('avatars')
+            .getPublicUrl(fileName);
+          if (publicUrlData?.publicUrl) {
+            uploadedUrls.push(publicUrlData.publicUrl);
+            continue;
+          }
+        } else {
+          console.warn('[Onboarding] Album storage upload warning:', uploadErr.message);
+        }
+
+        // Compressed JPEG fallback (~80KB) only if storage bucket upload fails temporarily
+        uploadedUrls.push(dataUrl);
+      }
+
+      if (uploadedUrls.length > 0) {
+        setAlbumPhotos((prev) => {
+          const next = [...prev, ...uploadedUrls];
+          saveOnboardingState({ albumPhotos: next, step: "profile-checklist", activeItem: "photo" });
+          return next;
+        });
+      }
+    } catch (err: any) {
+      console.error('[Onboarding] Album photo compression/upload error:', err);
+      setFormError(
+        t(
+          "onboarding.main.albumUploadError",
+          "Could not process one or more album photos. Please try another image."
+        )
+      );
+    } finally {
+      setIsUploadingAlbum(false);
+      if (albumFileInputRef.current) {
+        albumFileInputRef.current.value = "";
+      }
+    }
+  };
+
   // Biometric Liveness Check states (powered by DIDIT Zero-Knowledge Identity Gateway)
   const [livenessVerified, setLivenessVerified] = useState(false);
   const [livenessLoading, setLivenessLoading] = useState(false);
+  const [isCheckingDidit, setIsCheckingDidit] = useState(false);
   const [livenessStep, setLivenessStep] = useState(0); // 0: idle, 1: connecting, 4: in progress, 5: success
   const [livenessLog, setLivenessLog] = useState("");
+
+  const checkDiditStatusFromDb = async (): Promise<boolean> => {
+    try {
+      setIsCheckingDidit(true);
+      const { data: { user: activeUser } } = await supabase.auth.getUser().catch(() => ({ data: { user: null } }));
+      const activeUid = activeUser?.id || userId;
+      if (!activeUid) return false;
+
+      const { data: prof } = await supabase
+        .from('profiles')
+        .select('is_kyc_verified')
+        .eq('id', activeUid)
+        .maybeSingle();
+
+      if (prof?.is_kyc_verified) {
+        setLivenessVerified(true);
+        setLivenessStep(5);
+        setLivenessLog(
+          locale === "fr"
+            ? "✓ Vérification Faciale 3D DIDIT confirmée (Zero-Knowledge)"
+            : locale === "es"
+            ? "✓ Verificación 3D Facial DIDIT confirmada (Zero-Knowledge)"
+            : "✓ 3D Face Liveness Verified via DIDIT (Zero-Knowledge)"
+        );
+        return true;
+      }
+
+      setLivenessVerified(false);
+      setLivenessStep(4);
+      setLivenessLog(
+        locale === "fr"
+          ? "En attente de confirmation du webhook DIDIT. Terminez le scan 3D et vérifiez à nouveau dans quelques secondes."
+          : locale === "es"
+          ? "Esperando confirmación del webhook DIDIT. Completa el escaneo 3D y vuelve a verificar en unos segundos."
+          : "Awaiting DIDIT webhook confirmation. Complete your 3D face scan and check again in a few seconds."
+      );
+      return false;
+    } catch {
+      return false;
+    } finally {
+      setIsCheckingDidit(false);
+    }
+  };
 
   const startLivenessCheck = async () => {
     try {
       setLivenessLoading(true);
+      setFormError(null);
       setLivenessStep(1);
       setLivenessLog(
-        locale === "es"
+        locale === "fr"
+          ? "Connexion à la passerelle DIDIT Zero-Knowledge..."
+          : locale === "es"
           ? "Conectando con la pasarela DIDIT Zero-Knowledge..."
           : "Connecting to DIDIT Zero-Knowledge Gateway..."
       );
@@ -313,26 +440,43 @@ export default function OnboardingFlow() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           returnTo: "/onboarding?didit_session=completed",
-          targetRole: isCreatorMode ? "creator" : "member",
         }),
       });
 
-      const data = await res.json();
-      const sessionUrl = data?.url || "https://verify.didit.me/u/bPzKX19JQiawBcuyL9kraw";
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data?.url) {
+        throw new Error(
+          data?.error ||
+            (locale === "fr"
+              ? "Impossible d'initialiser la session de vérification DIDIT. Veuillez réessayer."
+              : locale === "es"
+              ? "No se pudo iniciar la sesión de verificación DIDIT. Inténtalo de nuevo."
+              : "Could not initialize DIDIT verification session. Please try again.")
+        );
+      }
+
+      const sessionUrl = data.url;
 
       try {
         const { DiditSdk } = await import("@didit-protocol/sdk-web");
         if (DiditSdk?.shared) {
-          DiditSdk.shared.onComplete = (result: any) => {
+          DiditSdk.shared.onComplete = async (result: any) => {
             console.log("[DIDIT Liveness Result]:", result?.status);
             if (result?.status === "completed" || result?.status === "approved") {
-              setLivenessVerified(true);
-              setLivenessStep(5);
+              setLivenessStep(4);
               setLivenessLog(
-                locale === "es"
-                  ? "✓ Verificación 3D Facial DIDIT confirmada (Zero-Knowledge)"
-                  : "✓ 3D Face Liveness Verified via DIDIT (Zero-Knowledge)"
+                locale === "fr"
+                  ? "Session DIDIT terminée. Confirmation de la vérification serveur..."
+                  : locale === "es"
+                  ? "Sesión DIDIT completada. Confirmando estado verificado..."
+                  : "DIDIT session finished. Confirming server verification..."
               );
+              const verifiedNow = await checkDiditStatusFromDb();
+              if (!verifiedNow) {
+                setTimeout(() => {
+                  void checkDiditStatusFromDb();
+                }, 2500);
+              }
             }
           };
           DiditSdk.shared.startVerification({ url: sessionUrl });
@@ -344,24 +488,27 @@ export default function OnboardingFlow() {
         console.warn("[DIDIT SDK Dynamic Modal Fallback]:", sdkErr);
       }
 
-      // Fallback: open secure DIDIT session in a new window/tab
+      // Fallback: open authenticated DIDIT session URL in a new tab
       window.open(sessionUrl, "_blank", "noopener,noreferrer");
       setLivenessLoading(false);
       setLivenessStep(4);
       setLivenessLog(
-        locale === "es"
-          ? "Ventana de verificación DIDIT abierta. Completa el escaneo 3D y regresa aquí."
-          : "DIDIT verification window opened. Complete 3D face scan and return here."
+        locale === "fr"
+          ? "Fenêtre de vérification DIDIT ouverte. Terminez le scan facial 3D puis cliquez sur Vérifier le Statut."
+          : locale === "es"
+          ? "Ventana de verificación DIDIT abierta. Completa el escaneo 3D y pulsa Verificar Estado."
+          : "DIDIT verification window opened. Complete 3D face scan and click Check Verification Status."
       );
     } catch (err: any) {
       console.error("[DIDIT Liveness Error]:", err);
-      window.open("https://verify.didit.me/u/bPzKX19JQiawBcuyL9kraw", "_blank", "noopener,noreferrer");
       setLivenessLoading(false);
-      setLivenessStep(4);
-      setLivenessLog(
-        locale === "es"
-          ? "Sesión de cumplimiento DIDIT iniciada."
-          : "DIDIT compliance session launched."
+      setLivenessStep(0);
+      setLivenessLog("");
+      setFormError(
+        err?.message ||
+          (locale === "es"
+            ? "Error al conectar con DIDIT. Inténtalo de nuevo en un momento."
+            : "Failed to start DIDIT session. Please try again shortly.")
       );
     }
   };
@@ -471,13 +618,24 @@ export default function OnboardingFlow() {
             setAlbumPhotos((prev) => (prev.length > 0 ? prev : profile.album_photos));
           }
 
-          if (profile.is_kyc_verified || params.get("didit_session") === "completed") {
+          if (profile.is_kyc_verified) {
             setLivenessVerified(true);
             setLivenessStep(5);
             setLivenessLog(
-              locale === "es"
+              locale === "fr"
+                ? "✓ Vérification Faciale 3D DIDIT confirmée (Zero-Knowledge)"
+                : locale === "es"
                 ? "✓ Verificación 3D Facial DIDIT confirmada (Zero-Knowledge)"
                 : "✓ 3D Face Liveness Verified via DIDIT (Zero-Knowledge)"
+            );
+          } else if (params.get("didit_session") === "completed") {
+            setLivenessStep(4);
+            setLivenessLog(
+              locale === "fr"
+                ? "Session DIDIT envoyée. Cliquez sur « Vérifier le Statut » pendant la confirmation de votre vérification."
+                : locale === "es"
+                ? "Sesión DIDIT enviada. Haz clic en 'Verificar Estado' mientras confirmamos tu verificación."
+                : "DIDIT session submitted. Click 'Check Verification Status' while we confirm your check."
             );
           }
 
@@ -518,10 +676,10 @@ export default function OnboardingFlow() {
               params.has("fresh") ||
               params.has("bypass");
 
-            if (pendingCreator) {
+            if (profile.role === "creator") {
               setIsCreatorMode(true);
               if (typeof window !== "undefined") {
-                document.cookie = "sb_ob=1; path=/; max-age=2592000; SameSite=Lax";
+                document.cookie = "sb_ob=; path=/; max-age=0; SameSite=Lax";
                 document.cookie = "sb_role=creator; path=/; max-age=2592000; SameSite=Lax";
                 if (!sessionStorage.getItem("_onboarding_creator_archive_choice")) {
                   sessionStorage.setItem("_onboarding_creator_archive_choice", "creator");
@@ -568,14 +726,10 @@ export default function OnboardingFlow() {
             }
           }
 
-          // Provision missing profile with safety wrapper
-          const isCreatorSignup =
-            isApprovedCreatorApplication ||
-            (typeof window !== "undefined" && (
-              params.get("role") === "creator" ||
-              localStorage.getItem("is_creator_signup") === "true" ||
-              !!sessionStorage.getItem("_onboarding_creator_archive_choice")
-            ));
+          // Provision missing profile with server-verified role only (never trust user_metadata.role)
+          const isFounderUser = authUser.email?.toLowerCase().trim() === "stefan.zagre@gmail.com";
+          const provisionedRole: "creator" | "member" =
+            isApprovedCreatorApplication || isFounderUser ? "creator" : "member";
 
           await safeSupabaseQuery(
             supabase
@@ -584,13 +738,13 @@ export default function OnboardingFlow() {
                 id: authUser.id,
                 username: (authUser.user_metadata?.username || authUser.email?.split('@')[0] || 'user_' + Math.floor(Math.random() * 10000)).toLowerCase(),
                 display_name: authUser.user_metadata?.full_name || authUser.email?.split('@')[0] || 'User',
-                role: authUser.user_metadata?.role === 'creator' ? 'creator' : 'member'
+                role: provisionedRole
               }),
             null,
             4000
           );
 
-          if (isCreatorSignup) {
+          if (provisionedRole === "creator") {
             setIsCreatorMode(true);
             setChecklist((prev) =>
               prev.map((item) => (item.id === "preferences" ? { ...item, completed: true } : item))
@@ -603,7 +757,7 @@ export default function OnboardingFlow() {
               params.has("fresh") ||
               params.has("bypass");
             if (typeof window !== "undefined") {
-              document.cookie = "sb_ob=1; path=/; max-age=2592000; SameSite=Lax";
+              document.cookie = "sb_ob=; path=/; max-age=0; SameSite=Lax";
               document.cookie = "sb_role=creator; path=/; max-age=2592000; SameSite=Lax";
               sessionStorage.setItem("_onboarding_creator_archive_choice", "creator");
               localStorage.removeItem("is_creator_signup");
@@ -680,8 +834,7 @@ export default function OnboardingFlow() {
 
   const handleSkipToStudio = () => {
     if (typeof window !== "undefined") {
-      document.cookie = "sb_ob=1; path=/; max-age=2592000; SameSite=Lax";
-      document.cookie = "sb_role=creator; path=/; max-age=2592000; SameSite=Lax";
+      document.cookie = "sb_ob=; path=/; max-age=0; SameSite=Lax";
       sessionStorage.setItem("_onboarding_creator_archive_choice", "creator");
       window.location.href = "/studio?welcome=true";
     }
@@ -864,7 +1017,9 @@ export default function OnboardingFlow() {
           .find((item) => !item.completed);
 
         if (typeof window !== "undefined") {
-          document.cookie = "sb_ob=1; path=/; max-age=2592000; SameSite=Lax";
+          if (!nextCreatorItem) {
+            document.cookie = "sb_ob=1; path=/; max-age=2592000; SameSite=Lax";
+          }
           document.cookie = "sb_role=creator; path=/; max-age=2592000; SameSite=Lax";
         }
 
@@ -957,7 +1112,7 @@ export default function OnboardingFlow() {
       const visibleChecklist = updatedChecklist.filter((item) => !(item.id === "preferences" && isCreatorSignup));
       const nextIncomplete = visibleChecklist.find((item) => !item.completed);
       if (nextIncomplete) setActiveItem(nextIncomplete.id as any);
-      else setStep(isCreatorSignup ? "creator-checklist" : "welcome");
+      else setStep("welcome");
       // Background DB write — never blocks UI
       resolveUserId().then(async (uid) => {
         if (!uid) { console.warn('[SECCION] photo: no userId — DB write skipped'); return; }
@@ -1009,8 +1164,7 @@ export default function OnboardingFlow() {
       const nextIncomplete = updatedChecklist.find((item) => !item.completed);
       if (nextIncomplete) setActiveItem(nextIncomplete.id as any);
       else {
-        const isCreatorSignup = tutorialRole === "creator" || isCreatorMode || (typeof window !== "undefined" && !!sessionStorage.getItem("_onboarding_creator_archive_choice"));
-        setStep(isCreatorSignup ? "creator-checklist" : "welcome");
+        setStep("welcome");
       }
       // Background DB write
       resolveUserId().then((uid) => {
@@ -1248,7 +1402,6 @@ export default function OnboardingFlow() {
                           .update(updatePayload)
                           .eq("id", currentUserId);
                         if (!upErr && typeof window !== "undefined") {
-                          document.cookie = "sb_ob=1; path=/; max-age=2592000; SameSite=Lax";
                           if (isCreatorMode) {
                             document.cookie = "sb_role=creator; path=/; max-age=2592000; SameSite=Lax";
                           }
@@ -1338,10 +1491,18 @@ export default function OnboardingFlow() {
                     <div className="space-y-0.5 text-left">
                       <div className="flex items-center gap-1.5 text-[#00fbfb] font-mono text-[10px] font-black uppercase tracking-wider">
                         <Sparkles className="w-3.5 h-3.5" />
-                        <span>{locale === "es" ? "Sinergia Calibrada · Perfil Rápido" : "Synergy Calibrated · Quick Setup"}</span>
+                        <span>
+                          {locale === "fr"
+                            ? "Synergie Calibrée · Configuration Rapide"
+                            : locale === "es"
+                            ? "Sinergia Calibrada · Perfil Rápido"
+                            : "Synergy Calibrated · Quick Setup"}
+                        </span>
                       </div>
                       <p className="text-[11px] text-white/80 leading-snug">
-                        {locale === "es"
+                        {locale === "fr"
+                          ? "Choisissez votre photo d’avatar et répondez à votre premier prompt ci-dessous. Vous pourrez tout affiner ensuite depuis votre Espace Profil Membre."
+                          : locale === "es"
                           ? "Selecciona tu foto de avatar y responde tu primer prompt a continuación. Podrás ajustar y enriquecer todo después desde tu Panel de Perfil de Miembro."
                           : "Select your avatar photo and answer your first prompt below. You can refine and expand everything anytime in your Member Profile Panel."}
                       </p>
@@ -1432,7 +1593,9 @@ export default function OnboardingFlow() {
                             <div className="p-3.5 rounded-2xl bg-white/5 border border-white/10 space-y-2.5 text-left">
                               <div className="flex items-center justify-between">
                                 <span className="text-[10px] font-mono uppercase tracking-widest text-primary font-bold">
-                                  {locale === "es"
+                                  {locale === "fr"
+                                    ? "⚡ Option A : Avatar Archétype Stylisé 1-Touche (Confidentialité Jour 1)"
+                                    : locale === "es"
                                     ? "⚡ Opción A: Avatar Estilizado 1-Tap (Privacidad Día 1)"
                                     : "⚡ Option A: 1-Tap Stylized Archetype Avatar (Day-1 Privacy)"}
                                 </span>
@@ -1534,37 +1697,32 @@ export default function OnboardingFlow() {
                             {/* Album Photo Uploader */}
                             <div className="space-y-3">
                               <input
+                                ref={albumFileInputRef}
                                 type="file"
                                 id="album-file-input"
                                 accept="image/*"
                                 multiple
-                                onChange={(e) => {
-                                  const files = Array.from(e.target.files || []);
-                                  files.forEach((file) => {
-                                    const reader = new FileReader();
-                                    reader.onload = (event) => {
-                                      const res = event.target?.result as string;
-                                      if (res) {
-                                        setAlbumPhotos((prev) => {
-                                          const next = [...prev, res];
-                                          saveOnboardingState({ albumPhotos: next, step: "profile-checklist", activeItem: "photo" });
-                                          return next;
-                                        });
-                                      }
-                                    };
-                                    reader.readAsDataURL(file);
-                                  });
-                                }}
+                                onChange={handleAlbumFilesUpload}
                                 className="hidden"
                               />
 
                               <button
                                 type="button"
-                                onClick={() => document.getElementById("album-file-input")?.click()}
-                                className="w-full py-3.5 px-5 bg-white/5 hover:bg-white/10 border border-purple-500/40 rounded-2xl text-xs font-bold text-purple-300 uppercase tracking-wider flex items-center justify-center gap-2 transition cursor-pointer"
+                                disabled={isUploadingAlbum}
+                                onClick={() => albumFileInputRef.current?.click()}
+                                className="w-full py-3.5 px-5 bg-white/5 hover:bg-white/10 border border-purple-500/40 rounded-2xl text-xs font-bold text-purple-300 uppercase tracking-wider flex items-center justify-center gap-2 transition cursor-pointer disabled:opacity-50"
                               >
-                                <Upload className="w-4 h-4 text-purple-400" />
-                                {t("onboarding.main.addPhotosAlbum", "Add Photos to Public Album")}
+                                {isUploadingAlbum ? (
+                                  <>
+                                    <Loader2 className="w-4 h-4 text-purple-400 animate-spin" />
+                                    {t("onboarding.main.uploadingAlbum", "Optimizing & Uploading Photos...")}
+                                  </>
+                                ) : (
+                                  <>
+                                    <Upload className="w-4 h-4 text-purple-400" />
+                                    {t("onboarding.main.addPhotosAlbum", "Add Photos to Public Album")}
+                                  </>
+                                )}
                               </button>
 
                               {/* Album Grid Previews */}
@@ -1614,7 +1772,13 @@ export default function OnboardingFlow() {
                                 {livenessLoading ? (
                                   <>
                                     <Loader2 className="w-4 h-4 animate-spin text-primary" />
-                                    <span>{locale === "es" ? "Conectando con DIDIT..." : "Connecting to DIDIT..."}</span>
+                                    <span>
+                                      {locale === "fr"
+                                        ? "Connexion à DIDIT..."
+                                        : locale === "es"
+                                        ? "Conectando con DIDIT..."
+                                        : "Connecting to DIDIT..."}
+                                    </span>
                                   </>
                                 ) : (
                                   <>
@@ -1637,24 +1801,30 @@ export default function OnboardingFlow() {
                                   <button
                                     type="button"
                                     onClick={startLivenessCheck}
-                                    className="px-3 py-1.5 bg-white/5 hover:bg-white/10 border border-white/20 text-white/80 font-mono text-[9px] font-bold rounded-lg transition"
+                                    disabled={livenessLoading}
+                                    className="px-3 py-1.5 bg-white/5 hover:bg-white/10 border border-white/20 text-white/80 font-mono text-[9px] font-bold rounded-lg transition disabled:opacity-50"
                                   >
-                                    {locale === "es" ? "Reabrir DIDIT" : "Re-open DIDIT Session"}
+                                    {locale === "fr"
+                                      ? "Rouvrir DIDIT"
+                                      : locale === "es"
+                                      ? "Reabrir DIDIT"
+                                      : "Re-open DIDIT Session"}
                                   </button>
                                   <button
                                     type="button"
+                                    disabled={isCheckingDidit}
                                     onClick={() => {
-                                      setLivenessVerified(true);
-                                      setLivenessStep(5);
-                                      setLivenessLog(
-                                        locale === "es"
-                                          ? "✓ Verificación 3D Facial DIDIT confirmada (Zero-Knowledge)"
-                                          : "✓ 3D Face Liveness Verified via DIDIT (Zero-Knowledge)"
-                                      );
+                                      void checkDiditStatusFromDb();
                                     }}
-                                    className="px-3 py-1.5 bg-primary/20 hover:bg-primary/30 border border-primary/40 text-primary font-mono text-[9px] font-bold rounded-lg transition"
+                                    className="px-3 py-1.5 bg-primary/20 hover:bg-primary/30 border border-primary/40 text-primary font-mono text-[9px] font-bold rounded-lg transition disabled:opacity-50"
                                   >
-                                    {locale === "es" ? "Ya he completado la verificación" : "I have completed verification"}
+                                    {isCheckingDidit
+                                      ? locale === "fr"
+                                        ? "Vérification..."
+                                        : locale === "es"
+                                        ? "Verificando..."
+                                        : "Checking..."
+                                      : t("onboarding.main.checkDiditStatus", "Check Verification Status")}
                                   </button>
                                 </div>
                               </div>
@@ -1666,7 +1836,11 @@ export default function OnboardingFlow() {
                                   <ShieldCheck className="w-5 h-5 text-green-400 shrink-0" />
                                   <div>
                                     <p className="text-[10px] font-bold text-white uppercase tracking-wider">
-                                      {locale === "es" ? "Identidad y Rostro 3D Verificados" : "3D Face Liveness Verified"}
+                                      {locale === "fr"
+                                        ? "Identité & Visage 3D Vérifiés"
+                                        : locale === "es"
+                                        ? "Identidad y Rostro 3D Verificados"
+                                        : "3D Face Liveness Verified"}
                                     </p>
                                     <p className="text-[9px] text-green-400 font-mono leading-none mt-0.5">
                                       {livenessLog}
@@ -1819,18 +1993,24 @@ export default function OnboardingFlow() {
                             const currentCatKey = promptCategory || entries[0]?.[0] || "skills";
                             const activeQuestion = promptQuestion || availablePrompts[currentCatKey]?.prompts?.[0] || "What skill are you currently obsessed with mastering?";
 
-                            const memberChips = (locale === "es" ? MEMBER_VIBE_CHIPS_ES : MEMBER_VIBE_CHIPS).map((c) => c.answer);
-                            const creatorChips = locale === "es"
+                            const memberChips = (locale === "fr" ? MEMBER_VIBE_CHIPS_FR : locale === "es" ? MEMBER_VIBE_CHIPS_ES : MEMBER_VIBE_CHIPS).map((c) => c.answer);
+                            const creatorChips = locale === "fr"
                               ? [
-                                  "Contenido exclusivo detrás de cámaras, charlas directas y acceso VIP a mi mundo creativo ✨",
-                                  "Me apasiona crear experiencias auténticas, conectar sin filtros y compartir mi estilo de vida diario 🔥",
-                                  "Sesiones privadas, contenido personalizado y conexión real con mi comunidad más cercana 💎",
+                                  "Contenu exclusif en coulisses, chats VIP directs et accès sans filtre à mon univers créatif ✨",
+                                  "Passionnée par les connexions authentiques, mon lifestyle au quotidien et un cercle proche plein d'énergie 🔥",
+                                  "Sessions privées, demandes personnalisées et créations exclusives pour mes membres les plus fidèles 💎",
                                 ]
-                              : [
-                                  "Exclusive behind-the-scenes content, direct VIP chats, and unfiltered access to my creative world ✨",
-                                  "Passionate about authentic connection, daily lifestyle drops, and building an inner circle with real energy 🔥",
-                                  "Private sessions, custom requests, and high-vibe creative drops for my closest supporters 💎",
-                                ];
+                              : locale === "es"
+                                ? [
+                                    "Contenido exclusivo detrás de cámaras, charlas directas y acceso VIP a mi mundo creativo ✨",
+                                    "Me apasiona crear experiencias auténticas, conectar sin filtros y compartir mi estilo de vida diario 🔥",
+                                    "Sesiones privadas, contenido personalizado y conexión real con mi comunidad más cercana 💎",
+                                  ]
+                                : [
+                                    "Exclusive behind-the-scenes content, direct VIP chats, and unfiltered access to my creative world ✨",
+                                    "Passionate about authentic connection, daily lifestyle drops, and building an inner circle with real energy 🔥",
+                                    "Private sessions, custom requests, and high-vibe creative drops for my closest supporters 💎",
+                                  ];
                             const activeChips = (isCreatorMode || tutorialRole === "creator") ? creatorChips : memberChips.slice(0, 3);
 
                             return (
@@ -1860,7 +2040,7 @@ export default function OnboardingFlow() {
                                 </div>
                                 <textarea
                                   rows={3}
-                                  placeholder={locale === "es" ? "Escribe tu respuesta detallada aquí (mínimo 10 caracteres)..." : "Write a detailed, thoughtful story in response to the prompt..."}
+                                  placeholder={locale === "fr" ? "Écrivez votre réponse détaillée ici (minimum 10 caractères)..." : locale === "es" ? "Escribe tu respuesta detallada aquí (mínimo 10 caracteres)..." : "Write a detailed, thoughtful story in response to the prompt..."}
                                   value={promptAnswer}
                                   onChange={(e) => setPromptAnswer(e.target.value)}
                                   className="w-full px-4 py-3 bg-black/40 border border-white/10 rounded-xl text-xs text-white placeholder-white/20 focus:border-primary focus:outline-none transition resize-none"
@@ -1960,15 +2140,21 @@ export default function OnboardingFlow() {
                             }
                           }}
                           onProceed={() => {
-                            if (typeof window !== "undefined") {
+                            const updatedList = checklist.map((item) =>
+                              item.id === "preferences" ? { ...item, completed: true } : item
+                            );
+                            const remaining = updatedList.find((item) => !item.completed);
+                            if (!remaining && typeof window !== "undefined") {
                               document.cookie = "sb_ob=1; path=/; max-age=2592000; SameSite=Lax";
                             }
-                            setChecklist((prev) =>
-                              prev.map((item) =>
-                                item.id === "preferences" ? { ...item, completed: true } : item
-                              )
-                            );
-                            setTimeout(() => setStep("welcome"), 1000);
+                            setChecklist(updatedList);
+                            setTimeout(() => {
+                              if (remaining) {
+                                setActiveItem(remaining.id as any);
+                              } else {
+                                setStep("welcome");
+                              }
+                            }, 1000);
                           }}
                         />
                       </motion.div>
@@ -2023,15 +2209,20 @@ export default function OnboardingFlow() {
                        <span className={`text-[10px] font-bold tabular-nums ${creatorBio.length < 20 ? "text-white/30" : "text-primary"}`}>{creatorBio.length} / 500</span>
                      </div>
                      <div className="flex flex-wrap gap-1.5 pb-1">
-                       {(locale === "es"
+                       {(locale === "fr"
                          ? [
-                             "Bienvenidos a mi Studio oficial en SECCION ✨ Contenido exclusivo, sesiones en vivo y trato directo VIP.",
-                             "Acceso sin filtros a mis sesiones privadas, fotos exclusivas y chat directo conmigo todos los días 🔥",
+                             "Bienvenue sur mon Studio officiel SECCION ✨ Drops exclusifs, sessions live et accès VIP 1-à-1 en direct.",
+                             "Accès sans filtre à mes séries privées, demandes personnalisées et chat direct avec moi chaque jour 🔥",
                            ]
-                         : [
-                             "Welcome to my official SECCION Studio ✨ Exclusive drops, live sessions, and direct 1-on-1 VIP access.",
-                             "Unfiltered access to my private sets, custom requests, and daily direct chat with me 🔥",
-                           ]
+                         : locale === "es"
+                           ? [
+                               "Bienvenidos a mi Studio oficial en SECCION ✨ Contenido exclusivo, sesiones en vivo y trato directo VIP.",
+                               "Acceso sin filtros a mis sesiones privadas, fotos exclusivas y chat directo conmigo todos los días 🔥",
+                             ]
+                           : [
+                               "Welcome to my official SECCION Studio ✨ Exclusive drops, live sessions, and direct 1-on-1 VIP access.",
+                               "Unfiltered access to my private sets, custom requests, and daily direct chat with me 🔥",
+                             ]
                        ).map((chipText, idx) => (
                          <button
                            key={idx}
@@ -2080,7 +2271,9 @@ export default function OnboardingFlow() {
                      const isAdult = sessionStorage.getItem("_onboarding_creator_is_adult");
 
                      if (typeof window !== "undefined") {
-                       document.cookie = "sb_ob=1; path=/; max-age=2592000; SameSite=Lax";
+                       if (avatarUrl) {
+                         document.cookie = "sb_ob=1; path=/; max-age=2592000; SameSite=Lax";
+                       }
                        document.cookie = "sb_role=creator; path=/; max-age=2592000; SameSite=Lax";
                      }
 
@@ -2103,14 +2296,12 @@ export default function OnboardingFlow() {
                          specialization: specialization || null,
                          member_purposes: Array.isArray(parsedPurposes) && parsedPurposes.length > 0 ? parsedPurposes : ["creator", "lifestyle"],
                          active_purposes: Array.isArray(parsedPurposes) && parsedPurposes.length > 0 ? parsedPurposes : ["creator", "lifestyle"],
-                         video_presentation_url: videoPresentationUrl || null,
                          bio: creatorBio,
                          base_subscription_price: tierPrice ? parseFloat(tierPrice) : 14.99,
                          sexual_preference: sexualPreference || null,
                          relationship_goals: relationshipGoal ? [relationshipGoal] : [],
                          relationship_types: relationshipType ? [relationshipType] : [],
                          is_adult_content: isAdult === "true",
-                         origins: residence || undefined,
                          residence: residence || undefined,
                        };
                        const dbPromise = supabase.from("profiles").update(payload).eq("id", uid);

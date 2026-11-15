@@ -3,6 +3,8 @@ import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { createAdminClient } from '@/lib/supabase/admin-client';
 import { isReservedUsername } from '@/lib/reserved-usernames';
+import { extractHandleFromLink, findAuthUserByEmail } from '@/lib/auth-admin';
+import { isOnboardingProfileComplete } from '@/lib/profile-visibility';
 import {
   buildArchetypeSynergyDefaults,
   isCountryStrictAgeMandate,
@@ -11,32 +13,6 @@ import {
 } from '@/lib/constants';
 
 const SAFE_MEMBER_SIGNUP_PURPOSES = new Set<string>(['lifestyle', 'language']);
-
-function extractHandleFromLink(link?: string | null, email?: string): string {
-  if (link) {
-    const cleaned = link.replace(/^https?:\/\/[^\/]+\/@?/, '').replace(/\./g, '_').replace(/[^a-zA-Z0-9_]/g, '');
-    if (cleaned.length >= 3) return cleaned.slice(0, 24).toLowerCase();
-  }
-  if (email) {
-    const fromEmail = email.split('@')[0].replace(/\./g, '_').replace(/[^a-zA-Z0-9_]/g, '');
-    if (fromEmail.length >= 3) return fromEmail.slice(0, 24).toLowerCase();
-  }
-  return `user_${Math.floor(1000 + Math.random() * 9000)}`;
-}
-
-async function findAuthUserByEmail(adminClient: any, email: string) {
-  let page = 1;
-  const perPage = 1000;
-  while (page <= 5) {
-    const { data } = await adminClient.auth.admin.listUsers({ page, perPage });
-    if (!data?.users || data.users.length === 0) break;
-    const match = data.users.find((u: any) => u.email?.toLowerCase().trim() === email);
-    if (match) return match;
-    if (data.users.length < perPage) break;
-    page++;
-  }
-  return null;
-}
 
 function sanitizeSignupAgeVerification(
   raw: any,
@@ -203,10 +179,15 @@ export async function POST(req: NextRequest) {
 
     if (!isApprovedCreator) {
       // Pre-launch gating (Decision 2): member accounts are placed on the VIP waitlist until creator milestone is met
+      const waitlistCity =
+        (typeof body.country === 'string' && body.country.trim()) ||
+        ageCheck.record.countryCode ||
+        cfCountry ||
+        'Global';
       await adminClient.from('member_waitlist').upsert(
         {
           email: cleanEmail,
-          city: userCountry || 'Global',
+          city: waitlistCity,
         },
         { onConflict: 'email' }
       );
@@ -222,7 +203,7 @@ export async function POST(req: NextRequest) {
 
     const baseUsername = (
       rawUsername ||
-      extractHandleFromLink(creatorApp?.link1, cleanEmail) ||
+      extractHandleFromLink(creatorApp?.link1, cleanEmail, 'user') ||
       cleanEmail.split('@')[0] ||
       'user'
     )
@@ -421,13 +402,15 @@ export async function POST(req: NextRequest) {
       console.warn('[Register API] Profile upsert notice:', upsertErr.message);
     }
 
+    const hasCompletedProfile = isFounder || isOnboardingProfileComplete(profilePayload);
+
     responseData.user = signInData.user;
     responseData.session = signInData.session;
     responseData.username = finalUsername;
     responseData.displayName = profilePayload.display_name;
     responseData.role = finalRole;
     responseData.isCreator = finalRole === 'creator';
-    responseData.onboardingCompleted = finalRole === 'creator' || hasSynergyCalibration;
+    responseData.onboardingCompleted = hasCompletedProfile;
 
     const response = NextResponse.json(responseData);
     pendingCookies.forEach(({ name, value, options }) => {
@@ -443,7 +426,7 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    if (finalRole === 'creator' || hasSynergyCalibration) {
+    if (hasCompletedProfile) {
       response.cookies.set('sb_ob', '1', {
         path: '/',
         maxAge: 60 * 60 * 24 * 30,

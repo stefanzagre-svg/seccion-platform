@@ -22,6 +22,8 @@ export interface StudioMediaItem {
   is_locked?: boolean;
   provenance?: ProvenanceLevel;
   face_blur_active?: boolean;
+  content_rating?: 'SFW' | 'NSFW_18';
+  required_ledger?: 'sfw_credits' | 'sovereign_red_pills';
   created_at?: string;
 }
 
@@ -250,7 +252,13 @@ export default function StudioContentOpsTab({
       {/* ─── Media Vault List ────────────────────────────────────────────── */}
       <div className="space-y-4">
         <h3 className="text-sm font-black text-white uppercase tracking-wider flex items-center gap-2">
-          <span>{locale === 'es' ? 'Contenido Publicado en tu Bóveda' : 'Published Media in Vault'}</span>
+          <span>
+            {locale === 'es'
+              ? 'Contenido Publicado en tu Bóveda'
+              : locale === 'fr'
+                ? 'Médias publiés dans votre coffre'
+                : 'Published Media in Vault'}
+          </span>
           <span className="text-xs text-white/40 font-mono">({mediaList.length})</span>
         </h3>
 
@@ -274,10 +282,22 @@ export default function StudioContentOpsTab({
                     />
                   )}
 
+                  {item.content_rating && (
+                    <span
+                      className={`absolute top-2.5 left-2.5 px-2 py-0.5 rounded-lg border font-mono text-[9px] font-black ${
+                        item.content_rating === 'NSFW_18'
+                          ? 'bg-red-500/20 border-red-400/40 text-red-200'
+                          : 'bg-emerald-500/20 border-emerald-400/40 text-emerald-200'
+                      }`}
+                    >
+                      {item.content_rating === 'NSFW_18' ? '💊 NSFW 18+' : '✨ SFW'}
+                    </span>
+                  )}
+
                   {item.is_locked && (
                     <span className="absolute top-2.5 right-2.5 px-2 py-0.5 rounded-lg bg-black/70 border border-white/20 text-primary font-mono text-[9px] font-black flex items-center gap-1">
                       <Lock className="w-2.5 h-2.5" />
-                      {item.price ? `$${item.price}` : 'PPV'}
+                      {item.price ? `€${item.price}` : 'PPV'}
                     </span>
                   )}
                 </div>
@@ -286,7 +306,13 @@ export default function StudioContentOpsTab({
                   <p className="text-xs font-bold text-white truncate">{item.description || 'Exclusive post'}</p>
                   <div className="flex items-center justify-between text-[9px] text-white/40 font-mono mt-1">
                     <span>{item.type.toUpperCase()}</span>
-                    <span>{item.provenance}</span>
+                    <span>
+                      {item.required_ledger === 'sovereign_red_pills'
+                        ? 'Red Pills Ledger'
+                        : item.required_ledger === 'sfw_credits'
+                          ? 'SFW Credits Ledger'
+                          : item.provenance}
+                    </span>
                   </div>
                 </div>
 
@@ -296,7 +322,7 @@ export default function StudioContentOpsTab({
                     className="text-red-400 hover:text-red-300 transition text-[10px] font-mono font-bold flex items-center gap-1 cursor-pointer"
                   >
                     <Trash2 className="w-3 h-3" />
-                    <span>{locale === 'es' ? 'Eliminar' : 'Delete'}</span>
+                    <span>{locale === 'es' ? 'Eliminar' : locale === 'fr' ? 'Supprimer' : 'Delete'}</span>
                   </button>
                 </div>
               </div>
@@ -304,7 +330,13 @@ export default function StudioContentOpsTab({
           </div>
         ) : (
           <div className="p-8 rounded-3xl bg-white/[0.01] border border-white/5 text-center text-[#b9cac9] text-xs space-y-2">
-            <p>{locale === 'es' ? 'Aún no has publicado fotos o videos en tu bóveda.' : 'No media published in your vault yet.'}</p>
+            <p>
+              {locale === 'es'
+                ? 'Aún no has publicado fotos o videos en tu bóveda.'
+                : locale === 'fr'
+                  ? 'Aucun média publié dans votre coffre pour le moment.'
+                  : 'No media published in your vault yet.'}
+            </p>
           </div>
         )}
       </div>

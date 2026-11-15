@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
+import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin-client";
+import { buildFoundingYear1Timestamps } from "@/lib/vip-invites";
 
-// Pre-approved 1-Year Free AI Assistant Passcodes
+// Pre-approved 1-Year Free AI Assistant Passcodes (approved creators only)
 const VALID_PASSCODES = [
   "VIP2026-AI-FREE",
   "SECCION-AI-1YEAR",
@@ -11,6 +13,16 @@ const VALID_PASSCODES = [
 
 export async function POST(req: NextRequest) {
   try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+      error: authErr,
+    } = await supabase.auth.getUser();
+
+    if (authErr || !user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const supabaseAdmin = createAdminClient();
     let body: any;
     try {
@@ -20,14 +32,18 @@ export async function POST(req: NextRequest) {
     }
     const { passcode, creatorId } = body || {};
 
-    if (!passcode || !creatorId) {
+    if (!passcode) {
       return NextResponse.json(
-        { error: "Missing required parameters: passcode and creatorId" },
+        { error: "Missing required parameter: passcode" },
         { status: 400 }
       );
     }
 
-    const cleanPasscode = passcode.trim().toUpperCase();
+    if (creatorId && creatorId !== user.id) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    const cleanPasscode = String(passcode).trim().toUpperCase();
 
     if (!VALID_PASSCODES.includes(cleanPasscode)) {
       return NextResponse.json(
@@ -36,19 +52,43 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Activate 1 Year Free AI Assistant Pack for Creator
-    const oneYearFromNow = new Date();
-    oneYearFromNow.setFullYear(oneYearFromNow.getFullYear() + 1);
+    // Verify caller already holds creator/approved status (never elevate unapproved accounts)
+    const { data: profile } = await supabaseAdmin
+      .from("profiles")
+      .select("role, promo_90_approved_at, ai_free_until")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    const isAlreadyCreator = profile?.role === "creator" || profile?.role === "admin";
+    let hasApprovedApp = false;
+    if (!isAlreadyCreator && user.email) {
+      const { data: appRow } = await supabaseAdmin
+        .from("creator_applications")
+        .select("status")
+        .eq("email", user.email.toLowerCase().trim())
+        .eq("status", "approved")
+        .maybeSingle();
+      hasApprovedApp = Boolean(appRow);
+    }
+
+    if (!isAlreadyCreator && !hasApprovedApp) {
+      return NextResponse.json(
+        { error: "Creator approval or a VIP Fast-Track invite link is required first." },
+        { status: 403 }
+      );
+    }
+
+    const { aiFreeUntil } = buildFoundingYear1Timestamps(profile, 12);
 
     const { data, error } = await supabaseAdmin
       .from("profiles")
       .update({
         ai_agent_active: true,
         content_ops_enabled: true,
-        ai_free_until: oneYearFromNow.toISOString(),
-        role: "creator"
+        ai_free_until: aiFreeUntil,
+        role: profile?.role === "admin" ? "admin" : "creator"
       })
-      .eq("id", creatorId)
+      .eq("id", user.id)
       .select()
       .single();
 
@@ -63,7 +103,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       success: true,
       message: "Congratulations! 1-Year Free AI Assistant & Ops Pack activated successfully.",
-      aiFreeUntil: oneYearFromNow.toISOString(),
+      aiFreeUntil,
       creator: data
     });
   } catch (err: any) {

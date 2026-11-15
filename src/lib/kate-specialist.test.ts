@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import {
   SPECIALIST_MODEL_CHAIN,
   detectSpecialistLanguage,
@@ -10,6 +10,25 @@ import {
 import { POST as speakPost } from '@/app/api/v2/voice/speak/route';
 import { POST as specialistPost } from '@/app/api/v2/onboarding/specialist/route';
 import { NextRequest } from 'next/server';
+
+const mockGetUser = vi.fn(async () => ({
+  data: { user: { id: '00000000-0000-0000-0000-000000000001' } },
+  error: null,
+}));
+
+vi.mock('@/lib/supabase/server', () => ({
+  createClient: vi.fn(async () => ({
+    auth: { getUser: mockGetUser },
+  })),
+}));
+
+vi.mock('@/lib/supabase/admin-client', () => ({
+  createAdminClient: vi.fn(() => ({})),
+}));
+
+vi.mock('@/lib/auth-admin', () => ({
+  checkEndpointRateLimit: vi.fn(async () => false),
+}));
 
 describe('Kate Specialist Resilience & Multilingual Engine', () => {
   describe('detectSpecialistLanguage', () => {
@@ -140,11 +159,14 @@ describe('Kate Specialist Resilience & Multilingual Engine', () => {
   });
 
   describe('Gemini Model Chain & Transient Error Resilience', () => {
-    it('excludes deprecated 404 models and prioritizes active multi-bucket Flash models', () => {
+    it('excludes deprecated 404 models and prioritizes high-quota Flash-Lite models', () => {
       expect(SPECIALIST_MODEL_CHAIN).not.toContain('gemini-2.0-flash');
       expect(SPECIALIST_MODEL_CHAIN).not.toContain('gemini-2.5-flash-lite');
-      expect(SPECIALIST_MODEL_CHAIN[0]).toBe('gemini-3-flash-preview');
+      expect(SPECIALIST_MODEL_CHAIN[0]).toBe('gemini-3.1-flash-lite-preview');
       expect(SPECIALIST_MODEL_CHAIN).toContain('gemini-3.5-flash-lite');
+      expect(SPECIALIST_MODEL_CHAIN.indexOf('gemini-3.1-flash-lite-preview')).toBeLessThan(
+        SPECIALIST_MODEL_CHAIN.indexOf('gemini-3-flash-preview')
+      );
     });
 
     it('distinguishes transient 503/RPM spikes from 404 deprecation and daily RPD limits', () => {

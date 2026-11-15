@@ -17,6 +17,7 @@ import {
 } from '@/lib/profile-utils';
 import Link from 'next/link';
 import ReportModal from '@/components/modals/ReportModal';
+import UnifiedPaymentGate from '@/components/monetization/UnifiedPaymentGate';
 
 interface ProfileDetailsModalProps {
   profileId: string;
@@ -37,6 +38,7 @@ export default function ProfileDetailsModal({ profileId, onClose, currentUserId 
   const [callRequestId, setCallRequestId] = useState<string>('');
   const [isRequestingCall, setIsRequestingCall] = useState(false);
   const [selectedDuration, setSelectedDuration] = useState<number>(5);
+  const [showCallPaymentGate, setShowCallPaymentGate] = useState(false);
   
   const handleBlock = async () => {
     if (!currentUserId || !profileId) return;
@@ -171,35 +173,8 @@ export default function ProfileDetailsModal({ profileId, onClose, currentUserId 
     }
   };
 
-  const handlePayForCall = async () => {
-    setIsRequestingCall(true);
-    try {
-      const amount = calculatePrice(selectedDuration);
-      
-      const resp = await fetch('/api/billing/checkout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          subscriberId: currentUserId,
-          creatorId: profileId,
-          price: amount,
-          type: 'private_call',
-          callId: callRequestId,
-          duration: selectedDuration
-        })
-      });
-      const data = await resp.json();
-      if (data.url) {
-        window.open(data.url, '_blank');
-      } else {
-        alert('Failed to generate checkout link');
-      }
-    } catch (err) {
-      console.error(err);
-      alert('Error during checkout');
-    } finally {
-      setIsRequestingCall(false);
-    }
+  const handlePayForCall = () => {
+    setShowCallPaymentGate(true);
   };
 
   if (isLoading) {
@@ -294,6 +269,7 @@ export default function ProfileDetailsModal({ profileId, onClose, currentUserId 
             <div className="w-20 h-20 rounded-2xl overflow-hidden border border-[#00fbfb]/30 shadow-[0_0_15px_rgba(0,251,251,0.2)] shrink-0 relative">
               <BlurredFaceImage
                 src={profile.avatar_url}
+                profileId={profile.avatar_url ? profile.id : undefined}
                 alt={profile.username}
                 sharedScore={relationship?.gauge_score ?? 0}
                 isEnabledByOwner={profile.face_blur_active || false}
@@ -702,6 +678,33 @@ export default function ProfileDetailsModal({ profileId, onClose, currentUserId 
         contentId={reportModalContentId}
         contentType="profile"
       />
+      {showCallPaymentGate && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/85 backdrop-blur-md p-4">
+          <div className="relative max-w-md w-full">
+            <button
+              type="button"
+              onClick={() => setShowCallPaymentGate(false)}
+              className="absolute top-4 right-4 z-10 p-2 rounded-full bg-white/10 text-white/70 hover:text-white cursor-pointer"
+            >
+              <X className="w-4 h-4" />
+            </button>
+            <UnifiedPaymentGate
+              amount={calculatePrice(selectedDuration)}
+              tier="PRIVATE_CALL"
+              creatorName={profile.display_name || profile.username || 'Creator'}
+              creatorId={profileId}
+              itemType="private_call"
+              callId={callRequestId || undefined}
+              duration={selectedDuration}
+              contentRating="SFW"
+              onSuccess={() => {
+                setShowCallPaymentGate(false);
+                setCallRequestStatus('paid');
+              }}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -45,14 +45,14 @@ export default function ReportModal({ isOpen, onClose, contentId, contentType }:
       }
 
       const { error: submitError } = await supabase
-        .from('reports')
+        .from('content_moderation_queue')
         .insert({
-          reported_id: contentType === 'profile' ? contentId : null,
-          content_id: contentType !== 'profile' ? contentId : null,
+          reported_user_id: contentType === 'profile' ? contentId : null,
+          content_id: contentId,
           content_type: contentType,
           reporter_id: user.id,
-          reason: reason,
-          details: description,
+          reason,
+          details: description || null,
           status: 'pending'
         });
 

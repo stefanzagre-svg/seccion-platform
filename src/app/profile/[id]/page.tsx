@@ -178,10 +178,11 @@ export default function ProfileInsidePage() {
     const requiredLevel = setting?.required_level;
     if (!requiredLevel || requiredLevel === 'public') return false;
 
-    const reqIdx = RELATIONSHIP_LEVELS.indexOf(requiredLevel as any);
+    const reqIdx = RELATIONSHIP_LEVELS.findIndex((l) => l.key === requiredLevel);
     const currentLevelKey = RELATIONSHIP_LEVELS_METADATA[gaugeLevel - 1]?.key || 'strangers';
-    const currentIdx = RELATIONSHIP_LEVELS.indexOf(currentLevelKey as any);
+    const currentIdx = RELATIONSHIP_LEVELS.findIndex((l) => l.key === currentLevelKey);
 
+    if (reqIdx === -1) return true;
     return currentIdx < (reqIdx === 5 ? 4 : reqIdx); // map vip/passionate constraints
   };
 

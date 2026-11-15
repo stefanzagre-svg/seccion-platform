@@ -1,14 +1,17 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Sparkles, RefreshCw, X } from "lucide-react";
 
 export default function ServiceWorkerRegister() {
   const [updateAvailable, setUpdateAvailable] = useState(false);
   const [waitingWorker, setWaitingWorker] = useState<ServiceWorker | null>(null);
+  const userApprovedUpdateRef = useRef(false);
 
   useEffect(() => {
     if (typeof window !== "undefined" && "serviceWorker" in navigator) {
+      const hadController = Boolean(navigator.serviceWorker.controller);
+
       navigator.serviceWorker
         .register("/sw.js")
         .then((registration) => {
@@ -40,18 +43,25 @@ export default function ServiceWorkerRegister() {
           console.warn("[PWA] Service Worker registration failed:", error);
         });
 
-      // Handle controller change (reloads page seamlessly when new SW takes over)
+      // Only reload when the user explicitly applies an update after an existing controller was active;
+      // never interrupt a first-time visitor or active session on initial clients.claim().
       let refreshing = false;
-      navigator.serviceWorker.addEventListener("controllerchange", () => {
-        if (!refreshing) {
+      const handleControllerChange = () => {
+        if (hadController && userApprovedUpdateRef.current && !refreshing) {
           refreshing = true;
           window.location.reload();
         }
-      });
+      };
+
+      navigator.serviceWorker.addEventListener("controllerchange", handleControllerChange);
+      return () => {
+        navigator.serviceWorker.removeEventListener("controllerchange", handleControllerChange);
+      };
     }
   }, []);
 
   const handleApplyUpdate = () => {
+    userApprovedUpdateRef.current = true;
     if (waitingWorker) {
       waitingWorker.postMessage({ type: "SKIP_WAITING" });
     } else {

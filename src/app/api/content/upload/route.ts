@@ -1,123 +1,196 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin-client';
+import {
+  classifyOrderIntent,
+  detectSightengineProvenance,
+  qualifyDeliveredMedia,
+  type ContentSafetyRating,
+  type WalletLedgerType,
+} from '@/lib/sightengine';
 
 export async function POST(request: Request) {
   try {
-    let body: any;
+    const supabase = await createClient();
+    const {
+      data: { user },
+      error: authErr,
+    } = await supabase.auth.getUser();
+
+    if (authErr || !user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    let body: Record<string, unknown>;
     try {
-      body = await request.json();
+      body = (await request.json()) as Record<string, unknown>;
     } catch {
       return NextResponse.json({ error: 'Malformed JSON payload' }, { status: 400 });
     }
-    const { creatorId, title, description, mediaUrl, mediaType, tier, tags } = body || {};
 
-    if (!creatorId || !title || !mediaUrl || !tier) {
-      return NextResponse.json({ error: 'Missing required fields: creatorId, title, mediaUrl, tier' }, { status: 400 });
+    const creatorId = typeof body.creatorId === 'string' ? body.creatorId : user.id;
+    const title = typeof body.title === 'string' ? body.title.trim() : '';
+    const description = typeof body.description === 'string' ? body.description : '';
+    const mediaUrl = typeof body.mediaUrl === 'string' ? body.mediaUrl.trim() : '';
+    const mediaType =
+      body.mediaType === 'video' || body.mediaType === 'audio' ? body.mediaType : 'image';
+    const tier = typeof body.tier === 'string' ? body.tier.trim() : '';
+    const tags = Array.isArray(body.tags)
+      ? body.tags.filter((t): t is string => typeof t === 'string')
+      : [];
+    const category = typeof body.category === 'string' ? body.category : '';
+    const explicitFlag = Boolean(body.explicitFlag);
+    const provenanceLevel =
+      typeof body.provenanceLevel === 'string' ? body.provenanceLevel : 'genuine';
+
+    if (creatorId !== user.id) {
+      return NextResponse.json(
+        { error: 'Forbidden: Authenticated user does not match creatorId.' },
+        { status: 403 }
+      );
     }
 
-    const supabase = await createClient();
+    if (!title || !mediaUrl || !tier) {
+      return NextResponse.json(
+        { error: 'Missing required fields: title, mediaUrl, tier' },
+        { status: 400 }
+      );
+    }
 
-    // 1. Fetch Creator Profile to perform Layer 1 Intent Mismatch Check
-    const { data: creator, error: creatorError } = await supabase
+    const admin = createAdminClient();
+
+    const { data: creator, error: creatorError } = await admin
       .from('profiles')
-      .select('*')
-      .eq('id', creatorId)
+      .select('id, display_name')
+      .eq('id', user.id)
       .single();
 
     if (creatorError || !creator) {
       return NextResponse.json({ error: 'Creator profile not found' }, { status: 404 });
     }
 
-    // Layer 1 Check: Intent & Tag validation
-    const creatorGoals = creator.relationship_goals || [];
-    const isAdultCreator = creator.sexual_preference === 'Heterosexual' || creator.sexual_preference === 'Lesbian' || creator.sexual_preference === 'Gay';
-    const hasExplicitTags = tags && tags.some((tag: string) => ['explicit', 'fantasy', 'adult', 'dating'].includes(tag.toLowerCase()));
+    // Stage 1: Classify metadata/tag/category intent
+    const stage1 = classifyOrderIntent({
+      category,
+      title,
+      description: [description, ...tags].join(' '),
+      explicitFlag,
+    });
 
-    // Trigger mismatch if a non-adult tutorial profile attempts to upload explicit/fantasy tags
-    if (hasExplicitTags && !isAdultCreator) {
-      return NextResponse.json({
-        success: false,
-        errorType: 'intent_mismatch',
-        message: `Tag conflict detected: Explicit tags are not permitted for educational/tutorial channels like ${creator.display_name}.`
-      }, { status: 422 });
+    // Stage 2: Real Sightengine AI safety & provenance inspection (no fake delay)
+    const [mediaVerdict, provenanceDetection] = await Promise.all([
+      qualifyDeliveredMedia(mediaUrl, stage1.rating),
+      detectSightengineProvenance(mediaUrl, mediaType),
+    ]);
+
+    if (mediaVerdict.isBlockedProhibited) {
+      return NextResponse.json(
+        {
+          success: false,
+          errorType: 'media_safety_fail',
+          safetyFlags: mediaVerdict.safetyFlags || [],
+          message: mediaVerdict.reason,
+        },
+        { status: 422 }
+      );
     }
 
-    // Layer 2 Check: Simulated Media Safety Scan (AWS Rekognition)
-    await new Promise((resolve) => setTimeout(resolve, 1500)); // Simulate API delay
+    // Server-Lock V3.1 classification & required payment ledger
+    const finalRating: ContentSafetyRating =
+      stage1.rating === 'NSFW_18' || mediaVerdict.rating === 'NSFW_18' ? 'NSFW_18' : 'SFW';
+    const finalLedger: WalletLedgerType =
+      finalRating === 'NSFW_18' ? 'sovereign_red_pills' : 'sfw_credits';
 
-    let confidenceScore = 99.6; // Default safe score
-    let rejectedReason = '';
+    const sightengineSnapshot = {
+      contentRating: finalRating,
+      requiredLedger: finalLedger,
+      stage1DetectedBy: stage1.detectedBy,
+      rawNudityScore: mediaVerdict.rawNudityScore,
+      partialNudityScore: mediaVerdict.partialNudityScore,
+      safeScore: mediaVerdict.safeScore,
+      safetyFlags: mediaVerdict.safetyFlags || [],
+      provenanceSubmitted: provenanceLevel,
+      provenanceDetected: provenanceDetection?.suggestedLevel || null,
+      checkedAt: new Date().toISOString(),
+    };
 
-    const lowerTitle = title.toLowerCase();
-    if (lowerTitle.includes('violence') || lowerTitle.includes('hate') || lowerTitle.includes('illegal')) {
-      confidenceScore = 85.4;
-      rejectedReason = 'Violence, hate symbols, or illegal items detected.';
-    } else if (lowerTitle.includes('extreme') || lowerTitle.includes('restricted')) {
-      confidenceScore = 94.2;
-      rejectedReason = 'Restricted content or non-consensual elements detected.';
-    }
+    const fullPayload = {
+      creator_id: user.id,
+      tier,
+      title,
+      description,
+      media_url: mediaUrl,
+      media_type: mediaType,
+      moderation_status: 'pending',
+      content_rating: finalRating,
+      required_ledger: finalLedger,
+      sightengine_verdict: sightengineSnapshot,
+    };
 
-    if (confidenceScore < 98.0) {
-      return NextResponse.json({
-        success: false,
-        errorType: 'media_safety_fail',
-        message: `Media safety scan failed (C_score: ${confidenceScore}% < 98.0%). Reason: ${rejectedReason}`
-      }, { status: 422 });
-    }
-
-    // Layer 3 Check: Write to Database with 'pending' moderation status
-    let newPost;
-    let insertError;
-
-    const firstAttempt = await supabase
+    let newPost: Record<string, unknown> | null = null;
+    const firstAttempt = await admin
       .from('platform_content')
-      .insert({
-        creator_id: creatorId,
-        tier,
-        title,
-        description,
-        media_url: mediaUrl,
-        media_type: mediaType || 'image',
-        moderation_status: 'pending' // Enforces human moderation queue
-      })
+      .insert(fullPayload)
       .select('*')
       .single();
 
-    if (firstAttempt.error && firstAttempt.error.message.includes('moderation_status')) {
-      // Fallback: column doesn't exist, insert without it
-      const secondAttempt = await supabase
+    if (firstAttempt.error) {
+      const msg = firstAttempt.error.message || '';
+      const isMissingCol =
+        msg.includes('moderation_status') ||
+        msg.includes('content_rating') ||
+        msg.includes('required_ledger') ||
+        msg.includes('sightengine_verdict') ||
+        firstAttempt.error.code === '42703' ||
+        firstAttempt.error.code === 'PGRST204';
+
+      if (!isMissingCol) {
+        throw firstAttempt.error;
+      }
+
+      const fallbackAttempt = await admin
         .from('platform_content')
         .insert({
-          creator_id: creatorId,
+          creator_id: user.id,
           tier,
           title,
           description,
           media_url: mediaUrl,
-          media_type: mediaType || 'image'
+          media_type: mediaType,
         })
         .select('*')
         .single();
-      
-      if (secondAttempt.error) {
-        throw secondAttempt.error;
+
+      if (fallbackAttempt.error) {
+        throw fallbackAttempt.error;
       }
-      newPost = secondAttempt.data;
+
+      newPost = (fallbackAttempt.data as Record<string, unknown>) || null;
       if (newPost) {
         newPost.moderation_status = 'pending';
+        newPost.content_rating = finalRating;
+        newPost.required_ledger = finalLedger;
       }
     } else {
-      if (firstAttempt.error) throw firstAttempt.error;
-      newPost = firstAttempt.data;
+      newPost = (firstAttempt.data as Record<string, unknown>) || null;
     }
 
     return NextResponse.json({
       success: true,
-      c_score: confidenceScore,
       post: newPost,
-      message: 'Upload successful. Content is pending moderation.'
+      moderation_status: 'pending',
+      contentRating: finalRating,
+      requiredLedger: finalLedger,
+      sightengineVerdict: sightengineSnapshot,
+      provenanceDetection,
+      message:
+        finalRating === 'NSFW_18'
+          ? 'Media passed safety checks and was locked to 18+ Sovereign Red Pills (NSFW_18) moderation queue.'
+          : 'Media passed safety checks and was locked to SFW Credits moderation queue.',
     });
-
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  } catch (error: unknown) {
+    const errMsg = error instanceof Error ? error.message : 'Internal server error during upload validation';
+    console.error('[CONTENT UPLOAD API] Error:', error);
+    return NextResponse.json({ error: errMsg }, { status: 500 });
   }
 }

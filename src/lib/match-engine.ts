@@ -496,11 +496,11 @@ function scoreMoodResonance(userA: UserProfile, userB: UserProfile): number {
 
   if (moodsA.length > 0 && moodsB.length > 0) {
     signals++;
-    const setA = new Set(moodsA);
-    const setB = new Set(moodsB);
-    const intersection = [...setA].filter(x => setB.has(x));
+    const setA = new Set(moodsA.map((m) => String(m).trim().toLowerCase()).filter(Boolean));
+    const setB = new Set(moodsB.map((m) => String(m).trim().toLowerCase()).filter(Boolean));
+    const intersection = [...setA].filter((x) => setB.has(x));
     const union = new Set([...setA, ...setB]);
-    score += (intersection.length / union.size) * 100;
+    score += union.size > 0 ? (intersection.length / union.size) * 100 : 0;
   }
 
   // Core passion match (exact or canonical normalized = 100, different = 30, missing = neutral 50)
@@ -828,6 +828,8 @@ export interface LocationProfile {
   current_location?: string;
   location?: string;
   origins?: string;
+  nativeTown?: string;
+  native_town?: string;
 }
 
 /**
@@ -937,12 +939,14 @@ export const TIER_META: Record<CompatibilityTier, {
 /**
  * Returns a human-readable description of the chemistry between two archetypes.
  */
-export function getChemistryNarrative(archA?: ArchetypeId, archB?: ArchetypeId): string {
-  if (!archA || !archB) return 'Archetype data not yet available for this connection.';
+export function getChemistryNarrative(archA?: ArchetypeId | string, archB?: ArchetypeId | string): string {
+  const normA = normalizeArchetypeKey(archA);
+  const normB = normalizeArchetypeKey(archB);
+  if (!normA || !normB) return 'Archetype data not yet available for this connection.';
 
-  const chemistry = ARCHETYPE_CHEMISTRY[archA]?.[archB] ?? 0.5;
-  const nameA = ARCHETYPE_PROFILES[archA]?.name ?? archA;
-  const nameB = ARCHETYPE_PROFILES[archB]?.name ?? archB;
+  const chemistry = ARCHETYPE_CHEMISTRY[normA]?.[normB] ?? 0.5;
+  const nameA = ARCHETYPE_PROFILES[normA]?.name ?? normA;
+  const nameB = ARCHETYPE_PROFILES[normB]?.name ?? normB;
 
   if (chemistry >= 0.85) {
     return `${nameA} and ${nameB} share extraordinary chemistry — a rare complementary bond where each amplifies the other's strengths.`;

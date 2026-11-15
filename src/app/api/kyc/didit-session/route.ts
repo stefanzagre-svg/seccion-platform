@@ -18,11 +18,11 @@ export async function POST(req: NextRequest) {
 
     const apiKey = process.env.DIDIT_API_KEY;
     if (!apiKey) {
-      // Graceful fallback to hosted link if API key is not configured
-      return NextResponse.json({
-        url: process.env.NEXT_PUBLIC_DIDIT_KYC_URL || 'https://verify.didit.me/u/bPzKX19JQiawBcuyL9kraw',
-        session_id: 'hosted_link_fallback',
-      });
+      console.error('[DIDIT Session]: DIDIT_API_KEY is not configured');
+      return NextResponse.json(
+        { error: 'Identity verification gateway is not configured.' },
+        { status: 503 }
+      );
     }
 
     const rawBody = await req.json().catch(() => ({}));
@@ -32,10 +32,6 @@ export async function POST(req: NextRequest) {
       !rawBody.returnTo.startsWith('//')
         ? rawBody.returnTo
         : '/onboarding/kyc?session_done=true';
-    const targetRole =
-      rawBody?.targetRole === 'creator' || rawBody?.targetRole === 'member'
-        ? rawBody.targetRole
-        : undefined;
 
     const origin = req.headers.get('origin') || 'https://seccion.ai';
     const callbackUrl = `${origin}${requestedReturnTo}`;
@@ -56,7 +52,6 @@ export async function POST(req: NextRequest) {
         metadata: {
           user_id: user.id,
           platform: 'SECCION',
-          ...(targetRole ? { target_role: targetRole } : {}),
         },
       }),
     });
@@ -64,11 +59,10 @@ export async function POST(req: NextRequest) {
     if (!res.ok) {
       const detail = await res.text();
       console.error('[DIDIT Session Create Failed]:', res.status, detail);
-      // Fallback to hosted link so the user is never blocked
-      return NextResponse.json({
-        url: process.env.NEXT_PUBLIC_DIDIT_KYC_URL || 'https://verify.didit.me/u/bPzKX19JQiawBcuyL9kraw',
-        session_id: 'fallback',
-      });
+      return NextResponse.json(
+        { error: 'Unable to start verification session right now. Please try again shortly.' },
+        { status: 502 }
+      );
     }
 
     const session = await res.json();
@@ -79,8 +73,8 @@ export async function POST(req: NextRequest) {
   } catch (error: any) {
     console.error('[DIDIT Session API Error]:', error);
     return NextResponse.json(
-      { url: process.env.NEXT_PUBLIC_DIDIT_KYC_URL || 'https://verify.didit.me/u/bPzKX19JQiawBcuyL9kraw' },
-      { status: 200 }
+      { error: 'Identity verification session failed to initialize.' },
+      { status: 500 }
     );
   }
 }

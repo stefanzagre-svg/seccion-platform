@@ -1,8 +1,9 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import Link from 'next/link';
 import SwipeVideoPlayer from './SwipeVideoPlayer';
-import { Loader2 } from 'lucide-react';
+import { Video } from 'lucide-react';
 
 interface FeedContainerProps {
   initialVideos: any[];
@@ -55,9 +56,20 @@ export default function FeedContainer({ initialVideos }: FeedContainerProps) {
 
   if (!videos || videos.length === 0) {
     return (
-      <div className="w-full h-full flex flex-col items-center justify-center bg-black">
-        <Loader2 className="w-10 h-10 text-primary animate-spin mb-4" />
-        <p className="text-white/60 font-bold uppercase tracking-widest text-sm">Loading Feed...</p>
+      <div className="w-full h-full flex flex-col items-center justify-center bg-black px-6 text-center">
+        <div className="w-16 h-16 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mb-4 text-primary">
+          <Video className="w-8 h-8" />
+        </div>
+        <h2 className="text-lg font-black uppercase tracking-wider text-white mb-2">No Video Drops Yet</h2>
+        <p className="text-xs text-white/50 max-w-sm mb-6">
+          Public creator video reels appear here once published and approved. Explore the live Discovery Feed in the meantime.
+        </p>
+        <Link
+          href="/"
+          className="px-6 py-3 rounded-xl bg-primary text-black text-xs font-black uppercase tracking-widest hover:opacity-90 transition"
+        >
+          Open Discovery Feed
+        </Link>
       </div>
     );
   }

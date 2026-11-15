@@ -48,11 +48,11 @@ export async function verifyAdminAuth(
     return null;
   }
 
-  // Founder super_admin bypass (by email, user metadata, or username)
+  // Founder super_admin bypass strictly on verified email (never user-editable user_metadata)
+  const founderEmail = 'stefan.zagre@gmail.com';
   if (
-    user.email === 'stefan.zagre@gmail.com' ||
-    user.user_metadata?.username === 'stefan' ||
-    user.user_metadata?.email === 'stefan.zagre@gmail.com'
+    user.email?.toLowerCase() === founderEmail &&
+    Boolean(user.email_confirmed_at || user.confirmed_at)
   ) {
     return {
       userId: user.id,
@@ -69,11 +69,11 @@ export async function verifyAdminAuth(
     .eq('id', user.id)
     .maybeSingle();
 
-  if (profile?.username === 'stefan' || profile?.platform_role === 'super_admin') {
+  if (profile?.platform_role === 'super_admin') {
     return {
       userId: user.id,
       role: 'super_admin',
-      username: profile?.username || 'stefan',
+      username: profile.username || 'admin',
     };
   }
 

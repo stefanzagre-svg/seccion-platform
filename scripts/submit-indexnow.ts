@@ -1,4 +1,4 @@
-import { submitToIndexNow } from './src/lib/indexnow';
+import { submitToIndexNow } from '../src/lib/indexnow';
 
 const urls = [
   'https://seccion.ai/creator-hub/onlyfans-alternative',

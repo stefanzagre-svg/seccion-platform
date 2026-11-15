@@ -91,16 +91,18 @@ export async function POST(req: NextRequest) {
     }
 
     // 3. Instant Telegram Admin Dispatch (Fire & Forget)
-    const telegramMessage = 
-      `🐞 *NEW BUG REPORT FILED* (#${report?.id?.slice(0, 8) || 'N/A'})\n\n` +
-      `👤 *Reporter:* ${userEmail || 'Guest'} (${userRole.toUpperCase()})\n` +
-      `🏷️ *Category:* ${category}\n` +
-      `⚡ *Severity:* ${severity.toUpperCase()}\n` +
-      `🌐 *URL:* ${pageUrl || 'N/A'}\n` +
-      `📱 *Viewport:* ${viewportSize || 'N/A'}\n\n` +
-      `📝 *Description:*\n"${description.trim()}"\n\n` +
-      `🎁 *Est. Reward:* ${reward.descriptionEn}\n` +
-      `👉 [Review in Admin Dashboard](https://seccion.ai/admin/bugs)`;
+    const esc = (v: unknown) =>
+      String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const telegramMessage =
+      `🐞 <b>NEW BUG REPORT FILED</b> (#${esc(report?.id?.slice(0, 8) || 'N/A')})\n\n` +
+      `👤 <b>Reporter:</b> ${esc(userEmail || 'Guest')} (${esc(userRole.toUpperCase())})\n` +
+      `🏷️ <b>Category:</b> ${esc(category)}\n` +
+      `⚡ <b>Severity:</b> ${esc(severity.toUpperCase())}\n` +
+      `🌐 <b>URL:</b> ${esc(pageUrl || 'N/A')}\n` +
+      `📱 <b>Viewport:</b> ${esc(viewportSize || 'N/A')}\n\n` +
+      `📝 <b>Description:</b>\n"${esc(description.trim())}"\n\n` +
+      `🎁 <b>Est. Reward:</b> ${esc(reward.descriptionEn)}\n` +
+      `👉 <a href="https://seccion.ai/admin/bugs">Review in Admin Dashboard</a>`;
 
     sendTelegramNotification(telegramMessage).catch((err) => {
       console.warn('[Bug Report] Telegram dispatch skipped:', err);

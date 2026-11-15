@@ -182,11 +182,13 @@ export default function BecomeCreatorPage({ initialProfile, userEmail }: { initi
       link1: normalizeSocialLink(formData.link1),
       link2: normalizeSocialLink(formData.link2),
       link3: normalizeSocialLink(formData.link3),
+      locale,
     };
     
     try {
       const response = await fetch('/api/v2/creator/apply', { 
-        method: 'POST', 
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload) 
       });
       
@@ -258,7 +260,13 @@ export default function BecomeCreatorPage({ initialProfile, userEmail }: { initi
                 </span>
               </div>
               <h1 className="font-display font-black leading-[1.05] tracking-tight text-white text-[32px] sm:text-[56px] md:text-[72px] lg:text-[80px] text-left">
-                {locale === "es" ? (
+                {locale === "fr" ? (
+                  <>
+                    Votre Espace. <br/>
+                    Vos Règles. <br/>
+                    Gardez <span className="text-[#00fbfb] drop-shadow-[0_0_35px_rgba(0,251,251,0.5)]">90%</span>.
+                  </>
+                ) : locale === "es" ? (
                   <>
                     Tu Espacio. <br/>
                     Tus Reglas. <br/>
@@ -623,11 +631,13 @@ export default function BecomeCreatorPage({ initialProfile, userEmail }: { initi
               {locale === "fr" ? "Contrôle Total du Créateur" : locale === "es" ? "Control Total del Creador" : "Total Creator Control"}
             </span>
             <h2 className="font-display text-2xl sm:text-3xl md:text-5xl font-black text-white tracking-tight">
-              {locale === "es" ? "Cifrado Difuminado Facial" : "Face Blur Encryption"}
+              {locale === "fr" ? "Chiffrement par Flou Facial" : locale === "es" ? "Cifrado Difuminado Facial" : "Face Blur Encryption"}
             </h2>
             <p className="text-xs sm:text-sm text-[#b9cac9] leading-relaxed font-medium break-words">
-              {locale === "es" 
-                ? "Tienes el control absoluto de quién ve tu contenido y cuándo. Nuestra tecnología de Difuminado Facial oculta automáticamente tu rostro en los feeds de descubrimiento públicos. Solo tú decides cuándo quitar el difuminado—ya sea automáticamente cuando un miembro compatible alcanza el Nivel 4 de Química al chatear e interactuar contigo, o de inmediato cuando elige una suscripción." 
+              {locale === "fr"
+                ? "Vous avez le contrôle absolu sur qui voit votre contenu et quand. Notre technologie de Flou Facial masque automatiquement votre visage dans les feeds publics. Vous seul décidez quand lever le flou — soit automatiquement lorsqu'un membre atteint le Niveau 4 de Complicité en échangeant avec vous, soit immédiatement lorsqu'il souscrit à votre espace."
+                : locale === "es"
+                ? "Tienes el control absoluto de quién ve tu contenido y cuándo. Nuestra tecnología de Difuminado Facial oculta automáticamente tu rostro en los feeds de descubrimiento públicos. Solo tú decides cuándo quitar el difuminado—ya sea automáticamente cuando un miembro compatible alcanza el Nivel 4 de Química al chatear e interactuar contigo, o de inmediato cuando elige una suscripción."
                 : "You are in absolute control of who sees your content, and when. Our Face Blur technology automatically obscures your face on all public discovery feeds. Only you decide when to lift the blur—whether automatically when a matched member climbs to Chemistry Level 4 by chatting and interacting with you, or immediately when they choose a subscription."}
             </p>
             <div className="space-y-3 sm:space-y-4 font-medium text-xs text-[#b9cac9]">
@@ -754,8 +764,10 @@ export default function BecomeCreatorPage({ initialProfile, userEmail }: { initi
             </h2>
             
             <p className="max-w-[620px] mx-auto text-xs sm:text-sm text-[#b9cac9] leading-relaxed">
-              {locale === "es" 
-                ? "Asegura una de las 500 plazas de Creador Fundador: garantiza tu 90% de comisión neta y desbloquea tu Asistente IA de Operaciones 100% gratis durante todo el 1er Año." 
+              {locale === "fr"
+                ? "Réservez l'une des 500 places de Créateur Fondateur : sécurisez 90% de vos revenus nets et débloquez votre Assistant Opérationnel IA intégré 100% gratuit pendant toute votre 1re année."
+                : locale === "es"
+                ? "Asegura una de las 500 plazas de Creador Fundador: garantiza tu 90% de comisión neta y desbloquea tu Asistente IA de Operaciones 100% gratis durante todo el 1er Año."
                 : "Lock in one of the 500 Founding Creator spots: secure your 90% net revenue split and unlock your built-in AI Operations Assistant 100% free for your entire 1st Year."}
             </p>
 
@@ -838,7 +850,7 @@ export default function BecomeCreatorPage({ initialProfile, userEmail }: { initi
                         <ArrowUpRight className="w-3 h-3" />
                       </a>
                       <a
-                        href="https://t.me/seccion_ai"
+                        href="https://t.me/seccionplatform"
                         target="_blank"
                         rel="noopener noreferrer"
                         className="py-2.5 px-3 rounded-xl bg-[#229ED9]/20 border border-[#229ED9]/40 hover:bg-[#229ED9] text-[#229ED9] hover:text-white font-mono text-[11px] font-bold transition flex items-center justify-center gap-1.5"
@@ -1020,7 +1032,7 @@ export default function BecomeCreatorPage({ initialProfile, userEmail }: { initi
                       <input
                         type="text"
                         name="customCity"
-                        placeholder={locale === "es" ? "Escribe tu ciudad y país (ej. Buenos Aires, Argentina / Montreal, Canadá)" : "Enter your city & country (e.g. Buenos Aires, Argentina / Montreal, Canada)"}
+                        placeholder={locale === "fr" ? "Entrez votre ville et pays (ex. Paris, France / Montréal, Canada)" : locale === "es" ? "Escribe tu ciudad y país (ej. Buenos Aires, Argentina / Montreal, Canadá)" : "Enter your city & country (e.g. Buenos Aires, Argentina / Montreal, Canada)"}
                         className="w-full px-4 py-3 rounded-xl bg-black/60 border border-[#00fbfb]/40 focus:border-[#00fbfb] text-white text-xs placeholder-white/30 focus:outline-none transition font-sans"
                         onChange={(e) => setFormData({ ...formData, city: e.target.value })}
                       />
@@ -1111,7 +1123,7 @@ export default function BecomeCreatorPage({ initialProfile, userEmail }: { initi
                     <strong className="text-white">
                       {locale === "fr" ? "Réclamer le Pack Assistant IA 1 An Gratuit" : locale === "es" ? "Reclamar Pack Asistente IA 1er Año Gratis" : "Claim 1-Year Free AI Assistant Pack"}
                     </strong>{" "}
-                    ({locale === "fr" ? " €/mois" : locale === "es" ? "Ahorro de 4.000 €/mes en costes de agencia, 90% retención neta en pre-launch." : "Save €4,000/mo in agency fees, 90% net revenue split during pre-launch."})
+                    ({locale === "fr" ? "Économisez 4 000 €/mois en frais d'agence, 90% de rétention nette en pré-lancement." : locale === "es" ? "Ahorro de 4.000 €/mes en costes de agencia, 90% retención neta en pre-launch." : "Save €4,000/mo in agency fees, 90% net revenue split during pre-launch."})
                   </label>
                 </div>
 
@@ -1144,15 +1156,15 @@ export default function BecomeCreatorPage({ initialProfile, userEmail }: { initi
                   <ul className="space-y-1.5 text-[10px] text-[#b9cac9] font-sans">
                     <li className="flex items-center gap-2">
                       <span className="w-1.5 h-1.5 rounded-full bg-[#39FF14]" />
-                      <span>{locale === "es" ? "Tu nombre legal, teléfono y WhatsApp NUNCA se muestran a los miembros." : "Your legal name, phone, and WhatsApp are NEVER visible to members."}</span>
+                      <span>{locale === "fr" ? "Votre nom légal, téléphone et WhatsApp ne sont JAMAIS visibles par les membres." : locale === "es" ? "Tu nombre legal, teléfono y WhatsApp NUNCA se muestran a los miembros." : "Your legal name, phone, and WhatsApp are NEVER visible to members."}</span>
                     </li>
                     <li className="flex items-center gap-2">
                       <span className="w-1.5 h-1.5 rounded-full bg-[#00fbfb]" />
-                      <span>{locale === "fr" ? "Chiffrement Flou Facial" : locale === "es" ? "Cifrado Difuminado Facial activo por defecto en feeds públicos." : "Face Blur Encryption active by default on public discovery feeds."}</span>
+                      <span>{locale === "fr" ? "Chiffrement Flou Facial actif par défaut sur les feeds de découverte publics." : locale === "es" ? "Cifrado Difuminado Facial activo por defecto en feeds públicos." : "Face Blur Encryption active by default on public discovery feeds."}</span>
                     </li>
                     <li className="flex items-center gap-2">
                       <span className="w-1.5 h-1.5 rounded-full bg-[#ffabf3]" />
-                      <span>{locale === "es" ? "Cero publicaciones automáticas ni acceso a tus contactos personales." : "Zero automatic posting and no access to your personal contacts."}</span>
+                      <span>{locale === "fr" ? "Zéro publication automatique et aucun accès à vos contacts personnels." : locale === "es" ? "Cero publicaciones automáticas ni acceso a tus contactos personales." : "Zero automatic posting and no access to your personal contacts."}</span>
                     </li>
                   </ul>
                 </div>
@@ -1181,8 +1193,10 @@ export default function BecomeCreatorPage({ initialProfile, userEmail }: { initi
             <div className="p-5 bg-white/[0.02] border border-white/5 rounded-2xl text-left space-y-2.5">
               <h4 className="text-sm font-bold text-white flex items-center gap-2">
                 <HelpCircle className="w-4 h-4 text-[#00fbfb] shrink-0" />
-                {locale === "es" 
-                  ? "¿Puedo unirme como Creador/a si no estoy en Medellín o en una ciudad de pre-lanzamiento?" 
+                {locale === "fr"
+                  ? "Puis-je rejoindre SECCION en tant que Créateur si je ne suis pas à Medellín ou dans une ville de pré-lancement ?"
+                  : locale === "es"
+                  ? "¿Puedo unirme como Creador/a si no estoy en Medellín o en una ciudad de pre-lanzamiento?"
                   : "Can I join as a Creator if I am not located in Medellín or a pre-launch city?"}
               </h4>
               <p className="text-xs text-[#b9cac9] leading-relaxed pl-6">

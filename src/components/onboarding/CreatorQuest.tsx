@@ -346,7 +346,7 @@ export default function CreatorQuest({ onSignUp, onSwitchToMember, onClose }: Cr
     } else if (step === "mode-select") {
       speak(`${t.vibe_title}. ${t.vibe_sub}`);
     } else if (step === "revenue-engine") {
-      speak(translate("creatorQuest.main.speech_revenue", "Look at our Revenue Payout Math. Most platforms or agencies take up to 40% or more. SECCION keeps it flat: you retain 80% of all earnings."));
+      speak(translate("creatorQuest.main.speech_revenue", "Look at our Revenue Payout Math. Most platforms or agencies take up to 40% or more. SECCION keeps it simple: you retain 90% as a Founding Creator."));
     } else if (step === "profile-setup") {
       speak(`${t.profile_title}. ${t.profile_sub}`);
     } else if (step === "stream-station") {
@@ -517,7 +517,7 @@ export default function CreatorQuest({ onSignUp, onSwitchToMember, onClose }: Cr
                     <span className="text-2xl block mb-2">👑</span>
                     <h5 className="text-sm font-black uppercase text-white">Creator Mode</h5>
                     <p className="text-[10px] text-white/40 mt-1 leading-normal font-medium">
-                      Configure custom monetization, test progressive Face Blur, and explore 80% payout streams.
+                      Configure custom monetization, test progressive Face Blur, and explore 90% Founding Creator payout streams.
                     </p>
                   </div>
                   <span className="text-[9px] font-black uppercase text-primary tracking-wider mt-4">
@@ -1089,35 +1089,18 @@ export default function CreatorQuest({ onSignUp, onSwitchToMember, onClose }: Cr
                     setIsSubmitting(true);
                     stopVoice();
                     try {
+                      const submitData = getSubmitsData();
                       const primarySexPref = sexualPreferences.length > 0 ? sexualPreferences[0] : "";
                       const primaryGoal = relationshipGoals.length > 0 ? relationshipGoals[0] : "";
                       const primaryType = relationshipTypes.length > 0 ? relationshipTypes[0] : "";
                       if (typeof window !== "undefined") {
                         sessionStorage.setItem("_onboarding_creator_vibe", selectedVibe);
-                        sessionStorage.setItem("_onboarding_creator_tier_price", tierPrice.toString());
-                        sessionStorage.setItem("_onboarding_creator_face_blur", faceBlurActive.toString());
-                        sessionStorage.setItem("_onboarding_creator_residence", residence);
-                        sessionStorage.setItem("_onboarding_creator_purposes", JSON.stringify(creatorPurposes));
-                        sessionStorage.setItem("_onboarding_creator_spec", specialization);
                         sessionStorage.setItem("_onboarding_creator_specialization", specialization);
-                        sessionStorage.setItem("_onboarding_creator_sexual_preferences", JSON.stringify(sexualPreferences));
                         sessionStorage.setItem("_onboarding_creator_sexual_preference", primarySexPref);
-                        sessionStorage.setItem("_onboarding_creator_relationship_goals", JSON.stringify(relationshipGoals));
                         sessionStorage.setItem("_onboarding_creator_relationship_goal", primaryGoal);
-                        sessionStorage.setItem("_onboarding_creator_relationship_types", JSON.stringify(relationshipTypes));
                         sessionStorage.setItem("_onboarding_creator_relationship_type", primaryType);
-                        sessionStorage.setItem("_onboarding_creator_archive_choice", selectedVibe);
                       }
-                      await onSignUp({
-                        archetype: selectedVibe,
-                        role: "creator",
-                        creator_purposes: creatorPurposes,
-                        specialization: specialization,
-                        sexual_preferences: sexualPreferences,
-                        relationship_goals: relationshipGoals,
-                        relationship_types: relationshipTypes,
-                        is_adult_content: isExplicit
-                      });
+                      await onSignUp(submitData);
                     } catch (err) {
                       console.error("[CreatorQuest] Error on claim studio:", err);
                       setIsSubmitting(false);

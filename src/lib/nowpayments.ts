@@ -55,7 +55,7 @@ export class NOWPaymentsService {
 
   constructor() {
     this.apiKey = process.env.NOWPAYMENTS_API_KEY || 'demo_api_key';
-    this.ipnSecret = process.env.NOWPAYMENTS_IPN_SECRET || 'demo_ipn_secret';
+    this.ipnSecret = process.env.NOWPAYMENTS_IPN_SECRET || '';
   }
 
   /**
@@ -83,8 +83,8 @@ export class NOWPaymentsService {
         order_id: params.orderId,
         order_description: params.orderDescription,
         price_amount: String(params.priceAmount),
-        price_currency: params.priceCurrency,
-        pay_currency: params.payCurrency || 'usdttrc20',
+        price_currency: params.priceCurrency || 'eur',
+        pay_currency: params.payCurrency || 'usdcpolygon',
         ipn_callback_url: params.ipnCallbackUrl || '',
         invoice_url: `https://nowpayments.io/payment/?iid=${mockId}`,
         success_url: params.successUrl || '',
@@ -101,8 +101,8 @@ export class NOWPaymentsService {
       },
       body: JSON.stringify({
         price_amount: params.priceAmount,
-        price_currency: params.priceCurrency,
-        pay_currency: params.payCurrency,
+        price_currency: params.priceCurrency || 'eur',
+        pay_currency: params.payCurrency || 'usdcpolygon',
         order_id: params.orderId,
         order_description: params.orderDescription,
         ipn_callback_url: params.ipnCallbackUrl,
@@ -174,6 +174,58 @@ export class NOWPaymentsService {
       platformShare
     };
   }
+
+  /**
+   * Financial Stack V3.1 MiCA + CJEU C-695/20 Fenix Net-Base Split:
+   * 1. VAT collected (`vatAmountEur`) is ring-fenced exclusively for AEAT Modelo 303/369.
+   * 2. Creator 90% (Founding) or 80% (Standard) applies strictly on Net Base minus network fee.
+   */
+  calculateMicaNetBaseSplit(params: {
+    grossPaidEur: number;
+    vatAmountEur: number;
+    isFoundingCreator?: boolean;
+    creatorSplitRatio?: number;
+  }): {
+    grossPaidEur: number;
+    vatRingFencedEur: number;
+    netBaseEur: number;
+    processorFee: number;
+    netDistributableEur: number;
+    creatorShare: number;
+    platformShare: number;
+    settlementAsset: 'USDC';
+  } {
+    const grossPaidEur = Math.round(Math.max(0, params.grossPaidEur) * 100) / 100;
+    const vatRingFencedEur = Math.round(Math.max(0, Math.min(grossPaidEur, params.vatAmountEur)) * 100) / 100;
+    const netBaseEur = Math.round(Math.max(0, grossPaidEur - vatRingFencedEur) * 100) / 100;
+    const processorFee = Math.round(grossPaidEur * 0.005 * 100) / 100;
+    const netDistributableEur = Math.round(Math.max(0, netBaseEur - processorFee) * 100) / 100;
+    const creatorRate =
+      typeof params.creatorSplitRatio === 'number' &&
+      Number.isFinite(params.creatorSplitRatio) &&
+      params.creatorSplitRatio > 0 &&
+      params.creatorSplitRatio <= 1
+        ? params.creatorSplitRatio
+        : params.isFoundingCreator !== false
+          ? 0.90
+          : 0.80;
+    const creatorShare = Math.round(netDistributableEur * creatorRate * 100) / 100;
+    const platformShare = Math.round((netDistributableEur - creatorShare) * 100) / 100;
+
+    return {
+      grossPaidEur,
+      vatRingFencedEur,
+      netBaseEur,
+      processorFee,
+      netDistributableEur,
+      creatorShare,
+      platformShare,
+      settlementAsset: 'USDC',
+    };
+  }
 }
+
+export const MICA_DEFAULT_PAY_CURRENCY = 'usdcpolygon';
+export const MICA_ALLOWED_PAY_CURRENCIES = ['usdcpolygon', 'usdcsol', 'usdcarb', 'eurcpolygon', 'btc', 'eth', 'sol'] as const;
 
 export const nowPayments = new NOWPaymentsService();

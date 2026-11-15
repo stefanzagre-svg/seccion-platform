@@ -1,47 +1,236 @@
 'use client';
 
-import React, { useState } from 'react';
-import { 
-  Network, 
-  FileText, 
-  Target, 
-  Image as ImageIcon, 
-  Lock, 
-  Plus, 
-  Save, 
-  ShieldAlert, 
+import React, { useEffect, useState } from 'react';
+import {
+  Network,
+  FileText,
+  Target,
+  Image as ImageIcon,
+  Lock,
+  Plus,
+  Save,
+  ShieldAlert,
   Download,
   Sliders,
-  DollarSign
+  DollarSign,
+  Trash2,
+  CheckCircle2,
+  AlertTriangle,
 } from 'lucide-react';
 import { buildVaultGraph, RawVaultNote } from '@/lib/vault/vault-graph-engine';
+import type { CopilotMemoryType } from '@/lib/ai/copilot-memory';
+
+interface VaultMemoryNote extends RawVaultNote {
+  status?: 'active' | 'superseded';
+  checkedAt?: string;
+  topicSlug?: string;
+  sourceContext?: string;
+  persisted?: boolean;
+}
+
+const NOTE_TYPE_TO_MEMORY_TYPE: Record<string, CopilotMemoryType> = {
+  PERSONA: 'brand_voice',
+  BOUNDARY: 'boundary',
+  MEMBER_DOSSIER: 'vip_preference',
+  TOPIC: 'vip_offer_decision',
+};
+
+const MEMORY_TYPE_TO_NOTE_TYPE: Record<CopilotMemoryType, RawVaultNote['note_type']> = {
+  brand_voice: 'PERSONA',
+  boundary: 'BOUNDARY',
+  vip_preference: 'MEMBER_DOSSIER',
+  vip_offer_decision: 'TOPIC',
+};
+
+const STARTER_NOTES: VaultMemoryNote[] = [
+  {
+    id: 'starter-1',
+    title: 'Persona_Official',
+    note_type: 'PERSONA',
+    content: 'Authentic tone: witty, playful, loves [[Fitness]], [[Pilates]], and organic coffee. Never mentions personal coordinates.',
+    status: 'active',
+    persisted: false,
+  },
+  {
+    id: 'starter-2',
+    title: 'Fitness_Boundary',
+    note_type: 'BOUNDARY',
+    content: 'Keep fitness advice casual. Direct members interested in deep workout coaching to [[Book_Consultation]].',
+    status: 'active',
+    persisted: false,
+  },
+  {
+    id: 'starter-3',
+    title: 'Member_Lucas',
+    note_type: 'MEMBER_DOSSIER',
+    content: 'Regular supporter since August. Has a Golden Retriever named Milo. Interested in [[Fitness]].',
+    status: 'active',
+    persisted: false,
+  },
+];
 
 export default function VaultAndStrategyCockpit() {
   const [activeTab, setActiveTab] = useState<'vault' | 'goals' | 'media'>('vault');
 
-  // Vault mock notes state
-  const [notes, setNotes] = useState<RawVaultNote[]>([
-    {
-      id: '1',
-      title: 'Persona_Official',
-      note_type: 'PERSONA',
-      content: 'Authentic tone: witty, playful, loves [[Fitness]], [[Pilates]], and organic coffee. Never mentions personal coordinates.',
-    },
-    {
-      id: '2',
-      title: 'Fitness_Boundary',
-      note_type: 'BOUNDARY',
-      content: 'Keep fitness advice casual. Direct members interested in deep workout coaching to [[Book_Consultation]].',
-    },
-    {
-      id: '3',
-      title: 'Member_Lucas',
-      note_type: 'MEMBER_DOSSIER',
-      content: 'Regular supporter since August. Has a Golden Retriever named Milo. Interested in [[Fitness]].',
-    }
-  ]);
+  // Provenance-backed Vault memory state
+  const [notes, setNotes] = useState<VaultMemoryNote[]>(STARTER_NOTES);
+  const [selectedNote, setSelectedNote] = useState<VaultMemoryNote>(STARTER_NOTES[0]);
+  const [isLoadingMemories, setIsLoadingMemories] = useState(false);
+  const [isSavingNote, setIsSavingNote] = useState(false);
+  const [vaultFeedback, setVaultFeedback] = useState<{
+    kind: 'success' | 'warning' | 'error';
+    text: string;
+  } | null>(null);
 
-  const [selectedNote, setSelectedNote] = useState<RawVaultNote>(notes[0]);
+  useEffect(() => {
+    let cancelled = false;
+    async function hydrateMemories() {
+      setIsLoadingMemories(true);
+      try {
+        const res = await fetch('/api/v2/copilot/memories');
+        if (!res.ok) return;
+        const json = await res.json();
+        if (cancelled) return;
+        if (Array.isArray(json.memories) && json.memories.length > 0) {
+          const loaded: VaultMemoryNote[] = json.memories.map((m: any) => ({
+            id: m.id,
+            title: m.title,
+            note_type: MEMORY_TYPE_TO_NOTE_TYPE[m.memory_type as CopilotMemoryType] || 'TOPIC',
+            content: m.summary,
+            status: m.status,
+            checkedAt: m.checked_at,
+            topicSlug: m.topic_slug,
+            sourceContext: m.source_context,
+            persisted: true,
+          }));
+          setNotes(loaded);
+          const firstActive = loaded.find((n) => n.status !== 'superseded') || loaded[0];
+          setSelectedNote(firstActive);
+        }
+      } catch {
+        // Fallback silently to starter notes in local preview mode
+      } finally {
+        if (!cancelled) setIsLoadingMemories(false);
+      }
+    }
+    hydrateMemories();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  async function handleSaveNote() {
+    if (!selectedNote.title.trim() || !selectedNote.content.trim()) {
+      setVaultFeedback({ kind: 'error', text: 'Title and memory summary cannot be empty.' });
+      return;
+    }
+
+    setIsSavingNote(true);
+    setVaultFeedback(null);
+    try {
+      const memoryType: CopilotMemoryType =
+        NOTE_TYPE_TO_MEMORY_TYPE[selectedNote.note_type] || 'vip_offer_decision';
+
+      const res = await fetch('/api/v2/copilot/memories', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: selectedNote.title,
+          memoryType,
+          topicSlug: selectedNote.topicSlug,
+          summary: selectedNote.content,
+          sourceContext: 'studio_cockpit',
+        }),
+      });
+
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setVaultFeedback({
+          kind: 'error',
+          text: data.error || 'Could not save memory to Supabase.',
+        });
+        return;
+      }
+
+      const savedRow = data.memory;
+      const savedNote: VaultMemoryNote = {
+        id: savedRow.id,
+        title: savedRow.title,
+        note_type: MEMORY_TYPE_TO_NOTE_TYPE[savedRow.memory_type as CopilotMemoryType] || selectedNote.note_type,
+        content: savedRow.summary,
+        status: savedRow.status,
+        checkedAt: savedRow.checked_at,
+        topicSlug: savedRow.topic_slug,
+        sourceContext: savedRow.source_context,
+        persisted: true,
+      };
+
+      setNotes((prev) => {
+        const updated = prev
+          .filter((n) => n.id !== selectedNote.id)
+          .map((n) =>
+            n.topicSlug === savedNote.topicSlug && n.status === 'active'
+              ? { ...n, status: 'superseded' as const }
+              : n
+          );
+        return [savedNote, ...updated];
+      });
+      setSelectedNote(savedNote);
+
+      const notesFlags: string[] = ['Saved & verified in AI Copilot Memory'];
+      if (data.supersededCount > 0) {
+        notesFlags.push(`superseded ${data.supersededCount} older rule(s)`);
+      }
+      if (data.piiRedacted) {
+        notesFlags.push(`auto-scrubbed PII (${(data.redactedTypes || []).join(', ')})`);
+      }
+      setVaultFeedback({
+        kind: data.piiRedacted ? 'warning' : 'success',
+        text: notesFlags.join(' • '),
+      });
+    } catch {
+      setVaultFeedback({ kind: 'error', text: 'Network error while saving AI memory.' });
+    } finally {
+      setIsSavingNote(false);
+    }
+  }
+
+  async function handleDeleteNote(noteToDelete: VaultMemoryNote) {
+    setVaultFeedback(null);
+    if (noteToDelete.persisted) {
+      try {
+        const res = await fetch(`/api/v2/copilot/memories?id=${encodeURIComponent(noteToDelete.id)}`, {
+          method: 'DELETE',
+        });
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          setVaultFeedback({ kind: 'error', text: data.error || 'Failed to delete memory.' });
+          return;
+        }
+      } catch {
+        setVaultFeedback({ kind: 'error', text: 'Network error while deleting memory.' });
+        return;
+      }
+    }
+
+    const remaining = notes.filter((n) => n.id !== noteToDelete.id);
+    setNotes(remaining);
+    if (remaining.length > 0) {
+      setSelectedNote(remaining[0]);
+    } else {
+      const blank: VaultMemoryNote = {
+        id: Date.now().toString(),
+        title: 'New_Brand_Rule',
+        note_type: 'PERSONA',
+        content: 'Describe your tone, [[Topics]], or VIP guidelines...',
+        status: 'active',
+        persisted: false,
+      };
+      setNotes([blank]);
+      setSelectedNote(blank);
+    }
+    setVaultFeedback({ kind: 'success', text: 'Memory deleted from Copilot context.' });
+  }
 
   // Goal & restriction state
   const [globalGoal, setGlobalGoal] = useState('SUBSCRIBE_VIP');
@@ -58,7 +247,8 @@ export default function VaultAndStrategyCockpit() {
     { id: 'm3', title: 'Exclusive Studio BTS', tag: 'bts', type: 'video', minRls: 25, isPpv: true, price: 15 },
   ]);
 
-  const graph = buildVaultGraph(notes);
+  const activeNotesForGraph = notes.filter((n) => n.status !== 'superseded');
+  const graph = buildVaultGraph(activeNotesForGraph);
 
   return (
     <div className="space-y-6">
@@ -97,46 +287,75 @@ export default function VaultAndStrategyCockpit() {
           <div className="glass-card p-5 rounded-2xl border border-white/5 space-y-4">
             <div className="flex items-center justify-between">
               <span className="text-[10px] font-black uppercase tracking-widest text-white/60">
-                Connected Vault Nodes ({graph.nodes.length})
+                Active Vault Nodes ({graph.nodes.length})
               </span>
               <button
                 onClick={() => {
                   const title = prompt('Enter new Note Title (e.g. [[Topic]]):');
                   if (!title) return;
-                  const newNote: RawVaultNote = {
+                  const newNote: VaultMemoryNote = {
                     id: Date.now().toString(),
                     title: title.replace(/\[\[|\]\]/g, ''),
                     note_type: 'TOPIC',
                     content: 'Define guidelines and context here using [[wikilinks]].',
+                    status: 'active',
+                    persisted: false,
                   };
-                  setNotes([...notes, newNote]);
+                  setNotes([newNote, ...notes]);
                   setSelectedNote(newNote);
+                  setVaultFeedback(null);
                 }}
                 className="p-1.5 bg-white/5 hover:bg-white/10 rounded-lg text-white/70 hover:text-white transition"
+                title="Add new provenance memory node"
               >
                 <Plus className="w-3.5 h-3.5" />
               </button>
             </div>
 
-            <div className="space-y-2">
-              {notes.map((n) => (
-                <div
-                  key={n.id}
-                  onClick={() => setSelectedNote(n)}
-                  className={`p-3 rounded-xl border cursor-pointer transition-all ${
-                    selectedNote.id === n.id
-                      ? 'bg-primary/10 border-primary/40 text-white'
-                      : 'bg-black/30 border-white/5 text-white/60 hover:text-white'
-                  }`}
-                >
-                  <div className="flex items-center justify-between text-[11px] font-bold">
-                    <span>[[{n.title}]]</span>
-                    <span className="text-[8px] uppercase tracking-wider bg-white/5 px-2 py-0.5 rounded text-white/40">
-                      {n.note_type}
-                    </span>
+            {isLoadingMemories && (
+              <div className="text-[10px] font-mono text-white/40 uppercase tracking-widest">
+                Syncing creator memory ledger...
+              </div>
+            )}
+
+            <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
+              {notes.map((n) => {
+                const isSuperseded = n.status === 'superseded';
+                return (
+                  <div
+                    key={n.id}
+                    onClick={() => {
+                      setSelectedNote(n);
+                      setVaultFeedback(null);
+                    }}
+                    className={`p-3 rounded-xl border cursor-pointer transition-all ${
+                      selectedNote.id === n.id
+                        ? 'bg-primary/10 border-primary/40 text-white'
+                        : isSuperseded
+                          ? 'bg-black/20 border-white/5 text-white/40 opacity-70 hover:opacity-100'
+                          : 'bg-black/30 border-white/5 text-white/60 hover:text-white'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between gap-2 text-[11px] font-bold">
+                      <span className={isSuperseded ? 'line-through' : ''}>[[{n.title}]]</span>
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <span
+                          className={`text-[8px] uppercase tracking-wider px-1.5 py-0.5 rounded ${
+                            isSuperseded
+                              ? 'bg-amber-500/15 text-amber-300'
+                              : 'bg-emerald-500/15 text-emerald-300'
+                          }`}
+                        >
+                          {isSuperseded ? 'superseded' : 'active'}
+                        </span>
+                        <span className="text-[8px] uppercase tracking-wider bg-white/5 px-2 py-0.5 rounded text-white/40">
+                          {n.note_type}
+                        </span>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             {/* Visual Edge Adjacency list */}
@@ -158,22 +377,72 @@ export default function VaultAndStrategyCockpit() {
 
           {/* Markdown Note Editor */}
           <div className="lg:col-span-2 glass-card p-6 rounded-2xl border border-white/5 space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-white/5">
+            <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-white/5">
               <div className="flex items-center gap-2">
                 <FileText className="w-4 h-4 text-primary" />
                 <span className="text-xs font-black uppercase tracking-widest text-white">
                   Editing: [[{selectedNote.title}]]
                 </span>
+                {selectedNote.checkedAt && (
+                  <span className="text-[9px] font-mono px-2 py-0.5 rounded bg-white/5 text-white/50">
+                    Checked {selectedNote.checkedAt.slice(0, 10)}
+                  </span>
+                )}
               </div>
-              <button
-                onClick={() => {
-                  alert('Vault note saved. AI memory updated.');
-                }}
-                className="flex items-center gap-2 px-4 py-1.5 bg-primary text-black font-black rounded-lg text-[9px] uppercase tracking-widest hover:brightness-110 transition"
-              >
-                <Save className="w-3.5 h-3.5" /> Save Note
-              </button>
+              <div className="flex items-center gap-2">
+                <select
+                  value={selectedNote.note_type}
+                  onChange={(e) => {
+                    const updated: VaultMemoryNote = {
+                      ...selectedNote,
+                      note_type: e.target.value as RawVaultNote['note_type'],
+                    };
+                    setSelectedNote(updated);
+                    setNotes(notes.map((n) => (n.id === updated.id ? updated : n)));
+                  }}
+                  aria-label="Memory category"
+                  className="bg-black/60 border border-white/10 rounded-lg px-2.5 py-1.5 text-[9px] font-black uppercase tracking-widest text-white/80 outline-none focus:border-primary/50"
+                >
+                  <option value="PERSONA">PERSONA (Brand Voice)</option>
+                  <option value="BOUNDARY">BOUNDARY (Hard Rule)</option>
+                  <option value="MEMBER_DOSSIER">MEMBER_DOSSIER (VIP)</option>
+                  <option value="TOPIC">TOPIC (Offer / Promo)</option>
+                </select>
+                <button
+                  onClick={() => handleDeleteNote(selectedNote)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-300 border border-red-500/20 font-black rounded-lg text-[9px] uppercase tracking-widest transition"
+                  title="Forget & delete memory"
+                >
+                  <Trash2 className="w-3.5 h-3.5" /> Forget
+                </button>
+                <button
+                  onClick={handleSaveNote}
+                  disabled={isSavingNote}
+                  className="flex items-center gap-2 px-4 py-1.5 bg-primary text-black font-black rounded-lg text-[9px] uppercase tracking-widest hover:brightness-110 transition disabled:opacity-50"
+                >
+                  <Save className="w-3.5 h-3.5" /> {isSavingNote ? 'Saving...' : 'Save Note'}
+                </button>
+              </div>
             </div>
+
+            {vaultFeedback && (
+              <div
+                className={`flex items-center gap-2 px-3.5 py-2.5 rounded-xl border text-[11px] font-mono ${
+                  vaultFeedback.kind === 'error'
+                    ? 'bg-red-500/10 border-red-500/30 text-red-300'
+                    : vaultFeedback.kind === 'warning'
+                      ? 'bg-amber-500/10 border-amber-500/30 text-amber-200'
+                      : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
+                }`}
+              >
+                {vaultFeedback.kind === 'success' ? (
+                  <CheckCircle2 className="w-4 h-4 shrink-0" />
+                ) : (
+                  <AlertTriangle className="w-4 h-4 shrink-0" />
+                )}
+                <span>{vaultFeedback.text}</span>
+              </div>
+            )}
 
             <textarea
               value={selectedNote.content}
@@ -188,7 +457,7 @@ export default function VaultAndStrategyCockpit() {
             />
 
             <div className="flex items-center justify-between text-[9px] uppercase tracking-widest text-white/40 pt-2">
-              <span>Supports full CommonMark & Wikilinks</span>
+              <span>Auto PII-Scrubbed • Active Provenance Injected into Copilot</span>
               <button
                 onClick={() => {
                   const blob = new Blob([selectedNote.content], { type: 'text/markdown' });

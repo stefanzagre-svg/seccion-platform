@@ -197,151 +197,38 @@ const MOCK_USER = {
   },
 };
 
-const MOCK_CANDIDATES = [
-  {
-    id: "placeholder-creator-a",
-    name: "Creator A",
-    avatar:
-      "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=800&q=80",
-    gender: "Female",
-    location: "San Francisco",
-    origins: "San Francisco",
-    hobbies: ["Fitness", "Music", "Traveling"],
-    relationshipGoal: "Good Vibe Instant Crush",
-    relationshipType: "Monogamous",
-    sexualPreferences: ["Heterosexual"],
-    familyGoals: "Want children",
-    archetype: "dreamer" as ArchetypeId,
-    moods: ["flirty_playful", "exclusive_vip"] as MoodId[],
-    corePassion: "fitness" as PassionId,
-    age: 26,
-    basePrice: 15,
-    isKycVerified: true,
-    lastActiveAt: new Date().toISOString(),
-    engagementScore: 95,
-    lifestyle: {
-      workout: "Often",
-      traveling: "Monthly",
-      partying: "Sometimes",
-      "healthy eating": "Every Day",
-      socializing: "Often",
-      reading: "Weekly",
-      sleep: "6-7 Hours",
-      smoking: "Never",
-      drinking: "Socially",
-      "social media": "Socially active",
-      pets: "Dog",
-      "morning/night": "Night Owl",
-    },
-  },
-  {
-    id: "placeholder-creator-b",
-    name: "Creator B",
-    avatar:
-      "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=800&q=80",
-    gender: "Female",
-    location: "San Jose",
-    origins: "San Jose",
-    hobbies: ["Tech", "Gaming", "Art"],
-    relationshipGoal: "Not limit myself",
-    relationshipType: "Monogamous",
-    sexualPreferences: ["Heterosexual", "Bisexual"],
-    familyGoals: "Open to children",
-    archetype: "explorer" as ArchetypeId,
-    moods: ["deep_intimate", "creative_showcase"] as MoodId[],
-    corePassion: "art" as PassionId,
-    age: 27,
-    basePrice: 12,
-    isKycVerified: true,
-    lastActiveAt: new Date().toISOString(),
-    engagementScore: 88,
-    lifestyle: {
-      workout: "Sometimes",
-      traveling: "Every Week",
-      partying: "Often",
-      "healthy eating": "Sometimes",
-      socializing: "Every Day",
-      reading: "Monthly",
-      sleep: "8+ Hours",
-      smoking: "Never",
-      drinking: "Socially",
-      "social media": "Influencer status",
-      pets: "Cat",
-      "morning/night": "Balanced",
-    },
-  },
-  {
-    id: "placeholder-creator-c",
-    name: "Creator C",
-    avatar:
-      "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=800&q=80",
-    gender: "Female",
-    location: "Los Angeles",
-    origins: "Los Angeles",
-    hobbies: ["Music", "Yoga", "Fashion"],
-    relationshipGoal: "Let's figure after a date.",
-    relationshipType: "Monogamous",
-    sexualPreferences: ["Heterosexual"],
-    familyGoals: "Don't want children",
-    archetype: "rebel" as ArchetypeId,
-    moods: ["flirty_playful", "party_dance"] as MoodId[],
-    corePassion: "music" as PassionId,
-    age: 24,
-    basePrice: 10,
-    isKycVerified: false,
-    lastActiveAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-    engagementScore: 60,
-    lifestyle: {
-      workout: "Sometimes",
-      traveling: "Yearly",
-      partying: "Every Weekend",
-      "healthy eating": "Sometimes",
-      socializing: "Often",
-      reading: "Never",
-      sleep: "6-7 Hours",
-      smoking: "Socially",
-      drinking: "Regularly",
-      "social media": "Influencer status",
-      pets: "Not for me",
-      "morning/night": "Night Owl",
-    },
-  },
-  {
-    id: "marco",
-    name: "Marco",
-    avatar:
-      "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=800&q=80",
-    gender: "Male",
-    location: "San Francisco",
-    origins: "San Francisco",
-    hobbies: ["Tech", "Outdoors"],
-    relationshipGoal: "Long term partner",
-    relationshipType: "Polyamorous",
-    sexualPreferences: ["Gay"],
-    familyGoals: "Want children",
-    archetype: "protector" as ArchetypeId,
-    moods: ["secret_confessions"] as MoodId[],
-    corePassion: "career" as PassionId,
-    age: 30,
-    isKycVerified: true,
-    lastActiveAt: new Date().toISOString(),
-    engagementScore: 90,
-    lifestyle: {
-      workout: "Every Day",
-      traveling: "Yearly",
-      partying: "Never",
-      "healthy eating": "Every Day",
-      socializing: "Sometimes",
-      reading: "Daily",
-      sleep: "8+ Hours",
-      smoking: "Never",
-      drinking: "Never",
-      "social media": "Off the grid",
-      pets: "Dog",
-      "morning/night": "Early Bird",
-    },
-  },
-];
+function mapProfileToCandidate(p: any) {
+  return {
+    id: p.id,
+    name: p.display_name || p.username || "Creator",
+    avatar: p.avatar_url || "",
+    gender: p.gender || "Female",
+    location: p.residence || p.current_location || "Remote",
+    origins: p.origins || p.residence || "Global",
+    hobbies: Array.isArray(p.hobbies) ? p.hobbies : [],
+    relationshipGoal: Array.isArray(p.relationship_goals)
+      ? p.relationship_goals[0] || "Not limit myself"
+      : p.relationship_goals || "Not limit myself",
+    relationshipType: Array.isArray(p.relationship_types)
+      ? p.relationship_types[0] || "Monogamous"
+      : p.relationship_types || "Monogamous",
+    sexualPreferences: Array.isArray(p.sexual_preferences)
+      ? p.sexual_preferences
+      : p.sexual_preference
+        ? [p.sexual_preference]
+        : ["Heterosexual"],
+    familyGoals: p.lifestyle_habits?.family_goals || "Open",
+    archetype: (p.archetype || "caregiver") as ArchetypeId,
+    moods: (Array.isArray(p.moods) ? p.moods : ["flirty_playful"]) as MoodId[],
+    corePassion: (p.core_passion || "lifestyle") as PassionId,
+    age: p.age || 25,
+    basePrice: Number(p.base_subscription_price) || 15,
+    isKycVerified: !!p.is_kyc_verified,
+    lastActiveAt: p.last_active_at || new Date().toISOString(),
+    engagementScore: Number(p.engagement_score) || 85,
+    lifestyle: p.lifestyle_habits || {},
+  };
+}
 
 const INSIGHT_PROMPTS = {
   chemistry: {
@@ -557,9 +444,12 @@ export default function MemberProfile() {
   const [isSwapOpen, setIsSwapOpen] = useState(false);
   const [swapTargetIndex, setSwapTargetIndex] = useState<number | null>(null);
 
+  const [liveCandidates, setLiveCandidates] = useState<any[]>([]);
+
   const selectedCandidate =
-    MOCK_CANDIDATES.find((c) => c.id === selectedCandidateId) ||
-    MOCK_CANDIDATES[0];
+    liveCandidates.find((c) => c.id === selectedCandidateId) ||
+    liveCandidates[0] ||
+    null;
   const HABIT_CATEGORIES = Object.keys(HABIT_CHOICES);
 
   // Live Relationship cockpit states
@@ -789,6 +679,21 @@ export default function MemberProfile() {
           }
         }
 
+        // Fetch live discoverable creators for MatchGate & Roster sponsorship
+        const { data: discoverCreators } = await supabase
+          .from("profiles")
+          .select(
+            "id, username, display_name, avatar_url, gender, residence, origins, current_location, hobbies, relationship_goals, relationship_types, sexual_preference, archetype, core_passion, moods, age, is_kyc_verified, lifestyle_habits, base_subscription_price, last_active_at"
+          )
+          .eq("role", "creator")
+          .not("avatar_url", "is", null)
+          .neq("id", session.user.id)
+          .limit(20);
+
+        if (discoverCreators && discoverCreators.length > 0) {
+          setLiveCandidates(discoverCreators.map(mapProfileToCandidate));
+        }
+
         // Fetch matches
         await loadMatches(session.user.id);
         // Load media album
@@ -986,7 +891,7 @@ export default function MemberProfile() {
   const aggregateValue =
     baseMasterFee + roster.reduce((sum, c) => sum + c.basePrice, 0);
 
-  const availableCandidates = MOCK_CANDIDATES.filter(
+  const availableCandidates = liveCandidates.filter(
     (c) => !roster.some((r) => r.id === c.id),
   );
 
@@ -1772,33 +1677,55 @@ export default function MemberProfile() {
             )}
 
             {activeTab === "status" && (
-              <MemberConnectionsTab
-                connections={liveMatches.map((m) => ({
-                  id: m.target_profile.id,
-                  name: m.target_profile.username,
-                  avatar: m.target_profile.avatar_url,
-                  face_blur_active: m.target_profile.face_blur_active,
-                  avatar_face_coordinates: m.target_profile.avatar_face_coordinates,
-                  matchScore: m.gauge_score || 0,
-                  ratingScore: calculateCreatorRating(m.target_profile),
-                  current_level: scoreToLevel(m.gauge_score).label,
-                  gauge_score: m.gauge_score,
-                  kycVerified: m.target_profile.is_kyc_verified
-                }))}
-                selectedConnection={selectedMatchId ? {
-                  id: selectedMatchId,
-                  name: liveMatches.find(m => m.target_profile.id === selectedMatchId)?.target_profile.username || "",
-                  avatar: liveMatches.find(m => m.target_profile.id === selectedMatchId)?.target_profile.avatar_url || "",
-                  matchScore: Math.round(selectedMatchState?.sharedScore || 0),
-                  current_level: selectedMatchState?.level.label
-                } : null}
-                onSelectConnection={(conn) => selectMatch(currentUser?.id || "", conn.id)}
-                dualGauge={selectedMatchState}
-                onOpenSuggestionMoves={(targetId) => {
-                  setSelectedMatchId(targetId);
-                  setIsMoveModalOpen(true);
-                }}
-              />
+              <div className="space-y-6">
+                <MemberConnectionsTab
+                  connections={liveMatches.map((m) => ({
+                    id: m.target_profile.id,
+                    name: m.target_profile.username,
+                    avatar: m.target_profile.avatar_url,
+                    face_blur_active: m.target_profile.face_blur_active,
+                    avatar_face_coordinates: m.target_profile.avatar_face_coordinates,
+                    matchScore: m.gauge_score || 0,
+                    ratingScore: calculateCreatorRating(m.target_profile),
+                    current_level: scoreToLevel(m.gauge_score).label,
+                    gauge_score: m.gauge_score,
+                    kycVerified: m.target_profile.is_kyc_verified
+                  }))}
+                  selectedConnection={selectedMatchId ? {
+                    id: selectedMatchId,
+                    name: liveMatches.find(m => m.target_profile.id === selectedMatchId)?.target_profile.username || "",
+                    avatar: liveMatches.find(m => m.target_profile.id === selectedMatchId)?.target_profile.avatar_url || "",
+                    matchScore: Math.round(selectedMatchState?.sharedScore || 0),
+                    current_level: selectedMatchState?.level.label
+                  } : null}
+                  onSelectConnection={(conn) => selectMatch(currentUser?.id || "", conn.id)}
+                  dualGauge={selectedMatchState}
+                  onOpenSuggestionMoves={(targetId) => {
+                    setSelectedMatchId(targetId);
+                    setIsMoveModalOpen(true);
+                  }}
+                />
+
+                {selectedMatchId && creatorGoals.length > 0 && (
+                  <div className="space-y-3 pt-4 border-t border-white/10">
+                    <h3 className="text-xs font-black uppercase tracking-widest text-primary">
+                      {t("memberProfile.activeCreatorGoals", "Active Creator Goals")}
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {creatorGoals.map((goal) => (
+                        <CreatorGoalProgress
+                          key={goal.id}
+                          goal={goal}
+                          onSponsor={(g) => {
+                            setSelectedGoalForContrib(g);
+                            setIsContribModalOpen(true);
+                          }}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
             )}
 
             {activeTab === "calendar" && (
@@ -1862,30 +1789,38 @@ export default function MemberProfile() {
 
             {activeTab === "livestream" && (
               <div className="space-y-6">
-                {matchedCreators[selectedCandidate.id] ? (
-                  <LivePulseHub
-                    currentUser={mappedCurrentUser}
-                    candidateProfile={selectedCandidate}
-                    onLock={() =>
-                      setMatchedCreators((prev) => ({
-                        ...prev,
-                        [selectedCandidate.id]: false,
-                      }))
-                    }
-                  />
+                {selectedCandidate ? (
+                  matchedCreators[selectedCandidate.id] ? (
+                    <LivePulseHub
+                      currentUser={mappedCurrentUser}
+                      candidateProfile={selectedCandidate}
+                      onLock={() =>
+                        setMatchedCreators((prev) => ({
+                          ...prev,
+                          [selectedCandidate.id]: false,
+                        }))
+                      }
+                    />
+                  ) : (
+                    <MatchGate
+                      currentUser={mappedCurrentUser}
+                      candidateProfile={selectedCandidate}
+                      onUnlocked={() =>
+                        setMatchedCreators((prev) => ({
+                          ...prev,
+                          [selectedCandidate.id]: true,
+                        }))
+                      }
+                      onSelectCandidate={(id) => setSelectedCandidateId(id)}
+                      candidatesList={liveCandidates}
+                    />
+                  )
                 ) : (
-                  <MatchGate
-                    currentUser={mappedCurrentUser}
-                    candidateProfile={selectedCandidate}
-                    onUnlocked={() =>
-                      setMatchedCreators((prev) => ({
-                        ...prev,
-                        [selectedCandidate.id]: true,
-                      }))
-                    }
-                    onSelectCandidate={(id) => setSelectedCandidateId(id)}
-                    candidatesList={MOCK_CANDIDATES}
-                  />
+                  <div className="flex flex-col items-center justify-center py-16 text-center rounded-3xl border border-white/10 bg-white/[0.02]">
+                    <p className="text-xs font-black uppercase tracking-widest text-white/50">
+                      {t("memberProfile.noLiveCreators", "No verified creators available yet — explore the discovery feed to match first.")}
+                    </p>
+                  </div>
                 )}
 
                 <div className="pt-4">
@@ -2388,6 +2323,36 @@ export default function MemberProfile() {
           </div>
         )}
       </AnimatePresence>
+
+      {/* Suggestion Moves Modal */}
+      <SuggestionMovesModal
+        isOpen={isMoveModalOpen}
+        onClose={() => setIsMoveModalOpen(false)}
+        gaugeLevel={Math.max(1, relationshipLevelIndex + 1)}
+        isKycVerified={!!currentUserProfile?.is_kyc_verified}
+        userId={currentUser?.id}
+        userRole={(currentUserProfile?.role as 'member' | 'creator') || 'member'}
+        onSelectMove={handleSelectMove}
+        activePurposes={currentUserProfile?.purposes || []}
+      />
+
+      {/* Creator Goal Contribution Modal */}
+      {selectedGoalForContrib && (
+        <ContributeModal
+          isOpen={isContribModalOpen}
+          onClose={() => {
+            setIsContribModalOpen(false);
+            setSelectedGoalForContrib(null);
+          }}
+          goal={selectedGoalForContrib}
+          contributorId={currentUser?.id || ''}
+          onSuccess={() => {
+            if (selectedMatchId) {
+              loadCreatorGoals(selectedMatchId);
+            }
+          }}
+        />
+      )}
 
       {/* Profile Preview Modal */}
       <ProfilePreviewModal

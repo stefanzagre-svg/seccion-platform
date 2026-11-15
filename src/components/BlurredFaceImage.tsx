@@ -19,6 +19,8 @@ interface BlurredFaceImageProps {
   sharedScore: number;
   faceCoordinates?: FaceCoordinates | null;
   isEnabledByOwner?: boolean;
+  profileId?: string;
+  postId?: string;
 }
 
 export default function BlurredFaceImage({
@@ -30,6 +32,8 @@ export default function BlurredFaceImage({
   sharedScore,
   faceCoordinates,
   isEnabledByOwner = false,
+  profileId,
+  postId,
 }: BlurredFaceImageProps) {
   const isBlurred = isFaceBlurRequired(sharedScore, isEnabledByOwner);
   const rawId = useId();
@@ -43,20 +47,27 @@ export default function BlurredFaceImage({
   // When face blur is required, route the image source through the Server-Side Blur transformation endpoint.
   // This guarantees that raw, unblurred facial pixels are NEVER transferred over the network or exposed in DOM.
   const effectiveSrc = React.useMemo(() => {
-    if (!src) return src;
     if (!isBlurred) return src;
+    if (!src && !postId && !profileId) return src;
 
-    // Route through server-side pixelation/blur API
+    // Route through server-side pixelation/blur API; prefer opaque postId/profileId when available
+    // so the raw storage URL never appears in the client DOM while blurred.
     const params = new URLSearchParams({
-      url: src,
       faceOnly: 'true',
       fx: coords.x.toString(),
       fy: coords.y.toString(),
       fr: coords.r.toString(),
       blur: '24'
     });
+    if (postId) {
+      params.set('postId', postId);
+    } else if (profileId) {
+      params.set('profileId', profileId);
+    } else if (src) {
+      params.set('url', src);
+    }
     return `/api/media/blur?${params.toString()}`;
-  }, [src, isBlurred, coords.x, coords.y, coords.r]);
+  }, [src, isBlurred, coords.x, coords.y, coords.r, postId, profileId]);
 
   return (
     <div className={`relative overflow-hidden ${className}`}>

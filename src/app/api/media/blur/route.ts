@@ -1,79 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import jpeg from 'jpeg-js';
 import { PNG } from 'pngjs';
-
-/**
- * SSRF Guard: Validates that the target hostname is not a loopback,
- * link-local, carrier-grade NAT, private RFC 1918, or cloud metadata IP address.
- */
-export function isPrivateOrBlockedHost(input: string | URL): boolean {
-  let hostname = typeof input === 'string' ? input : input.hostname;
-  hostname = hostname.toLowerCase().replace(/^\[|\]$/g, '').trim();
-
-  // Strip port if present
-  if (hostname.includes(':') && !hostname.includes('.')) {
-    const colonCount = (hostname.match(/:/g) || []).length;
-    if (colonCount === 1) {
-      hostname = hostname.split(':')[0];
-    }
-  } else if (hostname.includes(':') && hostname.includes('.')) {
-    hostname = hostname.split(':')[0];
-  }
-
-  // 1. Localhost and internal reserved domain names
-  if (
-    ['localhost', '127.0.0.1', '::1', '0.0.0.0'].includes(hostname) ||
-    hostname.endsWith('.localhost') ||
-    hostname.endsWith('.local') ||
-    hostname.endsWith('.internal')
-  ) {
-    return true;
-  }
-
-  // 2. IPv4 address range filtering
-  const ipv4Regex = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/;
-  const match = hostname.match(ipv4Regex);
-  if (match) {
-    const [, o1Str, o2Str, o3Str, o4Str] = match;
-    const o1 = parseInt(o1Str, 10);
-    const o2 = parseInt(o2Str, 10);
-    const o3 = parseInt(o3Str, 10);
-    const o4 = parseInt(o4Str, 10);
-
-    // Validate octet range
-    if (o1 > 255 || o2 > 255 || o3 > 255 || o4 > 255) return true;
-
-    // 0.0.0.0/8 (Current network)
-    if (o1 === 0) return true;
-    // 10.0.0.0/8 (Private RFC 1918)
-    if (o1 === 10) return true;
-    // 100.64.0.0/10 (Carrier-Grade NAT)
-    if (o1 === 100 && o2 >= 64 && o2 <= 127) return true;
-    // 127.0.0.0/8 (Loopback)
-    if (o1 === 127) return true;
-    // 169.254.0.0/16 (Link-Local & Cloud Metadata e.g. 169.254.169.254)
-    if (o1 === 169 && o2 === 254) return true;
-    // 172.16.0.0/12 (Private RFC 1918)
-    if (o1 === 172 && o2 >= 16 && o2 <= 31) return true;
-    // 192.168.0.0/16 (Private RFC 1918)
-    if (o1 === 192 && o2 === 168) return true;
-    // 224.0.0.0/4 & 240.0.0.0/4 (Multicast & Reserved)
-    if (o1 >= 224) return true;
-  }
-
-  // 3. IPv6 private / link-local / unique local filtering
-  if (
-    hostname === '::1' ||
-    hostname === '::' ||
-    hostname.startsWith('fc') ||
-    hostname.startsWith('fd') ||
-    hostname.startsWith('fe80')
-  ) {
-    return true;
-  }
-
-  return false;
-}
+import { isPrivateOrBlockedHost, isAllowedMediaHost } from '@/lib/media-url-guard';
+import { createAdminClient } from '@/lib/supabase/admin-client';
 
 /**
  * Server-Side Image Obfuscation & Face Blur Endpoint
@@ -82,19 +11,37 @@ export function isPrivateOrBlockedHost(input: string | URL): boolean {
  * the original raw face pixels in their DOM or HTTP response.
  *
  * Query Params:
- *  - url: encoded remote image URL (e.g. Supabase storage or asset)
- *  - blur: blur radius / pixelation factor (default: 24, range 4-64)
+ *  - url: encoded remote image URL (or profileId / postId opaque lookup)
+ *  - blur: blur radius / pixelation factor (clamped 16-64, default 24)
  *  - faceOnly: whether to blur full image or face region (x, y, r)
  */
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
-    const imageUrl = searchParams.get('url');
-    const blurRadius = Math.min(Math.max(parseInt(searchParams.get('blur') || '24', 10), 4), 64);
+    let imageUrl = searchParams.get('url');
+    const profileId = searchParams.get('profileId');
+    const postId = searchParams.get('postId');
+
+    const rawBlur = parseInt(searchParams.get('blur') || '24', 10);
+    const blurRadius = Math.min(Math.max(Number.isFinite(rawBlur) ? rawBlur : 24, 16), 64);
     const faceOnly = searchParams.get('faceOnly') === 'true';
-    const fx = parseFloat(searchParams.get('fx') || '0.5'); // center x ratio
-    const fy = parseFloat(searchParams.get('fy') || '0.38'); // center y ratio
-    const fr = parseFloat(searchParams.get('fr') || '0.22'); // radius ratio
+
+    const rawFx = parseFloat(searchParams.get('fx') || '0.5');
+    const rawFy = parseFloat(searchParams.get('fy') || '0.38');
+    const rawFr = parseFloat(searchParams.get('fr') || '0.22');
+    const fx = Math.min(Math.max(Number.isFinite(rawFx) ? rawFx : 0.5, 0), 1);
+    const fy = Math.min(Math.max(Number.isFinite(rawFy) ? rawFy : 0.38, 0), 1);
+    const fr = Math.min(Math.max(Number.isFinite(rawFr) ? rawFr : 0.22, 0.12), 0.5);
+
+    if (!imageUrl && profileId) {
+      const admin = createAdminClient();
+      const { data: prof } = await admin.from('profiles').select('avatar_url').eq('id', profileId).maybeSingle();
+      imageUrl = prof?.avatar_url || null;
+    } else if (!imageUrl && postId) {
+      const admin = createAdminClient();
+      const { data: post } = await admin.from('platform_content').select('media_url').eq('id', postId).maybeSingle();
+      imageUrl = post?.media_url || null;
+    }
 
     if (!imageUrl) {
       return NextResponse.json({ error: 'Missing image url parameter' }, { status: 400 });
@@ -112,14 +59,23 @@ export async function GET(req: NextRequest) {
           { status: 400 }
         );
       }
+
+      if (!isAllowedMediaHost(parsedUrl)) {
+        return NextResponse.json(
+          { error: 'SSRF protection: Image host is not in permitted media storage domains' },
+          { status: 400 }
+        );
+      }
     } catch {
       return NextResponse.json({ error: 'Malformed image URL' }, { status: 400 });
     }
 
-    // 1. Fetch source image securely
+    // 1. Fetch source image securely (never follow open redirects)
     let imgRes: Response;
     try {
       imgRes = await fetch(imageUrl, {
+        redirect: 'error',
+        signal: AbortSignal.timeout(8000),
         headers: {
           'Accept': 'image/jpeg,image/png,image/webp,*/*',
           'User-Agent': 'SECCION-Edge-Blur/1.0',

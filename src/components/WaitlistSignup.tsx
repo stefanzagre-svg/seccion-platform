@@ -12,6 +12,8 @@ export interface WaitlistSignupProps {
 
 export function WaitlistSignup({ variant = 'inline' }: WaitlistSignupProps) {
   const { t, locale } = useTranslation();
+  const isFr = locale === 'fr';
+  const isEs = locale === 'es';
   const [email, setEmail] = useState('');
   const [city, setCity] = useState('Global');
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'duplicate' | 'error'>('idle');
@@ -21,14 +23,14 @@ export function WaitlistSignup({ variant = 'inline' }: WaitlistSignupProps) {
     e.preventDefault();
     if (!email) return;
     setStatus('loading');
-    
+
     try {
       const res = await fetch('/api/v2/waitlist/join', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, city: city || 'Global' })
       });
-      
+
       if (res.status === 409) {
         setStatus('duplicate');
       } else if (res.ok) {
@@ -38,7 +40,7 @@ export function WaitlistSignup({ variant = 'inline' }: WaitlistSignupProps) {
       } else {
         setStatus('error');
       }
-    } catch (err) {
+    } catch {
       setStatus('error');
     }
   };
@@ -50,10 +52,18 @@ export function WaitlistSignup({ variant = 'inline' }: WaitlistSignupProps) {
       <div className="mb-6 text-center">
         <h3 className="text-xl md:text-2xl font-bold font-outfit text-white mb-2 flex items-center justify-center gap-2">
           <Sparkles className="w-5 h-5 text-[#00fbfb]" />
-          Join the Member's Early Access list
+          {isFr
+            ? "Rejoindre la Liste VIP d'Accès Anticipé Membre"
+            : isEs
+            ? 'Únete a la Lista VIP de Acceso Anticipado para Miembros'
+            : "Join the Member's Early Access list"}
         </h3>
         <p className="text-sm md:text-base text-gray-400 font-mono">
-          Secure early access to SECCION
+          {isFr
+            ? 'Réservez votre accès prioritaire à SECCION'
+            : isEs
+            ? 'Asegura tu acceso anticipado a SECCION'
+            : 'Secure early access to SECCION'}
         </p>
       </div>
 
@@ -68,10 +78,17 @@ export function WaitlistSignup({ variant = 'inline' }: WaitlistSignupProps) {
             <div className="w-16 h-16 rounded-full bg-[#00fbfb]/20 flex items-center justify-center mb-4 border border-[#00fbfb]/30">
               <Check className="w-8 h-8 text-[#00fbfb]" />
             </div>
-            <h4 className="text-2xl font-bold text-white mb-2">You're on the list! 🎉</h4>
+            <h4 className="text-2xl font-bold text-white mb-2">
+              {isFr
+                ? 'Vous êtes sur la liste ! 🎉'
+                : isEs
+                ? '¡Ya estás en la lista! 🎉'
+                : "You're on the list! 🎉"}
+            </h4>
             {position && (
               <p className="text-lg text-gray-300 font-mono bg-white/5 px-4 py-2 rounded-lg border border-white/10">
-                Position <span className="text-[#00fbfb]">#{position}</span>
+                {isFr ? 'Position' : isEs ? 'Posición' : 'Position'}{' '}
+                <span className="text-[#00fbfb]">#{position}</span>
               </p>
             )}
           </motion.div>
@@ -85,8 +102,20 @@ export function WaitlistSignup({ variant = 'inline' }: WaitlistSignupProps) {
             <div className="w-16 h-16 rounded-full bg-[#ffabf3]/20 flex items-center justify-center mb-4 border border-[#ffabf3]/30">
               <Check className="w-8 h-8 text-[#ffabf3]" />
             </div>
-            <h4 className="text-2xl font-bold text-white mb-2">You're already on the Early Access list!</h4>
-            <p className="text-gray-400">Keep an eye on your inbox for updates.</p>
+            <h4 className="text-2xl font-bold text-white mb-2">
+              {isFr
+                ? "Vous êtes déjà sur la liste d'Accès Anticipé !"
+                : isEs
+                ? '¡Ya estás en la lista de Acceso Anticipado!'
+                : "You're already on the Early Access list!"}
+            </h4>
+            <p className="text-gray-400">
+              {isFr
+                ? 'Surveillez votre boîte mail pour nos prochaines nouvelles.'
+                : isEs
+                ? 'Mantente atento a tu correo para recibir novedades.'
+                : 'Keep an eye on your inbox for updates.'}
+            </p>
           </motion.div>
         ) : (
           <motion.form
@@ -97,8 +126,10 @@ export function WaitlistSignup({ variant = 'inline' }: WaitlistSignupProps) {
             onSubmit={handleSubmit}
             className={`flex ${isCard ? 'flex-col gap-4' : 'flex-col md:flex-row gap-3'} w-full items-end`}
           >
-            <div className={`flex-1 w-full ${isCard ? '' : ''}`}>
-              <label className="block text-xs font-mono text-gray-400 mb-1.5 uppercase tracking-wider">Email</label>
+            <div className="flex-1 w-full">
+              <label className="block text-xs font-mono text-gray-400 mb-1.5 uppercase tracking-wider">
+                {isFr ? 'E-mail' : isEs ? 'Correo Electrónico' : 'Email'}
+              </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <Mail className="h-5 w-5 text-gray-500" />
@@ -109,14 +140,14 @@ export function WaitlistSignup({ variant = 'inline' }: WaitlistSignupProps) {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="w-full bg-black/40 border border-white/10 rounded-xl py-3 pl-10 pr-4 text-white placeholder-gray-500 focus:outline-none focus:border-[#00fbfb]/50 focus:ring-1 focus:ring-[#00fbfb]/50 transition-all font-mono text-sm"
-                  placeholder="your@email.com"
+                  placeholder={isFr ? 'vous@email.com' : isEs ? 'tu@correo.com' : 'your@email.com'}
                 />
               </div>
             </div>
 
-            <div className={`flex-1 w-full ${isCard ? '' : ''}`}>
+            <div className="flex-1 w-full">
               <label className="block text-xs font-mono text-gray-400 mb-1.5 uppercase tracking-wider">
-                {locale === 'es' ? 'Ciudad (Opcional)' : 'City (Optional)'}
+                {isFr ? 'Ville (Optionnel)' : isEs ? 'Ciudad (Opcional)' : 'City (Optional)'}
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -127,15 +158,17 @@ export function WaitlistSignup({ variant = 'inline' }: WaitlistSignupProps) {
                   onChange={(e) => setCity(e.target.value)}
                   className="w-full bg-black/40 border border-white/10 rounded-xl py-3 pl-10 pr-4 text-white focus:outline-none focus:border-[#00fbfb]/50 focus:ring-1 focus:ring-[#00fbfb]/50 transition-all font-mono text-sm appearance-none"
                 >
-                  <option value="Global">🌍 {locale === 'es' ? 'Global / Cualquier Ciudad' : 'Worldwide / Any City'}</option>
-                  <optgroup label="Pre-Launch Cities">
+                  <option value="Global">
+                    🌍 {isFr ? 'Monde entier / N\'importe quelle ville' : isEs ? 'Global / Cualquier Ciudad' : 'Worldwide / Any City'}
+                  </option>
+                  <optgroup label={isFr ? 'Villes de Pré-Lancement' : isEs ? 'Ciudades de Pre-Lanzamiento' : 'Pre-Launch Cities'}>
                     <option value="Medellín">🥇 Medellín, Colombia</option>
                     <option value="Bogotá">🥈 Bogotá, Colombia</option>
                     <option value="Barcelona">🥉 Barcelona, Spain</option>
                     <option value="Lisbon">Lisbon, Portugal</option>
                     <option value="Mexico City">Mexico City, Mexico</option>
                   </optgroup>
-                  <optgroup label="Expansion Cities">
+                  <optgroup label={isFr ? "Villes d'Expansion" : isEs ? 'Ciudades en Expansión' : 'Expansion Cities'}>
                     <option value="Berlin">Berlin, Germany</option>
                     <option value="Bucharest">Bucharest, Romania</option>
                     <option value="London">London, UK</option>
@@ -144,7 +177,7 @@ export function WaitlistSignup({ variant = 'inline' }: WaitlistSignupProps) {
                   <optgroup label="Global">
                     <option value="Bangkok">Bangkok, Thailand</option>
                     <option value="São Paulo">São Paulo, Brazil</option>
-                    <option value="Other">Other City</option>
+                    <option value="Other">{isFr ? 'Autre ville' : isEs ? 'Otra Ciudad' : 'Other City'}</option>
                   </optgroup>
                 </select>
               </div>
@@ -159,7 +192,7 @@ export function WaitlistSignup({ variant = 'inline' }: WaitlistSignupProps) {
                 <span className="w-5 h-5 border-2 border-black/20 border-t-black rounded-full animate-spin" />
               ) : (
                 <>
-                  {locale === 'es' ? 'Reservar Acceso VIP' : 'Reserve VIP Spot'} <ChevronRight className="w-5 h-5" />
+                  {isFr ? 'Réserver Accès VIP' : isEs ? 'Reservar Acceso VIP' : 'Reserve VIP Spot'} <ChevronRight className="w-5 h-5" />
                 </>
               )}
             </button>
@@ -167,7 +200,13 @@ export function WaitlistSignup({ variant = 'inline' }: WaitlistSignupProps) {
         )}
       </AnimatePresence>
       {status === 'error' && (
-        <p className="text-red-400 text-sm mt-4 text-center font-mono">Something went wrong. Please try again.</p>
+        <p className="text-red-400 text-sm mt-4 text-center font-mono">
+          {isFr
+            ? 'Une erreur est survenue. Veuillez réessayer.'
+            : isEs
+            ? 'Algo salió mal. Por favor inténtalo de nuevo.'
+            : 'Something went wrong. Please try again.'}
+        </p>
       )}
 
       {/* Creator Pre-Launch Banner */}
@@ -199,7 +238,9 @@ export function WaitlistSignup({ variant = 'inline' }: WaitlistSignupProps) {
             href="/login"
             className="text-xs font-mono font-bold text-[#00fbfb] hover:underline"
           >
-            {locale === 'es'
+            {isFr
+              ? 'Déjà Créateur Approuvé ? Accédez à votre Creator Studio →'
+              : isEs
               ? '¿Ya eres un Creador Aprobado? Entra directo a tu Creator Studio →'
               : 'Already an Approved Creator? Enter Creator Studio Instantly →'}
           </Link>

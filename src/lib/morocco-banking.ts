@@ -169,7 +169,7 @@ export function calculateMoroccoRibKey(bankCode: string, branchCode: string, acc
 
   const full22 = `${cleanBank}${cleanBranch}${cleanAcc}`;
   const bigN = BigInt(full22);
-  const remainder = Number((bigN * 100n) % 97n);
+  const remainder = Number((bigN * BigInt(100)) % BigInt(97));
   const key = 97 - remainder;
   return String(key).padStart(2, '0');
 }
@@ -187,7 +187,7 @@ export function convertRibToMoroccanIban(rib24: string): string {
   // ISO 7064 Modulo 97-10 check digits derivation for 'MA' + check_digits + RIB
   // Step 1: Append 221000 ('M' = 22, 'A' = 10, '00' = 00)
   const numericString = `${clean}221000`;
-  const remainder = Number(BigInt(numericString) % 97n);
+  const remainder = Number(BigInt(numericString) % BigInt(97));
   const checkDigits = 98 - remainder;
   const cdString = String(checkDigits).padStart(2, '0');
 
@@ -207,7 +207,7 @@ export function verifyMoroccanIban(iban: string): boolean {
 
   // Modulo 97 verification
   const numericString = `${rib}2210${cd}`;
-  return BigInt(numericString) % 97n === 1n;
+  return BigInt(numericString) % BigInt(97) === BigInt(1);
 }
 
 /**

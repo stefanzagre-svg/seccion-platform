@@ -31,6 +31,12 @@ export interface SightengineModerationResult {
       liveness?: number;   // 0.0 - 1.0 anti-spoof probability
     };
   }>;
+  weapon?: number;         // 0.0 - 1.0 weapons probability (wad model)
+  alcohol?: number;        // 0.0 - 1.0 alcohol probability (wad model)
+  drugs?: number;          // 0.0 - 1.0 recreational drugs probability (wad model)
+  gore?: {
+    prob?: number;         // 0.0 - 1.0 gore/graphic violence probability
+  };
 }
 
 export interface MemberAgeLivenessVerdict {
@@ -175,13 +181,15 @@ export async function detectSightengineProvenance(
   const deepfakeScore = result.type?.deepfake ?? 0;
   const overallAiConfidence = Math.max(aiScore, deepfakeScore);
 
-  const suggestedLevel = suggestProvenanceFromDetection(overallAiConfidence);
+  const suggestedLevel = suggestProvenanceFromDetection(overallAiConfidence * 100);
 
   return {
     confidence: overallAiConfidence,
     suggestedLevel: suggestedLevel ?? 'genuine',
     isAiGenerated: overallAiConfidence >= 0.50,
-    matchedModel: deepfakeScore > 0.5 ? 'deepfake-detection' : aiScore > 0.7 ? 'sightengine-genai' : undefined,
+    detectedModel: deepfakeScore > 0.5 ? 'deepfake-detection' : aiScore > 0.7 ? 'sightengine-genai' : undefined,
+    source: 'sightengine',
+    checkedAt: new Date().toISOString(),
   };
 }
 
@@ -204,6 +212,9 @@ export interface MediaDeliveryQualification {
   partialNudityScore: number;
   safeScore: number;
   isBlockedForSfwLedger: boolean;
+  safetyFlags?: string[];
+  contentSafetyPass?: boolean;
+  isBlockedProhibited?: boolean;
   reason: string;
 }
 
@@ -275,7 +286,7 @@ export async function qualifyDeliveredMedia(
   mediaUrl: string,
   orderRating: ContentSafetyRating = 'SFW'
 ): Promise<MediaDeliveryQualification> {
-  const result = await analyzeImage(mediaUrl, ['nudity']);
+  const result = await analyzeImage(mediaUrl, ['nudity', 'wad', 'gore']);
 
   // If Sightengine credentials are not active in local/test env, fall back to deterministic URL/rating check
   if (!result || result.status !== 'success' || !result.nudity) {
@@ -290,6 +301,9 @@ export async function qualifyDeliveredMedia(
       partialNudityScore: urlLooksExplicit ? 0.50 : 0.05,
       safeScore: urlLooksExplicit ? 0.10 : 0.98,
       isBlockedForSfwLedger: isBlocked,
+      safetyFlags: [],
+      contentSafetyPass: true,
+      isBlockedProhibited: false,
       reason: isBlocked
         ? 'Blocked: 18+ explicit media cannot be delivered on an SFW-rated escrow order.'
         : 'Media passed content qualification check.',
@@ -300,10 +314,28 @@ export async function qualifyDeliveredMedia(
   const partialScore = result.nudity.partial ?? 0;
   const safeScore = result.nudity.safe ?? 1;
 
-  // Strict MCC 5818 threshold: raw nudity > 0.15 or high partial nudity (> 0.35) is classified NSFW_18
-  const isNsfwMedia = rawScore > 0.15 || partialScore > 0.35;
+  const safetyFlags: string[] = [];
+  if ((result.weapon ?? 0) > 0.50) safetyFlags.push('weapon');
+  if ((result.drugs ?? 0) > 0.50) safetyFlags.push('drugs');
+  if ((result.gore?.prob ?? 0) > 0.40) safetyFlags.push('gore');
+
+  const isBlockedProhibited = safetyFlags.length > 0;
+  const contentSafetyPass = !isBlockedProhibited;
+
+  // Strict MCC 5818 threshold: raw nudity > 0.15 or partial nudity > 0.25 is classified NSFW_18
+  const isNsfwMedia = rawScore > 0.15 || partialScore > 0.25;
   const mediaRating: ContentSafetyRating = isNsfwMedia ? 'NSFW_18' : 'SFW';
-  const isBlockedForSfwLedger = orderRating === 'SFW' && mediaRating === 'NSFW_18';
+  const isBlockedForSfwLedger =
+    isBlockedProhibited || (orderRating === 'SFW' && mediaRating === 'NSFW_18');
+
+  let reason = 'Verified SFW media compliant with mainstream digital goods standards.';
+  if (isBlockedProhibited) {
+    reason = `Blocked by Sightengine Safety Gate (${safetyFlags.join(', ')}): Prohibited weapon, drug, or graphic gore content cannot be hosted or delivered.`;
+  } else if (isBlockedForSfwLedger) {
+    reason = `Blocked by Sightengine AI (nudity.raw=${rawScore.toFixed(2)}, partial=${partialScore.toFixed(2)}): This order was funded as SFW Lifestyle/Coaching and cannot deliver 18+ explicit content.`;
+  } else if (isNsfwMedia) {
+    reason = 'Verified 18+ NSFW media authorized under Sovereign Red Pills (💊) escrow.';
+  }
 
   return {
     rating: mediaRating,
@@ -312,10 +344,9 @@ export async function qualifyDeliveredMedia(
     partialNudityScore: partialScore,
     safeScore,
     isBlockedForSfwLedger,
-    reason: isBlockedForSfwLedger
-      ? `Blocked by Sightengine AI (nudity.raw=${rawScore.toFixed(2)}): This order was funded as SFW Lifestyle/Coaching and cannot deliver 18+ explicit content.`
-      : isNsfwMedia
-      ? 'Verified 18+ NSFW media authorized under Sovereign Red Pills (💊) escrow.'
-      : 'Verified SFW media compliant with mainstream digital goods standards.',
+    safetyFlags,
+    contentSafetyPass,
+    isBlockedProhibited,
+    reason,
   };
 }

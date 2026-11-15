@@ -19,11 +19,9 @@ import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import CreatorGoalProgress, { type CreatorGoal } from '@/components/CreatorGoalProgress';
 import CreatorGoalsTab from '@/components/studio/CreatorGoalsTab';
-import StudioStreamTab from '@/components/studio/StudioStreamTab';
-import StudioContentOpsTab from '@/components/studio/StudioContentOpsTab';
-import StudioAnalyticsTab from '@/components/studio/StudioAnalyticsTab';
 import SuggestionMovesModal from '@/components/SuggestionMovesModal';
 import { useTranslation } from '@/context/LanguageContext';
+import { getCountryDisplayName, readGeoRestrictionCodes } from '@/lib/profile-visibility';
 import CreatorOrdersPanel from '@/components/CreatorOrdersPanel';
 import SafetyPatrolPanel from '@/components/SafetyPatrolPanel';
 import ConfigPanel from '@/components/AIAssistant/ConfigPanel';
@@ -361,16 +359,12 @@ export default function CreatorStudio() {
   const [postProvenance, setPostProvenance] = useState<ProvenanceLevel>('genuine');
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [uploadSuccess, setUploadSuccess] = useState(false);
+  const [uploadClassification, setUploadClassification] = useState<{
+    rating: string;
+    ledger: string;
+  } | null>(null);
   const [allPendingPosts, setAllPendingPosts] = useState<any[]>([]);
   const [isModerating, setIsModerating] = useState<string | null>(null);
-
-  const getSimulatedModerationStatus = (postId: string, dbStatus?: string) => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem(`sim_moderation_status_${postId}`);
-      if (saved) return saved;
-    }
-    return dbStatus || 'pending';
-  };
 
   const loadCreatorPosts = async (creatorId: string) => {
     try {
@@ -382,12 +376,7 @@ export default function CreatorStudio() {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      
-      const enriched = (data || []).map((post: any) => ({
-        ...post,
-        moderation_status: getSimulatedModerationStatus(post.id, post.moderation_status)
-      }));
-      setUploadedPosts(enriched);
+      setUploadedPosts(data || []);
     } catch (err) {
       console.error('Error loading creator posts:', err);
     } finally {
@@ -395,54 +384,46 @@ export default function CreatorStudio() {
     }
   };
 
-  const loadAllPendingPosts = async () => {
+  const loadAllPendingPosts = async (roleOverride?: string) => {
+    const effectiveRole = roleOverride ?? profile?.platform_role;
+    if (!['moderator', 'admin', 'super_admin'].includes(effectiveRole || '')) {
+      setAllPendingPosts([]);
+      return;
+    }
+
     try {
-      // Attempt to query with DB filter first
-      let { data, error } = await supabase
+      const { data, error } = await supabase
         .from('platform_content')
         .select('*, creator_profile:profiles!platform_content_creator_id_fkey(*)')
         .eq('moderation_status', 'pending')
         .order('created_at', { ascending: false });
 
-      if (error) {
-        console.warn('DB filter by moderation_status failed, falling back to in-memory filter:', error);
-        // Fallback: load all posts and filter in memory
-        const { data: allData, error: allErr } = await supabase
-          .from('platform_content')
-          .select('*, creator_profile:profiles!platform_content_creator_id_fkey(*)')
-          .order('created_at', { ascending: false });
-
-        if (allErr) throw allErr;
-        
-        data = (allData || []).map((post: any) => ({
-          ...post,
-          moderation_status: getSimulatedModerationStatus(post.id, post.moderation_status)
-        })).filter((post: any) => post.moderation_status === 'pending');
-      } else {
-        // Enforce simulation overrides even if DB query succeeded
-        data = (data || []).map((post: any) => ({
-          ...post,
-          moderation_status: getSimulatedModerationStatus(post.id, post.moderation_status)
-        })).filter((post: any) => post.moderation_status === 'pending');
-      }
-
+      if (error) throw error;
       setAllPendingPosts(data || []);
     } catch (err) {
       console.error('Error loading pending posts:', err);
+      setAllPendingPosts([]);
     }
   };
 
   const handleModeratePost = async (postId: string, action: 'approved' | 'rejected') => {
+    if (!isModeratorOrAdmin) {
+      console.error('Unauthorized moderation attempt blocked');
+      return;
+    }
+
     setIsModerating(postId);
     try {
-      // 1. Try to update in database
       const { error } = await supabase
         .from('platform_content')
         .update({ moderation_status: action })
         .eq('id', postId);
 
-      if (!error && action === 'approved') {
-        // Award Creator XP (+100 XP) for approved content
+      if (error) {
+        throw error;
+      }
+
+      if (action === 'approved') {
         const { data: postData } = await supabase
           .from('platform_content')
           .select('creator_id')
@@ -454,29 +435,13 @@ export default function CreatorStudio() {
         }
       }
 
-      if (error) {
-        console.warn('DB update of moderation_status failed, falling back to localStorage simulation:', error);
-      }
-      
-      // 2. Always persist in localStorage to override/simulate
-      if (typeof window !== 'undefined') {
-        localStorage.setItem(`sim_moderation_status_${postId}`, action);
-      }
-      
       if (profile) {
         await loadCreatorPosts(profile.id);
       }
       await loadAllPendingPosts();
     } catch (err: any) {
       console.error('Moderation error:', err);
-      // Fallback in case of absolute failure
-      if (typeof window !== 'undefined') {
-        localStorage.setItem(`sim_moderation_status_${postId}`, action);
-      }
-      if (profile) {
-        await loadCreatorPosts(profile.id);
-      }
-      await loadAllPendingPosts();
+      setUploadError(err?.message || 'Failed to update moderation status.');
     } finally {
       setIsModerating(null);
     }
@@ -499,6 +464,7 @@ export default function CreatorStudio() {
     setUploadError(null);
     setIsUploading(true);
     setUploadSuccess(false);
+    setUploadClassification(null);
 
     try {
       const parsedTags = postTags
@@ -544,6 +510,11 @@ export default function CreatorStudio() {
       }
 
       setUploadSuccess(true);
+      setUploadClassification(
+        data.contentRating && data.requiredLedger
+          ? { rating: data.contentRating, ledger: data.requiredLedger }
+          : null
+      );
       setPostTitle('');
       setPostDesc('');
       setPostMediaUrl('');
@@ -672,6 +643,7 @@ export default function CreatorStudio() {
 
   // Creator Settings State
   const [profile, setProfile] = useState<any>(null);
+  const isModeratorOrAdmin = ['moderator', 'admin', 'super_admin'].includes(profile?.platform_role || '');
   const [isLoadingSettings, setIsLoadingSettings] = useState(true);
   const [isSavingSettings, setIsSavingSettings] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
@@ -709,7 +681,7 @@ export default function CreatorStudio() {
   const [vatGstNumber, setVatGstNumber] = useState<string>('');
   const [paxumEmail, setPaxumEmail] = useState<string>('');
   const [cryptoWalletAddress, setCryptoWalletAddress] = useState<string>('');
-  const [cryptoNetwork, setCryptoNetwork] = useState<'USDT_TRC20' | 'USDT_POLYGON' | 'USDC_POLYGON' | 'BTC'>('USDT_TRC20');
+  const [cryptoNetwork, setCryptoNetwork] = useState<'USDC_POLYGON' | 'USDT_POLYGON' | 'USDT_TRC20' | 'BTC'>('USDC_POLYGON');
   const [moroccoRib, setMoroccoRib] = useState<string>('');
   const [moroccoBankName, setMoroccoBankName] = useState<string>('');
   const [moroccoSwiftBic, setMoroccoSwiftBic] = useState<string>('');
@@ -924,8 +896,13 @@ export default function CreatorStudio() {
             const privacy = profileData.privacy_settings || {};
             setPpvBaseRate(Number(privacy.ppv_base_rate || 0));
             setPrivateCallPrice(Number(privacy.private_call_rate || 0));
-            setGeoRestrictionEnabled(Boolean(privacy.geo_restriction_enabled || false));
-            setBlockedCountries(Array.isArray(privacy.blocked_countries) ? privacy.blocked_countries.join(', ') : '');
+            const hasSavedCountries = Array.isArray(privacy.blocked_countries) && privacy.blocked_countries.length > 0;
+            setGeoRestrictionEnabled(
+              privacy.geo_restriction_enabled !== undefined
+                ? Boolean(privacy.geo_restriction_enabled)
+                : Boolean(privacy.morocco_domestic_shield || hasSavedCountries)
+            );
+            setBlockedCountries(hasSavedCountries ? privacy.blocked_countries.join(', ') : '');
             setCustomRequestPermission(privacy.custom_request_permission || 'anyone');
             setFaceBlurDefault(Boolean(privacy.face_blur_default || false));
 
@@ -943,7 +920,7 @@ export default function CreatorStudio() {
                 setVatGstNumber(privData.vat_gst_number || '');
                 setPaxumEmail(privData.paxum_email || '');
                 setCryptoWalletAddress(privData.crypto_wallet_address || '');
-                setCryptoNetwork(privData.crypto_network || 'USDT_TRC20');
+                setCryptoNetwork(privData.crypto_network || 'USDC_POLYGON');
                 if (privData.morocco_rib) {
                   setMoroccoRib(privData.morocco_rib);
                   const check = validateMoroccanRib(privData.morocco_rib);
@@ -959,7 +936,7 @@ export default function CreatorStudio() {
                 setVatGstNumber(privacy.vat_gst_number || '');
                 setPaxumEmail(privacy.paxum_email || '');
                 setCryptoWalletAddress(privacy.crypto_wallet_address || '');
-                setCryptoNetwork(privacy.crypto_network || 'USDT_TRC20');
+                setCryptoNetwork(privacy.crypto_network || 'USDC_POLYGON');
               }
             } catch {
               setLegalBusinessName(privacy.legal_business_name || '');
@@ -967,7 +944,7 @@ export default function CreatorStudio() {
               setVatGstNumber(privacy.vat_gst_number || '');
               setPaxumEmail(privacy.paxum_email || '');
               setCryptoWalletAddress(privacy.crypto_wallet_address || '');
-              setCryptoNetwork(privacy.crypto_network || 'USDT_TRC20');
+              setCryptoNetwork(privacy.crypto_network || 'USDC_POLYGON');
             }
             setCreatorResidence(profileData.residence || '');
             
@@ -987,9 +964,11 @@ export default function CreatorStudio() {
 
             // Load Goals
             loadGoalsData(user.id);
-            // Load Posts & Moderation
+            // Load Posts & Moderation (Safety Patrol strictly for moderators/admins)
             loadCreatorPosts(user.id);
-            loadAllPendingPosts();
+            if (['moderator', 'admin', 'super_admin'].includes(profileData.platform_role || '')) {
+              loadAllPendingPosts(profileData.platform_role);
+            }
             // Load creator match count for AI Auto-Chat eligibility
             supabase
               .from('relationships')
@@ -1031,8 +1010,8 @@ export default function CreatorStudio() {
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const tab = params.get('activeTab');
-    if (tab && ['content', 'live', 'analytics', 'settings', 'goals', 'safety_ops', 'orders'].includes(tab)) {
+    const tab = params.get('activeTab') || params.get('tab');
+    if (tab && ['content', 'live', 'analytics', 'settings', 'goals', 'safety_ops', 'orders', 'consent_inbox'].includes(tab)) {
       setActiveTab(tab as any);
     }
     if (params.get('welcome') === 'true' || params.get('tour') === 'true') {
@@ -1223,16 +1202,18 @@ export default function CreatorStudio() {
         .eq('id', profile.id)
         .single();
         
+      const normalizedBlockedCountries = readGeoRestrictionCodes(blockedCountries, locale)
+        .filter(item => item.isValid)
+        .map(item => item.code);
+
       const currentPrivacy = latestProfile?.privacy_settings || {};
       const updatedPrivacy = {
         ...currentPrivacy,
         ppv_base_rate: ppvBaseRate,
         private_call_rate: privateCallPrice,
         geo_restriction_enabled: geoRestrictionEnabled,
-        blocked_countries: blockedCountries
-          .split(',')
-          .map(c => c.trim().toUpperCase())
-          .filter(Boolean),
+        morocco_domestic_shield: geoRestrictionEnabled && normalizedBlockedCountries.includes('MA'),
+        blocked_countries: normalizedBlockedCountries,
         custom_request_permission: customRequestPermission,
         face_blur_default: faceBlurDefault,
       };
@@ -1530,13 +1511,17 @@ export default function CreatorStudio() {
   }, [isBroadcasting, minMatchThreshold, poll.question, poll.options, profile?.id]);
 
   const handleToggleBroadcast = async () => {
+    if (!profile?.id) {
+      alert('Please sign in with your creator profile before starting a broadcast.');
+      return;
+    }
     const nextStatus = !isBroadcasting;
     try {
       const res = await fetch('/api/integrations/stream', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          userId: profile?.id || 'mock-user-id',
+          userId: profile.id,
           action: nextStatus ? 'start' : 'stop'
         })
       });
@@ -1690,10 +1675,23 @@ export default function CreatorStudio() {
             hasKyc: !!profile?.is_kyc_verified,
             hasTaxId: !!(taxIdNumber || profile?.privacy_settings?.tax_id_number || (profile as any)?.tax_id_number)
           }}
+          vipFastTrack={{
+            isVipFastTrack: Boolean(
+              (profile as any)?.is_approved_founder_creator ||
+                (profile as any)?.promo_90_approved_at ||
+                profile?.privacy_settings?.vip_fast_track ||
+                (typeof window !== 'undefined' && window.location.search.includes('vip=welcome'))
+            ),
+            isWelcomeBanner:
+              typeof window !== 'undefined' && window.location.search.includes('vip=welcome'),
+            promo90ApprovedAt: (profile as any)?.promo_90_approved_at || null,
+            aiFreeUntil: (profile as any)?.ai_free_until || null,
+            moroccoShieldActive: Boolean(profile?.privacy_settings?.morocco_domestic_shield),
+          }}
           onNavigateTab={(tabId) => setActiveTab(tabId as any)}
           onNavigateAiTools={() => router.push('/studio/ai-tools')}
           onOpenTour={() => setIsTourOpen(true)}
-          onOpenKyc={() => router.push('/creator/kyc')}
+          onOpenKyc={() => router.push('/onboarding/kyc?role=creator')}
           onAskCopilot={(question) => {
             if (typeof window !== 'undefined') {
               window.dispatchEvent(new CustomEvent('seccion:ask-kate', { detail: { question } }));
@@ -1723,7 +1721,7 @@ export default function CreatorStudio() {
             { id: 'goals', icon: Crown, label: 'Goals' },
             { id: 'analytics', icon: BarChart3, label: 'Vibe Insights' },
             { id: 'settings', icon: Settings, label: 'Profile Settings' },
-            { id: 'safety_ops', icon: Shield, label: 'Safety Patrol' },
+            ...(isModeratorOrAdmin ? [{ id: 'safety_ops', icon: Shield, label: 'Safety Patrol' }] : []),
             { id: 'ai_tools', icon: Zap, label: 'AI Tools' },
           ].map((tab) => (
             <button
@@ -1761,42 +1759,17 @@ export default function CreatorStudio() {
                     </div>
                   )}
 
-                  {activeTab === 'analytics' && (
-                    <StudioAnalyticsTab
-                      grossRevenue={creatorAnalytics?.total_gross_volume || 0}
-                      netRevenue={creatorAnalytics?.total_net_payout || 0}
-                      commissionRate={0.90}
-                      activeSubscribers={creatorAnalytics?.active_sponsors || 0}
-                      conversionRate={creatorAnalytics?.conversion_rate || 0}
-                      payouts={[
-                        {
-                          id: 'p1',
-                          period: 'Aug 2026 (Tranche 1)',
-                          grossAmount: (creatorAnalytics?.total_gross_volume || 1200) * 0.6,
-                          netPayout: (creatorAnalytics?.total_net_payout || 1080) * 0.6,
-                          channel: 'NOWPayments (USDT/BTC)',
-                          status: 'released',
-                          releasedAt: new Date().toISOString()
-                        },
-                        {
-                          id: 'p2',
-                          period: 'Aug 2026 (Tranche 2)',
-                          grossAmount: (creatorAnalytics?.total_gross_volume || 1200) * 0.4,
-                          netPayout: (creatorAnalytics?.total_net_payout || 1080) * 0.4,
-                          channel: 'NOWPayments (USDT/BTC)',
-                          status: 'escrow_pending'
-                        }
-                      ]}
-                      walletAddress={profile?.payout_wallet_address || undefined}
-                    />
-                  )}
-
                   {uploadSuccess && (
                     <div className="p-4 bg-green-500/10 border border-green-500/30 rounded-2xl flex items-center gap-3 text-left">
                       <ShieldCheck className="w-5 h-5 text-green-400 shrink-0" />
-                      <div>
+                      <div className="space-y-1">
                         <p className="text-xs font-bold text-white uppercase tracking-wider">Asset Submitted Successfully</p>
                         <p className="text-[10px] text-green-400/80 font-mono leading-none">Status: Pending Layer 3 Human Review</p>
+                        {uploadClassification && (
+                          <p className="text-[10px] font-mono text-white/75 leading-snug">
+                            Sightengine Gate: <span className="font-bold text-white">{uploadClassification.rating}</span> ({uploadClassification.ledger === 'sovereign_red_pills' ? '💊 Sovereign Red Pills Ledger' : '✨ SFW Credits Ledger'})
+                          </p>
+                        )}
                       </div>
                     </div>
                   )}
@@ -1818,18 +1791,20 @@ export default function CreatorStudio() {
                         <div className="flex gap-2">
                           <input 
                             type="text" 
-                            placeholder="https://images.unsplash.com/..." 
+                            placeholder="https://..." 
                             value={postMediaUrl}
                             onChange={(e) => setPostMediaUrl(e.target.value)}
                             className="flex-1 px-4 py-3 bg-black/40 border border-white/10 rounded-xl text-xs text-white placeholder-white/20 focus:border-primary focus:outline-none transition"
                           />
-                          <button
-                            type="button"
-                            onClick={() => setPostMediaUrl('https://images.unsplash.com/photo-1517841905240-472988babdf9?w=600&q=80')}
-                            className="px-3 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 text-[9px] uppercase font-black tracking-widest transition"
-                          >
-                            Mock
-                          </button>
+                          {process.env.NODE_ENV === 'development' && (
+                            <button
+                              type="button"
+                              onClick={() => setPostMediaUrl('https://images.unsplash.com/photo-1517841905240-472988babdf9?w=600&q=80')}
+                              className="px-3 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 text-[9px] uppercase font-black tracking-widest transition"
+                            >
+                              Mock
+                            </button>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -2282,7 +2257,7 @@ export default function CreatorStudio() {
                             </div>
                             
                             <span className="text-[9px] font-black uppercase text-white/40 tracking-widest">
-                              Stream: Elena_Room
+                              Stream: {profile?.username || profile?.display_name || 'Creator_Room'}
                             </span>
                           </div>
                         </>
@@ -3880,9 +3855,9 @@ export default function CreatorStudio() {
                                 onChange={(e) => setCryptoNetwork(e.target.value as any)}
                                 className="w-full px-3 py-2.5 bg-black/60 border border-white/10 rounded-xl text-xs font-mono text-white focus:border-[#00fbfb] focus:outline-none"
                               >
-                                <option value="USDT_TRC20">USDT (TRC20 - Tron)</option>
+                                <option value="USDC_POLYGON">USDC (Polygon · MiCA Recommended)</option>
                                 <option value="USDT_POLYGON">USDT (Polygon)</option>
-                                <option value="USDC_POLYGON">USDC (Polygon)</option>
+                                <option value="USDT_TRC20">USDT (TRC20 - Tron)</option>
                                 <option value="BTC">Bitcoin (BTC)</option>
                               </select>
                             </div>
@@ -4007,56 +3982,134 @@ export default function CreatorStudio() {
                           </button>
                         </div>
 
-                        <div className={`space-y-4 transition-opacity duration-300 ${geoRestrictionEnabled ? 'opacity-100' : 'opacity-40 pointer-events-none'}`}>
-                          <div className="space-y-2">
-                            <label className="text-[9px] font-black text-white/40 uppercase tracking-widest">Blocked Country Codes</label>
-                            <input 
-                              type="text" 
-                              value={blockedCountries}
-                              disabled={!geoRestrictionEnabled}
-                              onChange={e => setBlockedCountries(e.target.value)}
-                              className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-4 text-xs font-black uppercase tracking-widest text-white outline-none focus:border-accent transition disabled:opacity-50"
-                              placeholder="US, FR, CA..."
-                            />
-                            <p className="text-[8px] text-white/30 uppercase tracking-widest">
-                              Comma-separated ISO country codes (e.g. US, FR, GB).
-                            </p>
-                          </div>
+                        {(() => {
+                          const parsedGeoCodes = readGeoRestrictionCodes(blockedCountries, locale);
+                          const blockedCodeSet = new Set(parsedGeoCodes.map(item => item.code));
+                          const formatGeoTooltip = (code: string, name: string | null) =>
+                            name
+                              ? `${code} — ${name}`
+                              : locale === 'fr'
+                                ? `${code} — Code ISO inconnu`
+                                : locale === 'es'
+                                  ? `${code} — Código ISO no reconocido`
+                                  : `${code} — Unrecognized ISO code`;
+                          const renderGeoTooltip = (label: string) => (
+                            <span
+                              role="tooltip"
+                              className="pointer-events-none opacity-0 group-hover/geo:opacity-100 group-focus-within/geo:opacity-100 transition-opacity duration-150 absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2.5 py-1 rounded-lg bg-black/95 border border-white/20 text-[10px] font-semibold tracking-normal text-white whitespace-nowrap shadow-xl z-30"
+                            >
+                              {label}
+                            </span>
+                          );
 
-                          {/* Quick suggestions */}
-                          <div className="space-y-2">
-                            <span className="text-[8px] font-black text-white/40 uppercase tracking-widest">Quick Toggle Suggestions</span>
-                            <div className="flex flex-wrap gap-2">
-                              {SUGGESTED_COUNTRIES.map(code => {
-                                const isBlocked = blockedCountries
-                                  .split(',')
-                                  .map(c => c.trim().toUpperCase())
-                                  .includes(code);
-                                return (
-                                  <button
-                                    key={code}
-                                    type="button"
-                                    disabled={!geoRestrictionEnabled}
-                                    onClick={() => toggleCountryChip(code)}
-                                    className={`px-3 py-1.5 rounded-full text-[9px] font-black border transition ${
-                                      isBlocked 
-                                        ? 'bg-accent/20 border-accent text-accent shadow-[0_0_10px_rgba(0,240,255,0.2)]'
-                                        : 'bg-white/5 border-white/10 text-white/40 hover:text-white/80'
-                                    }`}
-                                  >
-                                    {code}
-                                  </button>
-                                );
-                              })}
+                          return (
+                            <div className={`space-y-4 transition-opacity duration-300 ${geoRestrictionEnabled ? 'opacity-100' : 'opacity-50'}`}>
+                              <div className="space-y-2">
+                                <label className="text-[9px] font-black text-white/40 uppercase tracking-widest">
+                                  {locale === 'fr'
+                                    ? 'Codes pays bloqués'
+                                    : locale === 'es'
+                                      ? 'Códigos de país bloqueados'
+                                      : 'Blocked Country Codes'}
+                                </label>
+                                <input
+                                  type="text"
+                                  value={blockedCountries}
+                                  disabled={!geoRestrictionEnabled}
+                                  onChange={e => setBlockedCountries(e.target.value)}
+                                  className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-4 text-xs font-black uppercase tracking-widest text-white outline-none focus:border-accent transition disabled:opacity-50"
+                                  placeholder="US, FR, CA..."
+                                />
+                                <p className="text-[8px] text-white/30 uppercase tracking-widest">
+                                  {locale === 'fr'
+                                    ? 'Codes pays ISO séparés par des virgules (ex. MA, US, GB). Survolez un code pour lire le nom complet.'
+                                    : locale === 'es'
+                                      ? 'Códigos ISO de país separados por comas (ej. MA, US, GB). Pasa el cursor sobre un código para ver el país.'
+                                      : 'Comma-separated ISO country codes (e.g. MA, US, GB). Hover any code to read the full country name.'}
+                                </p>
+
+                                {/* Interactive Geo Restriction Code Reader with hover tooltips */}
+                                {parsedGeoCodes.length > 0 && (
+                                  <div className="flex flex-wrap gap-1.5 pt-1" aria-label="Active geo-restriction code reader">
+                                    {parsedGeoCodes.map(({ code, name, isValid }) => {
+                                      const tooltipLabel = formatGeoTooltip(code, name);
+                                      return (
+                                        <span
+                                          key={code}
+                                          tabIndex={0}
+                                          title={tooltipLabel}
+                                          aria-label={tooltipLabel}
+                                          className={`group/geo relative inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[9px] font-black tracking-widest border cursor-help transition ${
+                                            isValid
+                                              ? 'bg-accent/15 border-accent/40 text-accent'
+                                              : 'bg-amber-500/15 border-amber-500/40 text-amber-300'
+                                          }`}
+                                        >
+                                          <span>{code}</span>
+                                          <button
+                                            type="button"
+                                            disabled={!geoRestrictionEnabled}
+                                            onClick={() => toggleCountryChip(code)}
+                                            aria-label={`Remove ${tooltipLabel}`}
+                                            className="hover:text-white transition leading-none"
+                                          >
+                                            ×
+                                          </button>
+                                          {renderGeoTooltip(tooltipLabel)}
+                                        </span>
+                                      );
+                                    })}
+                                  </div>
+                                )}
+                              </div>
+
+                              {/* Quick suggestions */}
+                              <div className="space-y-2">
+                                <span className="text-[8px] font-black text-white/40 uppercase tracking-widest">
+                                  {locale === 'fr'
+                                    ? 'Suggestions rapides'
+                                    : locale === 'es'
+                                      ? 'Sugerencias rápidas'
+                                      : 'Quick Toggle Suggestions'}
+                                </span>
+                                <div className="flex flex-wrap gap-2">
+                                  {SUGGESTED_COUNTRIES.map(code => {
+                                    const isBlocked = blockedCodeSet.has(code);
+                                    const tooltipLabel = formatGeoTooltip(code, getCountryDisplayName(code, locale));
+                                    return (
+                                      <span key={code} className="group/geo relative inline-flex" title={tooltipLabel}>
+                                        <button
+                                          type="button"
+                                          disabled={!geoRestrictionEnabled}
+                                          onClick={() => toggleCountryChip(code)}
+                                          aria-label={tooltipLabel}
+                                          className={`px-3 py-1.5 rounded-full text-[9px] font-black border transition cursor-help disabled:cursor-not-allowed ${
+                                            isBlocked
+                                              ? 'bg-accent/20 border-accent text-accent shadow-[0_0_10px_rgba(0,240,255,0.2)]'
+                                              : 'bg-white/5 border-white/10 text-white/40 hover:text-white/80'
+                                          }`}
+                                        >
+                                          {code}
+                                        </button>
+                                        {renderGeoTooltip(tooltipLabel)}
+                                      </span>
+                                    );
+                                  })}
+                                </div>
+                              </div>
                             </div>
-                          </div>
-                        </div>
+                          );
+                        })()}
 
                         {!geoRestrictionEnabled && (
                           <div className="p-4 bg-white/5 border border-white/5 rounded-2xl flex items-center gap-3">
                             <Shield className="w-5 h-5 text-white/20 shrink-0" />
                             <p className="text-[8px] text-white/40 uppercase tracking-widest leading-relaxed">
-                              Geo-restrictions are disabled. Your profile is visible worldwide.
+                              {locale === 'fr'
+                                ? 'Les géo-restrictions sont désactivées. Votre profil est visible dans le monde entier.'
+                                : locale === 'es'
+                                  ? 'Las geo-restricciones están desactivadas. Tu perfil es visible en todo el mundo.'
+                                  : 'Geo-restrictions are disabled. Your profile is visible worldwide.'}
                             </p>
                           </div>
                         )}
@@ -4189,7 +4242,7 @@ export default function CreatorStudio() {
             )}
 
             {/* Safety Patrol Panel (Layer 3 Content Moderation Queue) */}
-            {activeTab === 'safety_ops' && (
+            {activeTab === 'safety_ops' && isModeratorOrAdmin && (
               <div className="space-y-6 text-left">
                 <div>
                   <h2 className="text-2xl font-black tracking-tighter uppercase mb-2 flex items-center gap-2">

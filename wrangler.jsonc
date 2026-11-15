@@ -36,7 +36,6 @@
 	},
 	"vars": {
 		"NEXTJS_ENV": "production",
-		"TELEGRAM_BOT_TOKEN": "8779277391:AAFigbudbO_qKxt68TXgkLMRVs5d2wCNZ30",
 		"TELEGRAM_CHAT_ID": "8717418370",
 		"NEXT_PUBLIC_ONBOARDING_LOGGING": "true"
 	}

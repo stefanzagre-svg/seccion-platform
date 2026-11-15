@@ -16,9 +16,12 @@ describe('gemini-failover', () => {
     warnSpy.mockRestore();
   });
 
-  it('orders multi-bucket free models ahead of strictly capped gemini-2.5-flash', () => {
-    expect(GEMINI_FREE_MODEL_CHAIN[0]).toBe('gemini-3-flash-preview');
+  it('orders high-quota Flash-Lite models ahead of strictly capped 20-RPD models', () => {
+    expect(GEMINI_FREE_MODEL_CHAIN[0]).toBe('gemini-3.1-flash-lite-preview');
     expect(GEMINI_FREE_MODEL_CHAIN).toContain('gemini-3.5-flash-lite');
+    expect(GEMINI_FREE_MODEL_CHAIN.indexOf('gemini-3.1-flash-lite-preview')).toBeLessThan(
+      GEMINI_FREE_MODEL_CHAIN.indexOf('gemini-3-flash-preview')
+    );
     expect(GEMINI_FREE_MODEL_CHAIN[GEMINI_FREE_MODEL_CHAIN.length - 1]).toBe('gemini-2.5-flash');
     expect(GEMINI_FREE_MODEL_CHAIN).not.toContain('gemini-2.0-flash');
     expect(GEMINI_FREE_MODEL_CHAIN).not.toContain('gemini-2.5-flash-lite');
@@ -63,8 +66,8 @@ describe('gemini-failover', () => {
         models: {
           generateContent: async ({ model }) => {
             visitedModels.push(model);
-            if (model === 'gemini-3-flash-preview') {
-              throw new Error('FreeTier quota exceeded: PerDay limit: 20');
+            if (model === 'gemini-3.1-flash-lite-preview') {
+              throw new Error('FreeTier quota exceeded: PerDay limit: 500');
             }
             if (model === 'gemini-3.5-flash-lite') {
               throw new Error('404 model not found');
@@ -76,7 +79,7 @@ describe('gemini-failover', () => {
     });
 
     expect(visitedModels).toEqual([
-      'gemini-3-flash-preview',
+      'gemini-3.1-flash-lite-preview',
       'gemini-3.5-flash-lite',
       'gemini-flash-lite-latest',
     ]);

@@ -2,6 +2,12 @@ import { supabase } from './supabase';
 import { applyInteractionEvent, scoreToLevel, resolveSharedScore, POINT_VALUES, type InteractionEventType } from './relationship-engine';
 import { awardXp } from './xp-service';
 import type { FaceCoordinates } from '@/components/BlurredFaceImage';
+import {
+  buildPublicMediaCountMap,
+  fetchVisitorCountryCode,
+  isCountryBlocked,
+  isProfileReadyForDiscovery,
+} from './profile-visibility';
 
 export interface Profile {
   id: string;
@@ -52,17 +58,59 @@ export interface MatchInfo {
 }
 
 /**
+ * Filter candidate swipe profiles by visitor country geoblock (including Moroccan Domestic Shield)
+ * and canonical public discovery readiness (`avatar_url`, bio/prompt, >= 2 `profile_media`, creator KYC).
+ */
+async function filterVisibleSwipeProfiles(
+  candidates: Profile[],
+  visitorCountry: string | null
+): Promise<Profile[]> {
+  if (!Array.isArray(candidates) || candidates.length === 0) return [];
+
+  const candidateIds = candidates.map((c) => c.id).filter(Boolean);
+  const [{ data: metaRows }, mediaCountMap] = await Promise.all([
+    supabase
+      .from('profiles')
+      .select('id, role, avatar_url, bio, bio_prompt_answer, is_kyc_verified, privacy_settings')
+      .in('id', candidateIds),
+    buildPublicMediaCountMap(supabase, candidateIds),
+  ]);
+
+  const metaById = new Map<string, any>((metaRows || []).map((row: any) => [row.id, row]));
+
+  return candidates
+    .filter((candidate) => {
+      const meta = metaById.get(candidate.id) || {};
+      const merged = {
+        ...candidate,
+        ...meta,
+        privacy_settings: meta.privacy_settings ?? candidate.privacy_settings,
+      };
+      if (isCountryBlocked(merged.privacy_settings, visitorCountry)) {
+        return false;
+      }
+      return isProfileReadyForDiscovery(merged, {
+        publicMediaCount: mediaCountMap.get(candidate.id) || 0,
+        requireCreatorKyc: true,
+      });
+    })
+    .slice(0, 10);
+}
+
+/**
  * Fetch profiles available for the current user to swipe on.
- * Excludes the current user and any users they have already interacted with.
+ * Excludes the current user, prior interactions, blocks, geoblocked visitors, and unready profiles.
  */
 export async function fetchSwipeableProfiles(currentUserId: string): Promise<Profile[]> {
   try {
+    const visitorCountry = await fetchVisitorCountryCode();
+
     // 1. Attempt scalable get_swipeable_profiles RPC first (prevents HTTP 414 URI Too Long)
     const { data: rpcProfiles, error: rpcError } = await supabase
-      .rpc('get_swipeable_profiles', { p_user_id: currentUserId, p_limit: 10 });
+      .rpc('get_swipeable_profiles', { p_user_id: currentUserId, p_limit: 25 });
 
     if (!rpcError && rpcProfiles && Array.isArray(rpcProfiles) && rpcProfiles.length > 0) {
-      return rpcProfiles as Profile[];
+      return await filterVisibleSwipeProfiles(rpcProfiles as Profile[], visitorCountry);
     }
 
     // 2. Fallback to query with excluded IDs
@@ -92,10 +140,10 @@ export async function fetchSwipeableProfiles(currentUserId: string): Promise<Pro
       .select('*')
       .not('id', 'in', `(${excludedIds.join(',')})`)
       .not('avatar_url', 'is', null)
-      .limit(10);
+      .limit(25);
 
     if (profError) throw profError;
-    return profiles || [];
+    return await filterVisibleSwipeProfiles((profiles || []) as Profile[], visitorCountry);
   } catch (err) {
     console.error('Error fetching swipeable profiles:', err);
     return [];
@@ -157,9 +205,20 @@ export async function recordInteraction(
       if (checkError) throw checkError;
 
       if (targetLikedBack && targetLikedBack.length > 0) {
-        // Mutual Match!
-        // 3. Upsert relationship records for both users
-        // Actor -> Target
+        // Mutual Match! Settle symmetric relationships & XP via server route (service_role) so RLS is respected.
+        if (typeof window !== 'undefined') {
+          const res = await fetch('/api/v2/relationships/sync', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'mutual_match', targetId }),
+          });
+          if (res.ok) {
+            const payload = await res.json().catch(() => ({}));
+            return { matched: Boolean(payload?.matched ?? true) };
+          }
+        }
+
+        // Non-browser fallback: upsert actor -> target row cleanly
         const { error: rel1Error } = await supabase
           .from('relationships')
           .upsert({
@@ -172,23 +231,7 @@ export async function recordInteraction(
 
         if (rel1Error) throw rel1Error;
 
-        // Target -> Actor
-        const { error: rel2Error } = await supabase
-          .from('relationships')
-          .upsert({
-            user_id: targetId,
-            target_id: actorId,
-            is_matched: true,
-            gauge_score: 5,
-            current_level: 'strangers'
-          }, { onConflict: 'user_id,target_id' });
-
-        if (rel2Error) throw rel2Error;
-
-        // Award Match XP (+100 XP to both matched users)
         await awardXp(actorId, 100);
-        await awardXp(targetId, 100);
-
         return { matched: true };
       }
     }
@@ -234,9 +277,15 @@ export async function fetchMatches(userId: string): Promise<MatchInfo[]> {
 
     if (error) throw error;
 
-    return (relationships || []).map((r: { id: string; target_profile: Profile; current_level: string; gauge_score: number; is_matched: boolean }) => ({
+    return ((relationships || []) as unknown as Array<{
+      id: string;
+      target_profile: Profile | Profile[] | null;
+      current_level: string;
+      gauge_score: number;
+      is_matched: boolean;
+    }>).map((r) => ({
       relationship_id: r.id,
-      target_profile: r.target_profile,
+      target_profile: Array.isArray(r.target_profile) ? r.target_profile[0] : (r.target_profile as Profile),
       current_level: r.current_level,
       gauge_score: r.gauge_score,
       is_matched: r.is_matched
@@ -482,6 +531,8 @@ export async function updateProfileArchetype(
     relationship_goals?: string[];
     sexual_preferences?: string[];
     spoken_languages?: string[];
+    quest_stage?: string | number;
+    connection_points?: number;
   }
 ) {
   try {
@@ -555,7 +606,24 @@ export async function respondToSuggestionMove(
   status: 'accepted' | 'rejected'
 ) {
   try {
-    // 1. Update message status
+    if (typeof window !== 'undefined') {
+      const res = await fetch('/api/v2/relationships/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'respond_suggestion_move',
+          messageId,
+          status,
+        }),
+      });
+      if (!res.ok) {
+        const errPayload = await res.json().catch(() => ({}));
+        throw new Error(errPayload?.error || 'Failed to update suggestion move');
+      }
+      return;
+    }
+
+    // Fallback for non-browser tests
     const { error: msgError } = await supabase
       .from('messages')
       .update({ suggestion_status: status })
@@ -563,14 +631,8 @@ export async function respondToSuggestionMove(
 
     if (msgError) throw msgError;
 
-    // 2. Adjust RLS Scores based on acceptance/rejection
     if (status === 'accepted') {
-      // Both users gain mutual spark points (+20)
-      await updateRelationshipScore(senderId, receiverId, 'suggestion_move_accepted');
       await updateRelationshipScore(receiverId, senderId, 'suggestion_move_accepted');
-    } else {
-      // Rejection reduces the score (-5 points)
-      await updateRelationshipScore(senderId, receiverId, 'suggestion_move_rejected');
     }
   } catch (err) {
     console.error('Error responding to suggestion move:', err);
@@ -610,6 +672,40 @@ export async function fetchProfileMedia(userId: string): Promise<ProfileMedia[]>
   } catch (err) {
     console.error('Error fetching profile media:', err);
     return [];
+  }
+}
+
+/**
+ * Batch fetch profile media items for multiple users in a single query.
+ */
+export async function fetchProfileMediaBatch(userIds: string[]): Promise<Record<string, ProfileMedia[]>> {
+  const uniqueIds = Array.from(new Set(userIds.filter(Boolean)));
+  const grouped: Record<string, ProfileMedia[]> = {};
+  if (uniqueIds.length === 0) return grouped;
+
+  try {
+    const { data, error } = await supabase
+      .from('profile_media')
+      .select('*')
+      .in('user_id', uniqueIds)
+      .order('created_at', { ascending: true });
+
+    if (error) throw error;
+
+    for (const id of uniqueIds) {
+      grouped[id] = [];
+    }
+    for (const item of data || []) {
+      const ownerId = (item as ProfileMedia & { user_id?: string }).user_id;
+      if (ownerId) {
+        if (!grouped[ownerId]) grouped[ownerId] = [];
+        grouped[ownerId].push(item);
+      }
+    }
+    return grouped;
+  } catch (err) {
+    console.error('Error batch fetching profile media:', err);
+    return grouped;
   }
 }
 
@@ -663,31 +759,18 @@ export async function deleteProfileMedia(mediaId: string): Promise<boolean> {
 }
 
 /**
- * Check if the user meets the minimum of 2 public photos/videos requirement in member_albums
+ * Check if the user meets the minimum of 2 non-hidden photos/videos in profile_media.
  */
 export async function checkPublicPhotoRequirement(userId: string): Promise<boolean> {
   try {
-    const { count: countAlbums } = await supabase
-      .from('member_albums')
-      .select('id', { count: 'exact', head: true })
-      .eq('member_id', userId)
-      .eq('visibility', 'public');
-
-    const { count: countMedia } = await supabase
+    const { count, error } = await supabase
       .from('profile_media')
       .select('id', { count: 'exact', head: true })
       .eq('user_id', userId)
       .eq('is_hidden', false);
 
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('album_photos')
-      .eq('id', userId)
-      .maybeSingle();
-
-    const albumPhotosCount = Array.isArray(profile?.album_photos) ? profile.album_photos.length : 0;
-    const totalPublic = Math.max((countAlbums || 0) + (countMedia || 0), albumPhotosCount);
-    return totalPublic >= 2;
+    if (error) throw error;
+    return (count || 0) >= 2;
   } catch (err) {
     console.error('Error checking public photo requirement:', err);
     return false;

@@ -328,7 +328,11 @@ export default function CreatorPublicProfileClient({
       }
 
       if (typeof window !== 'undefined') {
-        document.cookie = 'sb_ob=1; path=/; max-age=2592000; SameSite=Lax';
+        if (data.onboardingCompleted === true) {
+          document.cookie = 'sb_ob=1; path=/; max-age=2592000; SameSite=Lax';
+        } else {
+          document.cookie = 'sb_ob=; path=/; max-age=0; SameSite=Lax';
+        }
       }
 
       // Route based on intent: Match & Interact -> Interactive Creator Profile with autoMatch=true

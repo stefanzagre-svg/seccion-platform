@@ -363,6 +363,9 @@
       "livenessLock": "No ID documents stored. Face data is deleted immediately.",
       "startCheck": "Start DIDIT 3D Face Liveness Check",
       "connectingCamera": "Connecting Camera...",
+      "uploadingAlbum": "Optimizing & Uploading Photos...",
+      "albumUploadError": "Could not process one or more album photos. Please try another image.",
+      "checkDiditStatus": "Check Verification Status",
       "nextStep": "Next: Bio Prompts",
       "bioPrompts": "Relational Bio Prompts",
       "bioDesc": "Help our AI Synergy Engine understand your vibe. Answer 2 prompts below.",
@@ -379,7 +382,29 @@
       "sexPrefTitle": "Sexual Preference",
       "relGoalTitle": "Relationship Goal",
       "relTypeTitle": "Relationship Type",
-      "finalize": "Finalize Profile"
+      "finalize": "Finalize Profile",
+      "activePrompt": "Active Prompt",
+      "previewProfile": "Preview Profile",
+      "photoReqTitle": "Photo Requirement: 1 Profile Avatar + 2 Public Album Photos",
+      "photoReqDesc": "Upload 1 profile avatar (your main cover visible everywhere) and 2 public album photos to unlock the full Matchmaking Feed.",
+      "mainAvatarTitle": "1. Main Profile Avatar (Visible to Everyone)",
+      "mainAvatarDesc": "Your Main Avatar is the primary vibe card shown across the community feed and match deck. Everyone on SECCION sees this photo as your cover.",
+      "uploadAvatar": "Upload Main Avatar Photo",
+      "replaceAvatar": "Change Main Avatar Photo",
+      "mainAvatarReady": "Main Avatar Ready",
+      "imageLoadedComputer": "Image loaded from your device",
+      "publicAlbumTitle": "2. Public Photo Album (Visible to All Members)",
+      "publicAlbumDesc": "Your Public Album showcases your authentic lifestyle, passions, and world. Add 2 public album photos: they are visible to all members and required to unlock the Feed.",
+      "addPhotosAlbum": "Add Photos to Public Album",
+      "savePhotosContinue": "Save Photos & Continue →",
+      "writeResponse": "3. Write Your Narrative Answer",
+      "minCharsReq": "Minimum 10 characters required",
+      "lengthValidated": "Length Validated",
+      "analyzeSavePrompt": "Analyze & Save Prompt {step}",
+      "continueDashboard": "Continue to Dashboard →",
+      "selectAvatarErr": "Please select or upload an avatar photo.",
+      "promptMissingErr": "Please select a category, question, and write an answer.",
+      "promptLengthErr": "Write a bit more so our AI can read your vibe (min. 10 characters)."
     },
     "creatorExt": {
       "title": "Creator Extension",
@@ -399,6 +424,7 @@
       "creatorNoticeTitle": "Are you a Content Creator?",
       "creatorNoticeDesc": "Apply for the Pre-Launch Creator Studio to unlock a 90% direct revenue split, 1-Year Free AI Assistant & priority discovery.",
       "creatorApplyBtn": "Apply as Creator →",
+      "smsDisabledPrelaunch": "Phone registration is paused during pre-launch. Please use your approved creator email or join Early Access.",
       "whatIsApprovedTitle": "What is an Approved Creator?",
       "whatIsApprovedDesc": "Creators who completed the pre-launch application and were verified by our team. If you are approved, click above and sign up with the exact email used in your application.",
       "notApprovedYet": "Haven't applied or waiting for approval?",
@@ -534,7 +560,7 @@
       "secret_cta": "Claim Your SECCION Studio",
       "secret_cta_home": "Go Back to Home Page",
       "subtitles_active": "Subtitles Active",
-      "speech_revenue": "Look at our Revenue Payout Math. Most platforms or agencies take up to 40% or more. SECCION keeps it flat: you retain 80% of all earnings.",
+      "speech_revenue": "Look at our Revenue Payout Math. Most platforms or agencies take up to 40% or more. SECCION keeps it simple: you retain 90% as a Founding Creator.",
       "speech_stream": "Observe the Stream Station cockpit. Monitor simulated viewers and check out our Face Blur privacy and ephemeral media gates.",
       "speech_monetization": "Review the 7 built-in streams. Additionally, see how our built-in AI Replacement Agent automates fan interactions 24/7.",
       "archetype_streamer": "Live Co-Op Legend",
@@ -601,14 +627,26 @@
     "bio": "Bio",
     "privacySettings": "Privacy Settings",
     "matchPreferences": "Match Preferences",
-    "saveChanges": "Save Changes"
+    "saveChanges": "Save Changes",
+    "activeCreatorGoals": "Active Creator Goals",
+    "noLiveCreators": "No verified creators available yet — explore the discovery feed to match first."
   },
   "secureMessaging": {
     "commsTitle": "SECURE COMMS",
     "noMessages": "No messages yet.",
     "typeMessage": "Type a message...",
     "send": "Send",
-    "call": "Start Call"
+    "call": "Start Call",
+    "startChatPrompt": "Matched — start chatting",
+    "signInTitle": "Sign in to view your Inbox",
+    "signInSubtitle": "Your direct messages and real-time translations are end-to-end tied to your verified account.",
+    "signInBtn": "Sign In",
+    "emptyInboxTitle": "No Conversations Yet",
+    "emptyInboxSubtitle": "Match with creators or connect on the discovery feed to unlock direct messaging.",
+    "exploreBtn": "Discover People",
+    "inboxTitle": "INBOX",
+    "sendFailed": "Message could not be delivered. Please try again.",
+    "noMessagesYet": "No messages yet — say hello!"
   },
   "profile": {
     "public_preview": "Public Profile Preview",
@@ -645,7 +683,7 @@
     "blur_enabled": "Blur: Enabled",
     "blur_disabled": "Blur: Disabled",
     "pause_account": "?? Take a Breather (Pause Account)",
-    "pause_desc": "Going off-grid for a bit? Pausing your account hides your profile from new discovery feeds and matchmaking decks. Don't worry�your existing matches can still message you in your inbox, and your XP, vibes, and unlocked connections stay safe until you unpause!",
+    "pause_desc": "Going off-grid for a bit? Pausing your account hides your profile from new discovery feeds and matchmaking decks. Don't worry—your existing matches can still message you in your inbox, and your XP, vibes, and unlocked connections stay safe until you unpause!",
     "unpause_btn": "?? Resume Discovery (Unpause)",
     "pause_btn": "?? Pause Account",
     "danger_zone": "Danger Zone",
@@ -775,6 +813,16 @@
         "title": "Add Profile Avatar & Creator Bio",
         "desc": "Upload your main cover photo and write a short bio in Studio Settings so members can discover you."
       }
+    },
+    "vipBanner": {
+      "badge": "VIP Fast-Track Active · Pre-Approved Creator",
+      "splitLabel": "90% Year-1 Net Split Active (80% Standard After)",
+      "daysLeft": "{days}d remaining in Year 1",
+      "aiFreeLabel": "AI Copilot & Content Ops Free Until",
+      "moroccoShield": "Morocco Domestic Shield (MA) Active",
+      "quickAvatarPhotos": "1 Avatar + 2 Photos",
+      "quickRatesGeo": "Rates & Geo Shield",
+      "quickKyc": "DIDIT 18+ KYC"
     }
   },
   "chatTranslation": {

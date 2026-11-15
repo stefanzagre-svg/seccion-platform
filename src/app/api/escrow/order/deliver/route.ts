@@ -1,18 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin-client';
+import {
+  classifyOrderIntent,
+  qualifyDeliveredMedia,
+  type ContentSafetyRating,
+} from '@/lib/sightengine';
 import { z } from 'zod';
-import { classifyOrderIntent, qualifyDeliveredMedia, type ContentSafetyRating } from '@/lib/sightengine';
 
 const deliverSchema = z.object({
   orderId: z.string().uuid(),
   mediaUrl: z.string().url(),
-  notes: z.string().optional()
+  notes: z.string().optional(),
 });
 
 export async function POST(req: NextRequest) {
   try {
     const supabase = await createClient();
-    const { data: { user }, error: authErr } = await supabase.auth.getUser();
+    const {
+      data: { user },
+      error: authErr,
+    } = await supabase.auth.getUser();
 
     if (authErr || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -22,13 +30,17 @@ export async function POST(req: NextRequest) {
     const parsed = deliverSchema.safeParse(body);
 
     if (!parsed.success) {
-      return NextResponse.json({ error: 'Invalid parameters', details: parsed.error.format() }, { status: 400 });
+      return NextResponse.json(
+        { error: 'Invalid parameters', details: parsed.error.format() },
+        { status: 400 }
+      );
     }
 
     const { orderId, mediaUrl, notes } = parsed.data;
+    const admin = createAdminClient();
 
-    // Verify creator owns this escrow order
-    const { data: order } = await supabase
+    // Verify creator owns this escrow order via admin client after auth verification
+    const { data: order } = await admin
       .from('matrix_escrow_orders')
       .select('*')
       .eq('id', orderId)
@@ -36,54 +48,97 @@ export async function POST(req: NextRequest) {
       .single();
 
     if (!order) {
-      return NextResponse.json({ error: 'Order not found' }, { status: 404 });
+      return NextResponse.json(
+        { error: 'Escrow order not found or unauthorized' },
+        { status: 404 }
+      );
     }
 
     if (order.status !== 'held_in_escrow' && order.status !== 'in_progress') {
-      return NextResponse.json({ error: `Cannot deliver order in status: ${order.status}` }, { status: 400 });
+      return NextResponse.json(
+        { error: `Order is currently '${order.status}' and cannot be delivered.` },
+        { status: 400 }
+      );
     }
 
-    // STAGE 2 GATE: Verify delivered media against the order's Stage 1 Content Safety Rating
+    // STAGE 2 GATE: Real Sightengine AI audit of delivered media against order classification + WAD/Gore
     const orderRating: ContentSafetyRating =
-      (order as any).content_rating ||
-      classifyOrderIntent({ title: order.title, description: order.description }).rating;
+      (order.content_rating as ContentSafetyRating | null) ||
+      classifyOrderIntent({
+        category: order.category,
+        title: order.title,
+        description: order.description,
+      }).rating;
 
     const mediaVerdict = await qualifyDeliveredMedia(mediaUrl, orderRating);
 
-    if (mediaVerdict.isBlockedForSfwLedger) {
-      return NextResponse.json({
-        error: 'CONTENT_RATING_MISMATCH',
-        message: mediaVerdict.reason,
-        mediaQualification: mediaVerdict
-      }, { status: 422 });
+    if (mediaVerdict.isBlockedProhibited || mediaVerdict.isBlockedForSfwLedger) {
+      return NextResponse.json(
+        {
+          error: mediaVerdict.isBlockedProhibited
+            ? 'MEDIA_PROHIBITED_SAFETY_BLOCK'
+            : 'MEDIA_RATING_MISMATCH_BLOCK',
+          message: mediaVerdict.reason,
+          orderRating,
+          detectedMediaRating: mediaVerdict.rating,
+          requiredLedgerForThisMedia: mediaVerdict.requiredLedger,
+          safetyFlags: mediaVerdict.safetyFlags || [],
+          sightengineVerdict: mediaVerdict,
+        },
+        { status: 422 }
+      );
     }
 
-    // Set status to delivered and trigger 48-hour auto-release countdown
-    const autoReleaseAt = new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString();
+    const now = new Date();
+    const autoReleaseAt = new Date(now.getTime() + 72 * 60 * 60 * 1000).toISOString();
+    const baseUpdate = {
+      status: 'delivered',
+      delivery_media_url: mediaUrl,
+      delivery_notes: notes || null,
+      delivered_at: now.toISOString(),
+      auto_release_at: autoReleaseAt,
+      updated_at: now.toISOString(),
+    };
 
-    const { data: updatedOrder, error: updateErr } = await supabase
+    let updated: Record<string, unknown> | null = null;
+    const firstAttempt = await admin
       .from('matrix_escrow_orders')
       .update({
-        status: 'delivered',
-        delivery_media_url: mediaUrl,
-        delivery_notes: notes || null,
-        delivered_at: new Date().toISOString(),
-        auto_release_at: autoReleaseAt,
-        updated_at: new Date().toISOString()
+        ...baseUpdate,
+        sightengine_delivery_verdict: mediaVerdict,
       })
       .eq('id', orderId)
       .select()
       .single();
 
-    if (updateErr) throw updateErr;
+    if (firstAttempt.error) {
+      const msg = firstAttempt.error.message || '';
+      if (msg.includes('sightengine_delivery_verdict') || firstAttempt.error.code === '42703') {
+        const fallback = await admin
+          .from('matrix_escrow_orders')
+          .update(baseUpdate)
+          .eq('id', orderId)
+          .select()
+          .single();
+
+        if (fallback.error) {
+          return NextResponse.json({ error: 'Failed to submit delivery' }, { status: 500 });
+        }
+        updated = fallback.data as Record<string, unknown>;
+      } else {
+        return NextResponse.json({ error: 'Failed to submit delivery' }, { status: 500 });
+      }
+    } else {
+      updated = firstAttempt.data as Record<string, unknown>;
+    }
 
     return NextResponse.json({
       success: true,
-      message: 'Milestone delivered. Fan has 48 hours to accept before auto-release.',
-      order: updatedOrder,
-      mediaQualification: mediaVerdict
+      order: updated,
+      mediaVerdict,
+      message: 'Content delivered and qualified! Fan has 72h to inspect before auto-release.',
     });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('Deliver escrow error:', err);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }

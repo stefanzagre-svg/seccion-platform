@@ -49,7 +49,7 @@ export default function PWAInstallPrompt() {
     // Android / Chrome beforeinstallprompt event handler
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault();
-      setDeferredPrompt(e);
+      setDeferredPrompt(e as BeforeInstallPromptEvent);
       setShowPrompt(true);
     };
 

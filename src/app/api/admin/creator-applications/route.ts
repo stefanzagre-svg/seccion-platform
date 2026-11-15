@@ -1,36 +1,16 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin-client';
+import { verifyAdminAuth, unauthorizedResponse } from '@/lib/admin-auth';
+import { extractHandleFromLink, findAuthUserByEmail } from '@/lib/auth-admin';
 import { sendCreatorApprovalEmail } from '@/lib/email';
+import { grantFoundingCreatorBenefits } from '@/lib/vip-invites';
 import crypto from 'crypto';
 
-function extractHandleFromLink(link?: string | null, email?: string): string {
-  if (link) {
-    const cleaned = link.replace(/^https?:\/\/[^\/]+\/@?/, '').replace(/\./g, '_').replace(/[^a-zA-Z0-9_]/g, '');
-    if (cleaned.length >= 3) return cleaned.slice(0, 24).toLowerCase();
-  }
-  if (email) {
-    const fromEmail = email.split('@')[0].replace(/\./g, '_').replace(/[^a-zA-Z0-9_]/g, '');
-    if (fromEmail.length >= 3) return fromEmail.slice(0, 24).toLowerCase();
-  }
-  return `creator_${Math.floor(1000 + Math.random() * 9000)}`;
-}
-
-async function findAuthUserByEmail(supabaseAdmin: any, email: string) {
-  let page = 1;
-  const perPage = 1000;
-  while (page <= 5) {
-    const { data } = await supabaseAdmin.auth.admin.listUsers({ page, perPage });
-    if (!data?.users || data.users.length === 0) break;
-    const match = data.users.find((u: any) => u.email?.toLowerCase().trim() === email);
-    if (match) return match;
-    if (data.users.length < perPage) break;
-    page++;
-  }
-  return null;
-}
-
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   try {
+    const admin = await verifyAdminAuth(request);
+    if (!admin) return unauthorizedResponse();
+
     const supabaseAdmin = createAdminClient();
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get('page') || '1');
@@ -74,8 +54,11 @@ export async function GET(request: Request) {
   }
 }
 
-export async function PATCH(request: Request) {
+export async function PATCH(request: NextRequest) {
   try {
+    const admin = await verifyAdminAuth(request);
+    if (!admin) return unauthorizedResponse();
+
     const supabaseAdmin = createAdminClient();
     const body = await request.json();
     const { id, action, reviewer_notes } = body;
@@ -162,15 +145,13 @@ export async function PATCH(request: Request) {
         }
 
         if (targetUserId) {
-          await supabaseAdmin.from('profiles').upsert(
-            {
-              id: targetUserId,
-              username: baseUsername,
-              display_name: displayName,
-              role: 'creator',
-            },
-            { onConflict: 'id' }
-          );
+          await grantFoundingCreatorBenefits(supabaseAdmin, {
+            userId: targetUserId,
+            email: cleanEmail,
+            displayName,
+            usernameSeed: baseUsername,
+            socialHandle: extractHandleFromLink(data.link1, cleanEmail),
+          });
         }
 
         const { data: linkData } = await supabaseAdmin.auth.admin.generateLink({
@@ -192,11 +173,20 @@ export async function PATCH(request: Request) {
         console.warn('[Admin Approve] Profile auto-provision notice:', e);
       }
 
-      sendCreatorApprovalEmail({
-        email: cleanEmail,
-        fullName: data.full_name || cleanEmail.split('@')[0],
-        magicLinkUrl,
-      }).catch((e) => console.warn('[Admin Approve] Approval email notice:', e));
+      try {
+        await sendCreatorApprovalEmail({
+          email: cleanEmail,
+          fullName: data.full_name || cleanEmail.split('@')[0],
+          locale: typeof body?.locale === 'string'
+            ? body.locale
+            : typeof (data as any)?.locale === 'string'
+              ? (data as any).locale
+              : request.headers.get('accept-language') || 'en',
+          magicLinkUrl,
+        });
+      } catch (e) {
+        console.warn('[Admin Approve] Approval email notice:', e);
+      }
     }
 
     return NextResponse.json({ success: true, application: data });
@@ -206,8 +196,11 @@ export async function PATCH(request: Request) {
   }
 }
 
-export async function DELETE(request: Request) {
+export async function DELETE(request: NextRequest) {
   try {
+    const admin = await verifyAdminAuth(request);
+    if (!admin) return unauthorizedResponse();
+
     const supabaseAdmin = createAdminClient();
     const { searchParams } = new URL(request.url);
     const email = searchParams.get('email');

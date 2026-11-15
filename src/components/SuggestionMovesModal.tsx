@@ -30,7 +30,6 @@ export default function SuggestionMovesModal({
   activePurposes = []
 }: SuggestionMovesModalProps) {
   const [sessionKycVerified, setSessionKycVerified] = useState(false);
-  const [skippedKyc, setSkippedKyc] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
   const [isSending, setIsSending] = useState<string | null>(null);
   const [movesSynced, setMovesSynced] = useState(false);
@@ -42,7 +41,7 @@ export default function SuggestionMovesModal({
   const [signLog, setSignLog] = useState('');
   const [signSuccess, setSignSuccess] = useState(false);
 
-  const localKycVerified = isKycVerified || sessionKycVerified || skippedKyc;
+  const localKycVerified = isKycVerified || sessionKycVerified;
   const needsKyc = gaugeLevel >= 5 && !localKycVerified;
 
   // Resolve the level object (get all moves regardless of KYC state for locked preview display)
@@ -93,7 +92,6 @@ export default function SuggestionMovesModal({
       setSignatureName('');
       setSignSuccess(false);
       setSignLog('');
-      setSkippedKyc(false);
     }
   }, [isOpen]);
 
@@ -158,17 +156,40 @@ export default function SuggestionMovesModal({
     const hashArray = Array.from(new Uint8Array(hashBuffer));
     const consentHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('').substring(0, 16).toUpperCase();
 
-    await new Promise(r => setTimeout(r, 600));
     setSignLog('Storing sealed consent ledger in compliance node...');
-    await new Promise(r => setTimeout(r, 600));
 
-    setSignSuccess(true);
-    setSignLog(`✓ Agreement signed! Consent Hash: ${consentHash}`);
-    await new Promise(r => setTimeout(r, 1000));
-    setIsSigningAgreement(false);
+    try {
+      const res = await fetch('/api/v2/compliance/consent', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          signatureName: signatureName.trim(),
+          moveId: snapSignStep.moveId,
+          moveLabel: snapSignStep.label,
+          consentHash,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data?.success) {
+        setSignSuccess(false);
+        setSignLog(`✗ Consent sealing failed: ${data?.error || 'Verification required'}`);
+        setIsSigningAgreement(false);
+        return;
+      }
 
-    // Continue to propose the move
-    await executeMoveSelection(snapSignStep.moveId, snapSignStep.label);
+      const sealedHash = data.consentHash || consentHash;
+      setSignSuccess(true);
+      setSignLog(`✓ Agreement sealed! Consent Hash: ${sealedHash}`);
+      await new Promise(r => setTimeout(r, 800));
+      setIsSigningAgreement(false);
+
+      // Continue to propose the move
+      await executeMoveSelection(snapSignStep.moveId, snapSignStep.label);
+    } catch (err: any) {
+      setSignSuccess(false);
+      setSignLog(`✗ Consent sealing failed: ${err?.message || 'Network error'}`);
+      setIsSigningAgreement(false);
+    }
   };
 
   return (
@@ -287,14 +308,6 @@ export default function SuggestionMovesModal({
                       >
                         {isVerifying ? <><Loader2 className="w-3 animate-spin text-white" /> Verifying...</> : 'Verify Now'}
                       </button>
-                      {userRole === 'member' && (
-                        <button
-                          onClick={() => setSkippedKyc(true)}
-                          className="py-2 px-3 bg-transparent hover:bg-white/5 text-white/60 font-semibold rounded-xl transition text-[9px] uppercase tracking-wider border border-white/10"
-                        >
-                          Skip
-                        </button>
-                      )}
                     </div>
                   </div>
                 )}

@@ -5,13 +5,16 @@ import { middleware } from '../../src/middleware';
 describe('Empirical Verification of Middleware Webhook & Public API Pass-Through', () => {
   const publicApiEndpoints = [
     '/api/billing/crypto/webhook',
-    '/api/crypto/nowpayments-webhook',
     '/api/billing/segpay-postback',
+    '/api/billing/cron/check-expirations',
     '/api/kyc/didit-webhook',
     '/api/media/blur',
     '/api/webhooks/telegram',
+    '/api/stream/webhook',
+    '/api/v2/cloudflare/webhook',
     '/api/v2/creator/apply',
     '/api/v2/waitlist/join',
+    '/api/admin/auth/founder-login',
   ];
 
   for (const endpoint of publicApiEndpoints) {
@@ -26,4 +29,10 @@ describe('Empirical Verification of Middleware Webhook & Public API Pass-Through
       expect(res.headers.get('location')).toBeNull();
     });
   }
+
+  it('blocks unauthenticated access to /api/v2/voice/speak with 401', async () => {
+    const req = new NextRequest('http://localhost:3000/api/v2/voice/speak', { method: 'POST' });
+    const res = await middleware(req);
+    expect(res.status).toBe(401);
+  });
 });

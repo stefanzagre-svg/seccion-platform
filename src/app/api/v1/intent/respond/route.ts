@@ -31,7 +31,7 @@ export async function POST(request: Request) {
 
     // 3. Process the response (accept or deny) via DB layer
     // This helper checks ownership and performs RLS point modifications (confirmed, denied, waitlist)
-    await respondToDatePlanApplication(planId, applierId, action, user.id);
+    await respondToDatePlanApplication(planId, applierId, action, user.id, supabase);
 
     return NextResponse.json({
       success: true,

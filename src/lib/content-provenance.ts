@@ -24,7 +24,7 @@ export interface AutoDetectionResult {
   confidence: number;        // 0–100
   detectedModel?: string;    // e.g., 'midjourney-v6', 'dall-e-3'
   suggestedLevel: ProvenanceLevel;
-  source: 'hive' | 'c2pa' | 'synthid';
+  source: 'hive' | 'c2pa' | 'synthid' | 'sightengine';
   checkedAt: string;         // ISO timestamp
 }
 

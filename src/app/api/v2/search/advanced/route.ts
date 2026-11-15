@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { calculateMatch } from '@/lib/match-engine';
+import {
+  buildPublicMediaCountMap,
+  isCountryBlocked,
+  isProfileReadyForDiscovery,
+  normalizeCountryCode,
+} from '@/lib/profile-visibility';
 
 export async function POST(request: NextRequest) {
   try {
@@ -11,8 +17,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Malformed JSON payload' }, { status: 400 });
     }
 
+    const supabase = await createClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return NextResponse.json({ error: 'Unauthorized. Please sign in to search.' }, { status: 401 });
+    }
+
     const {
-      userId,
+      userId: requestedUserId,
       query,
       minAge,
       maxAge,
@@ -30,16 +43,16 @@ export async function POST(request: NextRequest) {
       profileStatus,
     } = body || {};
 
-    if (!userId) {
-      return NextResponse.json({ error: 'userId is required' }, { status: 400 });
+    if (requestedUserId && requestedUserId !== user.id) {
+      return NextResponse.json({ error: 'Forbidden: cannot search on behalf of another user' }, { status: 403 });
     }
 
-    const supabase = await createClient();
+    const userId = user.id;
 
     // 1. Fetch searcher profile details to check role and subscription status
     const { data: searcherProfile, error: searcherError } = await supabase
       .from('profiles')
-      .select('*')
+      .select('id, role, creator_ultimate_pack, creator_ultimate_pack_expires_at, sexual_preference, origins, current_location, hobbies, lifestyle_habits, relationship_goals, relationship_types')
       .eq('id', userId)
       .single();
 
@@ -64,10 +77,10 @@ export async function POST(request: NextRequest) {
     let userXpProfile = null;
 
     if (!isFreeSearch) {
-      // Standard member: deduct 250 XP
+      // Standard member: deduct 250 XP atomically
       const { data: xpProf, error: xpError } = await supabase
         .from('user_xp_profiles')
-        .select('*')
+        .select('current_xp, boost_passes_available')
         .eq('user_id', userId)
         .single();
 
@@ -82,7 +95,7 @@ export async function POST(request: NextRequest) {
         }, { status: 403 });
       }
 
-      // Deduct 250 XP
+      // Guard update with .gte('current_xp', 250) to prevent negative balance on concurrent requests
       const { data: updatedXpProf, error: deductError } = await supabase
         .from('user_xp_profiles')
         .update({
@@ -90,23 +103,33 @@ export async function POST(request: NextRequest) {
           updated_at: new Date().toISOString()
         })
         .eq('user_id', userId)
-        .select('*')
-        .single();
+        .gte('current_xp', 250)
+        .select('current_xp, boost_passes_available')
+        .maybeSingle();
 
       if (deductError) throw deductError;
+      if (!updatedXpProf) {
+        return NextResponse.json({
+          error: 'Insufficient XP. Advanced Search costs 250 XP.',
+          currentXp: xpProf.current_xp
+        }, { status: 403 });
+      }
       userXpProfile = updatedXpProf;
     } else {
       // Free search: just read current XP profile if it exists
       const { data: xpProf } = await supabase
         .from('user_xp_profiles')
-        .select('*')
+        .select('current_xp, boost_passes_available')
         .eq('user_id', userId)
         .single();
       userXpProfile = xpProf;
     }
 
-    // 3. Query all candidate profiles (strictly require avatar_url to prevent ghost profiles - M4 fix)
-    let dbQuery = supabase.from('profiles').select('*').not('avatar_url', 'is', null);
+    // 3. Query all candidate profiles (explicit non-sensitive columns only; require avatar_url to prevent ghost profiles)
+    let dbQuery = supabase
+      .from('profiles')
+      .select('id, username, display_name, avatar_url, bio, bio_prompt_answer, role, residence, origins, current_location, is_kyc_verified, age, height, relationship_goals, relationship_types, sexual_preference, hobbies, lifestyle_habits, specialization, specialization_tags, is_adult_content, privacy_settings')
+      .not('avatar_url', 'is', null);
 
     if (query && typeof query === 'string') {
       const sanitizedQuery = query.replace(/[^a-zA-Z0-9_\s]/g, '').trim();
@@ -142,14 +165,14 @@ export async function POST(request: NextRequest) {
       dbQuery = dbQuery.eq('is_adult_content', false);
     }
 
-    const { data: candidates, error: queryError } = await dbQuery;
+    const { data: candidates, error: queryError } = await dbQuery.limit(100);
 
     if (queryError) throw queryError;
 
     // 4. Load all relationships for the searcher to evaluate levels
     const { data: relationships } = await supabase
       .from('relationships')
-      .select('*')
+      .select('target_id, current_level, gauge_score')
       .eq('user_id', userId);
 
     const relMap = new Map((relationships || []).map(r => [r.target_id, r]));
@@ -166,10 +189,25 @@ export async function POST(request: NextRequest) {
       familyGoals: searcherProfile.lifestyle_habits?.family_goals || 'Open to children'
     };
 
-    // 6. Enrich, filter, and mask candidate profiles
-    let results = candidates
-      .filter(c => c.id !== userId) // Exclude self
-      .map(c => {
+    const visitorCountry = normalizeCountryCode(request.headers.get('cf-ipcountry'));
+
+    // 6. Enforce country geoblock + canonical readiness, then enrich & mask candidate profiles
+    const nonSelfCandidates = (candidates || []).filter((c: any) => c.id !== userId);
+    const mediaCountMap = await buildPublicMediaCountMap(
+      supabase,
+      nonSelfCandidates.map((c: any) => c.id)
+    );
+
+    let results = nonSelfCandidates
+      .filter(
+        (c: any) =>
+          !isCountryBlocked(c.privacy_settings, visitorCountry) &&
+          isProfileReadyForDiscovery(c, {
+            publicMediaCount: mediaCountMap.get(c.id) || 0,
+            requireCreatorKyc: true,
+          })
+      )
+      .map((c: any) => {
         // Calculate match compatibility
         const candidateCompatProfile = {
           gender: c.sexual_preference === 'Lesbian' || c.sexual_preference === 'Gay' ? 'female' : 'male',
@@ -269,7 +307,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      results,
+      results: results.slice(0, 50),
       deducted: !isFreeSearch,
       currentXp: userXpProfile?.current_xp ?? 0,
       passesAvailable: userXpProfile?.boost_passes_available ?? 0

@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, DollarSign, Gift, Loader2, Sparkles, CheckCircle2 } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
 import { CreatorGoal } from './CreatorGoalProgress';
 
 interface ContributeModalProps {
@@ -36,54 +35,19 @@ export default function ContributeModal({ isOpen, onClose, goal, contributorId, 
     setErrorMsg(null);
 
     try {
-      // 1. Insert the contribution log
-      const { error: contribError } = await supabase
-        .from('goal_contributions')
-        .insert({
-          goal_id: goal.id,
-          contributor_id: contributorId,
-          amount: parsedAmount,
-          message: message.trim() || null
-        });
-
-      if (contribError) throw contribError;
-
-      // 2. Fetch the current amount to update it accurately (prevent race condition overwrite)
-      const { data: currentGoal, error: goalFetchError } = await supabase
-        .from('creator_goals')
-        .select('current_amount, target_amount')
-        .eq('id', goal.id)
-        .single();
-
-      if (goalFetchError) throw goalFetchError;
-
-      const newAmount = Number(currentGoal.current_amount || 0) + parsedAmount;
-      const isCompletedNow = newAmount >= Number(currentGoal.target_amount);
-
-      // 3. Update the goal progress
-      const { error: updateGoalError } = await supabase
-        .from('creator_goals')
-        .update({
-          current_amount: newAmount,
-          is_completed: isCompletedNow
-        })
-        .eq('id', goal.id);
-
-      if (updateGoalError) throw updateGoalError;
-
-      // 4. Reward Member with Connection Points (+50 Points)
-      const { data: memberProfile } = await supabase
-        .from('profiles')
-        .select('connection_points')
-        .eq('id', contributorId)
-        .single();
-
-      if (memberProfile) {
-        const currentPoints = memberProfile.connection_points || 0;
-        await supabase
-          .from('profiles')
-          .update({ connection_points: currentPoints + 50 })
-          .eq('id', contributorId);
+      const spendCredits = Math.max(1, Math.round(parsedAmount));
+      const res = await fetch('/api/v2/goals/contribute', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          goalId: goal.id,
+          amount: spendCredits,
+          message: message.trim() || undefined,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data.message || data.error || 'Payment failed');
       }
 
       setIsSuccess(true);

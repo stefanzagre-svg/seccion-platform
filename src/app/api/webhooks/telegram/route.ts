@@ -1,7 +1,34 @@
 import { NextResponse } from 'next/server';
+import { timingSafeEqual } from 'node:crypto';
+
+function escapeHtml(text: unknown): string {
+  return String(text ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
+function verifyWebhookSecret(request: Request): boolean {
+  const expected =
+    process.env.SUPABASE_WEBHOOK_SECRET?.trim() ||
+    process.env.TELEGRAM_WEBHOOK_SECRET?.trim() ||
+    process.env.CRON_SECRET?.trim();
+  if (!expected) return false;
+  const provided =
+    request.headers.get('x-supabase-webhook-secret') ||
+    request.headers.get('x-webhook-secret') ||
+    request.headers.get('authorization')?.replace(/^Bearer\s+/i, '') ||
+    '';
+  if (!provided || provided.length !== expected.length) return false;
+  return timingSafeEqual(Buffer.from(provided), Buffer.from(expected));
+}
 
 export async function POST(request: Request) {
   try {
+    if (!verifyWebhookSecret(request)) {
+      return NextResponse.json({ error: 'Unauthorized webhook request' }, { status: 401 });
+    }
+
     // Parse the payload from Supabase Webhook
     const body = await request.json();
 
@@ -20,15 +47,15 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Telegram configuration missing' }, { status: 500 });
     }
 
-    // Format the message for the Telegram push notification
+    // Format the message for the Telegram push notification using HTML
     const roleEmoji = newProfile.role === 'creator' ? '⭐' : '👤';
     const message = `
-🚀 *New Signup Alert!*
-${roleEmoji} *Role:* ${newProfile.role?.toUpperCase()}
-🆔 *Username:* @${newProfile.username}
+🚀 <b>New Signup Alert!</b>
+${roleEmoji} <b>Role:</b> ${escapeHtml(String(newProfile.role || 'member').toUpperCase())}
+🆔 <b>Username:</b> @${escapeHtml(newProfile.username || 'unknown')}
 ${newProfile.is_kyc_verified ? '✅ KYC Verified' : '⏳ KYC Pending'}
 
-[View in Supabase Dashboard](https://supabase.com/dashboard)
+<a href="https://supabase.com/dashboard">View in Supabase Dashboard</a>
     `.trim();
 
     // Send the message to the Telegram API
@@ -41,7 +68,8 @@ ${newProfile.is_kyc_verified ? '✅ KYC Verified' : '⏳ KYC Pending'}
       body: JSON.stringify({
         chat_id: chatId,
         text: message,
-        parse_mode: 'Markdown',
+        parse_mode: 'HTML',
+        disable_web_page_preview: true,
       }),
     });
 

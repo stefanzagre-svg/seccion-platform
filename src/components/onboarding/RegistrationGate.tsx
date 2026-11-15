@@ -23,7 +23,7 @@ export default function RegistrationGate({ onComplete, initialError }: Registrat
   const [userCountry, setUserCountry] = useState<string>('ES');
   const [showAgeVerification, setShowAgeVerification] = useState(false);
   const [ageVerificationData, setAgeVerificationData] = useState<{ birthDate: string; countryCode: string; verificationTier: string } | null>(null);
-  const [showEmailForm, setShowEmailForm] = useState(true);
+  const [showEmailForm, setShowEmailForm] = useState(false);
   const [showPhoneForm, setShowPhoneForm] = useState(false);
   const [showOtpScreen, setShowOtpScreen] = useState(false);
 
@@ -92,7 +92,6 @@ export default function RegistrationGate({ onComplete, initialError }: Registrat
         if (!nameParam && emailParam.includes('@')) {
           setUsername(emailParam.split('@')[0].toLowerCase().replace(/[^a-z0-9_]/g, ''));
         }
-        setShowEmailForm(true);
       }
       if (promoParam) {
         setInvitedPromo(promoParam);
@@ -100,7 +99,7 @@ export default function RegistrationGate({ onComplete, initialError }: Registrat
       const isCreatorInStorage =
         localStorage.getItem('is_creator_signup') === 'true' ||
         Boolean(sessionStorage.getItem('_onboarding_creator_archive_choice'));
-      if (roleParam === 'creator' || params.get('invite') === 'creator' || isCreatorInStorage) {
+      if (roleParam === 'creator' || params.get('invite') === 'creator' || (roleParam !== 'member' && isCreatorInStorage)) {
         setIsInvitedCreator(true);
         sessionStorage.setItem('_onboarding_creator_archive_choice', 'creator');
         setShowEmailForm(true);
@@ -108,7 +107,7 @@ export default function RegistrationGate({ onComplete, initialError }: Registrat
         setIsInvitedCreator(false);
         sessionStorage.removeItem('_onboarding_creator_archive_choice');
         localStorage.removeItem('is_creator_signup');
-        setShowEmailForm(true);
+        setShowEmailForm(false);
       }
     }
   }, []);
@@ -122,13 +121,25 @@ export default function RegistrationGate({ onComplete, initialError }: Registrat
     }
     setError(null);
     if (provider === 'email') {
+      if (isSignUp && !resolveIsCreatorMode()) {
+        window.location.href = '/early-access';
+        return;
+      }
       setShowEmailForm(true);
       setShowPhoneForm(false);
     } else if (provider === 'phone') {
-      setShowPhoneForm(true);
-      setShowEmailForm(false);
+      setShowPhoneForm(false);
+      setError(
+        t(
+          'onboarding.prelaunchGates.smsDisabledPrelaunch',
+          'Phone registration is paused during pre-launch. Please use your approved creator email or join Early Access.'
+        )
+      );
     } else {
-      // Direct OAuth — preserve Creator vs Member onboarding target
+      if (isSignUp && !resolveIsCreatorMode()) {
+        window.location.href = '/early-access';
+        return;
+      }
       const nextTarget = resolveIsCreatorMode() ? '/onboarding?role=creator' : '/onboarding';
       supabase.auth.signInWithOAuth({
         provider: provider as import('@supabase/supabase-js').Provider,
@@ -212,147 +223,68 @@ export default function RegistrationGate({ onComplete, initialError }: Registrat
           isAdultContent = sessionStorage.getItem('_onboarding_creator_is_adult') === 'true';
         }
 
-        // Primary Path: Server-side auto-confirmed registration + profile provisioning (prevents mobile webview PKCE lockouts)
-        let registeredViaServer = false;
-        try {
-          const res = await fetch('/api/v2/auth/register', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              email: cleanEmail,
-              password,
-              username: effectiveUsername,
-              fullName: invitedName || username.trim() || effectiveUsername,
-              role: userRole,
-              isInvitedCreator: isCreatorMode,
-              ageVerification: effectiveAgeVerification,
-              locale,
-            }),
-          });
-
-          const resData = await res.json();
-          if (res.ok && resData.waitlist) {
-            registeredViaServer = true;
-            window.location.href = resData.redirectUrl || '/early-access';
-            return;
-          }
-          if (res.ok && resData.success && resData.user) {
-            registeredViaServer = true;
-
-            if (resData.session?.access_token && resData.session?.refresh_token) {
-              await supabase.auth.setSession({
-                access_token: resData.session.access_token,
-                refresh_token: resData.session.refresh_token,
-              });
-            }
-
-            if (resData.isCreator && typeof window !== 'undefined') {
-              sessionStorage.setItem('_onboarding_creator_archive_choice', 'creator');
-              localStorage.setItem('is_creator_signup', 'true');
-            }
-
-            if (residenceChoice || creatorPurposes || specialization || isAdultContent) {
-              await supabase.from('profiles').upsert({
-                id: resData.user.id,
-                username: resData.username || effectiveUsername,
-                display_name: resData.displayName || effectiveUsername,
-                role: resData.role || 'member',
-                residence: residenceChoice || undefined,
-                creator_purposes: creatorPurposes,
-                specialization: specialization,
-                is_adult_content: isAdultContent,
-              });
-            }
-
-            localStorage.setItem(
-              'fusion_onboarding_core',
-              JSON.stringify({
-                userId: resData.user.id,
-                username: resData.username || effectiveUsername,
-              })
-            );
-
-            onComplete();
-            return;
-          } else if (res.status === 401 || res.status === 400) {
-            throw new Error(resData.error || 'Registration failed.');
-          }
-        } catch (serverErr: any) {
-          if (serverErr?.message && !serverErr.message.includes('fetch')) {
-            throw serverErr;
-          }
-          console.warn('[RegistrationGate] Falling back to client signUp:', serverErr);
-        }
-
-        if (!registeredViaServer) {
-          // Fallback Path: Client-side Supabase Sign Up
-          const nextTarget = isCreatorMode ? '/onboarding?role=creator' : '/onboarding';
-          const { data, error: signUpError } = await supabase.auth.signUp({
+        // Strict Server-Authoritative Registration (never falls back to client signUp)
+        const res = await fetch('/api/v2/auth/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
             email: cleanEmail,
             password,
-            options: {
-              emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(nextTarget)}`,
-              data: {
-                username: effectiveUsername,
-                role: 'member',
-              },
-            },
-          });
+            username: effectiveUsername,
+            fullName: invitedName || username.trim() || effectiveUsername,
+            role: userRole,
+            isInvitedCreator: isCreatorMode,
+            ageVerification: effectiveAgeVerification,
+            locale,
+          }),
+        });
 
-          if (signUpError) throw signUpError;
-
-          if (data.user) {
-            const { error: profileError } = await supabase.from('profiles').upsert({
-              id: data.user.id,
-              username: effectiveUsername,
-              display_name: username.trim() || effectiveUsername,
-              role: 'member',
-              residence: residenceChoice || undefined,
-              creator_purposes: creatorPurposes,
-              specialization: specialization,
-              is_adult_content: isAdultContent,
-            });
-
-            if (profileError) {
-              console.error('Failed to create profile record:', profileError);
-            }
-
-            localStorage.setItem(
-              'fusion_onboarding_core',
-              JSON.stringify({
-                userId: data.user.id,
-                username: effectiveUsername,
-              })
-            );
-
-            if (isCreatorMode && typeof window !== 'undefined') {
-              sessionStorage.setItem('_onboarding_creator_archive_choice', 'creator');
-            }
-
-            let activeSession = data.session;
-            if (!activeSession) {
-              try {
-                const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-                  email: cleanEmail,
-                  password,
-                });
-                if (!signInError && signInData.session) {
-                  activeSession = signInData.session;
-                }
-              } catch {
-                // Ignore
-              }
-            }
-
-            if (activeSession) {
-              onComplete();
-            } else {
-              setSuccessMessage(
-                'Account created! Please check your email inbox to confirm your address and enter the dashboard.'
-              );
-            }
-          }
+        const resData = await res.json().catch(() => ({}));
+        if (res.ok && resData.waitlist) {
+          window.location.href = resData.redirectUrl || '/early-access';
+          return;
         }
+        if (!res.ok || !resData.success || !resData.user) {
+          if (resData?.redirectUrl) {
+            window.location.href = resData.redirectUrl;
+            return;
+          }
+          throw new Error(resData?.error || 'Registration failed. Please verify your details and try again.');
+        }
+
+        if (resData.session?.access_token && resData.session?.refresh_token) {
+          await supabase.auth.setSession({
+            access_token: resData.session.access_token,
+            refresh_token: resData.session.refresh_token,
+          });
+        }
+
+        if (resData.isCreator && typeof window !== 'undefined') {
+          sessionStorage.setItem('_onboarding_creator_archive_choice', 'creator');
+          localStorage.setItem('is_creator_signup', 'true');
+        }
+
+        if (residenceChoice || creatorPurposes || specialization || isAdultContent) {
+          await supabase.from('profiles').update({
+            username: resData.username || effectiveUsername,
+            display_name: resData.displayName || effectiveUsername,
+            residence: residenceChoice || undefined,
+            creator_purposes: creatorPurposes,
+            specialization: specialization,
+            is_adult_content: isAdultContent,
+          }).eq('id', resData.user.id);
+        }
+
+        localStorage.setItem(
+          'fusion_onboarding_core',
+          JSON.stringify({
+            userId: resData.user.id,
+            username: resData.username || effectiveUsername,
+          })
+        );
+
+        onComplete();
+        return;
       } else {
         // Sign In User (via server-side founder-login endpoint with client fallback)
         const cleanEmail = email.trim().toLowerCase();
@@ -427,6 +359,15 @@ export default function RegistrationGate({ onComplete, initialError }: Registrat
   const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!acceptedTerms || !acceptedPrivacy) return;
+    if (isSignUp) {
+      setError(
+        t(
+          'onboarding.prelaunchGates.smsDisabledPrelaunch',
+          'Phone registration is paused during pre-launch. Please use your approved creator email or join Early Access.'
+        )
+      );
+      return;
+    }
     if (!phone.trim()) {
       setError('Phone number is required.');
       return;
@@ -678,7 +619,6 @@ export default function RegistrationGate({ onComplete, initialError }: Registrat
                 >
                   {locale === 'es' ? '¿Ya tienes contraseña? Ir a Login →' : 'Already have a password? Go to Login →'}
                 </Link>
-                <button type="button" onClick={() => setShowEmailForm(true)} className="opacity-0 absolute w-4 h-4 bottom-0 right-0 z-50">Email</button>
 
                 {/* Approved Creator Explanation Callout */}
                 <div className="p-3.5 bg-black/40 border border-[#ffabf3]/20 rounded-xl text-left space-y-2">

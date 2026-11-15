@@ -18,8 +18,17 @@ export interface CreatorChecklistMetrics {
   hasTaxId: boolean;
 }
 
+export interface CreatorVipFastTrackStatus {
+  isVipFastTrack: boolean;
+  isWelcomeBanner?: boolean;
+  promo90ApprovedAt?: string | null;
+  aiFreeUntil?: string | null;
+  moroccoShieldActive?: boolean;
+}
+
 interface CreatorOnboardingChecklistProps {
   metrics: CreatorChecklistMetrics;
+  vipFastTrack?: CreatorVipFastTrackStatus;
   onNavigateTab: (tabId: string) => void;
   onNavigateAiTools: () => void;
   onOpenTour: () => void;
@@ -29,6 +38,7 @@ interface CreatorOnboardingChecklistProps {
 
 export default function CreatorOnboardingChecklist({
   metrics,
+  vipFastTrack,
   onNavigateTab,
   onNavigateAiTools,
   onOpenTour,
@@ -90,10 +100,80 @@ export default function CreatorOnboardingChecklist({
   const progressPercent = Math.round((completedCount / checklistItems.length) * 100);
   const isAllComplete = progressPercent === 100;
 
+  const promoStartMs = vipFastTrack?.promo90ApprovedAt
+    ? new Date(vipFastTrack.promo90ApprovedAt).getTime()
+    : NaN;
+  const year1DaysLeft = Number.isFinite(promoStartMs)
+    ? Math.max(0, Math.ceil((promoStartMs + 365 * 24 * 60 * 60 * 1000 - Date.now()) / 86_400_000))
+    : 365;
+  const aiFreeDateLabel = vipFastTrack?.aiFreeUntil
+    ? new Date(vipFastTrack.aiFreeUntil).toLocaleDateString()
+    : null;
+
   return (
     <div className="w-full mb-8 glass-card bg-gradient-to-r from-white/[0.04] via-black/40 to-white/[0.02] border border-white/10 rounded-3xl p-5 sm:p-6 shadow-[0_10px_40px_rgba(0,0,0,0.5)] backdrop-blur-xl relative overflow-hidden text-left">
       {/* Background Neon Aura */}
       <div className="absolute top-0 right-1/4 w-96 h-32 bg-[#00fbfb]/10 rounded-full blur-3xl pointer-events-none" />
+
+      {vipFastTrack?.isVipFastTrack && (
+        <div className="mb-5 rounded-2xl bg-gradient-to-r from-emerald-500/15 via-teal-500/10 to-violet-500/15 border border-emerald-500/30 p-4 flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+          <div className="space-y-1">
+            <div className="inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-emerald-300">
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>{t('creatorChecklist.vipBanner.badge', 'VIP Fast-Track Active · Pre-Approved Creator')}</span>
+            </div>
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-white/85">
+              <span className="font-bold text-white">
+                {t('creatorChecklist.vipBanner.splitLabel', '90% Year-1 Net Split Active (80% Standard After)')}
+              </span>
+              <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-mono font-bold">
+                {t('creatorChecklist.vipBanner.daysLeft', '{days}d remaining in Year 1').replace('{days}', String(year1DaysLeft))}
+              </span>
+              {aiFreeDateLabel && (
+                <span className="text-[11px] text-violet-200">
+                  {t('creatorChecklist.vipBanner.aiFreeLabel', 'AI Copilot & Content Ops Free Until')}:{' '}
+                  <strong className="text-white">{aiFreeDateLabel}</strong>
+                </span>
+              )}
+              {vipFastTrack.moroccoShieldActive && (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-indigo-500/20 border border-indigo-400/30 text-indigo-200 text-[10px] font-bold">
+                  <ShieldCheck className="w-3 h-3" />
+                  {t('creatorChecklist.vipBanner.moroccoShield', 'Morocco Domestic Shield (MA) Active')}
+                </span>
+              )}
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2 shrink-0">
+            <button
+              type="button"
+              onClick={() => onNavigateTab(metrics.hasVisuals ? 'content' : 'settings')}
+              className="px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-[10px] font-black uppercase tracking-wider transition cursor-pointer inline-flex items-center gap-1"
+            >
+              <ImageIcon className="w-3 h-3 text-[#ffabf3]" />
+              {t('creatorChecklist.vipBanner.quickAvatarPhotos', '1 Avatar + 2 Photos')}
+            </button>
+            <button
+              type="button"
+              onClick={() => onNavigateTab('settings')}
+              className="px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-[10px] font-black uppercase tracking-wider transition cursor-pointer inline-flex items-center gap-1"
+            >
+              <DollarSign className="w-3 h-3 text-emerald-300" />
+              {t('creatorChecklist.vipBanner.quickRatesGeo', 'Rates & Geo Shield')}
+            </button>
+            {!metrics.hasKyc && (
+              <button
+                type="button"
+                onClick={onOpenKyc}
+                className="px-3 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black text-[10px] font-black uppercase tracking-wider transition cursor-pointer inline-flex items-center gap-1"
+              >
+                <ShieldCheck className="w-3 h-3" />
+                {t('creatorChecklist.vipBanner.quickKyc', 'DIDIT 18+ KYC')}
+              </button>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Header Bar */}
       <div className="flex items-center justify-between gap-4 flex-wrap pb-4 border-b border-white/5">

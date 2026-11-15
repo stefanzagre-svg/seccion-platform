@@ -95,12 +95,13 @@ export async function POST(req: NextRequest) {
       // Check call_requests table
       const { data: callReq } = await supabase
         .from('call_requests')
-        .select('member_id, creator_id')
+        .select('member_id, creator_id, status')
         .eq('id', callIdentifier)
         .single();
 
       if (callReq) {
-        if (callReq.member_id === user.id || callReq.creator_id === user.id) {
+        const isPaidOrActive = callReq.status === 'paid' || callReq.status === 'in_progress';
+        if ((callReq.member_id === user.id || callReq.creator_id === user.id) && isPaidOrActive) {
           isAuthorizedParticipant = true;
         }
       }

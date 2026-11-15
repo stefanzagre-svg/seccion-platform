@@ -7,10 +7,10 @@ import { validateMoroccanRib, formatMoroccanRib, MoroccanBankInfo } from '@/lib/
 
 export default function CreatorPayoutSettings() {
   const { locale } = useTranslation();
-  const [preferredRail, setPreferredRail] = useState<'sepa' | 'crypto_usdt' | 'wise' | 'cosmo_card' | 'morocco_bank'>('crypto_usdt');
+  const [preferredRail, setPreferredRail] = useState<'sepa' | 'crypto_usdc' | 'crypto_usdt' | 'wise' | 'cosmo_card' | 'morocco_bank'>('crypto_usdc');
   const [sepaIban, setSepaIban] = useState('');
   const [accountHolderName, setAccountHolderName] = useState('');
-  const [cryptoNetwork, setCryptoNetwork] = useState<'solana' | 'tron_trc20'>('solana');
+  const [cryptoNetwork, setCryptoNetwork] = useState<'polygon' | 'solana' | 'tron_trc20'>('polygon');
   const [cryptoWalletAddress, setCryptoWalletAddress] = useState('');
   const [wiseEmail, setWiseEmail] = useState('');
   const [cosmoAccountId, setCosmoAccountId] = useState('');
@@ -223,23 +223,23 @@ export default function CreatorPayoutSettings() {
             </div>
           </button>
 
-          {/* Crypto USDT (Global / Non-EU) */}
+          {/* Crypto USDC (MiCA-Compliant Global / Non-EU) */}
           <button
             type="button"
-            onClick={() => setPreferredRail('crypto_usdt')}
+            onClick={() => setPreferredRail('crypto_usdc')}
             className={`p-4 rounded-2xl border text-left transition flex flex-col justify-between ${
-              preferredRail === 'crypto_usdt'
+              preferredRail === 'crypto_usdc' || preferredRail === 'crypto_usdt'
                 ? 'bg-[#FF204E]/10 border-[#FF204E] shadow-[0_0_15px_rgba(255,32,78,0.25)]'
                 : 'bg-white/[0.02] border-white/10 hover:border-white/20'
             }`}
           >
             <div>
               <Coins className="w-5 h-5 text-[#FF204E] mb-2" />
-              <div className="text-xs font-bold text-white font-mono">USDT / USDC</div>
-              <div className="text-[10px] text-white/50 font-mono mt-0.5">Solana / Tron (TRC-20)</div>
+              <div className="text-xs font-bold text-white font-mono">USDC (MiCA)</div>
+              <div className="text-[10px] text-white/50 font-mono mt-0.5">Polygon / Solana</div>
             </div>
             <div className="text-[10px] font-mono text-[#39FF14] font-bold mt-4">
-              Instant · Gas ~$0.50 (Best for LATAM)
+              Instant · Gas ~€0.01 (Best for Global / LATAM)
             </div>
           </button>
 
@@ -412,26 +412,29 @@ export default function CreatorPayoutSettings() {
             </div>
           )}
 
-          {preferredRail === 'crypto_usdt' && (
+          {(preferredRail === 'crypto_usdc' || preferredRail === 'crypto_usdt') && (
             <div className="space-y-3">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="text-[10px] font-mono uppercase font-bold text-white/50 block mb-1">
-                    Blockchain Network
+                    Blockchain Network (MiCA USDC Default)
                   </label>
                   <select
                     value={cryptoNetwork}
-                    onChange={(e: any) => setCryptoNetwork(e.target.value)}
+                    onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+                      setCryptoNetwork(e.target.value as 'polygon' | 'solana' | 'tron_trc20')
+                    }
                     className="w-full bg-[#050505] border border-white/10 rounded-xl px-3.5 py-2.5 text-xs text-white font-mono outline-none focus:border-[#FF204E]"
                   >
-                    <option value="solana">Solana (SPL Token) — Fast & $0.01 fee</option>
-                    <option value="tron_trc20">Tron (TRC-20) — Binance & Local P2P friendly</option>
+                    <option value="polygon">Polygon POS (Circle USDC) — Recommended MiCA</option>
+                    <option value="solana">Solana (Circle USDC SPL) — Fast & €0.01 fee</option>
+                    <option value="tron_trc20">Tron (TRC-20 Legacy)</option>
                   </select>
                 </div>
 
                 <div>
                   <label className="text-[10px] font-mono uppercase font-bold text-white/50 block mb-1">
-                    Wallet Address (USDT or USDC)
+                    Wallet Address (USDC / USDT)
                   </label>
                   <input
                     type="text"

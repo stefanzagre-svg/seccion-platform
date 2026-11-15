@@ -1,14 +1,11 @@
 /**
  * Social Media Scheduler Helper — SECCIØN Platform
- * Integrates with Supabase Storage (for media hosting) and Make.com Webhook
+ * Integrates with Make.com Webhook using validated HTTPS media URLs.
  */
-import { createAdminClient } from './supabase/admin-client';
-import fs from 'fs';
-import path from 'path';
 
 export interface SocialDraftPayload {
   text: string;
-  mediaUrls?: string[]; // Array of absolute local file paths to upload
+  mediaUrls?: string[]; // Array of validated HTTPS media URLs
   platforms?: ('instagram' | 'tiktok' | 'twitter' | 'facebook')[];
   scheduledAt?: string;
 }
@@ -19,75 +16,44 @@ export interface SocialDraftResponse {
   message: string;
 }
 
-const MAKE_WEBHOOK_URL = 'https://hook.eu1.make.com/zc2jronounqeqzvnq1iorj8tu8h70mnf';
+const MAKE_WEBHOOK_URL = process.env.MAKE_SOCIAL_WEBHOOK_URL?.trim();
 
-// Lazy initialization to ensure env vars are loaded first
-function getSupabaseAdmin() {
-  return createAdminClient();
-}
-
-export async function uploadMediaToSupabase(localFilePath: string): Promise<string> {
-  if (!fs.existsSync(localFilePath)) {
-    throw new Error(`File not found: ${localFilePath}`);
+function sanitizeExternalMediaUrl(rawUrl: string): string {
+  let parsed: URL;
+  try {
+    parsed = new URL(rawUrl);
+  } catch {
+    throw new Error('Invalid media URL: local file paths are not allowed.');
   }
-
-  const fileName = `${Date.now()}_${path.basename(localFilePath)}`;
-  const fileBuffer = fs.readFileSync(localFilePath);
-  
-  // Determine mime type
-  const ext = path.extname(localFilePath).toLowerCase();
-  let contentType = 'image/jpeg';
-  if (ext === '.png') contentType = 'image/png';
-  if (ext === '.mp4') contentType = 'video/mp4';
-
-  console.log(`Uploading ${fileName} to Supabase...`);
-  
-  const { error } = await getSupabaseAdmin()
-    .storage
-    .from('social-assets')
-    .upload(fileName, fileBuffer, {
-      contentType,
-      upsert: true
-    });
-
-  if (error) {
-    throw new Error(`Failed to upload to Supabase: ${error.message}`);
+  if (parsed.protocol !== 'https:') {
+    throw new Error('Invalid media URL: HTTPS protocol is required.');
   }
-
-  // Get the public URL
-  const { data: publicUrlData } = getSupabaseAdmin()
-    .storage
-    .from('social-assets')
-    .getPublicUrl(fileName);
-
-  return publicUrlData.publicUrl;
+  return parsed.toString();
 }
 
 export async function pushSocialDraft(payload: SocialDraftPayload): Promise<SocialDraftResponse> {
   try {
-    const publicMediaUrls: string[] = [];
-
-    // 1. Upload local media files to Supabase to get public URLs for Make.com
-    if (payload.mediaUrls && payload.mediaUrls.length > 0) {
-      for (const localPath of payload.mediaUrls) {
-        const publicUrl = await uploadMediaToSupabase(localPath);
-        publicMediaUrls.push(publicUrl);
-        console.log(`Uploaded! Public URL: ${publicUrl}`);
-      }
+    if (!MAKE_WEBHOOK_URL) {
+      return {
+        success: false,
+        provider: 'make.com',
+        message: 'MAKE_SOCIAL_WEBHOOK_URL is not configured.',
+      };
     }
 
-    // 2. Prepare payload for Make.com
+    const publicMediaUrls = (payload.mediaUrls || [])
+      .filter((u): u is string => typeof u === 'string' && u.trim().length > 0)
+      .map((u) => sanitizeExternalMediaUrl(u.trim()));
+
     const makePayload = {
       text: payload.text,
       platforms: payload.platforms || ['instagram', 'tiktok', 'twitter'],
       mediaUrls: publicMediaUrls
     };
 
-    console.log('Sending payload to Make.com...', JSON.stringify(makePayload, null, 2));
-
-    // 3. POST to Make.com Webhook
     const res = await fetch(MAKE_WEBHOOK_URL, {
       method: 'POST',
+      signal: AbortSignal.timeout(10000),
       headers: {
         'Content-Type': 'application/json',
       },

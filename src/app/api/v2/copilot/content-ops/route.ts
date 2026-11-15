@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin-client';
 import { createClient as createServerClient } from '@/lib/supabase/server';
 import { generateContentWithFailover } from '@/lib/gemini-failover';
+import {
+  formatProvenanceMemoryBlock,
+  loadActiveCopilotMemories,
+} from '@/lib/ai/copilot-memory';
 
 /**
  * Sandbox / Development convenience:
@@ -16,6 +20,12 @@ const IS_DEV = process.env.NODE_ENV === 'development';
 
 export async function POST(req: NextRequest) {
   try {
+    const authClient = await createServerClient();
+    const { data: { user }, error: authError } = await authClient.auth.getUser();
+    if (authError || !user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     let body: any;
     try {
       body = await req.json();
@@ -31,10 +41,17 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    if (user.id !== creatorId) {
+      return NextResponse.json(
+        { error: 'Forbidden — content-ops is restricted to the creator account' },
+        { status: 403 }
+      );
+    }
+
     const hasServiceKey = !!process.env.SUPABASE_SERVICE_ROLE_KEY;
     const sandboxMode = IS_DEV && !hasServiceKey;
 
-    const supabase: any = hasServiceKey ? createAdminClient() : await createServerClient();
+    const supabase: any = hasServiceKey ? createAdminClient() : authClient;
 
     // ── 1. Fetch Creator Profile ─────────────────────────────────────────────
     const { data: creatorProfile, error: profileError } = await supabase
@@ -69,6 +86,8 @@ export async function POST(req: NextRequest) {
     }
 
     const creatorName = creatorProfile?.display_name || creatorProfile?.username || 'Creator';
+    const activeMemories = await loadActiveCopilotMemories(supabase, creatorId, null, 5);
+    const memoryBlock = formatProvenanceMemoryBlock(activeMemories, 5);
 
     // ── 3. Generate content ──────────────────────────────────────────────────
     const geminiKey = process.env.GEMINI_API_KEY;
@@ -80,6 +99,7 @@ export async function POST(req: NextRequest) {
 You are the AI Content Strategist for Creator ${creatorName}.
 Your task is to generate premium short-form marketing captions and video concepts.
 Always write high-converting, punchy captions for platforms like Instagram, TikTok, and X.
+${memoryBlock ? `\n${memoryBlock}\n` : ''}
 Compliance Constraint: If the promotion is sponsored, you MUST prepend or append prominent FTC ad disclosures (e.g. #ad or #sponsored) at the very beginning of the caption.
 `;
         const prompt = `

@@ -72,10 +72,18 @@ export default function ProvenanceSelector({
           return (
             <div key={level}>
               {/* Option Card */}
-              <button
-                type="button"
-                onClick={() => handleSelect(level)}
-                disabled={isLocked}
+              <div
+                role="button"
+                tabIndex={isLocked ? -1 : 0}
+                aria-disabled={isLocked}
+                aria-pressed={isSelected}
+                onClick={() => { if (!isLocked) handleSelect(level); }}
+                onKeyDown={(e) => {
+                  if (!isLocked && (e.key === 'Enter' || e.key === ' ')) {
+                    e.preventDefault();
+                    handleSelect(level);
+                  }
+                }}
                 className={`
                   w-full text-left p-4 rounded-2xl border transition-all duration-300
                   ${isSelected
@@ -157,7 +165,7 @@ export default function ProvenanceSelector({
                       : 'Requires active Replicant Authorization in Studio → Settings'}
                   </div>
                 )}
-              </button>
+              </div>
 
               {/* Expandable detail panel */}
               <AnimatePresence>

@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
     const adminClient = createAdminClient();
 
     // Parallel fetch all dashboard data with safe query fallbacks
-    const safeQuery = async (promise: any) => {
+    const safeQuery = async (promise: PromiseLike<{ data: Record<string, any>[] | null }>): Promise<Record<string, any>[]> => {
       try {
         const res = await promise;
         return res?.data || [];

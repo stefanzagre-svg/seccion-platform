@@ -552,7 +552,7 @@ export function populateRelationshipLevels(moves: SuggestionMoveDbRow[]) {
  */
 export async function syncSuggestionMoves(supabaseClient: {
   from: (table: string) => {
-    select: (columns: string) => Promise<{ data: SuggestionMoveDbRow[] | null; error: unknown }>;
+    select: (columns: string) => PromiseLike<{ data: SuggestionMoveDbRow[] | null; error: unknown }>;
   };
 }) {
   try {

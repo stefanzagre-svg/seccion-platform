@@ -2,14 +2,15 @@ import { GoogleGenAI } from '@google/genai';
 
 /**
  * Multi-bucket Free-Tier Gemini model failover chain.
- * Avoids exhausting the low 20 RPD quota on `gemini-2.5-flash` alone and skips
- * retired/deprecated models (`gemini-2.0-flash`, `gemini-2.5-flash-lite`).
+ * Prioritizes high-quota Flash-Lite models (e.g. `gemini-3.1-flash-lite-preview`
+ * with 15 RPM / 500 RPD on Free Tier) ahead of strictly capped 5 RPM / 20 RPD
+ * Flash models, while skipping retired models (`gemini-2.0-flash`, `gemini-2.5-flash-lite`).
  */
 export const GEMINI_FREE_MODEL_CHAIN: readonly string[] = [
-  'gemini-3-flash-preview',
+  'gemini-3.1-flash-lite-preview',
   'gemini-3.5-flash-lite',
   'gemini-flash-lite-latest',
-  'gemini-3.1-flash-lite-preview',
+  'gemini-3-flash-preview',
   'gemini-2.5-flash',
 ];
 
