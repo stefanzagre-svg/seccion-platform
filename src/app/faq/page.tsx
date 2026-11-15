@@ -17,10 +17,10 @@ export async function generateMetadata(): Promise<Metadata> {
     : "FAQ — SECCION Platform Guide for Creators & Members";
 
   const description = isFr
-    ? "Tout ce que vous devez savoir sur SECCION : reversement de 90 %, AI Copilot 24/7 en DM, coffre DRM anti-piratage, Warm Paywall, vérification KYC et statut Créateur Fondateur."
+    ? "Guide FAQ SECCION : paiement Créateur Fondateur à 90 %, AI Copilot DM 24/7, coffre DRM anti-piratage, Warm Paywall et vérification KYC confidentielle."
     : isEs
-    ? "Todo lo que necesitas saber sobre SECCION: cómo funciona el pago del 90%, el AI Copilot 24/7 en DMs, la bóveda DRM antipiratería, el Warm Paywall, la verificación KYC y cómo unirte como Creador Fundador."
-    : "Everything you need to know about SECCION: how the 90% creator payout works, the 24/7 AI Copilot DMs, DRM anti-piracy vault, Warm Paywall, KYC verification, and how to join as a Founding Creator.";
+    ? "Guía FAQ de SECCION: pago del 90% para Creadores Fundadores, AI Copilot en DMs 24/7, bóveda DRM antipiratería, Warm Paywall y verificación KYC segura."
+    : "SECCION FAQ guide: how the 90% Founding Creator payout works, 24/7 voice-trained AI Copilot DMs, DRM anti-piracy vault, Warm Paywall, and KYC safety.";
 
   return {
     title,

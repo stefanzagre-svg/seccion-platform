@@ -174,6 +174,43 @@ export default function HitUsUpPage() {
           </div>
         </DoubleBezelCard>
 
+        {/* Support Channels & Compliance Directory (rich SSR indexable context) */}
+        <section className="mt-12 grid gap-4 text-left" aria-label="Support Channels">
+          <div className="rounded-3xl bg-white/[0.03] border border-white/10 p-6 space-y-2">
+            <h2 className="text-xs font-mono font-black uppercase tracking-wider text-[#00fbfb]">
+              {locale === "fr"
+                ? "Onboarding Créateurs Fondateurs (90 % Revenus)"
+                : locale === "es"
+                ? "Onboarding de Creadores Fundadores (90% Ingresos)"
+                : "Founding Creator Onboarding & Concierge"}
+            </h2>
+            <p className="text-xs text-[#b9cac9] leading-relaxed">
+              {locale === "fr"
+                ? "Besoin d'aide pour migrer depuis OnlyFans, Fansly ou Patreon, configurer votre AI Copilot vocal ou activer le DRM Content Vault ? Notre équipe à Madrid traite les demandes de créateurs en moins de 24 heures."
+                : locale === "es"
+                ? "¿Necesitas ayuda para migrar desde OnlyFans, Fansly o Patreon, calibrar tu AI Copilot con tu voz o activar la bóveda DRM antipiratería? Nuestro equipo en Madrid responde en menos de 24 horas."
+                : "Migrating from OnlyFans, Fansly, or Patreon, calibrating your voice-trained AI Copilot, or enabling DRM anti-piracy watermarking? Our Madrid creator operations team reviews Founding Creator inquiries within 24 hours."}
+            </p>
+          </div>
+
+          <div className="rounded-3xl bg-white/[0.03] border border-white/10 p-6 space-y-2">
+            <h2 className="text-xs font-mono font-black uppercase tracking-wider text-[#ffabf3]">
+              {locale === "fr"
+                ? "Paiements, DMCA, RGPD & Sécurité DSA"
+                : locale === "es"
+                ? "Pagos, DMCA, GDPR y Seguridad DSA"
+                : "Payouts, DMCA Takedowns, GDPR & EU DSA"}
+            </h2>
+            <p className="text-xs text-[#b9cac9] leading-relaxed">
+              {locale === "fr"
+                ? "Pour toute demande concernant les virements SEPA/USDC, la vérification KYC zero-knowledge, les retraits DMCA ou vos droits RGPD européens auprès de SECCION AI CONCEPT S.L., précisez l'objet ci-dessus ou écrivez à support@seccion.ai."
+                : locale === "es"
+                ? "Para consultas sobre retiros SEPA/USDC, verificación KYC zero-knowledge, avisos DMCA o derechos de privacidad GDPR ante SECCION AI CONCEPT S.L., indica el asunto en el formulario o escribe a support@seccion.ai."
+                : "For questions covering SEPA/USDC payouts, zero-knowledge KYC verification, urgent DMCA anti-leak takedowns, or EU GDPR data requests with SECCION AI CONCEPT S.L., specify your subject above or email support@seccion.ai."}
+            </p>
+          </div>
+        </section>
+
       </div>
 
       {/* Footer */}

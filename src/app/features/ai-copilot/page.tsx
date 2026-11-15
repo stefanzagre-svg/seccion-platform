@@ -17,10 +17,10 @@ export async function generateMetadata(): Promise<Metadata> {
     : "AI Copilot for Creators — 24/7 DM Manager in Your Exact Voice";
 
   const description = isFr
-    ? "L'AI Copilot de SECCION répond à vos fans 24/7 en messages privés avec votre ton et votre voix authentiques — entraîné avec votre consentement. Remplacez les agences à 50 % et gardez 90 % de vos revenus."
+    ? "L'AI Copilot SECCION répond aux fans 24/7 en DM avec votre voix exacte et votre consentement. Remplacez les agences à 50 % et gardez 90 % des revenus."
     : isEs
-    ? "El AI Copilot de SECCION interactúa con tus fans 24/7 en DMs con tu tono y voz exactos, entrenado con tu consentimiento. Despide a las agencias que cobran 40–50% y quédate con el 90%."
-    : "SECCION's AI Copilot engages your fans 24/7 in direct messages using your exact tone and voice — trained with your explicit permission. Replace chatting agencies taking 40–50% and keep 90% of your earnings.";
+    ? "El AI Copilot de SECCION responde DMs 24/7 con tu tono exacto y tu permiso explícito. Reemplaza agencias que cobran 40–50% y conserva el 90% neto."
+    : "SECCION's voice-trained AI Copilot handles 24/7 fan DMs with your explicit consent. Replace chatting agencies taking 40–50% and keep 90% net earnings.";
 
   return {
     title,

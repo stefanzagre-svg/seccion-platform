@@ -17,10 +17,10 @@ export async function generateMetadata(): Promise<Metadata> {
     : "DRM Content Vault — Anti-Piracy Protection for Creators";
 
   const description = isFr
-    ? "Le DRM Content Vault de SECCION utilise un filigrane cryptographique et un robot DMCA autonome pour protéger vos photos et vidéos du piratage et des fuites — automatiquement, 24/7."
+    ? "Le DRM Content Vault de SECCION applique un filigrane cryptographique et un robot DMCA autonome pour stopper piratage, fuites et diffusions 24/7."
     : isEs
-    ? "El Content Vault DRM de SECCION utiliza marcas de agua criptográficas y un rastreador web DMCA autónomo para proteger tus fotos y videos contra piratería y filtraciones 24/7."
-    : "SECCION's DRM Content Vault uses cryptographic watermarking and an autonomous DMCA web sweeper to protect your photos and videos from piracy, leaks, and unauthorized distribution — automatically, 24/7.";
+    ? "El Content Vault DRM de SECCION usa marcas de agua criptográficas y rastreo DMCA autónomo 24/7 para frenar filtraciones y piratería de tus archivos."
+    : "SECCION's DRM Content Vault combines cryptographic watermarking and an autonomous DMCA sweeper to stop creator leaks and piracy automatically 24/7.";
 
   return {
     title,

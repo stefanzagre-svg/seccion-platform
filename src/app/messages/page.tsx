@@ -2,8 +2,9 @@ import Navbar from '@/components/Navbar';
 import MessagesInboxClient from '@/components/messaging/MessagesInboxClient';
 
 export const metadata = {
-  title: 'SECCION | Messages',
-  description: 'Connect directly with your favorite creators.',
+  title: 'Direct Messages — Private Creator & Member Inbox',
+  description: 'Signed-in encrypted messaging inbox for direct one-on-one conversations, Warm Paywall progression, and creator requests on SECCION.',
+  robots: { index: false, follow: false },
 };
 
 export default function MessagesPage() {

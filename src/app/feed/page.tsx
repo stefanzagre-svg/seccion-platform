@@ -5,8 +5,9 @@ import { createClient } from '@/lib/supabase/server';
 export const dynamic = 'force-dynamic';
 
 export const metadata = {
-  title: 'SECCION | For You',
-  description: 'Your personalized feed of premium content.',
+  title: 'For You Feed — Personalized Creator Discovery',
+  description: 'Signed-in personalized creator feed displaying live media drops, verified compatibility matches, and exclusive member updates inside SECCION.',
+  robots: { index: false, follow: false },
 };
 
 interface FeedVideoRow {

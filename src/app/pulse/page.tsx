@@ -3,8 +3,9 @@ import EventCard from '@/components/pulse/EventCard';
 import LivePulseBanner from '@/components/pulse/LivePulseBanner';
 
 export const metadata = {
-  title: 'SECCION | Live Pulse',
-  description: 'Real-time events, live streams, and exclusive drops.',
+  title: 'Live Pulse — Real-Time Events & Exclusive Drops',
+  description: 'Authenticated live pulse stream directory highlighting active creator broadcasts, scheduled countdown sessions, and limited member drops on SECCION.',
+  robots: { index: false, follow: false },
 };
 
 // Simulated Event Data

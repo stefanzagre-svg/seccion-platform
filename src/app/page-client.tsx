@@ -22,7 +22,8 @@ export default function Home() {
   const { t } = useTranslation();
   const [user, setUser] = useState<any>(null);
   const [onboardingCompleted, setOnboardingCompleted] = useState<boolean>(false);
-  const [loading, setLoading] = useState(true);
+  // Start false so SSR/SSG emits full semantic LandingPageHook HTML for search crawlers instead of an empty spinner.
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
 
   useEffect(() => {

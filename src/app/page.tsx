@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import ClientPage from "./page-client";
 
 export const metadata: Metadata = {
-  title: "SECCION — AI-Powered Creator Platform | 90% Payout, AI Copilot & DRM Protection",
-  description: "SECCION is the creator platform built for independence: keep 90% of your earnings, engage fans 24/7 with an AI Copilot trained in your exact voice, and protect your content with an unbreakable DRM vault. Zero agency cuts.",
+  title: "SECCION — AI-Powered Creator Platform | 90% Payout & DRM Vault",
+  description: "Keep 90% of your creator earnings on SECCION. Engage members 24/7 with a voice-trained AI Copilot, Warm Paywall discovery, and DRM anti-piracy protection.",
   keywords: [
     "creator platform 90% payout",
     "OnlyFans alternative 2026",

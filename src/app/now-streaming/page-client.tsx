@@ -217,6 +217,46 @@ export default function NowStreamingPage() {
             </DoubleBezelCard>
           ))}
         </div>
+
+        {/* Live VIP Broadcast Capabilities */}
+        <section className="mt-16 grid md:grid-cols-3 gap-6 text-left" aria-label="Live Broadcast Technology">
+          <div className="rounded-3xl bg-white/[0.03] border border-white/10 p-6 space-y-2">
+            <h2 className="text-xs font-mono font-black uppercase tracking-wider text-[#00fbfb]">
+              {isFr ? "Traduction Vocale S2S en Direct" : isEs ? "Traducción de Voz S2S en Vivo" : "Real-Time S2S Voice Translation"}
+            </h2>
+            <p className="text-xs text-[#b9cac9] leading-relaxed">
+              {isFr
+                ? "Diffusez dans votre langue maternelle pendant que les membres du monde entier vous écoutent et réagissent instantanément en anglais, espagnol ou français sans barrière linguistique."
+                : isEs
+                ? "Transmite en tu idioma mientras miembros de todo el mundo escuchan e interactúan en vivo con traducción bidireccional instantánea entre inglés, español y francés."
+                : "Broadcast naturally in your own language while global members hear low-latency translated audio and engage across EN, ES, and FR without geographic friction."}
+            </p>
+          </div>
+          <div className="rounded-3xl bg-white/[0.03] border border-white/10 p-6 space-y-2">
+            <h2 className="text-xs font-mono font-black uppercase tracking-wider text-[#ffabf3]">
+              {isFr ? "Flux Protégés par DRM & Anti-Fuite" : isEs ? "Streams Blindados con DRM Antifiltración" : "DRM-Hardened VIP Video Rooms"}
+            </h2>
+            <p className="text-xs text-[#b9cac9] leading-relaxed">
+              {isFr
+                ? "Chaque session VIP en direct intègre un filigrane cryptographique et une protection contre les fuites pour garantir la sécurité des créateurs et l'exclusivité des abonnés."
+                : isEs
+                ? "Cada sala VIP integra marcas de agua criptográficas por sesión y monitoreo autónomo antipiratería para proteger tus transmisiones en tiempo real."
+                : "Every VIP live session pairs encrypted video delivery with per-viewer forensic watermarking and automated leak deterrence so creators control their broadcasts."}
+            </p>
+          </div>
+          <div className="rounded-3xl bg-white/[0.03] border border-white/10 p-6 space-y-2">
+            <h2 className="text-xs font-mono font-black uppercase tracking-wider text-[#39FF14]">
+              {isFr ? "90 % Pourboires & Tickets VIP Directs" : isEs ? "90% en Propinas y Accesos VIP Directos" : "90% Founding Creator Live Payouts"}
+            </h2>
+            <p className="text-xs text-[#b9cac9] leading-relaxed">
+              {isFr
+                ? "Monétisez les salles VIP, les demandes personnalisées sous escrow et les interactions en direct en gardant jusqu'à 90 % de vos revenus sans aucune commission d'agence."
+                : isEs
+                ? "Monetiza entradas VIP, propinas en directo y pedidos con escrow conservando hasta el 90% neto, con pagos directos vía SEPA o USDC sin intermediarios."
+                : "Monetize ticketed live rooms, real-time tips, and escrow-backed custom requests while keeping up to 90% net creator revenue with SEPA and USDC settlement."}
+            </p>
+          </div>
+        </section>
       </div>
 
       <section id="waitlist" className="py-20 w-full px-4 md:px-12 relative z-10">

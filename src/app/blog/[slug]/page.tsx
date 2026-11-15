@@ -27,12 +27,16 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   if (!post) {
     return {
       title: "Article Not Found",
-      description: "The requested article does not exist on SECCION.",
+      description: "The requested article could not be found on SECCION. Explore creator payout comparisons, AI Copilot guides, and creator economy insights instead.",
+      robots: {
+        index: false,
+        follow: false,
+      },
     };
   }
 
   return {
-    title: `${post.title} — Insights`,
+    title: post.title,
     description: post.description,
     keywords: post.tags,
     authors: [{ name: post.author.name, url: post.author.twitter }],

@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import React from 'react';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
@@ -7,6 +8,12 @@ import AdminAuthGate from '@/components/admin/AdminAuthGate';
 import { headers } from 'next/headers';
 
 export const dynamic = 'force-dynamic';
+
+export const metadata: Metadata = {
+  title: 'Platform Admin Operations Console',
+  description: 'Restricted internal SECCION operations dashboard for moderation, KYC verification, creator approvals, and compliance telemetry.',
+  robots: { index: false, follow: false },
+};
 
 export default async function AdminLayout({
   children,

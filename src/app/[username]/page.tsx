@@ -121,7 +121,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   if (!isValidUsernameFormat(cleanUsername) || isReservedUsername(cleanUsername)) {
     return {
       title: 'Creator Not Found',
-      description: 'The requested creator profile does not exist on SECCION.',
+      description: 'The requested creator profile does not exist on SECCION. Browse verified creators, live streams, and VIP memberships across the platform.',
+      robots: { index: false, follow: false },
     };
   }
 
@@ -129,13 +130,20 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   if (!resolved) {
     return {
       title: 'Creator Not Found',
-      description: 'The requested creator profile does not exist on SECCION.',
+      description: 'The requested creator profile does not exist on SECCION. Browse verified creators, live streams, and VIP memberships across the platform.',
+      robots: { index: false, follow: false },
     };
   }
 
   const creator = resolved.creator;
   const displayName = creator.display_name || creator.username;
-  const bio = creator.bio || `Official SECCION Creator Hub for ${displayName}. Exclusive DRM content vault, direct 1-on-1 messaging, and VIP membership.`;
+  const rawBio = (creator.bio || '').trim();
+  const bio =
+    rawBio.length >= 120
+      ? rawBio.slice(0, 158)
+      : rawBio.length > 0
+      ? `${rawBio} — Official SECCION Creator Hub for ${displayName} (@${creator.username}) with DRM content vault, live rooms, and VIP access.`
+      : `Official SECCION Creator Hub for ${displayName} (@${creator.username}): DRM-protected media vault, direct 1-on-1 messaging, live sessions, and VIP membership.`;
   const shareImage = creator.cover_url || creator.avatar_url || 'https://seccion.ai/assets/seo/og-image.jpg';
   const pageUrl = `https://seccion.ai/${creator.username}`;
 

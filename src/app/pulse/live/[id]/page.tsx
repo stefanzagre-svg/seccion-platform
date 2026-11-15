@@ -2,7 +2,9 @@ import { X, Users, MessageCircle, Heart, DollarSign, Share2 } from 'lucide-react
 import Link from 'next/link';
 
 export const metadata = {
-  title: 'SECCION | Live Stream',
+  title: 'Live VIP Broadcast Room',
+  description: 'Authenticated interactive live video broadcast room featuring real-time viewer chat, creator reactions, and DRM-protected streaming on SECCION.',
+  robots: { index: false, follow: false },
 };
 
 // In production, fetch this based on params.id

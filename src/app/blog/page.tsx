@@ -8,7 +8,7 @@ import Link from "next/link";
 import { ArrowLeft, Sparkles, BookOpen } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "SECCION Blog & Insights | Creator Economy, AI Tools & Warm Paywall",
+  title: "Blog & Insights — Creator Economy, AI Copilot & Warm Paywall",
   description: "In-depth research, platform comparisons, and guides on creator platform payouts, 90% revenue economics, AI operations, and chemistry-first monetization.",
   keywords: [
     "SECCION blog",
@@ -23,16 +23,16 @@ export const metadata: Metadata = {
     canonical: "https://seccion.ai/blog"
   },
   openGraph: {
-    title: "SECCION Blog & Insights | Creator Economy, AI Tools & Warm Paywall",
-    description: "In-depth research and platform economics: 90% creator splits, AI copilot, and chemistry-first Warm Paywalls.",
+    title: "Blog & Insights — Creator Economy & AI Tools | SECCION",
+    description: "In-depth research, platform comparisons, and guides on creator platform payouts, 90% revenue economics, AI operations, and chemistry-first monetization.",
     url: "https://seccion.ai/blog",
     siteName: "SECCION",
     type: "website"
   },
   twitter: {
     card: "summary_large_image",
-    title: "SECCION Blog & Insights | Creator Economy, AI Tools & Warm Paywall",
-    description: "In-depth research and platform economics: 90% creator splits, AI copilot, and chemistry-first Warm Paywalls."
+    title: "Blog & Insights — Creator Economy & AI Tools | SECCION",
+    description: "In-depth research, platform comparisons, and guides on creator platform payouts, 90% revenue economics, AI operations, and chemistry-first monetization."
   }
 };
 

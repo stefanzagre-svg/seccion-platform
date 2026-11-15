@@ -4,7 +4,7 @@ import ClientPage from "./page-client";
 export const metadata: Metadata = {
   // Note: layout.tsx template is "%s | SECCION" — do NOT add "| SECCION" here to avoid duplication
   title: "Become a Creator — 90% Payout, AI Copilot & DRM Vault",
-  description: "Join SECCION as a Founding Creator. Keep 90% net revenue, get a free 24/7 AI Copilot that engages fans in your exact voice, and protect your content with DRM anti-piracy vaulting. Zero agency cuts.",
+  description: "Join SECCION as a Founding Creator: keep 90% net revenue, automate 24/7 fan DMs with a voice-trained AI Copilot, and seal uploads in an anti-leak DRM vault.",
   keywords: [
     "become a content creator",
     "join creator platform 90% payout",
