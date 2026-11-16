@@ -55,9 +55,11 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       tags: post.tags,
       images: [
         {
-          url: "https://seccion.ai/assets/seo/og-image.jpg",
+          url: post.coverImage
+            ? `https://seccion.ai${post.coverImage}`
+            : "https://seccion.ai/assets/seo/og-image.jpg",
           width: 1200,
-          height: 630,
+          height: post.coverImage ? 675 : 630,
           alt: post.title,
         },
       ],
@@ -66,7 +68,11 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       card: "summary_large_image",
       title: post.title,
       description: post.description,
-      images: ["https://seccion.ai/assets/seo/og-image.jpg"],
+      images: [
+        post.coverImage
+          ? `https://seccion.ai${post.coverImage}`
+          : "https://seccion.ai/assets/seo/og-image.jpg",
+      ],
       creator: "@steveseccion",
     },
   };

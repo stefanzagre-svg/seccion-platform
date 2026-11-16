@@ -11,15 +11,51 @@ import robots from '../app/robots';
 import { generateStaticParams, generateMetadata } from '../app/blog/[slug]/page';
 
 describe('SECCION Blog Core Data & Content Pillar Integrity', () => {
-  it('loads all blog posts and ensures at least the 4 cornerstone pillar articles exist', () => {
+  it('loads all blog posts and ensures at least the 6 cornerstone pillar articles exist', () => {
     const posts = getAllBlogPosts();
-    expect(posts.length).toBeGreaterThanOrEqual(4);
+    expect(posts.length).toBeGreaterThanOrEqual(6);
 
     const slugs = posts.map((p) => p.slug);
+    expect(slugs).toContain('creator-privacy-face-blur-drm-leak-protection-2026');
+    expect(slugs).toContain('how-creators-avoid-banking-fx-fees-usdc-sepa-2026');
     expect(slugs).toContain('replace-40-percent-onlyfans-agency-with-ai-copilot-2026');
     expect(slugs).toContain('seccion-vs-passes-vs-fanvue-vs-fansly-2026');
     expect(slugs).toContain('creator-platform-90-percent-payout-comparison-2026');
     expect(slugs).toContain('what-is-a-warm-paywall-creator-economy');
+  });
+
+  it('verifies Safety & DRM Pillar (EN/ES/FR): ZKP Face Blur & DRM Protection 2026', () => {
+    const post = getBlogPostBySlug('creator-privacy-face-blur-drm-leak-protection-2026');
+    expect(post).toBeDefined();
+    if (!post) return;
+
+    expect(post.category).toBe('Safety & DRM');
+    expect(post.coverImage).toBe('/assets/blog/drm-face-blur-shield-2026.png');
+    expect(post.titleEs).toBeDefined();
+    expect(post.titleFr).toBeDefined();
+    expect(post.summaryPointsEs?.length).toBeGreaterThanOrEqual(3);
+    expect(post.summaryPointsFr?.length).toBeGreaterThanOrEqual(3);
+    expect(post.contentHtml).toContain('Stealth ZKP Face Blur');
+    expect(post.contentHtmlEs).toContain('Stealth ZKP Face Blur');
+    expect(post.contentHtmlFr).toContain('Stealth ZKP Face Blur');
+    expect(post.canonical).toBe('https://seccion.ai/blog/creator-privacy-face-blur-drm-leak-protection-2026');
+  });
+
+  it('verifies Payouts & Taxes Pillar (EN/ES/FR): Avoid FX Fees with USDC & SEPA 2026', () => {
+    const post = getBlogPostBySlug('how-creators-avoid-banking-fx-fees-usdc-sepa-2026');
+    expect(post).toBeDefined();
+    if (!post) return;
+
+    expect(post.category).toBe('Payouts & Taxes');
+    expect(post.coverImage).toBe('/assets/blog/usdc-sepa-instant-payouts-2026.png');
+    expect(post.titleEs).toBeDefined();
+    expect(post.titleFr).toBeDefined();
+    expect(post.summaryPointsEs?.length).toBeGreaterThanOrEqual(3);
+    expect(post.summaryPointsFr?.length).toBeGreaterThanOrEqual(3);
+    expect(post.contentHtml).toContain('SEPA Instant');
+    expect(post.contentHtmlEs).toContain('SEPA Instant');
+    expect(post.contentHtmlFr).toContain('SEPA Instant');
+    expect(post.canonical).toBe('https://seccion.ai/blog/how-creators-avoid-banking-fx-fees-usdc-sepa-2026');
   });
 
   it('verifies Brief #2 (EN/ES/FR): Replace 40% OnlyFans Agency with AI Copilot 2026', () => {
@@ -123,7 +159,9 @@ describe('SECCION Blog Core Data & Content Pillar Integrity', () => {
 describe('SECCION Blog Next.js Static & Metadata Generation', () => {
   it('generates static params matching all published slugs', async () => {
     const params = await generateStaticParams();
-    expect(params.length).toBeGreaterThanOrEqual(4);
+    expect(params.length).toBeGreaterThanOrEqual(6);
+    expect(params).toContainEqual({ slug: 'creator-privacy-face-blur-drm-leak-protection-2026' });
+    expect(params).toContainEqual({ slug: 'how-creators-avoid-banking-fx-fees-usdc-sepa-2026' });
     expect(params).toContainEqual({ slug: 'replace-40-percent-onlyfans-agency-with-ai-copilot-2026' });
     expect(params).toContainEqual({ slug: 'seccion-vs-passes-vs-fanvue-vs-fansly-2026' });
     expect(params).toContainEqual({ slug: 'creator-platform-90-percent-payout-comparison-2026' });
@@ -156,6 +194,8 @@ describe('SECCION SEO & Crawler Discovery Verification', () => {
     const urls = map.map((entry) => entry.url);
 
     expect(urls).toContain('https://seccion.ai/blog');
+    expect(urls).toContain('https://seccion.ai/blog/creator-privacy-face-blur-drm-leak-protection-2026');
+    expect(urls).toContain('https://seccion.ai/blog/how-creators-avoid-banking-fx-fees-usdc-sepa-2026');
     expect(urls).toContain('https://seccion.ai/blog/replace-40-percent-onlyfans-agency-with-ai-copilot-2026');
     expect(urls).toContain('https://seccion.ai/blog/seccion-vs-passes-vs-fanvue-vs-fansly-2026');
     expect(urls).toContain('https://seccion.ai/blog/creator-platform-90-percent-payout-comparison-2026');
@@ -183,6 +223,8 @@ describe('SECCION SEO & Crawler Discovery Verification', () => {
 
     const llmsTxt = await fs.readFile(path.join(process.cwd(), 'public/llms.txt'), 'utf-8');
     expect(llmsTxt).toContain('https://seccion.ai/blog');
+    expect(llmsTxt).toContain('creator-privacy-face-blur-drm-leak-protection-2026');
+    expect(llmsTxt).toContain('how-creators-avoid-banking-fx-fees-usdc-sepa-2026');
     expect(llmsTxt).toContain('replace-40-percent-onlyfans-agency-with-ai-copilot-2026');
     expect(llmsTxt).toContain('seccion-vs-passes-vs-fanvue-vs-fansly-2026');
     expect(llmsTxt).toContain('creator-platform-90-percent-payout-comparison-2026');
@@ -190,6 +232,8 @@ describe('SECCION SEO & Crawler Discovery Verification', () => {
 
     const llmsFullTxt = await fs.readFile(path.join(process.cwd(), 'public/llms-full.txt'), 'utf-8');
     expect(llmsFullTxt).toContain('https://seccion.ai/blog');
+    expect(llmsFullTxt).toContain('creator-privacy-face-blur-drm-leak-protection-2026');
+    expect(llmsFullTxt).toContain('how-creators-avoid-banking-fx-fees-usdc-sepa-2026');
     expect(llmsFullTxt).toContain('replace-40-percent-onlyfans-agency-with-ai-copilot-2026');
     expect(llmsFullTxt).toContain('seccion-vs-passes-vs-fanvue-vs-fansly-2026');
     expect(llmsFullTxt).toContain('creator-platform-90-percent-payout-comparison-2026');
