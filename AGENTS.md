@@ -301,3 +301,14 @@ Load only the domain map required for your active sub-task:
    - **Layer 4 (Alias & Vaulted Real Identity)**: Legal name and CNI held strictly in encrypted DIDIT vault; never displayed publicly.
    - **Layer 5 (Zero-Adult Invoicing Isolation)**: Automated B2B self-billing (*Autofacturación*) and payout payment descriptors strictly use neutral digital export terminology (*"Prestation de services de création et production audiovisuelle numérique"*).
 
+---
+
+## 🌐 Browser Support Policy (Modern Web Guidance)
+
+- **Baseline Target**: Target **Baseline 2024** or earlier. Omit fallbacks and `@supports` blocks for features that reached Baseline in or before 2024.
+- **Outreach Funnel & Mobile In-App WebView Protection**: On creator acquisition and auth routes clicked from X, Instagram, TikTok, Telegram, or WhatsApp (`/become-creator`, `/onboarding`, `/login`, `/[username]`), never ship unguarded **Limited availability** features that can break iOS WebKit or Android in-app WebViews.
+- **Fallback Budget (`Baseline Newly available` / `2025+`)**: Allow Baseline Newly available features only when non-breaking via CSS progressive enhancement, a `@supports` guard, or a custom zero-dependency fallback of **20 lines or fewer**.
+- **Zero Polyfill Dependencies**: Do not add external polyfill libraries; prefer CSS `@supports` rules or native HTML fallbacks.
+- **Cross-Engine Verification**: When modifying modals, dialogs, forms, or layout primitives on conversion routes, verify both modern and fallback paths across **Chromium** and **WebKit (Safari/iOS)**.
+
+
