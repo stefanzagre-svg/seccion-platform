@@ -35,6 +35,9 @@
 }
 
 :root {
+  color-scheme: dark;
+  accent-color: var(--primary);
+
   /* ── Electric Sophistication — Dark Mode First ─────────────────── */
   --background:           #0B0C10;          /* Deep Space Black     */
   --foreground:           #FFFFFF;           /* Crisp White          */
@@ -78,6 +81,7 @@ body {
 
 h1, h2, h3, .font-display {
   font-family: var(--font-display, 'Space Grotesk', system-ui, sans-serif);
+  text-wrap: balance;
 }
 
 /* ── Design Utility Classes ────────────────────────────────────────── */
@@ -144,14 +148,28 @@ h1, h2, h3, .font-display {
 }
 
 /* ── Scrollbar ─────────────────────────────────────────────────────── */
-::-webkit-scrollbar { width: 6px; }
-::-webkit-scrollbar-track { background: var(--background); }
-::-webkit-scrollbar-thumb {
-  background: rgba(102, 252, 241, 0.2);
-  border-radius: 3px;
+:root {
+  --scrollbar-thumb: rgba(102, 252, 241, 0.45);
+  --scrollbar-track: var(--background);
 }
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(102, 252, 241, 0.4);
+
+@layer base {
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+  }
+}
+
+@supports not (scrollbar-color: auto) {
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--scrollbar-track); }
+  ::-webkit-scrollbar-thumb {
+    background: var(--scrollbar-thumb);
+    border-radius: 3px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(102, 252, 241, 0.65);
+  }
 }
 
 /* ── Animations ────────────────────────────────────────────────────── */

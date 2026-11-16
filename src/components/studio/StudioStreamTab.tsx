@@ -198,9 +198,13 @@ export default function StudioStreamTab({
               value={chatInput}
               onChange={(e) => setChatInput(e.target.value)}
               onKeyDown={(e) => {
-                if (e.key === 'Enter' && chatInput.trim()) {
-                  onSendChatMessage(chatInput.trim());
-                  setChatInput('');
+                if (e.key === 'Enter') {
+                  if (e.nativeEvent.isComposing || e.keyCode === 229) return;
+                  e.preventDefault();
+                  if (chatInput.trim()) {
+                    onSendChatMessage(chatInput.trim());
+                    setChatInput('');
+                  }
                 }
               }}
               placeholder={locale === 'es' ? 'Escribe un mensaje en vivo...' : 'Send message to stream...'}

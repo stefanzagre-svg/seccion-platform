@@ -133,7 +133,14 @@ export default function MatchParticleCanvas({ isActive }: { isActive: boolean })
       particlesRef.current.push(new RevealParticle(cx, cy, 'spark'));
     }
 
+    let isPaused = document.hidden;
+
     const renderLoop = () => {
+      if (isPaused) {
+        animFrameId.current = null;
+        return;
+      }
+
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       const particles = particlesRef.current;
 
@@ -154,10 +161,30 @@ export default function MatchParticleCanvas({ isActive }: { isActive: boolean })
       animFrameId.current = requestAnimationFrame(renderLoop);
     };
 
-    renderLoop();
+    const resumeIfReady = () => {
+      if (!isPaused && animFrameId.current === null) {
+        renderLoop();
+      }
+    };
+
+    const handleVisibilityChange = () => {
+      isPaused = document.hidden;
+      if (isPaused && animFrameId.current !== null) {
+        cancelAnimationFrame(animFrameId.current);
+        animFrameId.current = null;
+      } else {
+        resumeIfReady();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    if (!isPaused) {
+      renderLoop();
+    }
 
     return () => {
       window.removeEventListener('resize', resize);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
       if (animFrameId.current) cancelAnimationFrame(animFrameId.current);
     };
   }, [isActive]);

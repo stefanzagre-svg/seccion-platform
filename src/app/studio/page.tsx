@@ -1923,7 +1923,7 @@ export default function CreatorStudio() {
                               <div className="flex flex-wrap gap-2">
                                 {addedCoPerformers.map((p, idx) => (
                                   <div key={idx} className="flex items-center gap-1.5 px-2.5 py-1 bg-white/5 border border-white/10 rounded-xl text-[9px] font-semibold text-white/80">
-                                    {p.avatar && <img src={p.avatar} className="w-4 h-4 rounded-full object-cover" />}
+                                    {p.avatar && <img src={p.avatar} alt="" loading="lazy" className="w-4 h-4 rounded-full object-cover" />}
                                     <span>{p.name}</span>
                                     <span className={`text-[7px] font-black uppercase px-1 rounded ${
                                       p.status === 'approved' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-amber-500/20 text-amber-400'
@@ -2139,12 +2139,12 @@ export default function CreatorStudio() {
                               teaser.thumbnail_type === 'video' ? (
                                 <video src={teaser.thumbnail_url} autoPlay loop muted playsInline className="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition duration-500" />
                               ) : (
-                                <img src={teaser.thumbnail_url} className="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition duration-500" />
+                                <img src={teaser.thumbnail_url} alt={post.title || 'Content teaser thumbnail'} loading="lazy" className="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition duration-500" />
                               )
                             ) : teaser.teaser_type === 'video_clip' ? (
                               <video src={`${post.media_url}#t=${teaser.video_start_time || 0},${(teaser.video_start_time || 0) + 5}`} autoPlay loop muted playsInline className="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition duration-500" />
                             ) : (
-                              <img src={post.media_url} className="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition duration-500" />
+                              <img src={post.media_url} alt={post.title || 'Studio post preview'} loading="lazy" className="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition duration-500" />
                             )}
                             <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                             
@@ -2179,7 +2179,7 @@ export default function CreatorStudio() {
                                   <span key={i} className={`flex items-center gap-1 px-1.5 py-0.5 rounded text-[7px] font-black uppercase tracking-wider ${
                                     p.status === 'approved' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-amber-500/20 text-amber-400 border border-amber-500/30 animate-pulse'
                                   }`} title={`${p.name} (${p.status})`}>
-                                    {p.avatar && <img src={p.avatar} className="w-3 h-3 rounded-full object-cover" />}
+                                    {p.avatar && <img src={p.avatar} alt="" loading="lazy" className="w-3 h-3 rounded-full object-cover" />}
                                     {p.name}
                                   </span>
                                 ))}
@@ -2366,7 +2366,7 @@ export default function CreatorStudio() {
                                       {addedLiveCoPerformers.map((p, idx) => (
                                         <div key={idx} className="flex items-center justify-between p-2 bg-black/40 border border-white/5 rounded-xl text-[10px]">
                                           <div className="flex items-center gap-1.5">
-                                            {p.avatar && <img src={p.avatar} className="w-5 h-5 rounded-full object-cover" />}
+                                            {p.avatar && <img src={p.avatar} alt="" loading="lazy" className="w-5 h-5 rounded-full object-cover" />}
                                             <span className="font-bold">{p.name}</span>
                                             <span className="text-white/40 uppercase text-[8px]">({p.type})</span>
                                           </div>
@@ -2569,7 +2569,7 @@ export default function CreatorStudio() {
                                 >
                                   <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-3">
-                                      <img src={viewer.avatar} className="w-8 h-8 rounded-full object-cover border border-white/10" />
+                                      <img src={viewer.avatar} alt="" loading="lazy" className="w-8 h-8 rounded-full object-cover border border-white/10" />
                                       <div>
                                         <div className="flex items-center gap-1.5">
                                           <p className="text-[10px] font-black text-white/90">{viewer.name}</p>

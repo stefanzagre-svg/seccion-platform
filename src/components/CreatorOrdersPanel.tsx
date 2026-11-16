@@ -510,7 +510,7 @@ export default function CreatorOrdersPanel({ customRequestPermission = 'anyone' 
                 <div key={i} className={`flex items-center gap-1.5 px-2 py-1.5 rounded-xl border text-[9px] font-black ${
                   p.status === 'approved' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-amber-500/10 text-amber-400 border-amber-500/20 animate-pulse'
                 }`}>
-                  {p.avatar && <img src={p.avatar} className="w-4 h-4 rounded-full object-cover" />}
+                  {p.avatar && <img src={p.avatar} alt="" loading="lazy" className="w-4 h-4 rounded-full object-cover" />}
                   <span>{p.name}</span>
                   {p.status === 'pending' && p.type === 'registered' && (
                     <button

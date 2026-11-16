@@ -86,6 +86,8 @@ export default function AdminLoginPage() {
               <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
               <input
                 type="email"
+                autoComplete="username"
+                spellCheck={false}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full bg-black/60 border border-white/20 rounded-xl py-3 pl-10 pr-4 text-xs font-mono text-white outline-none focus:border-cyan-400 focus:bg-black transition-all"
@@ -104,6 +106,7 @@ export default function AdminLoginPage() {
               <Key className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
               <input
                 type="password"
+                autoComplete="current-password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full bg-black/60 border border-white/20 rounded-xl py-3 pl-10 pr-4 text-xs font-mono text-white outline-none focus:border-cyan-400 focus:bg-black transition-all"

@@ -16,6 +16,7 @@ import FloatingBugButton from "@/components/bug-bounty/FloatingBugButton";
 import { LanguageProvider, SupportedLocale } from "@/context/LanguageContext";
 
 export const viewport: Viewport = {
+  colorScheme: "dark",
   themeColor: "#0a0a0c",
   width: "device-width",
   initialScale: 1,

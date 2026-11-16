@@ -753,14 +753,14 @@ export default function ProfileInsidePage() {
               <div className="flex justify-around items-center w-full gap-4 max-w-sm pt-4">
                 <div className="text-center">
                   <div className="w-20 h-20 rounded-[1.5rem] overflow-hidden border border-white/10 shadow-lg">
-                    <img src={currentUserProfile?.avatar_url || 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=200&q=80'} className="w-full h-full object-cover" />
+                    <img src={currentUserProfile?.avatar_url || 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=200&q=80'} alt={currentUserProfile?.display_name || "Your profile avatar"} loading="lazy" className="w-full h-full object-cover" />
                   </div>
                   <p className="text-[10px] text-white/40 mt-2 uppercase font-bold">You</p>
                 </div>
                 <Heart className="w-8 h-8 text-primary fill-primary" />
                 <div className="text-center">
                   <div className="w-20 h-20 rounded-[1.5rem] overflow-hidden border border-white/10 shadow-lg">
-                    <img src={profile.avatar_url} className="w-full h-full object-cover" />
+                    <img src={profile.avatar_url} alt={profile.display_name || "Match avatar"} loading="lazy" className="w-full h-full object-cover" />
                   </div>
                   <p className="text-[10px] text-white/40 mt-2 uppercase font-bold">{profile.display_name}</p>
                 </div>

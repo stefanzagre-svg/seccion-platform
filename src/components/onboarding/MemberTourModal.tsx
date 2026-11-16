@@ -238,10 +238,10 @@ export default function MemberTourModal({ isOpen, onClose, onStartQuest }: Membe
                           <span>Add Bio Audio Clip (15s)</span>
                         </button>
                         <div className="aspect-square rounded-xl overflow-hidden border border-white/10">
-                          <img src="https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=150&q=80" className="w-full h-full object-cover" />
+                          <img src="https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=150&q=80" alt="Sample profile photo 1" loading="lazy" className="w-full h-full object-cover" />
                         </div>
                         <div className="aspect-square rounded-xl overflow-hidden border border-white/10">
-                          <img src="https://images.unsplash.com/photo-1529139574466-a303027c1d8b?w=150&q=80" className="w-full h-full object-cover" />
+                          <img src="https://images.unsplash.com/photo-1529139574466-a303027c1d8b?w=150&q=80" alt="Sample profile photo 2" loading="lazy" className="w-full h-full object-cover" />
                         </div>
                       </div>
                     </div>
@@ -303,6 +303,8 @@ export default function MemberTourModal({ isOpen, onClose, onStartQuest }: Membe
                       <div className="relative aspect-square w-full rounded-2xl overflow-hidden border border-white/5 bg-black/30">
                         <img 
                           src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&q=80" 
+                          alt="Profile unblurred preview"
+                          loading="lazy"
                           className="w-full h-full object-cover" 
                         />
                         <div className="absolute top-2 left-2 z-10 px-2 py-0.5 rounded-full backdrop-blur-md bg-black/60 border border-white/10 flex items-center gap-1">
@@ -314,10 +316,10 @@ export default function MemberTourModal({ isOpen, onClose, onStartQuest }: Membe
                       {/* Anchors row */}
                       <div className="grid grid-cols-2 gap-2">
                         <div className="h-10 rounded-lg overflow-hidden border border-white/5">
-                          <img src="https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=150&q=80" className="w-full h-full object-cover" />
+                          <img src="https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=150&q=80" alt="Profile gallery thumbnail 1" loading="lazy" className="w-full h-full object-cover" />
                         </div>
                         <div className="h-10 rounded-lg overflow-hidden border border-white/5">
-                          <img src="https://images.unsplash.com/photo-1529139574466-a303027c1d8b?w=150&q=80" className="w-full h-full object-cover" />
+                          <img src="https://images.unsplash.com/photo-1529139574466-a303027c1d8b?w=150&q=80" alt="Profile gallery thumbnail 2" loading="lazy" className="w-full h-full object-cover" />
                         </div>
                       </div>
                     </div>
@@ -411,7 +413,7 @@ export default function MemberTourModal({ isOpen, onClose, onStartQuest }: Membe
                       <div className="p-3 bg-white/[0.02] border border-white/5 rounded-xl flex justify-between items-center">
                         <div className="flex items-center gap-2">
                           <div className="w-8 h-8 rounded-full overflow-hidden border border-white/10">
-                            <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&q=80" className="w-full h-full object-cover" />
+                            <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&q=80" alt="" loading="lazy" className="w-full h-full object-cover" />
                           </div>
                           <div className="text-left">
                             <span className="text-[9px] font-bold text-white block">Sarah</span>
@@ -429,7 +431,7 @@ export default function MemberTourModal({ isOpen, onClose, onStartQuest }: Membe
                       <div className="p-3 bg-white/[0.02] border border-white/5 rounded-xl flex justify-between items-center opacity-60">
                         <div className="flex items-center gap-2">
                           <div className="w-8 h-8 rounded-full overflow-hidden border border-white/10">
-                            <img src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&q=80" className="w-full h-full object-cover" />
+                            <img src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&q=80" alt="" loading="lazy" className="w-full h-full object-cover" />
                           </div>
                           <div className="text-left">
                             <span className="text-[9px] font-bold text-white block">Elena</span>

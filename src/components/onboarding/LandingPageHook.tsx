@@ -519,11 +519,13 @@ export default function LandingPageHook({
                   <img
                     src={activeConnect.leftImg}
                     alt="Connect Person 1"
+                    fetchPriority="high"
                     className="w-full h-full object-cover object-[center_18%] border-r border-[#00fbfb]/50"
                   />
                   <img
                     src={activeConnect.rightImg}
                     alt="Connect Person 2"
+                    fetchPriority="high"
                     className="w-full h-full object-cover object-[center_18%]"
                   />
                 </div>

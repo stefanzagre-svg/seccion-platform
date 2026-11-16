@@ -72,6 +72,8 @@ export default function AdminAuthGate() {
               <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
               <input
                 type="email"
+                autoComplete="username"
+                spellCheck={false}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full bg-black/50 border border-white/15 rounded-xl py-2.5 pl-10 pr-4 text-xs font-mono text-white outline-none focus:border-cyan-400 transition"
@@ -90,6 +92,7 @@ export default function AdminAuthGate() {
               <Key className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
               <input
                 type="password"
+                autoComplete="current-password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full bg-black/50 border border-white/15 rounded-xl py-2.5 pl-10 pr-4 text-xs font-mono text-white outline-none focus:border-cyan-400 transition"

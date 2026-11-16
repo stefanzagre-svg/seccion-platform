@@ -770,6 +770,8 @@ export default function CreatorPublicProfileClient({
                         </label>
                         <input
                           type="text"
+                          autoComplete="username"
+                          spellCheck={false}
                           value={fanUsername}
                           onChange={(e) => setFanUsername(e.target.value)}
                           placeholder="alex_vibe"
@@ -824,6 +826,8 @@ export default function CreatorPublicProfileClient({
                       </label>
                       <input
                         type="email"
+                        autoComplete="email"
+                        spellCheck={false}
                         required
                         value={fanEmail}
                         onChange={(e) => {
@@ -844,6 +848,7 @@ export default function CreatorPublicProfileClient({
                       </label>
                       <input
                         type="password"
+                        autoComplete="new-password"
                         required
                         minLength={6}
                         value={fanPassword}

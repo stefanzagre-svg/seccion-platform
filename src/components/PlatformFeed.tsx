@@ -1322,6 +1322,7 @@ export default function PlatformFeed() {
                             <img 
                               src={m.target_profile.avatar_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&q=80'} 
                               alt={m.target_profile.display_name} 
+                              loading="lazy"
                               className="w-full h-full object-cover" 
                             />
                           </div>
@@ -1363,6 +1364,7 @@ export default function PlatformFeed() {
                             <img 
                               src={m.avatar_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&q=80'} 
                               alt={m.display_name} 
+                              loading="lazy"
                               className="w-full h-full object-cover" 
                             />
                           </div>
@@ -1460,6 +1462,7 @@ export default function PlatformFeed() {
                       <img 
                         src={profile.avatar_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&q=80'} 
                         alt={profile.display_name} 
+                        loading="lazy"
                         className="w-full h-full object-cover group-hover:scale-105 transition duration-[1.2s] ease-[cubic-bezier(0.32,0.72,0,1)]" 
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent z-20" />

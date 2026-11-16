@@ -581,7 +581,7 @@ export default function CustomOrderRequestForm({
                       <div className="flex flex-wrap gap-2">
                         {addedCoPerformers.map((p, idx) => (
                           <div key={idx} className="flex items-center gap-1.5 px-2.5 py-1 bg-white/5 border border-white/10 rounded-xl text-[9px] font-semibold text-white/80">
-                            {p.avatar && <img src={p.avatar} className="w-4 h-4 rounded-full object-cover" />}
+                            {p.avatar && <img src={p.avatar} alt="" loading="lazy" className="w-4 h-4 rounded-full object-cover" />}
                             <span>{p.name}</span>
                             <span className={`text-[7px] font-black uppercase px-1 rounded ${
                               p.status === 'approved' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-amber-500/20 text-amber-400 animate-pulse'
