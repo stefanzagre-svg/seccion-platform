@@ -6,6 +6,15 @@ import {
   getContextualFallbackReply,
   sanitizeHistory,
 } from '@/lib/kate-specialist';
+import { createAdminClient } from '@/lib/supabase/admin-client';
+import {
+  type PersonaSpec,
+  buildKateFrictionPromptBlock,
+  detectPersonaDeviceFromUserAgent,
+  simulatePersonaFriction,
+} from '@/lib/friction-simulator';
+import { fetchCohortTelemetrySummary } from '@/lib/funnel-telemetry-server';
+import { VIP_INVITE_COOKIE } from '@/lib/vip-invites';
 
 export async function POST(req: NextRequest) {
   try {
@@ -24,6 +33,61 @@ export async function POST(req: NextRequest) {
     const detectedLang = langInfo.uiLang;
     const targetLanguageDesc = langInfo.targetLanguageDesc;
     const historyTurns = sanitizeHistory(body.history);
+
+    // Optional Pre-Emptive Friction Briefing injection when caller supplies personaContext or VIP cookie
+    const rawPersonaCtx =
+      body?.personaContext && typeof body.personaContext === 'object'
+        ? (body.personaContext as Partial<PersonaSpec>)
+        : null;
+    const vipCodeFromReq =
+      (typeof body?.vipCode === 'string' && body.vipCode.trim()) ||
+      req.cookies.get(VIP_INVITE_COOKIE)?.value?.trim() ||
+      rawPersonaCtx?.vipCode?.trim() ||
+      undefined;
+
+    let frictionBriefingBlock = '';
+    if (rawPersonaCtx || vipCodeFromReq) {
+      try {
+        const cfCountry = (req.headers.get('cf-ipcountry') || rawPersonaCtx?.country || 'US')
+          .toUpperCase()
+          .slice(0, 2);
+        const inferredDevice = detectPersonaDeviceFromUserAgent(req.headers.get('user-agent'));
+        const personaForKate: PersonaSpec = {
+          role: rawPersonaCtx?.role === 'member' ? 'member' : 'creator',
+          age: typeof rawPersonaCtx?.age === 'number' && rawPersonaCtx.age >= 18 ? rawPersonaCtx.age : 24,
+          country: cfCountry === 'XX' ? 'ES' : cfCountry,
+          origins: rawPersonaCtx?.origins || cfCountry,
+          language:
+            rawPersonaCtx?.language ||
+            (detectedLang === 'es' || detectedLang === 'fr' || detectedLang === 'ar'
+              ? detectedLang
+              : 'en'),
+          device: rawPersonaCtx?.device || inferredDevice,
+          intent: rawPersonaCtx?.intent || 'sensual_glamour',
+          cryptoFamiliarity: rawPersonaCtx?.cryptoFamiliarity || 'none',
+          paymentPreference:
+            rawPersonaCtx?.paymentPreference ||
+            (cfCountry === 'MA' ? 'local_bank_rib' : 'instant_bank'),
+          vipCode: vipCodeFromReq,
+          hasPreApprovedFastTrack:
+            rawPersonaCtx?.hasPreApprovedFastTrack ?? Boolean(vipCodeFromReq),
+          hasThreePhotosReady: rawPersonaCtx?.hasThreePhotosReady,
+          hasRegisteredTaxId: rawPersonaCtx?.hasRegisteredTaxId,
+          stalledAtStep: rawPersonaCtx?.stalledAtStep ?? null,
+        };
+
+        const adminDb = createAdminClient();
+        const telemetry = await fetchCohortTelemetrySummary(adminDb, {
+          role: personaForKate.role,
+          country: personaForKate.country,
+          limit: 500,
+        });
+        const report = simulatePersonaFriction(personaForKate, telemetry.observedStatsByStep);
+        frictionBriefingBlock = `\n${buildKateFrictionPromptBlock(report)}\n`;
+      } catch {
+        // Non-blocking: never prevent Kate from replying if telemetry DB is unreachable
+      }
+    }
 
     const apiKeys = Array.from(
       new Set([process.env.GEMINI_API_KEY?.trim()].filter((k): k is string => Boolean(k)))
@@ -221,6 +285,7 @@ CONVERSATION STYLE RULES:
   * Help them navigate their setup step-by-step, explaining how to set rates, seed their vault, protect their privacy with DRM/Face-Blur, and monetize without losing 40-50% to predatory agencies.
 - When addressing institutional underwriters/compliance queries (Sabadell, BBVA, Bit2Me, Kraken, Nuvei, Noda, NOWPayments, Wert, Paxum, chargebacks, 2257, refunds, Two-Stage SFW/NSFW separation):
   * Be professional, precise, reassuring, and compliance-first. Provide concrete technical and policy answers regarding the Matrix token firewall, chargeback mitigation, and 90% creator split transparency.
+${frictionBriefingBlock}
 `;
 
         const contentsPayload =

@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { OnboardingLogger } from '@/lib/onboarding-logger';
 import {
   Sparkles,
   ShieldCheck,
@@ -250,6 +251,16 @@ export default function VipFastTrackClaimClient({
     summary.creatorName ||
     (summary.socialHandle ? `@${summary.socialHandle}` : t.headingFallback);
 
+  useEffect(() => {
+    OnboardingLogger.log(
+      '1_entry',
+      'step_enter',
+      `vip_claim_view status=${summary.status}`,
+      null,
+      { vipCode: summary.code, role: 'creator', platform: summary.platform }
+    );
+  }, [summary.code, summary.status, summary.platform]);
+
   const finalizeClaim = async () => {
     const res = await fetch('/api/v2/creator/vip-claim', {
       method: 'POST',
@@ -258,8 +269,22 @@ export default function VipFastTrackClaimClient({
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok || !data.ok) {
+      OnboardingLogger.log(
+        '2_registration',
+        'validation_error',
+        data.reason || data.error || 'vip_finalize_failed',
+        null,
+        { vipCode: summary.code, role: 'creator' }
+      );
       throw new Error(t.errors[data.reason] || data.error || 'Could not activate VIP pass.');
     }
+    OnboardingLogger.log(
+      '2_registration',
+      'step_complete',
+      'vip_claim_finalized',
+      null,
+      { vipCode: summary.code, role: 'creator' }
+    );
     router.push(data.redirectTo || '/studio?vip=welcome');
     router.refresh();
   };
@@ -267,6 +292,13 @@ export default function VipFastTrackClaimClient({
   const handleGoogleOAuth = async () => {
     setErrorMsg(null);
     setBusy('google');
+    OnboardingLogger.log(
+      '2_registration',
+      'step_enter',
+      'vip_oauth_google_start',
+      null,
+      { vipCode: summary.code, role: 'creator' }
+    );
     try {
       const prep = await fetch('/api/v2/creator/vip-claim', {
         method: 'POST',

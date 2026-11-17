@@ -8,6 +8,7 @@ import {
   Brain, Video, AlertCircle, Bot
 } from 'lucide-react';
 import { useTranslation } from '@/context/LanguageContext';
+import { OnboardingLogger } from '@/lib/onboarding-logger';
 
 export interface CreatorChecklistMetrics {
   hasVisuals: boolean;
@@ -319,7 +320,22 @@ export default function CreatorOnboardingChecklist({
 
                   {!item.done ? (
                     <button
-                      onClick={item.action}
+                      onClick={() => {
+                        const mappedStep =
+                          item.id === 'kyc' || item.id === 'tax'
+                            ? '6_verification'
+                            : item.id === 'pricing'
+                              ? '7_payment_payout'
+                              : '5_first_action';
+                        OnboardingLogger.log(
+                          mappedStep,
+                          'cta_click',
+                          `studio_checklist_${item.id}`,
+                          null,
+                          { role: 'creator', checklistItem: item.id }
+                        );
+                        item.action();
+                      }}
                       className="px-3.5 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-[10px] font-black uppercase tracking-wider transition flex items-center gap-1 cursor-pointer"
                     >
                       <span>{item.actionLabel}</span>

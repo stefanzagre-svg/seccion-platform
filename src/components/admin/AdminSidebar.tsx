@@ -17,7 +17,8 @@ import {
   ChevronRight,
   Shield,
   UserPlus,
-  Bug
+  Bug,
+  Gauge
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -38,6 +39,7 @@ export default function AdminSidebar({ adminUser }: SidebarProps) {
     { name: 'Creators', href: '/admin/creators', icon: Tv },
     { name: 'Applications', href: '/admin/creators/applications', icon: Shield },
     { name: 'CRM Tracker', href: '/admin/creators/crm-outreach', icon: UserPlus },
+    { name: 'Friction Sim', href: '/admin/friction-simulator', icon: Gauge },
     { name: 'Bug Bounty', href: '/admin/bugs', icon: Bug },
     { name: 'Moderation', href: '/admin/moderation', icon: ShieldAlert },
     { name: 'Finance', href: '/admin/finance', icon: DollarSign },

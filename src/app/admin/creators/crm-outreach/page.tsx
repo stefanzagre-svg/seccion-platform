@@ -8,8 +8,10 @@ import {
   RefreshCw,
   FileText,
   Target,
-  MapPin
+  MapPin,
+  Gauge
 } from 'lucide-react';
+import Link from 'next/link';
 import DataTable, { Column } from '@/components/admin/DataTable';
 import { cn } from '@/lib/utils';
 
@@ -206,6 +208,20 @@ export default function CRMOutreachPage() {
             {!row.instagram_handle && !row.tiktok_handle && (
               <span className="text-white/40 text-xs">-</span>
             )}
+            <Link
+              href={`/admin/friction-simulator?${new URLSearchParams({
+                ...(row.full_name ? { name: row.full_name } : {}),
+                ...(row.email ? { email: row.email } : {}),
+                ...(row.city ? { city: row.city } : {}),
+                ...(row.instagram_handle ? { ig: row.instagram_handle } : {}),
+                ...(row.tiktok_handle ? { tt: row.tiktok_handle } : {}),
+                ...(row.status ? { status: row.status } : {}),
+              }).toString()}`}
+              className="mt-1 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-[#00fbfb]/30 bg-[#00fbfb]/10 text-[#00fbfb] hover:bg-[#00fbfb]/20 text-[9px] font-mono font-bold uppercase tracking-wider w-fit transition"
+            >
+              <Gauge className="w-3 h-3" />
+              Simulate &amp; Track
+            </Link>
           </div>
         );
       }

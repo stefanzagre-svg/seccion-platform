@@ -50,4 +50,5 @@ next-env.d.ts
 
 # generated test/audit reports and Supabase CLI temp files
 /reports/ux-audit-reports/
+/reports/friction-simulation-latest.md
 /supabase/.temp/

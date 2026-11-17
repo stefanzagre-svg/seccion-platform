@@ -22,7 +22,8 @@
     "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
     "upload": "opennextjs-cloudflare build && opennextjs-cloudflare upload",
     "cf-typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts",
-    "db:seed": "node --env-file=.env.local scripts/seed_database.js"
+    "db:seed": "node --env-file=.env.local scripts/seed_database.js",
+    "simulate:friction": "node scripts/simulate-persona-friction.mjs"
   },
   "dependencies": {
     "@didit-protocol/sdk-web": "^0.2.1",
