@@ -51,14 +51,14 @@ export default function ProvenanceSelector({
       <div className="flex items-center gap-2 mb-3">
         <ShieldCheck className="w-4 h-4 text-primary" />
         <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-white/80">
-          {isEs ? 'Declaración de Procedencia del Contenido' : 'Content Provenance Declaration'}
+          {isEs ? 'Etiqueta de Contenido e IA' : 'AI & Content Label'}
         </h4>
       </div>
 
       <p className="text-[8px] text-white/40 uppercase tracking-widest leading-relaxed mb-4">
         {isEs
-          ? 'Selecciona cómo fue creado este contenido. Tu audiencia verá esta etiqueta. Sé transparente — genera confianza.'
-          : 'Select how this content was created. Your audience will see this label. Be transparent — it builds trust.'}
+          ? 'Indica si este post es real o usa IA. Tus fans verán esta etiqueta—la transparencia genera confianza.'
+          : 'Choose whether this post is camera-shot or uses AI. Your audience sees this badge—honesty builds trust.'}
       </p>
 
       {/* Provenance Options */}
@@ -161,8 +161,8 @@ export default function ProvenanceSelector({
                   <div className="mt-2 flex items-center gap-1.5 text-[8px] text-amber-400/80 font-black uppercase tracking-widest">
                     <AlertTriangle className="w-3 h-3 shrink-0" />
                     {isEs
-                      ? 'Requiere Autorización de Replicant activa en Studio → Configuración'
-                      : 'Requires active Replicant Authorization in Studio → Settings'}
+                      ? 'Requiere activar permiso de Doble Digital IA en Studio → Ajustes'
+                      : 'Requires active AI Digital Twin permission in Studio → Settings'}
                   </div>
                 )}
               </div>
@@ -206,8 +206,8 @@ export default function ProvenanceSelector({
         <ShieldCheck className="w-3.5 h-3.5 text-primary/60 shrink-0 mt-0.5" />
         <p className="text-[7px] text-white/30 uppercase tracking-widest leading-relaxed">
           {isEs
-            ? 'SECCION analiza automáticamente el contenido subido para verificar la procedencia. Si nuestro análisis difiere de tu declaración, te pediremos que la reconsideres.'
-            : 'SECCION automatically analyzes uploaded content to verify provenance. If our analysis differs from your declaration, we\'ll ask you to reconsider.'}
+            ? 'SECCION revisa automáticamente si la etiqueta coincide con el archivo subido. Si detectamos uso de IA sin marcar, te avisaremos antes de publicar.'
+            : 'SECCION checks uploads automatically to confirm the AI label matches. If something looks mislabeled, we\'ll ask you to update it.'}
         </p>
       </div>
     </div>

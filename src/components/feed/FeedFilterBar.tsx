@@ -146,16 +146,6 @@ export default function FeedFilterBar({
             <span>{t('platformFeed.advancedFiltersBtn', 'Advanced Filters')}</span>
           </button>
         </div>
-
-        {/* A/B Test Group Visual Pill Badge */}
-        <div className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-[0.2em] border shrink-0 flex items-center gap-1.5 transition-all duration-300 select-none ${
-          abGroup === 'B' 
-            ? 'bg-purple-500/10 text-purple-400 border-purple-500/20 shadow-[0_0_15px_rgba(168,85,247,0.15)]' 
-            : 'bg-pink-500/10 text-pink-400 border-pink-500/20 shadow-[0_0_15px_rgba(236,72,153,0.15)]'
-        }`}>
-          <span className={`w-1.5 h-1.5 rounded-full ${abGroup === 'B' ? 'bg-purple-400 animate-pulse' : 'bg-pink-400 animate-pulse'}`} />
-          {abGroup === 'B' ? 'B: Interaction Priority' : 'A: Synergy Mode'}
-        </div>
       </div>
 
       {/* Advanced Search Form Drawer */}

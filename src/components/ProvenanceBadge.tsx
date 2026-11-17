@@ -36,12 +36,12 @@ export default function ProvenanceBadge({
   const tier = getProvenanceTier(level);
   const isEs = locale === 'es';
 
-  // Dynamic label — for Replicant level, include creator's name
+  // Dynamic label — for fully AI-generated level, include creator's name
   const displayLabel =
     level === 'ai_generated' && creatorName
       ? isEs
-        ? `100% Replicant de ${creatorName}`
-        : `100% ${creatorName}'s Replicant`
+        ? `100% IA de ${creatorName}`
+        : `100% AI · ${creatorName}`
       : isEs
         ? tier.labelEs
         : tier.label;

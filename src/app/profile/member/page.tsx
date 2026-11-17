@@ -1509,13 +1509,13 @@ export default function MemberProfile() {
             className="bg-white/[0.02] border border-white/5 p-2 rounded-[2.5rem] shadow-[0_30px_60px_-15px_rgba(0,0,0,0.8)] backdrop-blur-xl relative overflow-hidden"
           >
             <div className="bg-black/40 border border-white/5 rounded-[2rem] p-6 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)] flex flex-col items-center text-center relative overflow-hidden">
-              {/* Match Pulse Indicator */}
+              {/* Match Compatibility Badge */}
               <div className="absolute top-0 right-0 p-4">
                 <div className="flex flex-col items-end">
                   <div className="flex items-center gap-1.5 px-2 py-0.5 bg-primary/20 rounded-full border border-primary/30">
                     <Zap className="w-2.5 h-2.5 text-primary fill-current" />
                     <span className="text-[9px] font-black text-white tracking-widest uppercase">
-                      94% PULSE
+                      94% MATCH
                     </span>
                   </div>
                 </div>
@@ -1581,13 +1581,13 @@ export default function MemberProfile() {
             >
               {[
                 { id: "edit", label: "Edit Profile", icon: Edit3 },
-                { id: "media", label: "My Media Album", icon: Image },
-                { id: "status", label: "Status Lists", icon: ListOrdered },
-                { id: "insights", label: "Relational Insights", icon: Brain },
-                { id: "track", label: "Track Record", icon: Activity },
+                { id: "media", label: "My Photos & Videos", icon: Image },
+                { id: "status", label: "Matches & Levels", icon: ListOrdered },
+                { id: "insights", label: "Match Insights", icon: Brain },
+                { id: "track", label: "Activity Log", icon: Activity },
                 { id: "calendar", label: "Calendar Events", icon: Calendar },
-                { id: "livestream", label: "Live Pulse Hub", icon: Video },
-                { id: "master", label: "My Sponsored Creators", icon: Crown },
+                { id: "livestream", label: "Live Streams", icon: Video },
+                { id: "master", label: "VIP & Master Circle", icon: Crown },
                 { id: "preferences", label: "Account Settings", icon: Settings },
               ].map((tab) => {
                 const Icon = tab.icon;

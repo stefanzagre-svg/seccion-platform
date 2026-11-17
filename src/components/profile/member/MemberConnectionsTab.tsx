@@ -71,13 +71,15 @@ export default function MemberConnectionsTab({
                 <Activity className="w-4 h-4" />
               </div>
               <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight">
-                {locale === 'es' ? 'Rastreador de Relación & Sinergia' : 'Relationship Depth & Dual-Gauge'}
+                {locale === 'es' ? 'Progreso de Conexiones' : locale === 'fr' ? 'Niveaux de Connexion' : 'Connection Levels'}
               </h2>
             </div>
             <p className="text-xs text-[#b9cac9] max-w-xl leading-relaxed">
               {locale === 'es'
-                ? 'Monitorea la afinidad mutua calculada mediante la media armónica. Desbloquea permisos RLS, gestos de sugerencia y citas presenciales al subir de nivel.'
-                : 'Track mutual relationship depth resolved via weighted harmonic scoring. Unlock RLS privacy gates, suggestion moves, and in-person plans as your synergy evolves.'}
+                ? 'Mira qué tan fuerte es tu conexión mutua. Sube de nivel chateando y compartiendo planes para desbloquear fotos sin desenfoque y citas presenciales.'
+                : locale === 'fr'
+                  ? 'Suivez votre progression mutuelle. Montez de niveau en discutant pour débloquer les photos nettes et les rencontres.'
+                  : 'See how close your mutual connection is. Level up through chats and shared plans to unlock Face Blur reveal and in-person dates.'}
             </p>
           </div>
 
@@ -86,7 +88,7 @@ export default function MemberConnectionsTab({
             <div className="flex items-center gap-4 bg-black/50 border border-white/10 p-3.5 rounded-2xl shrink-0">
               <div className="text-right">
                 <p className="text-[9px] uppercase font-mono font-bold text-white/50">
-                  {locale === 'es' ? 'Nivel de Conexión' : 'Harmonic Level'}
+                  {locale === 'es' ? 'Nivel de Conexión' : locale === 'fr' ? 'Niveau de Lien' : 'Connection Level'}
                 </p>
                 <p className="text-base font-black text-white flex items-center gap-1.5 justify-end" style={{ color: dualGauge.level.color }}>
                   <span>{dualGauge.level.label}</span>
@@ -102,10 +104,10 @@ export default function MemberConnectionsTab({
           )}
         </div>
 
-        {/* ─── 8 Milestone Progression Bar (Exact RLS Alignment) ──────────── */}
+        {/* ─── 8 Milestone Progression Bar ───────────────────────────────── */}
         <div className="mt-8 pt-6 border-t border-white/5 space-y-3">
           <div className="flex justify-between items-center text-[10px] font-mono font-bold uppercase tracking-wider text-white/60">
-            <span>{locale === 'es' ? 'Hitos de Nivel (RLS)' : 'RLS Milestone Progression'}</span>
+            <span>{locale === 'es' ? 'Progreso de Nivel' : locale === 'fr' ? 'Progression des Niveaux' : 'Connection Progress'}</span>
             <span className="text-primary font-black">
               {dualGauge ? `${Math.round(dualGauge.sharedScore)} / 100 PTS` : '0 / 100 PTS'}
             </span>
@@ -242,8 +244,10 @@ export default function MemberConnectionsTab({
             <Compass className="w-8 h-8 text-white/30 mx-auto" />
             <p>
               {locale === 'es'
-                ? 'Aún no tienes conexiones activas. Explora el Feed o envía pulsos de afinidad para empezar a conectar.'
-                : 'No active connections found yet. Explore the Feed or send affinity pulses to start connecting.'}
+                ? 'Aún no tienes conexiones activas. Explora el Feed o desliza perfiles para empezar a conectar.'
+                : locale === 'fr'
+                  ? 'Aucune connexion active pour l\'instant. Explorez le Feed ou swipez des profils pour commencer.'
+                  : 'No active connections yet. Explore the Feed or swipe on profiles to start connecting.'}
             </p>
             <Link
               href="/feed"

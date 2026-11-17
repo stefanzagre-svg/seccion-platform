@@ -3,6 +3,7 @@ import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import CreatorTourModal from '@/components/studio/CreatorTourModal';
 import CreatorOnboardingChecklist, { type CreatorChecklistMetrics } from '@/components/studio/CreatorOnboardingChecklist';
+import { getStudioTabs } from '@/lib/studio-navigation';
 
 // Mock Language Context
 vi.mock('@/context/LanguageContext', () => ({
@@ -36,7 +37,7 @@ describe('Creator Tour Modal Component', () => {
       />
     );
     expect(html).toContain('Welcome to SECCION Creator Studio');
-    expect(html).toContain('Next: Earnings &amp; Rates');
+    expect(html).toContain('Next: Pricing &amp; Earnings');
   });
 });
 
@@ -63,8 +64,10 @@ describe('Creator Onboarding Checklist Component', () => {
     );
     expect(html).toContain('0%');
     expect(html).toContain('0/5 Completed');
-    expect(html).toContain('Configure');
+    expect(html).toContain('Set Prices');
+    expect(html).toContain('Upload Your First 2 Posts');
     expect(html).toContain('Ask Copilot about this step');
+    expect(html).not.toContain('Obsidian Vault');
   });
 
   it('calculates 100% progress when all items are complete', () => {
@@ -88,6 +91,28 @@ describe('Creator Onboarding Checklist Component', () => {
       />
     );
     expect(html).toContain('100%');
-    expect(html).toContain('Portfolio Ready');
+    expect(html).toContain('Ready to Launch');
+  });
+});
+
+describe('Studio Navigation Labels', () => {
+  it('returns plain-language localized tabs without jargon', () => {
+    const enTabs = getStudioTabs(false, 'en');
+    expect(enTabs.map((t) => t.label)).toEqual([
+      'Posts & Media',
+      'Livestreams',
+      'Custom Requests',
+      'Co-Star Approvals',
+      'Goals',
+      'Analytics',
+      'Settings',
+      'AI Copilot',
+    ]);
+
+    const esTabs = getStudioTabs(true, 'es');
+    expect(esTabs.some((t) => t.id === 'safety_ops' && t.label === 'Moderación')).toBe(true);
+
+    const frTabs = getStudioTabs(false, 'fr');
+    expect(frTabs.some((t) => t.id === 'live' && t.label === 'Directs')).toBe(true);
   });
 });

@@ -31,34 +31,34 @@ export default function CreatorTourModal({
       id: 'welcome',
       icon: Compass,
       accent: 'from-[#00fbfb]/20 to-[#7c3aed]/20',
-      badge: t('creatorTour.steps.welcome.badge', 'Step 1 of 5 • Orientation'),
+      badge: t('creatorTour.steps.welcome.badge', 'Step 1 of 5 • Overview'),
       title: t('creatorTour.steps.welcome.title', 'Welcome to SECCION Creator Studio'),
       description: t(
         'creatorTour.steps.welcome.desc',
-        'Your high-status creator headquarters. Everything is built to replace 40% agency tolls with direct, authentic monetization and automated fan nurturing.'
+        'Your creator headquarters—built to replace 40% management agency fees with direct fan subscriptions and smart chat automation.'
       ),
       highlight: t(
         'creatorTour.steps.welcome.highlight',
-        'You retain 90% Net Revenue from day one across all 7 income streams.'
+        'You keep 90% of your net revenue from day one across all 7 income streams.'
       ),
-      actionLabel: t('creatorTour.steps.welcome.action', 'Next: Earnings & Rates'),
+      actionLabel: t('creatorTour.steps.welcome.action', 'Next: Pricing & Earnings'),
       onAction: () => setCurrentStep(1)
     },
     {
       id: 'pricing',
       icon: DollarSign,
       accent: 'from-emerald-500/20 to-teal-500/20',
-      badge: t('creatorTour.steps.pricing.badge', 'Step 2 of 5 • Monetization'),
-      title: t('creatorTour.steps.pricing.title', 'Configure Your Founding Rates'),
+      badge: t('creatorTour.steps.pricing.badge', 'Step 2 of 5 • Pricing'),
+      title: t('creatorTour.steps.pricing.title', 'Set Your Prices'),
       description: t(
         'creatorTour.steps.pricing.desc',
-        'Set your base VIP subscription, PPV unlocks, and private 1-on-1 call pricing. Members unlock content through cash or earned Chemistry XP.'
+        'Set your single-creator VIP monthly pass, pay-to-unlock (PPV) post prices, and 1-on-1 video call rate. Note: VIP is a fan subscribing to you alone; Master is a multi-creator bundle chosen by the member.'
       ),
       highlight: t(
         'creatorTour.steps.pricing.highlight',
-        'Recommended baseline: $9.99/mo VIP Pass • $4.99 PPV Media • $3.00/min Private Call.'
+        'Suggested start: $9.99/mo VIP Pass • $4.99 PPV Post • $3.00/min Private Call.'
       ),
-      actionLabel: t('creatorTour.steps.pricing.action', 'Go to Earnings Settings'),
+      actionLabel: t('creatorTour.steps.pricing.action', 'Go to Pricing Settings'),
       onAction: () => {
         onClose();
         onNavigateTab('settings');
@@ -68,17 +68,17 @@ export default function CreatorTourModal({
       id: 'content',
       icon: ShieldCheck,
       accent: 'from-[#ff007f]/20 to-purple-500/20',
-      badge: t('creatorTour.steps.content.badge', 'Step 3 of 5 • Content & DRM'),
-      title: t('creatorTour.steps.content.title', 'DRM Vault & Progressive Privacy'),
+      badge: t('creatorTour.steps.content.badge', 'Step 3 of 5 • Posts & Privacy'),
+      title: t('creatorTour.steps.content.title', 'Protected Posts & Smart Face Blur'),
       description: t(
         'creatorTour.steps.content.desc',
-        'Upload your initial seed portfolio with forensic DRM watermarking. If you enable Face-Blur, your identity stays encrypted until connections reach Relationship Level 3.'
+        'Every upload gets automatic anti-leak watermarking. Turn on Face Blur to keep your face hidden from public discovery until fans subscribe or build trust.'
       ),
       highlight: t(
         'creatorTour.steps.content.highlight',
-        'Seed your feed with 2–3 exclusive posts so new subscribers get immediate value.'
+        'Start with 2–3 exclusive posts so new VIP subscribers get value right away.'
       ),
-      actionLabel: t('creatorTour.steps.content.action', 'Open Content Vault'),
+      actionLabel: t('creatorTour.steps.content.action', 'Go to Posts & Media'),
       onAction: () => {
         onClose();
         onNavigateTab('content');
@@ -88,17 +88,17 @@ export default function CreatorTourModal({
       id: 'stream',
       icon: Video,
       accent: 'from-amber-500/20 to-orange-500/20',
-      badge: t('creatorTour.steps.stream.badge', 'Step 4 of 5 • Live Experience'),
-      title: t('creatorTour.steps.stream.title', 'Interactive WebRTC Live Cockpit'),
+      badge: t('creatorTour.steps.stream.badge', 'Step 4 of 5 • Go Live'),
+      title: t('creatorTour.steps.stream.title', 'Real-Time Livestreaming'),
       description: t(
         'creatorTour.steps.stream.desc',
-        'Broadcast with sub-500ms latency. The live Audience Vibe Dashboard calculates chemistry scores in real time so you always know who is tipping and engaging.'
+        'Go live with instant, zero-lag video and see live tips, top supporters, and chat reactions in real time.'
       ),
       highlight: t(
         'creatorTour.steps.stream.highlight',
-        'Requires 18+ KYC Identity Shield before your first public broadcast.'
+        'Requires a quick, private 18+ ID check before your first public livestream.'
       ),
-      actionLabel: t('creatorTour.steps.stream.action', 'Inspect Live Station'),
+      actionLabel: t('creatorTour.steps.stream.action', 'Open Livestreams'),
       onAction: () => {
         onClose();
         onNavigateTab('live');
@@ -108,17 +108,17 @@ export default function CreatorTourModal({
       id: 'copilot',
       icon: Brain,
       accent: 'from-indigo-500/20 to-[#00fbfb]/20',
-      badge: t('creatorTour.steps.copilot.badge', 'Step 5 of 5 • AI Second Brain'),
-      title: t('creatorTour.steps.copilot.title', 'Obsidian Vault & AI Copilot'),
+      badge: t('creatorTour.steps.copilot.badge', 'Step 5 of 5 • AI Chat Assistant'),
+      title: t('creatorTour.steps.copilot.title', 'Train Your AI Copilot'),
       description: t(
         'creatorTour.steps.copilot.desc',
-        'Your digital twin replies to fan DMs when you are offline. Train your Copilot using Obsidian Markdown notes with [[Persona]] and [[Boundaries]] to ensure safe, authentic conversations.'
+        'Your AI assistant replies to fan DMs when you\'re offline. Write simple notes for your tone, favorite topics, and hard boundaries—no coding needed.'
       ),
       highlight: t(
         'creatorTour.steps.copilot.highlight',
-        'Protected by an instant 1-click Emergency Halt kill-switch.'
+        'Includes a 1-click pause switch whenever you want to take over live.'
       ),
-      actionLabel: t('creatorTour.steps.copilot.action', 'Open Obsidian AI Tools'),
+      actionLabel: t('creatorTour.steps.copilot.action', 'Open AI Copilot'),
       onAction: () => {
         onClose();
         onNavigateAiTools();

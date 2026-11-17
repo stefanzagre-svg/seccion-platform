@@ -333,16 +333,16 @@
     "aiAssistedShort": "Creado por humano, mejorado por IA",
     "aiAssistedDesc": "El contenido base fue creado por el creador, pero se usaron herramientas de IA para mejorarlo. Incluye filtros con IA, eliminación de fondo, subtitulado automático, corrección de color o gramática.",
     "aiAssistedExamples": "Fotos con filtros IA, videos con subtítulos IA, texto corregido por IA, iluminación mejorada",
-    "aiGenerated": "100% Replicant",
-    "aiGeneratedShort": "Generado completamente por el Replicant del creador",
-    "aiGeneratedDesc": "Este contenido fue generado completamente por IA en nombre del creador. El creador autorizó a su Replicant para producirlo usando su voz, estilo e imagen entrenados.",
-    "aiGeneratedExamples": "Imágenes generadas por IA, mensajes escritos por Replicant, grabaciones de voz IA, avatares sintéticos",
+    "aiGenerated": "100% Generado por IA",
+    "aiGeneratedShort": "Creado completamente por la IA autorizada del creador",
+    "aiGeneratedDesc": "Este contenido fue generado completamente por IA en nombre del creador. El creador autorizó a su asistente de IA para producirlo usando su voz, estilo e imagen aprobados.",
+    "aiGeneratedExamples": "Fotos generadas por IA, mensajes escritos por IA, notas de voz IA autorizadas, avatares virtuales",
     "aiEnhanced": "Mejorado por IA",
     "aiEnhancedShort": "Contenido original modificado por IA",
     "aiEnhancedDesc": "El creador comenzó con contenido original real pero usó IA para modificarlo significativamente más allá de filtros simples. Incluye retoque facial IA, modificación corporal, reemplazo de fondo IA o edición de video con IA.",
     "aiEnhancedExamples": "Fotos retocadas por IA, cambios de fondo IA, efectos de video IA, modificaciones tipo deepfake en contenido propio",
-    "autoDetectionNotice": "SECCION analiza automáticamente el contenido subido para verificar la procedencia. Si nuestro análisis difiere de tu declaración, te pediremos que la reconsideres.",
-    "requiresConsent": "Requiere Autorización de Replicant activa en Studio → Configuración"
+    "autoDetectionNotice": "SECCION revisa automáticamente si la etiqueta coincide con el archivo subido. Si detectamos uso de IA sin marcar, te avisaremos antes de publicar.",
+    "requiresConsent": "Requiere activar permiso de Doble Digital IA en Studio → Ajustes"
   },
   "onboarding": {
     "main": {
@@ -733,96 +733,96 @@
   "creatorTour": {
     "steps": {
       "welcome": {
-        "badge": "Paso 1 de 5 • Orientación",
-        "title": "Bienvenido a tu Creator Studio en SECCION",
-        "desc": "Tu cuartel general de creador. Todo diseñado para eliminar las comisiones del 40% de las agencias con monetización directa y fidelización automática de tu comunidad.",
-        "highlight": "Mantienes el 90% de Ingresos Netos desde el primer día en tus 7 canales de monetización.",
-        "action": "Siguiente: Tarifas & Ganancias"
+        "badge": "Paso 1 de 5 • Resumen",
+        "title": "Bienvenido a SECCION Creator Studio",
+        "desc": "Tu base de operaciones como Creator: pensada para reemplazar el 40% de comisión de las agencias con suscripciones directas y un chat automatizado.",
+        "highlight": "Te quedas con el 90% de tus ingresos netos desde el primer día en tus 7 fuentes de ingreso.",
+        "action": "Siguiente: Precios y Ganancias"
       },
       "pricing": {
-        "badge": "Paso 2 de 5 • Monetización",
-        "title": "Configura tus Tarifas Fundadoras",
-        "desc": "Establece tu pase VIP mensual, tus desbloqueos PPV y videollamadas privadas 1 a 1. Los miembros desbloquean contenido con dinero real o su XP de Química.",
-        "highlight": "Tarifas recomendadas: $9.99/mes Pase VIP • $4.99 Contenido PPV • $3.00/min Llamada Privada.",
-        "action": "Ir a Ajustes de Tarifas"
+        "badge": "Paso 2 de 5 • Precios",
+        "title": "Configura Tus Precios",
+        "desc": "Define tu pase VIP mensual individual, el precio de posts de pago único (PPV) y tu tarifa de videollamada 1 a 1. Nota: VIP es suscripción directa a ti; Master es un paquete que el miembro arma con varios Creators.",
+        "highlight": "Base recomendada: $9.99/mes Pase VIP • $4.99 Post PPV • $3.00/min Llamada Privada.",
+        "action": "Ir a Ajustes de Precios"
       },
       "content": {
-        "badge": "Paso 3 de 5 • Contenido & DRM",
-        "title": "Bóveda DRM & Privacidad Progresiva",
-        "desc": "Sube tu portafolio inicial con marcas de agua forenses DRM. Si activas Face-Blur, tu rostro permanece encriptado hasta que una conexión alcance el Nivel 3 de relación.",
-        "highlight": "Siembra tu feed con 2–3 publicaciones exclusivas para dar valor inmediato a tus primeros suscriptores.",
-        "action": "Abrir Bóveda de Contenido"
+        "badge": "Paso 3 de 5 • Posts y Privacidad",
+        "title": "Posts Protegidos y Desenfoque Facial",
+        "desc": "Cada archivo incluye marca de agua automática contra filtraciones. Activa el Desenfoque Facial si quieres ocultar tu rostro en público hasta que se suscriban o ganen confianza.",
+        "highlight": "Empieza subiendo 2 o 3 posts exclusivos para que tus primeros suscriptores VIP tengan contenido al instante.",
+        "action": "Ir a Posts y Media"
       },
       "stream": {
-        "badge": "Paso 4 de 5 • Experiencia en Vivo",
-        "title": "Cockpit Live WebRTC Interactivo",
-        "desc": "Transmite con latencia ultrabaja (sub-500ms). Tu Radar de Audiencia calcula la química en tiempo real para que veas al instante quién aporta y conecta.",
-        "highlight": "Requiere verificación de Escudo de Identidad (+18) antes de tu primera transmisión pública.",
-        "action": "Inspeccionar Sala Live"
+        "badge": "Paso 4 de 5 • Directos",
+        "title": "Directos en Tiempo Real",
+        "desc": "Transmite en vivo sin retrasos y mira al instante tus propinas, mejores seguidores y comentarios.",
+        "highlight": "Requiere una verificación rápida y privada de mayoría de edad (+18) antes de tu primer directo público.",
+        "action": "Abrir Directos"
       },
       "copilot": {
-        "badge": "Paso 5 de 5 • Segundo Cerebro IA",
-        "title": "Bóveda Obsidian & Copilot IA",
-        "desc": "Tu gemelo digital responde mensajes directos cuando estás fuera de línea. Entrena tu Copilot con notas Markdown en Obsidian con [[Persona]] y [[Límites]] para interacciones seguras y auténticas.",
-        "highlight": "Protegido por un interruptor de emergencia instantáneo (Emergency Halt).",
-        "action": "Abrir Herramientas Obsidian"
+        "badge": "Paso 5 de 5 • Asistente de Chat IA",
+        "title": "Entrena tu Copilot IA",
+        "desc": "Tu asistente responde mensajes cuando estás desconectada. Escribe notas simples sobre tu estilo, temas favoritos y límites claros—sin nada técnico.",
+        "highlight": "Incluye un botón de pausa instantánea en 1 clic cuando quieras tomar el control.",
+        "action": "Abrir Copilot IA"
       }
     }
   },
   "creatorChecklist": {
     "header": {
-      "title": "Cockpit de Primeros Pasos del Creador",
-      "sub": "Completa tu configuración inicial para desbloquear transmisiones en vivo y recibir tu 90% de ingresos fundadores."
+      "title": "Primeros Pasos",
+      "sub": "Completa estos pasos para hacer directos y empezar a quedarte con el 90% de lo que generas."
     },
     "status": {
-      "ready": "Portafolio Listo",
+      "ready": "Listo para Lanzar",
       "steps": "Completados"
     },
     "actions": {
       "tour": "Tour del Studio",
-      "configure": "Configurar",
+      "configure": "Fijar Precios",
       "upload": "Subir",
-      "writeVault": "Editar Bóveda",
-      "verify": "Verificar",
+      "writeVault": "Reglas IA",
+      "verify": "Verificar ID",
       "submitTax": "Datos Fiscales",
-      "askAi": "Consultar al Copilot sobre este paso",
+      "askAi": "Preguntar al Copilot sobre este paso",
       "setupProfile": "Editar Perfil"
     },
     "items": {
       "pricing": {
-        "title": "Fijar Tarifas VIP & PPV",
-        "desc": "Define el pase mensual y el costo de desbloqueo por publicación PPV."
+        "title": "Fijar Precios VIP y PPV",
+        "desc": "Define el precio de tu suscripción mensual individual (VIP) y tus posts de pago único."
       },
       "content": {
-        "title": "Sembrar Bóveda de Contenido DRM",
-        "desc": "Sube al menos 2 publicaciones o teasers exclusivos para tus miembros."
+        "title": "Sube tus Primeros 2 Posts",
+        "desc": "Publica al menos 2 posts exclusivos o previews protegidos con marca de agua y desenfoque."
       },
       "vault": {
-        "title": "Definir Segundo Cerebro en Obsidian",
-        "desc": "Crea tus notas de [[Persona]] y [[Límites]] en tu Bóveda de Obsidian."
+        "title": "Entrena tu Copilot IA",
+        "desc": "Añade notas simples sobre tu personalidad, tono y límites para que responda como tú."
       },
       "kyc": {
-        "title": "Escudo de Identidad (KYC +18)",
-        "desc": "Verificación sin revelación de datos personales para habilitar directos y retiros."
+        "title": "Verifica tu Edad (ID +18)",
+        "desc": "Comprobación rápida y privada (nunca se muestra en tu perfil) para activar directos y retiros."
       },
       "tax": {
-        "title": "Perfil Fiscal & Billetera de Retiros",
-        "desc": "Registra tu nombre legal y número de identificación fiscal para cumplimiento DAC7/1099."
+        "title": "Datos Fiscales y Cobros",
+        "desc": "Registra tu nombre legal, identificación fiscal y dónde quieres recibir tus pagos."
       },
       "visuals": {
-        "title": "Añadir Foto de Perfil y Bio de Creador",
-        "desc": "Sube tu foto principal y escribe una breve Bio en Configuración del Studio para que los miembros te descubran."
+        "title": "Añade Foto de Perfil y Bio",
+        "desc": "Sube tu foto principal y escribe una bio corta en Ajustes para que los fans te encuentren."
       }
     },
     "vipBanner": {
       "badge": "VIP Fast-Track Activo · Creadora Preaprobada",
       "splitLabel": "90% Neto Primer Año Activo (80% Estándar Después)",
       "daysLeft": "{days}d restantes del 1er Año",
-      "aiFreeLabel": "Copiloto IA & Content Ops Gratis Hasta",
-      "moroccoShield": "Escudo Doméstico Marruecos (MA) Activo",
+      "aiFreeLabel": "Copilot IA y Herramientas Studio Gratis Hasta",
+      "moroccoShield": "Bloqueo Local en Marruecos (MA) Activo",
       "quickAvatarPhotos": "1 Avatar + 2 Fotos",
-      "quickRatesGeo": "Tarifas & Geo-Escudo",
-      "quickKyc": "KYC 18+ DIDIT"
+      "quickRatesGeo": "Precios y Privacidad por País",
+      "quickKyc": "Verificar ID +18"
     }
   },
   "chatTranslation": {

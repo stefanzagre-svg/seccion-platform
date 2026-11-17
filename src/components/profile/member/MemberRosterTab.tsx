@@ -55,20 +55,22 @@ export default function MemberRosterTab({
                 <Crown className="w-4 h-4" />
               </div>
               <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight">
-                {locale === 'es' ? 'Tu Roster & Suscripciones VIP' : 'Active Roster & VIP Subscriptions'}
+                {locale === 'es' ? 'Tus Suscripciones VIP y Master Circle' : locale === 'fr' ? 'Vos Abonnements VIP & Master Circle' : 'VIP & Master Circle Subscriptions'}
               </h2>
             </div>
             <p className="text-xs text-[#b9cac9] max-w-xl leading-relaxed">
               {locale === 'es'
-                ? 'Gestiona tus patrocinios VIP y Master directos con creadores. Tu apoyo asegura contenido exclusivo, transmisiones privadas y 90% de comisión directa para ellos.'
-                : 'Manage your direct VIP and Master tier creator sponsorships. Your pledge unlocks full private access and direct 90% revenue support for creators.'}
+                ? 'Gestiona tus pases VIP individuales (1 Creator) y tus paquetes Master Circle (varios Creators en un pago). El 90% va directo al Creator.'
+                : locale === 'fr'
+                  ? 'Gérez vos pass VIP individuels (1 Créateur) et vos packs Master Circle (plusieurs Créateurs en un paiement). 90% revient directement au Créateur.'
+                  : 'Manage your single-creator VIP passes and multi-creator Master Circle bundles. 90% of what you pay goes straight to the creators.'}
             </p>
           </div>
 
           {/* Monthly Spend Pill */}
           <div className="p-4 rounded-2xl bg-black/60 border border-white/10 shrink-0">
             <p className="text-[9px] uppercase font-mono font-bold text-white/50">
-              {locale === 'es' ? 'Aporte Mensual Activo' : 'Active Monthly Pledge'}
+              {locale === 'es' ? 'Gasto Mensual Activo' : locale === 'fr' ? 'Total Mensuel Actif' : 'Active Monthly Spend'}
             </p>
             <p className="text-2xl font-black text-amber-400 font-mono mt-0.5">
               ${totalMonthlySpend.toFixed(2)}
@@ -81,7 +83,7 @@ export default function MemberRosterTab({
       {/* ─── Subscriptions List ───────────────────────────────────────────── */}
       <div className="space-y-4">
         <h3 className="text-sm font-black text-white uppercase tracking-wider flex items-center gap-2">
-          <span>{locale === 'es' ? 'Creadores en tu Roster' : 'Creators in Your Roster'}</span>
+          <span>{locale === 'es' ? 'Creadores Suscritos' : locale === 'fr' ? 'Créateurs Suivis' : 'Subscribed Creators'}</span>
           <span className="text-xs text-white/40 font-mono">({subscriptions.length})</span>
         </h3>
 

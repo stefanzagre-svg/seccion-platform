@@ -126,18 +126,18 @@ export default function MatrixTopUpModal({
       if (targetLedger === 'sovereign_red_pills' && (paymentRail === 'coinflow' || paymentRail === 'open_banking')) {
         throw new Error(
           tx(
-            '18+ Sovereign Red Pills must be topped up via Instant MiCA USDC or E-Pin.',
-            'Los Red Pills 18+ deben recargarse vía MiCA USDC o E-Pin.',
-            'Les Red Pills 18+ doivent être rechargés via MiCA USDC ou E-Pin.'
+            '18+ Tokens (Red Pills) can only be topped up with Digital USD (USDC) or an E-Pin.',
+            'Los Tokens 18+ (Red Pills) solo se recargan con Dólar Digital (USDC) o E-Pin.',
+            'Les Jetons 18+ (Red Pills) se rechargent uniquement par USD Numérique (USDC) ou E-Pin.'
           )
         );
       }
 
       throw new Error(
         tx(
-          'External Open Banking / Card / E-Pin top-up is activating after S.L.U. KYB approval. Please use Instant MiCA USDC (0.5% fee) now.',
-          'Recarga vía Open Banking / Tarjeta / E-Pin activándose tras aprobación KYB S.L.U. Usa Instant MiCA USDC (0.5%) ahora.',
-          'Recharge Open Banking / Carte / E-Pin en cours d’activation KYB S.L.U. Utilisez MiCA USDC (0,5%) dès maintenant.'
+          'Bank, Card & E-Pin top-ups are finishing setup. Please use Instant Digital USD (USDC · 0.5% fee) now.',
+          'La recarga por Banco, Tarjeta o E-Pin estará lista muy pronto. Usa Dólar Digital (USDC · 0.5%) ahora.',
+          'La recharge par Banque, Carte ou E-Pin arrive très bientôt. Utilisez l\'USD Numérique (USDC · 0,5%) dès maintenant.'
         )
       );
     } catch (err: unknown) {
@@ -158,12 +158,12 @@ export default function MatrixTopUpModal({
           <div>
             <div className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-red-400">
               <Zap className="w-4 h-4 fill-red-400" />
-              {tx('Dual-Ledger Wallet Top-Up', 'Recarga Cartera Dual-Ledger', 'Recharge Portefeuille Dual-Ledger')}
+              {tx('Wallet Top-Up', 'Recarga de Cartera', 'Recharger Mon Portefeuille')}
             </div>
             <h2 className="text-xl font-black text-white mt-1">
               {targetLedger === 'sfw_credits'
-                ? tx('Add SFW Studio Credits ✨', 'Añadir Créditos Studio SFW ✨', 'Ajouter des Crédits SFW ✨')
-                : tx('Add 18+ Sovereign Red Pills 💊', 'Añadir Red Pills Sovereign 💊', 'Ajouter des Red Pills 18+ 💊')}
+                ? tx('Add Standard Credits ✨', 'Añadir Créditos Estándar ✨', 'Ajouter des Crédits Standard ✨')
+                : tx('Add 18+ Tokens (Red Pills) 💊', 'Añadir Tokens 18+ (Red Pills) 💊', 'Ajouter des Jetons 18+ (Red Pills) 💊')}
             </h2>
           </div>
           <button
@@ -176,7 +176,7 @@ export default function MatrixTopUpModal({
         </div>
 
         <div className="p-6 overflow-y-auto space-y-6">
-          {/* Dual-Ledger Selector */}
+          {/* Balance Type Selector */}
           <div className="grid grid-cols-2 gap-3">
             <button
               type="button"
@@ -190,9 +190,9 @@ export default function MatrixTopUpModal({
                   : 'bg-white/[0.02] border-white/10 text-white/60 hover:text-white'
               }`}
             >
-              <div className="text-xs font-black">✨ SFW Studio Credits</div>
+              <div className="text-xs font-black">✨ {tx('Standard Credits', 'Créditos Estándar', 'Crédits Standard')}</div>
               <div className="text-[10px] text-white/50 mt-0.5">
-                {tx('Coaching, Lifestyle & Mainstream Tiers', 'Coaching, Estilo de Vida y SFW', 'Coaching, Lifestyle & SFW')}
+                {tx('Coaching, Lifestyle & Standard Posts', 'Coaching, Estilo de Vida y Posts', 'Coaching, Lifestyle & Posts')}
               </div>
             </button>
             <button
@@ -208,17 +208,17 @@ export default function MatrixTopUpModal({
                   : 'bg-white/[0.02] border-white/10 text-white/60 hover:text-white'
               }`}
             >
-              <div className="text-xs font-black">💊 18+ Sovereign Red Pills</div>
+              <div className="text-xs font-black">💊 {tx('18+ Tokens (Red Pills)', 'Tokens 18+ (Red Pills)', 'Jetons 18+ (Red Pills)')}</div>
               <div className="text-[10px] text-white/50 mt-0.5">
-                {tx('18+ Vaults, Custom Escrow & Private Streams', 'Contenido 18+, Escrow y Streams', 'Coffre 18+, Escrow & Streams')}
+                {tx('18+ Content, Custom Orders & Private Streams', 'Contenido 18+, Pedidos y Streams Privados', 'Contenus 18+, Commandes & Lives Privés')}
               </div>
             </button>
           </div>
 
-          {/* 1. Credit / Pill Pack Selection */}
+          {/* 1. Credit / Token Pack Selection */}
           <div>
             <label className="text-[10px] font-black uppercase tracking-widest text-white/40 block mb-3">
-              {tx('1. Select Capsule Pack', '1. Selecciona tu Paquete', '1. Choisissez votre Pack')}
+              {tx('1. Choose a Pack', '1. Elige un Paquete', '1. Choisissez un Pack')}
             </label>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {MATRIX_PACKS.map((pack) => {
@@ -266,7 +266,7 @@ export default function MatrixTopUpModal({
             </div>
           </div>
 
-          {/* 2. Blue Pill XP Burn Discount Toggle */}
+          {/* 2. Activity Points Discount Toggle */}
           {userBluePillsXp >= 50 && (
             <div className="p-4 rounded-2xl bg-sky-500/10 border border-sky-500/20 flex items-center justify-between gap-4">
               <div className="flex items-center gap-3">
@@ -275,13 +275,13 @@ export default function MatrixTopUpModal({
                 </div>
                 <div>
                   <h4 className="text-xs font-black text-white">
-                    {tx('Apply Blue Pill Chemistry XP Discount', 'Aplicar Descuento Chemistry XP', 'Appliquer Réduction Chemistry XP')}
+                    {tx('Use Activity Points Discount', 'Usar Descuento de Puntos', 'Utiliser Mes Points de Réduction')}
                   </h4>
                   <p className="text-[11px] text-white/60">
                     {tx(
-                      `Save €${availableDiscount.toFixed(2)} using ${userBluePillsXp} XP`,
-                      `Ahorra €${availableDiscount.toFixed(2)} usando ${userBluePillsXp} XP`,
-                      `Économisez €${availableDiscount.toFixed(2)} avec ${userBluePillsXp} XP`
+                      `Save €${availableDiscount.toFixed(2)} using ${userBluePillsXp} points`,
+                      `Ahorra €${availableDiscount.toFixed(2)} usando ${userBluePillsXp} puntos`,
+                      `Économisez €${availableDiscount.toFixed(2)} avec ${userBluePillsXp} points`
                     )}
                   </p>
                 </div>
@@ -302,10 +302,10 @@ export default function MatrixTopUpModal({
             </div>
           )}
 
-          {/* 3. Payment Rail */}
+          {/* 3. Payment Method */}
           <div>
             <label className="text-[10px] font-black uppercase tracking-widest text-white/40 block mb-3">
-              {tx('2. Zero-Robbery Payment Method', '2. Método de Pago Directo', '2. Moyen de Paiement Direct')}
+              {tx('2. Payment Method', '2. Método de Pago', '2. Moyen de Paiement')}
             </label>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
               <button
@@ -321,8 +321,8 @@ export default function MatrixTopUpModal({
                 }`}
               >
                 <Coins className="w-5 h-5 text-amber-400" />
-                <span className="text-[11px] font-bold">USDC (MiCA)</span>
-                <span className="text-[9px] text-emerald-400 font-mono">0.5% Fee · Live</span>
+                <span className="text-[11px] font-bold">USDC (Digital USD)</span>
+                <span className="text-[9px] text-emerald-400 font-mono">0.5% Fee · Instant</span>
               </button>
 
               <button
@@ -455,7 +455,7 @@ export default function MatrixTopUpModal({
                 </span>
                 <span className="text-xs text-white/50 font-medium">
                   ({selectedPack.totalRedPills}{' '}
-                  {targetLedger === 'sfw_credits' ? 'SFW Credits ✨' : 'Red Pills 💊'})
+                  {targetLedger === 'sfw_credits' ? 'Standard Credits ✨' : '18+ Tokens 💊'})
                 </span>
               </div>
             </div>
@@ -487,9 +487,9 @@ export default function MatrixTopUpModal({
             <ShieldCheck className="w-3.5 h-3.5 text-emerald-500/70" />
             <span>
               {tx(
-                'Direct creator settlement (90% Founding / 80% Std Net) · MiCA USDC Compliant',
-                'Liquidación directa al creador (90% Fundador / 80% Est.) · MiCA USDC',
-                'Règlement direct créateur (90% Fondateur / 80% Std) · MiCA USDC'
+                '90% goes straight to the creator (80% standard) · Instant USDC settlement',
+                'El 90% va directo al creador (80% estándar) · Liquidación instantánea USDC',
+                '90% versé directement au créateur (80% standard) · Règlement instantané USDC'
               )}
             </span>
           </div>

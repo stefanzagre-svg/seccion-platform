@@ -31,6 +31,7 @@ import { type ProvenanceLevel } from '@/lib/content-provenance';
 import { awardXp } from '@/lib/xp-service';
 import CreatorTourModal from '@/components/studio/CreatorTourModal';
 import CreatorOnboardingChecklist, { type CreatorChecklistMetrics } from '@/components/studio/CreatorOnboardingChecklist';
+import { getStudioTabs } from '@/lib/studio-navigation';
 
 interface TeaserMetadata {
   teaser_type: 'none' | 'video_clip' | 'main_photo' | 'custom';
@@ -1591,25 +1592,40 @@ export default function CreatorStudio() {
               <span className="w-2.5 h-10 bg-primary rounded-full shadow-[0_0_20px_rgba(255,0,127,0.5)]" />
               CREATOR STUDIO
             </h1>
-            <p className="text-[10px] text-white/40 font-black uppercase tracking-[0.3em] mt-2">Manage your pulse, content, and interactive sessions.</p>
+            <p className="text-[10px] text-white/40 font-black uppercase tracking-[0.3em] mt-2">
+              {locale === 'es'
+                ? 'Publica contenido, haz directos y controla tus ingresos.'
+                : locale === 'fr'
+                  ? 'Publiez vos posts, passez en direct et suivez vos revenus.'
+                  : 'Publish posts, go live, and track your earnings.'}
+            </p>
           </div>
           
           <div className="flex items-center gap-4">
-            <button className="flex items-center gap-3 bg-white/5 border border-white/10 px-6 py-3 rounded-2xl hover:bg-white/10 transition group">
+            <button
+              type="button"
+              onClick={() => setActiveTab('analytics')}
+              className="flex items-center gap-3 bg-white/5 border border-white/10 px-6 py-3 rounded-2xl hover:bg-white/10 transition group cursor-pointer"
+            >
               <div className="w-8 h-8 rounded-xl bg-primary/20 flex items-center justify-center border border-primary/30 group-hover:scale-110 transition">
                 <Zap className="w-4 h-4 text-primary fill-current" />
               </div>
               <div className="text-left">
-                <p className="text-[9px] font-black uppercase tracking-widest text-white/40">Tier Status</p>
-                <p className="text-xs font-black uppercase text-primary">Master Creator</p>
+                <p className="text-[9px] font-black uppercase tracking-widest text-white/40">
+                  {locale === 'es' ? 'Tu Reparto' : locale === 'fr' ? 'Part Créateur' : 'Creator Split'}
+                </p>
+                <p className="text-xs font-black uppercase text-primary">
+                  {locale === 'es' ? '90% Fundador' : locale === 'fr' ? '90% Fondateur' : '90% Founding'}
+                </p>
               </div>
             </button>
             
             <button 
               onClick={() => setActiveTab('content')}
-              className="flex items-center gap-3 bg-primary text-white px-8 py-3 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] shadow-lg shadow-primary/20 border border-white/10 hover:scale-105 transition"
+              className="flex items-center gap-3 bg-primary text-white px-8 py-3 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] shadow-lg shadow-primary/20 border border-white/10 hover:scale-105 transition cursor-pointer"
             >
-              <Plus className="w-4 h-4" /> New Pulse
+              <Plus className="w-4 h-4" />{' '}
+              {locale === 'es' ? 'Nuevo Post' : locale === 'fr' ? 'Nouveau Post' : 'New Post'}
             </button>
           </div>
         </div>
@@ -1712,25 +1728,15 @@ export default function CreatorStudio() {
           onNavigateAiTools={() => router.push('/studio/ai-tools')}
         />
 
-        <div className="flex items-center gap-2 bg-white/5 p-1.5 rounded-2xl border border-white/5 w-fit">
-          {[
-            { id: 'content', icon: LayoutGrid, label: 'Content' },
-            { id: 'live', icon: Video, label: 'Stream Station' },
-            { id: 'orders', icon: ListOrdered, label: 'Custom Requests' },
-            { id: 'consent_inbox', icon: Users, label: 'Consent Box' },
-            { id: 'goals', icon: Crown, label: 'Goals' },
-            { id: 'analytics', icon: BarChart3, label: 'Vibe Insights' },
-            { id: 'settings', icon: Settings, label: 'Profile Settings' },
-            ...(isModeratorOrAdmin ? [{ id: 'safety_ops', icon: Shield, label: 'Safety Patrol' }] : []),
-            { id: 'ai_tools', icon: Zap, label: 'AI Tools' },
-          ].map((tab) => (
+        <div className="flex items-center gap-2 bg-white/5 p-1.5 rounded-2xl border border-white/5 w-fit max-w-full overflow-x-auto scrollbar-hide">
+          {getStudioTabs(isModeratorOrAdmin, locale).map((tab) => (
             <button
               key={tab.id}
               onClick={() => tab.id === 'ai_tools' ? router.push('/studio/ai-tools') : setActiveTab(tab.id as any)}
-              className={`flex items-center gap-3 px-6 py-3 rounded-xl transition-all duration-300 ${activeTab === tab.id ? 'bg-white/10 text-white shadow-xl' : 'text-white/40 hover:text-white/60'}`}
+              className={`flex items-center gap-3 px-6 py-3 rounded-xl transition-all duration-300 shrink-0 ${activeTab === tab.id ? 'bg-white/10 text-white shadow-xl' : 'text-white/40 hover:text-white/60'}`}
             >
               <tab.icon className={`w-4 h-4 ${activeTab === tab.id ? 'text-primary' : ''}`} />
-              <span className="text-[10px] font-black uppercase tracking-widest">{tab.label}</span>
+              <span className="text-[10px] font-black uppercase tracking-widest whitespace-nowrap">{tab.label}</span>
             </button>
           ))}
         </div>
@@ -1744,16 +1750,19 @@ export default function CreatorStudio() {
                 <div className="glass-card p-6 border border-white/10 bg-black/40 rounded-3xl space-y-6">
                   <div>
                     <h3 className="text-base font-black tracking-wider uppercase flex items-center gap-2 text-white">
-                      <Plus className="w-5 h-5 text-primary animate-pulse" /> Upload New Premium Media
+                      <Plus className="w-5 h-5 text-primary animate-pulse" />{' '}
+                      {locale === 'es' ? 'Publicar Nuevo Post' : locale === 'fr' ? 'Publier un Nouveau Post' : 'Publish New Post'}
                     </h3>
-                    <p className="text-[10px] text-white/40 uppercase font-black tracking-widest mt-1">Submit content for review</p>
+                    <p className="text-[10px] text-white/40 uppercase font-black tracking-widest mt-1">
+                      {locale === 'es' ? 'Sube una foto o video para tus suscriptores o de pago único' : locale === 'fr' ? 'Ajoutez une photo ou vidéo pour vos abonnés ou à l\'acte' : 'Upload a photo or video for subscribers or pay-per-view'}
+                    </p>
                   </div>
 
                   {uploadError && (
                     <div className="p-4 bg-red-950/20 border border-red-500/30 rounded-2xl flex items-start gap-3 text-left">
                       <ShieldAlert className="w-5 h-5 text-[#ff007f] shrink-0 mt-0.5" />
                       <div className="space-y-1">
-                        <p className="text-xs font-bold text-white uppercase tracking-wider">Compliance Upload Conflict</p>
+                        <p className="text-xs font-bold text-white uppercase tracking-wider">Upload Issue</p>
                         <p className="text-[10px] text-white/70 leading-normal">{uploadError}</p>
                       </div>
                     </div>
@@ -1763,11 +1772,14 @@ export default function CreatorStudio() {
                     <div className="p-4 bg-green-500/10 border border-green-500/30 rounded-2xl flex items-center gap-3 text-left">
                       <ShieldCheck className="w-5 h-5 text-green-400 shrink-0" />
                       <div className="space-y-1">
-                        <p className="text-xs font-bold text-white uppercase tracking-wider">Asset Submitted Successfully</p>
-                        <p className="text-[10px] text-green-400/80 font-mono leading-none">Status: Pending Layer 3 Human Review</p>
+                        <p className="text-xs font-bold text-white uppercase tracking-wider">Post Submitted Successfully</p>
+                        <p className="text-[10px] text-green-400/80 font-mono leading-none">Status: Under quick safety review before going live</p>
                         {uploadClassification && (
                           <p className="text-[10px] font-mono text-white/75 leading-snug">
-                            Sightengine Gate: <span className="font-bold text-white">{uploadClassification.rating}</span> ({uploadClassification.ledger === 'sovereign_red_pills' ? '💊 Sovereign Red Pills Ledger' : '✨ SFW Credits Ledger'})
+                            Audience rating:{' '}
+                            <span className="font-bold text-white">
+                              {uploadClassification.ledger === 'sovereign_red_pills' ? '18+ Adults Only' : 'Standard (All Audiences)'}
+                            </span>
                           </p>
                         )}
                       </div>
@@ -2056,38 +2068,46 @@ export default function CreatorStudio() {
                     </div>
 
                     <div className="flex flex-col md:flex-row gap-4 justify-between items-center pt-2">
-                      {/* Tier Toggle */}
-                      <div className="flex bg-white/5 p-1 rounded-xl border border-white/15 shrink-0">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setPostTier('vip');
-                            setTeaserType('none');
-                          }}
-                          className={`px-4 py-2 rounded-lg text-[9px] font-black uppercase tracking-wider transition ${postTier === 'vip' ? 'bg-[#ff007f] text-white' : 'text-white/40 hover:text-white/80'}`}
-                        >
-                          VIP Access
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setPostTier('master');
-                            setTeaserType('none');
-                          }}
-                          className={`px-4 py-2 rounded-lg text-[9px] font-black uppercase tracking-wider transition ${postTier === 'master' ? 'bg-[#9d4edd] text-white font-black' : 'text-white/40 hover:text-white/80'}`}
-                        >
-                          Master Tier
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setPostTier('ppv');
-                            setTeaserType('none');
-                          }}
-                          className={`px-4 py-2 rounded-lg text-[9px] font-black uppercase tracking-wider transition ${postTier === 'ppv' ? 'bg-primary text-black font-black' : 'text-white/40 hover:text-white/80'}`}
-                        >
-                          PPV Gated
-                        </button>
+                      {/* Access Tier Toggle */}
+                      <div className="space-y-1.5">
+                        <div className="flex bg-white/5 p-1 rounded-xl border border-white/15 shrink-0 w-fit">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setPostTier('vip');
+                              setTeaserType('none');
+                            }}
+                            title="Included for members subscribed directly to you (single-creator VIP pass)"
+                            className={`px-4 py-2 rounded-lg text-[9px] font-black uppercase tracking-wider transition ${postTier === 'vip' ? 'bg-[#ff007f] text-white' : 'text-white/40 hover:text-white/80'}`}
+                          >
+                            VIP Pass (1 Creator)
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setPostTier('master');
+                              setTeaserType('none');
+                            }}
+                            title="Included for members subscribed to a multi-creator Master Circle bundle"
+                            className={`px-4 py-2 rounded-lg text-[9px] font-black uppercase tracking-wider transition ${postTier === 'master' ? 'bg-[#9d4edd] text-white font-black' : 'text-white/40 hover:text-white/80'}`}
+                          >
+                            Master Circle (Bundle)
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setPostTier('ppv');
+                              setTeaserType('none');
+                            }}
+                            title="One-time purchase to unlock this post"
+                            className={`px-4 py-2 rounded-lg text-[9px] font-black uppercase tracking-wider transition ${postTier === 'ppv' ? 'bg-primary text-black font-black' : 'text-white/40 hover:text-white/80'}`}
+                          >
+                            Pay-Per-View ($)
+                          </button>
+                        </div>
+                        <p className="text-[9px] text-white/45 leading-snug">
+                          VIP = fans subscribed to you alone · Master Circle = multi-creator bundle subscribers · Pay-Per-View = one-time unlock.
+                        </p>
                       </div>
 
                       {/* Content Provenance Declaration */}
@@ -2104,7 +2124,7 @@ export default function CreatorStudio() {
                         disabled={isUploading || (teaserType !== 'none' && !teaserConsent)}
                         className="w-full md:w-auto px-8 py-3 bg-primary text-black font-black uppercase tracking-wider text-[10px] rounded-xl hover:shadow-[0_0_20px_rgba(102,252,241,0.4)] transition disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
                       >
-                        {isUploading ? <><Loader2 className="w-4 h-4 animate-spin" /> Scanning Media...</> : 'Publish to Gateway'}
+                        {isUploading ? <><Loader2 className="w-4 h-4 animate-spin" /> Checking Upload...</> : 'Publish Post'}
                       </button>
                     </div>
                   </form>
@@ -2115,7 +2135,7 @@ export default function CreatorStudio() {
                   <div className="flex items-center justify-between">
                     <h2 className="text-xl font-black tracking-tight text-white">{t('creatorStudio.recentUploads', 'UPLOADED CONTENT')}</h2>
                     <div className="flex items-center gap-2 text-[9px] text-white/40 font-black uppercase tracking-widest bg-white/5 px-3 py-1.5 rounded-lg">
-                      Total Assets: {uploadedPosts.length}
+                      Total Posts: {uploadedPosts.length}
                     </div>
                   </div>
                   
@@ -2197,7 +2217,7 @@ export default function CreatorStudio() {
                     </div>
                   ) : (
                     <div className="py-12 text-center text-white/30 font-bold uppercase tracking-widest text-[10px] border-2 border-dashed border-white/5 rounded-3xl">
-                      No uploaded assets found. Complete the gateway scan above to publish.
+                      No posts published yet. Use the form above to upload your first photo or video.
                     </div>
                   )}
                 </div>
@@ -2827,10 +2847,10 @@ export default function CreatorStudio() {
                 <div className="flex items-center justify-between">
                   <div>
                     <h2 className="text-2xl font-black tracking-tighter uppercase mb-2 flex items-center gap-2">
-                      <BarChart3 className="text-accent w-6 h-6" /> Analytics Insights
+                      <BarChart3 className="text-accent w-6 h-6" /> Earnings & Analytics
                     </h2>
                     <p className="text-[10px] text-white/40 uppercase font-black tracking-widest mt-1">
-                      Review weekly conversion flows, relationship depths, and escrow yields
+                      Track your weekly views, subscriber growth, and payout earnings
                     </p>
                   </div>
                   {profile && (
@@ -2874,17 +2894,17 @@ export default function CreatorStudio() {
                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                       <div className="glass-card p-5 bg-white/2 border border-white/5 rounded-2xl relative overflow-hidden">
                         <div className="absolute top-3 right-3 opacity-20"><Users className="w-5 h-5 text-accent" /></div>
-                        <p className="text-[8px] font-black uppercase tracking-widest text-white/40 mb-1">Active VIP Subs</p>
+                        <p className="text-[8px] font-black uppercase tracking-widest text-white/40 mb-1">VIP Subs (1-Creator)</p>
                         <h3 className="text-2xl font-black text-white">{analyticsData.kpis.activeVip}</h3>
                       </div>
                       <div className="glass-card p-5 bg-white/2 border border-white/5 rounded-2xl relative overflow-hidden">
                         <div className="absolute top-3 right-3 opacity-20"><Zap className="w-5 h-5 text-primary" /></div>
-                        <p className="text-[8px] font-black uppercase tracking-widest text-white/40 mb-1">Active Master Subs</p>
+                        <p className="text-[8px] font-black uppercase tracking-widest text-white/40 mb-1">Master Circle (Bundles)</p>
                         <h3 className="text-2xl font-black text-white">{analyticsData.kpis.activeMaster}</h3>
                       </div>
                       <div className="glass-card p-5 bg-white/2 border border-white/5 rounded-2xl relative overflow-hidden">
                         <div className="absolute top-3 right-3 opacity-20"><Users className="w-5 h-5 text-blue-400" /></div>
-                        <p className="text-[8px] font-black uppercase tracking-widest text-white/40 mb-1">Total Audience</p>
+                        <p className="text-[8px] font-black uppercase tracking-widest text-white/40 mb-1">Total Subscribers</p>
                         <h3 className="text-2xl font-black text-white">{analyticsData.kpis.totalSubscribers}</h3>
                       </div>
                       <div className="glass-card p-5 bg-white/2 border border-white/5 rounded-2xl relative overflow-hidden">
@@ -3218,10 +3238,10 @@ export default function CreatorStudio() {
               <div className="space-y-8">
                 <div>
                   <h2 className="text-2xl font-black tracking-tighter uppercase mb-2">
-                    <Users className="text-primary inline-block mr-2 w-6 h-6 align-text-bottom" /> Consent & Depiction Inbox
+                    <Users className="text-primary inline-block mr-2 w-6 h-6 align-text-bottom" /> Co-Star Approvals
                   </h2>
                   <p className="text-[10px] text-white/40 uppercase font-black tracking-widest mt-1">
-                    Manage digital consent requests and track outbound performer approvals
+                    Approve requests when another creator tags you, or track your outgoing tags
                   </p>
                 </div>
 
@@ -3623,14 +3643,14 @@ export default function CreatorStudio() {
                             />
                           </div>
                           <p className="text-[8px] text-white/30 uppercase tracking-widest">
-                            Monthly VIP Subscription Rate for premium post feeds.
+                            Monthly VIP price for fans subscribing directly to your profile alone.
                           </p>
                         </div>
 
                         {/* PPV base rate */}
                         <div className="space-y-2">
                           <div className="flex justify-between items-center">
-                            <label className="text-[9px] font-black text-white/40 uppercase tracking-widest">PPV Base Rate</label>
+                            <label className="text-[9px] font-black text-white/40 uppercase tracking-widest">Pay-Per-View Default Price</label>
                             <span className="text-[10px] font-black text-primary">${ppvBaseRate.toFixed(2)}</span>
                           </div>
                           <div className="flex items-center gap-4">
@@ -3648,7 +3668,7 @@ export default function CreatorStudio() {
                             </div>
                           </div>
                           <p className="text-[8px] text-white/30 uppercase tracking-widest">
-                            Default price required to unlock PPV images or custom clips.
+                            Default one-time price to unlock locked photos or videos.
                           </p>
                         </div>
 
@@ -4246,7 +4266,7 @@ export default function CreatorStudio() {
               <div className="space-y-6 text-left">
                 <div>
                   <h2 className="text-2xl font-black tracking-tighter uppercase mb-2 flex items-center gap-2">
-                    <Shield className="text-primary inline-block w-6 h-6 animate-pulse" /> Safety Patrol — Layer 3 DSA Queue
+                    <Shield className="text-primary inline-block w-6 h-6 animate-pulse" /> Moderation Queue
                   </h2>
                   <p className="text-[10px] text-white/40 uppercase font-black tracking-widest mt-1">
                     Content moderation desk — review and approve/reject pending uploads
@@ -4283,13 +4303,13 @@ export default function CreatorStudio() {
           <div className="lg:col-span-4 space-y-6">
             <div className="glass-card p-6 border-accent/20">
               <h3 className="text-sm font-black uppercase tracking-widest mb-6 flex items-center gap-2">
-                <BarChart3 className="w-4 h-4 text-accent" /> Insights Pulse
+                <BarChart3 className="w-4 h-4 text-accent" /> Weekly Snapshot
               </h3>
               <div className="space-y-6">
                  {[
-                   { label: 'Weekly Eye-Catchers', val: '12.4k', change: '+12%' },
-                   { label: 'Social Buzz', val: '18.2%', change: '+5%' },
-                   { label: 'Gold Coins Earned', val: '$2,450', change: '+24%' },
+                   { label: 'Profile Views', val: analyticsData ? String(analyticsData.abTesting?.variantA?.impressions ?? 0) : '—', change: '7d' },
+                   { label: 'Engagement Rate', val: analyticsData ? `${(analyticsData.abTesting?.variantA?.ctr ?? 0).toFixed(1)}%` : '—', change: 'CTR' },
+                   { label: 'Active Subscribers', val: analyticsData ? String(analyticsData.kpis?.totalSubscribers ?? 0) : '—', change: 'VIP + Circle' },
                  ].map((stat, i) => (
                    <div key={i} className="flex justify-between items-end border-b border-white/5 pb-4 last:border-0 last:pb-0">
                       <div>
@@ -4303,14 +4323,22 @@ export default function CreatorStudio() {
             </div>
 
             <div className="glass-card p-6 bg-white/2 border-white/10">
-              <h3 className="text-sm font-black uppercase tracking-widest mb-4">Quick Setup</h3>
+              <h3 className="text-sm font-black uppercase tracking-widest mb-4">Quick Actions</h3>
               <div className="space-y-4">
-                 <button className="w-full flex items-center justify-between p-4 bg-black/40 rounded-2xl border border-white/5 hover:border-primary/40 transition group">
-                    <span className="text-[10px] font-black uppercase tracking-widest text-white/60 group-hover:text-white">Verify KYC Status</span>
+                 <button
+                   type="button"
+                   onClick={() => router.push('/onboarding/kyc?role=creator')}
+                   className="w-full flex items-center justify-between p-4 bg-black/40 rounded-2xl border border-white/5 hover:border-primary/40 transition group cursor-pointer"
+                 >
+                    <span className="text-[10px] font-black uppercase tracking-widest text-white/60 group-hover:text-white">Verify 18+ ID</span>
                     <ShieldCheck className="w-4 h-4 text-green-400" />
                  </button>
-                 <button className="w-full flex items-center justify-between p-4 bg-black/40 rounded-2xl border border-white/5 hover:border-primary/40 transition group">
-                    <span className="text-[10px] font-black uppercase tracking-widest text-white/60 group-hover:text-white">Update Vault Keys</span>
+                 <button
+                   type="button"
+                   onClick={() => setActiveTab('settings')}
+                   className="w-full flex items-center justify-between p-4 bg-black/40 rounded-2xl border border-white/5 hover:border-primary/40 transition group cursor-pointer"
+                 >
+                    <span className="text-[10px] font-black uppercase tracking-widest text-white/60 group-hover:text-white">Pricing & Payout Setup</span>
                     <Crown className="w-4 h-4 text-yellow-500" />
                  </button>
               </div>

@@ -3,32 +3,25 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
-import { 
-  Zap, 
-  MessageSquare, 
-  Scale, 
-  TrendingUp, 
-  BarChart, 
-  Mic, 
-  Lock, 
-  CheckCircle,
-  Gift,
+import {
+  Zap,
+  MessageSquare,
+  Scale,
+  TrendingUp,
+  BarChart,
+  Mic,
   ArrowRight,
-  LayoutGrid,
-  Video,
-  ListOrdered,
-  Users,
-  Crown,
-  BarChart3,
-  Shield,
   Network,
-  Settings
+  Gift,
 } from 'lucide-react';
 import Link from 'next/link';
 import VaultAndStrategyCockpit from '@/components/studio/VaultAndStrategyCockpit';
+import { getStudioTabs } from '@/lib/studio-navigation';
+import { useTranslation } from '@/context/LanguageContext';
 
 export default function AIToolsHub() {
   const router = useRouter();
+  const { locale } = useTranslation();
   const [profile, setProfile] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTool, setActiveTool] = useState<string | null>(null);
@@ -36,17 +29,7 @@ export default function AIToolsHub() {
   const isModeratorOrAdmin = ['moderator', 'admin', 'super_admin'].includes(profile?.platform_role || '');
 
   const renderDashboardBar = () => {
-    const tabs = [
-      { id: 'content', icon: LayoutGrid, label: 'Content' },
-      { id: 'live', icon: Video, label: 'Stream Station' },
-      { id: 'orders', icon: ListOrdered, label: 'Custom Requests' },
-      { id: 'consent_inbox', icon: Users, label: 'Consent Box' },
-      { id: 'goals', icon: Crown, label: 'Goals' },
-      { id: 'analytics', icon: BarChart3, label: 'Vibe Insights' },
-      { id: 'settings', icon: Settings, label: 'Profile Settings' },
-      ...(isModeratorOrAdmin ? [{ id: 'safety_ops', icon: Shield, label: 'Safety Patrol' }] : []),
-      { id: 'ai_tools', icon: Zap, label: 'AI Tools' },
-    ];
+    const tabs = getStudioTabs(isModeratorOrAdmin, locale);
 
     return (
       <div className="flex items-center gap-2 bg-white/5 p-1.5 rounded-2xl border border-white/5 w-fit mb-8 max-w-full overflow-x-auto scrollbar-hide shrink-0">
@@ -62,14 +45,14 @@ export default function AIToolsHub() {
                   router.push(`/studio?activeTab=${tab.id}`);
                 }
               }}
-              className={`flex items-center gap-3 px-6 py-3 rounded-xl transition-all duration-300 ${
+              className={`flex items-center gap-3 px-6 py-3 rounded-xl transition-all duration-300 shrink-0 ${
                 isActive 
                   ? 'bg-white/10 text-white shadow-xl' 
                   : 'text-white/40 hover:text-white/60 hover:bg-white/[0.02]'
               }`}
             >
               <tab.icon className={`w-4 h-4 ${isActive ? 'text-primary' : ''}`} />
-              <span className="text-[10px] font-black uppercase tracking-widest">{tab.label}</span>
+              <span className="text-[10px] font-black uppercase tracking-widest whitespace-nowrap">{tab.label}</span>
             </button>
           );
         })}
@@ -166,11 +149,11 @@ export default function AIToolsHub() {
 
           <div className="grid md:grid-cols-2 gap-6 text-left mb-12">
             {[
-              { icon: MessageSquare, title: 'Auto-Generated Messaging', desc: 'AI drafts hyper-personalized DMs to your top members to drive PPV sales.' },
-              { icon: Scale, title: 'Legal Copilot', desc: 'Instant DMCA takedown drafts, contract reviews, and compliance checks.' },
-              { icon: TrendingUp, title: 'Options Ops', desc: 'Predictive pricing analytics to maximize your subscription revenue.' },
-              { icon: BarChart, title: 'Content Strategy', desc: 'Data-driven analysis of your feed to suggest what you should post next.' },
-              { icon: Mic, title: 'Speech-to-Speech Live Translation', desc: 'Real-time voice cloning in 14 languages for international voice notes.' }
+              { icon: MessageSquare, title: 'Smart DM Drafts', desc: 'AI drafts personalized replies and pay-per-view offers for your top fans.' },
+              { icon: Scale, title: 'Legal Copilot', desc: 'Instant copyright takedown notices, agency contract reviews, and safety checks.' },
+              { icon: TrendingUp, title: 'Smart Pricing', desc: 'Pricing recommendations to help you pick the best VIP & pay-per-view rates.' },
+              { icon: BarChart, title: 'Content Strategy', desc: 'Data-backed tips on what to post next based on what converts best.' },
+              { icon: Mic, title: 'Live Voice Translation', desc: 'Translate your voice notes in 14 languages while keeping your natural tone.' }
             ].map((tool, i) => (
               <div key={i} className="glass-card p-6 rounded-2xl flex gap-4 border border-white/5 hover:border-[#ffabf3]/25 transition duration-500 hover:scale-[1.01] hover:bg-white/[0.03]">
                 <div className="mt-1">
@@ -279,10 +262,10 @@ export default function AIToolsHub() {
               <div className="space-y-6">
                 <div className="flex items-center gap-3 mb-8 text-green-400">
                   <TrendingUp className="w-8 h-8" />
-                  <h2 className="text-2xl font-black uppercase">Options Ops</h2>
+                  <h2 className="text-2xl font-black uppercase">Smart Pricing</h2>
                 </div>
                 <div className="p-6 bg-white/5 border border-white/10 rounded-xl flex items-center justify-center min-h-[200px]">
-                  <p className="text-white/50 text-sm">Analyzing current subscription tier elasticity...</p>
+                  <p className="text-white/50 text-sm">Analyzing your current VIP & pay-per-view price performance...</p>
                 </div>
               </div>
             )}
@@ -309,7 +292,7 @@ export default function AIToolsHub() {
               <div className="space-y-6">
                 <div className="flex items-center gap-3 mb-6 text-primary">
                   <Network className="w-8 h-8" />
-                  <h2 className="text-2xl font-black uppercase">Replicant Vault & Strategy Cockpit</h2>
+                  <h2 className="text-2xl font-black uppercase">AI Copilot Rules & Media Library</h2>
                 </div>
                 <VaultAndStrategyCockpit />
               </div>
@@ -326,8 +309,8 @@ export default function AIToolsHub() {
                     <Network className="w-6 h-6 animate-pulse" />
                   </div>
                   <div>
-                    <h2 className="text-xl font-black uppercase tracking-wider text-white">Replicant Strategy & Vault Cockpit</h2>
-                    <p className="text-xs text-white/50 uppercase tracking-widest mt-0.5">Obsidian Knowledge Graph, Interaction Directives & Media Vault</p>
+                    <h2 className="text-xl font-black uppercase tracking-wider text-white">Train Your AI Copilot</h2>
+                    <p className="text-xs text-white/50 uppercase tracking-widest mt-0.5">Set your voice, chat goals, hard boundaries & shareable media</p>
                   </div>
                 </div>
               </div>
@@ -337,10 +320,10 @@ export default function AIToolsHub() {
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             <ToolCard 
               icon={MessageSquare} 
-              title="Auto-Messaging" 
+              title="Smart DM Drafts" 
               color="text-[#ffabf3]"
               glowClass="from-[#ffabf3]/10 to-transparent"
-              desc="Draft mass PPV messages instantly."
+              desc="Draft mass pay-per-view messages instantly."
               onClick={() => setActiveTool('messaging')}
             />
             <ToolCard 
@@ -348,15 +331,15 @@ export default function AIToolsHub() {
               title="Legal Copilot" 
               color="text-[#00ffff]"
               glowClass="from-[#00ffff]/10 to-transparent"
-              desc="DMCA takedowns and contract analysis."
+              desc="Copyright takedowns and contract analysis."
               onClick={() => setActiveTool('legal')}
             />
             <ToolCard 
               icon={TrendingUp} 
-              title="Options Ops" 
+              title="Smart Pricing" 
               color="text-green-400"
               glowClass="from-green-500/10 to-transparent"
-              desc="Pricing prediction models."
+              desc="Suggested prices for VIP & PPV posts."
               onClick={() => setActiveTool('options')}
             />
             <ToolCard 

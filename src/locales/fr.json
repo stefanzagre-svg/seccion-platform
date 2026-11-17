@@ -333,16 +333,16 @@
     "aiAssistedShort": "Créé par l'humain, sublimé par l'IA",
     "aiAssistedDesc": "Le contenu de base provient du créateur, mais des outils d'IA ont été employés pour la retouche ou les sous-titres.",
     "aiAssistedExamples": "Photos avec filtres IA, vidéos sous-titrées par IA, descriptions optimisées.",
-    "aiGenerated": "100% Replicant",
-    "aiGeneratedShort": "Généré intégralement par le Replicant du créateur",
-    "aiGeneratedDesc": "Ce contenu a été entièrement conçu par une intelligence artificielle au nom et sous l'autorisation du créateur.",
-    "aiGeneratedExamples": "Images générées par IA, messages composés par le Replicant, avatars de synthèse.",
+    "aiGenerated": "100% Généré par IA",
+    "aiGeneratedShort": "Créé intégralement par l'IA autorisée du créateur",
+    "aiGeneratedDesc": "Ce contenu a été entièrement généré par une IA au nom et avec l'autorisation du créateur, selon sa voix, son style et son image approuvés.",
+    "aiGeneratedExamples": "Photos générées par IA, messages rédigés par IA, notes vocales IA autorisées, avatars virtuels.",
     "aiEnhanced": "Amélioré par IA",
     "aiEnhancedShort": "Contenu original modifié par IA",
     "aiEnhancedDesc": "Le créateur est parti d'un média original authentique puis a appliqué une transformation IA substantielle.",
     "aiEnhancedExamples": "Retouche du visage par IA, remplacement de décor par IA, clonage vocal assisté.",
-    "autoDetectionNotice": "SECCION analyse automatiquement les médias téléversés pour vérifier l'exactitude des déclarations de provenance.",
-    "requiresConsent": "Nécessite une Autorisation Replicant active dans le Studio pour la publication."
+    "autoDetectionNotice": "SECCION vérifie automatiquement les médias téléversés afin de confirmer l'exactitude du label IA.",
+    "requiresConsent": "Nécessite d'activer l'autorisation Double Numérique IA dans le Studio → Paramètres."
   },
   "onboarding": {
     "main": {
@@ -733,96 +733,96 @@
   "creatorTour": {
     "steps": {
       "welcome": {
-        "badge": "Étape 1 sur 5 • Orientation",
+        "badge": "Étape 1 sur 5 • Aperçu",
         "title": "Bienvenue dans le Creator Studio SECCION",
-        "desc": "Votre quartier général créateur haut standing. Tout est conçu pour remplacer les 40% de commissions d'agences par une monétisation directe et l'engagement automatisé de vos fans.",
-        "highlight": "Vous conservez 90% des revenus nets dès le premier jour sur l'ensemble de vos 7 sources de revenus.",
-        "action": "Suivant : Revenus & Tarifs"
+        "desc": "Votre espace créateur conçu pour remplacer les 40% de commissions d'agence par des abonnements directs et un assistant de discussion intelligent.",
+        "highlight": "Vous conservez 90% de vos revenus nets dès le premier jour sur vos 7 sources de revenus.",
+        "action": "Suivant : Tarifs & Revenus"
       },
       "pricing": {
-        "badge": "Étape 2 sur 5 • Monétisation",
-        "title": "Configurez Vos Tarifs Fondateurs",
-        "desc": "Définissez vos abonnements VIP, vos déblocages de médias exclusifs (PPV) et le tarif de vos appels privés 1-à-1. Les membres débloquent vos contenus en devises ou via leur XP de Chimie.",
-        "highlight": "Recommandation de base : Pass VIP à 9,99€/mois • Médias exclusifs à 4,99€ • Appels privés à 3,00€/min.",
-        "action": "Accéder aux Paramètres de Revenus"
+        "badge": "Étape 2 sur 5 • Tarifs",
+        "title": "Fixez Vos Tarifs",
+        "desc": "Définissez votre abonnement VIP individuel, le prix de vos posts à l'acte (PPV) et le tarif de vos appels privés. Rappel : VIP = abonnement à vous seul ; Master = pack multi-créateurs choisi par le membre.",
+        "highlight": "Base conseillée : Pass VIP 9,99€/mois • Post PPV 4,99€ • Appel privé 3,00€/min.",
+        "action": "Aller aux Tarifs"
       },
       "content": {
-        "badge": "Étape 3 sur 5 • Contenu & DRM",
-        "title": "Vault DRM & Confidentialité Progressive",
-        "desc": "Publiez votre portfolio initial avec filigrane DRM invisible. Si vous activez le Flou Facial, votre identité reste chiffrée jusqu'à ce qu'un membre atteigne le Niveau 3 de relation.",
-        "highlight": "Alimentez votre feed avec 2 à 3 publications exclusives pour offrir une valeur immédiate aux nouveaux abonnés.",
-        "action": "Ouvrir le Content Vault"
+        "badge": "Étape 3 sur 5 • Posts & Confidentialité",
+        "title": "Posts Protégés & Flou Facial",
+        "desc": "Chaque média reçoit un filigrane automatique anti-fuite. Activez le Flou Facial pour masquer votre visage en public jusqu'à l'abonnement ou un lien de confiance.",
+        "highlight": "Publiez 2 à 3 posts exclusifs pour offrir de la valeur dès l'arrivée de vos premiers abonnés VIP.",
+        "action": "Aller aux Posts & Médias"
       },
       "stream": {
-        "badge": "Étape 4 sur 5 • Expérience en Direct",
-        "title": "Cockpit Live WebRTC Interactif",
-        "desc": "Diffusez avec une latence ultra-faible (<500ms). Le tableau de bord d'audience calcule les scores de chimie en direct pour savoir en permanence qui vous soutient.",
-        "highlight": "Nécessite la vérification d'identité 18+ (KYC Shield) avant votre première diffusion publique.",
-        "action": "Explorer la Station Live"
+        "badge": "Étape 4 sur 5 • Directs",
+        "title": "Streaming en Temps Réel",
+        "desc": "Passez en direct sans latence et voyez les pourboires, meilleurs soutiens et réactions en temps réel.",
+        "highlight": "Nécessite une vérification privée d'âge 18+ avant votre premier direct public.",
+        "action": "Ouvrir les Directs"
       },
       "copilot": {
-        "badge": "Étape 5 sur 5 • Second Cerveau IA",
-        "title": "Vault Obsidian & Copilote IA",
-        "desc": "Votre jumeau numérique répond aux DMs de vos fans lorsque vous êtes hors ligne. Entraînez votre Copilote avec des notes Obsidian Markdown [[Persona]] et [[Limites]] pour des échanges authentiques et sécurisés.",
-        "highlight": "Protégé par un bouton d'arrêt d'urgence instantané en 1 clic.",
-        "action": "Ouvrir les Outils IA Obsidian"
+        "badge": "Étape 5 sur 5 • Assistant Chat IA",
+        "title": "Formez Votre Copilote IA",
+        "desc": "Votre assistant répond aux DMs quand vous êtes hors ligne. Ajoutez de simples notes sur votre ton, vos sujets et vos limites—sans aucune compétence technique.",
+        "highlight": "Inclut un bouton de pause instantanée en 1 clic à tout moment.",
+        "action": "Ouvrir le Copilote IA"
       }
     }
   },
   "creatorChecklist": {
     "header": {
-      "title": "Cockpit des Premiers Pas Créateur",
-      "sub": "Complétez votre configuration initiale pour débloquer le live streaming et percevoir vos 90% de revenus fondateurs."
+      "title": "Premiers Pas",
+      "sub": "Complétez ces étapes pour lancer vos directs et percevoir 90% de vos gains."
     },
     "status": {
-      "ready": "Portfolio Prêt",
-      "steps": "Terminé"
+      "ready": "Prêt à Lancer",
+      "steps": "Terminées"
     },
     "actions": {
       "tour": "Visite Studio",
       "configure": "Configurer",
       "upload": "Publier",
-      "writeVault": "Éditer le Vault",
-      "verify": "Vérifier",
-      "submitTax": "Déclarer Fiscalité",
-      "askAi": "Interroger le Copilote",
+      "writeVault": "Règles IA",
+      "verify": "Vérifier ID",
+      "submitTax": "Infos Fiscales",
+      "askAi": "Demander au Copilote",
       "setupProfile": "Modifier le Profil"
     },
     "items": {
       "pricing": {
-        "title": "Définir les Tarifs VIP & Médias Exclusifs",
-        "desc": "Configurez l'abonnement mensuel et les déblocages de contenus à la pièce."
+        "title": "Fixer Vos Tarifs VIP & PPV",
+        "desc": "Définissez le prix de votre abonnement VIP individuel et des posts à l'acte."
       },
       "content": {
-        "title": "Alimenter le Vault de Contenus DRM",
-        "desc": "Publiez au moins 2 posts ou teasers exclusifs pour vos premiers membres."
+        "title": "Publier Vos 2 Premiers Posts",
+        "desc": "Ajoutez au moins 2 posts ou aperçus exclusifs protégés par filigrane et floutage."
       },
       "vault": {
-        "title": "Définir le Second Cerveau du Copilote",
-        "desc": "Rédigez vos notes [[Persona]] et [[Limites]] dans le Vault Obsidian."
+        "title": "Former Votre Copilote IA",
+        "desc": "Ajoutez de simples notes sur votre personnalité, votre ton et vos limites."
       },
       "kyc": {
-        "title": "Bouclier d'Identité (KYC 18+)",
-        "desc": "Validez votre identité majeure en Zero-Knowledge pour débloquer les lives publics et les retraits."
+        "title": "Vérifier Votre Âge (ID 18+)",
+        "desc": "Vérification rapide et confidentielle (jamais affichée) pour activer directs et retraits."
       },
       "tax": {
-        "title": "Profil Fiscal & Destination des Retraits",
-        "desc": "Enregistrez votre nom commercial et numéro fiscal pour la conformité DAC7/1099."
+        "title": "Infos Fiscales & Paiements",
+        "desc": "Ajoutez votre nom légal, numéro fiscal et mode de paiement pour vos virements."
       },
       "visuals": {
-        "title": "Ajouter un Avatar & une Bio Créateur",
-        "desc": "Ajoutez votre photo principale et une courte bio dans les paramètres du Studio pour être découvert."
+        "title": "Ajouter Photo de Profil & Bio",
+        "desc": "Importez votre photo principale et rédigez une courte bio dans les Paramètres pour être visible."
       }
     },
     "vipBanner": {
       "badge": "VIP Fast-Track Actif · Créatrice Pré-Approuvée",
       "splitLabel": "90% Net 1re Année Actif (80% Standard Ensuite)",
       "daysLeft": "{days}j restants en 1re Année",
-      "aiFreeLabel": "AI Copilot & Content Ops Offerts Jusqu'au",
-      "moroccoShield": "Bouclier Domestique Maroc (MA) Actif",
+      "aiFreeLabel": "Copilote IA & Outils Studio Offerts Jusqu'au",
+      "moroccoShield": "Blocage Local Maroc (MA) Actif",
       "quickAvatarPhotos": "1 Avatar + 2 Photos",
-      "quickRatesGeo": "Tarifs & Géo-Bouclier",
-      "quickKyc": "KYC 18+ DIDIT"
+      "quickRatesGeo": "Tarifs & Confidentialité Pays",
+      "quickKyc": "Vérifier ID 18+"
     }
   },
   "chatTranslation": {

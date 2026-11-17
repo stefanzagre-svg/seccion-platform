@@ -64,7 +64,7 @@ class Particle {
 export default function LivePulseHub({ currentUser, candidateProfile, onLock }: LivePulseHubProps) {
   const [isLive, setIsLive] = useState(false);
   const [messages, setMessages] = useState<Array<{ user: string; msg: string; type: string }>>([
-    { user: candidateProfile.name, msg: 'Connecting to live pulse stream...', type: 'system' },
+    { user: candidateProfile.name, msg: 'Connecting to live stream...', type: 'system' },
   ]);
   const [inputText, setInputText] = useState('');
   const [showHudDetails, setShowHudDetails] = useState(false);
@@ -349,10 +349,10 @@ export default function LivePulseHub({ currentUser, candidateProfile, onLock }: 
                 <Tv className="w-12 h-12 text-white/30 relative z-10 animate-pulse" />
               </div>
               <h3 className="text-sm font-black tracking-[0.2em] text-white uppercase mb-2">
-                Pulse Room Offline
+                Stream Offline
               </h3>
               <p className="text-[9px] font-bold text-white/50 max-w-xs uppercase tracking-wider leading-relaxed">
-                {candidateProfile.name} is currently preparing the next interactive match alignment. Stay tuned...
+                {candidateProfile.name} isn&apos;t live right now. Check back soon for the next broadcast...
               </p>
             </div>
           )}
@@ -441,13 +441,13 @@ export default function LivePulseHub({ currentUser, candidateProfile, onLock }: 
                 onClick={() => triggerPulseBurst('⚡')}
                 className="px-5 py-3 bg-primary hover:bg-primary-dark text-white rounded-2xl text-[9px] font-black uppercase tracking-widest shadow-lg shadow-primary/20 border border-white/10 transition-all flex items-center gap-1.5"
               >
-                <Zap className="w-3.5 h-3.5 fill-current" /> Spark Pulse
+                <Zap className="w-3.5 h-3.5 fill-current" /> Send Spark
               </button>
               <button 
                 onClick={() => triggerPulseBurst('💎')}
                 className="px-5 py-3 bg-accent hover:bg-accent/80 text-white rounded-2xl text-[9px] font-black uppercase tracking-widest border border-white/10 hover:scale-102 active:scale-98 transition-all flex items-center gap-1.5"
               >
-                <Sparkles className="w-3.5 h-3.5" /> Diamond Pulse
+                <Sparkles className="w-3.5 h-3.5" /> Send Diamond
               </button>
             </div>
 
@@ -461,7 +461,7 @@ export default function LivePulseHub({ currentUser, candidateProfile, onLock }: 
         <div className="lg:col-span-1 flex flex-col h-[340px] md:h-auto glass-card p-5 bg-white/2 border-white/5">
           <div className="flex items-center justify-between mb-4 pb-3 border-b border-white/5">
             <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary flex items-center gap-2">
-              <MessageSquare className="w-4 h-4" /> Live Pulse Feed
+              <MessageSquare className="w-4 h-4" /> Live Chat
             </p>
             <SlidersHorizontal className="w-4 h-4 text-white/40" />
           </div>

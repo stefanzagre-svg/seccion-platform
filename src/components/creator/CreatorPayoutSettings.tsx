@@ -162,13 +162,13 @@ export default function CreatorPayoutSettings() {
           <div className="text-2xl sm:text-3xl font-black font-mono text-white flex items-center gap-2">
             <span>€{availableBalanceEur.toFixed(2)}</span>
             <span className="text-xs font-mono font-normal text-white/50">
-              ({Math.round(availableBalanceEur / 0.90)} Red Pills 💊 cashed out)
+              ({Math.round(availableBalanceEur / 0.90)} Tokens / Credits earned)
             </span>
           </div>
           <p className="text-xs text-[#C5C6C7] mt-1 max-w-lg">
             {locale === 'es'
-              ? 'Tus fans te envían Red Pills. Cuando usan Banco Instantáneo o Cripto, evitan peajes bancarios y tu liquidación llega limpia.'
-              : 'Fans unlock your content with Red Pills. When they use Instant Bank or Crypto, gateway tolls drop and your net take-home is maximized.'}
+              ? 'Tus fans desbloquean contenido con Créditos o Tokens 18+. Cuando pagan por Banco Instantáneo o Dólar Digital (USDC), las comisiones son mínimas.'
+              : 'Fans unlock your content with Credits or 18+ Tokens. When they pay with Instant Bank or Digital USD (USDC), processing fees drop so you keep more.'}
           </p>
         </div>
 
@@ -235,11 +235,11 @@ export default function CreatorPayoutSettings() {
           >
             <div>
               <Coins className="w-5 h-5 text-[#FF204E] mb-2" />
-              <div className="text-xs font-bold text-white font-mono">USDC (MiCA)</div>
+              <div className="text-xs font-bold text-white font-mono">USDC (Digital USD)</div>
               <div className="text-[10px] text-white/50 font-mono mt-0.5">Polygon / Solana</div>
             </div>
             <div className="text-[10px] font-mono text-[#39FF14] font-bold mt-4">
-              Instant · Gas ~€0.01 (Best for Global / LATAM)
+              Instant · ~$0.01 Fee (Best Global / LATAM)
             </div>
           </button>
 

@@ -56,10 +56,10 @@ export default function SponsoredCreators() {
         <div className="flex items-center justify-between mb-6">
           <div>
             <h2 className="text-xl font-black uppercase tracking-tighter flex items-center gap-2 text-white">
-              <ShieldCheck className="text-primary w-5 h-5" /> Sponsored Creators
+              <ShieldCheck className="text-primary w-5 h-5" /> Master Circle Bundle
             </h2>
             <p className="text-[10px] uppercase tracking-widest text-primary/70 font-bold mt-1">
-              Your Master Subscription Roster
+              Your inner circle of creators covered under one monthly payment
             </p>
           </div>
           <div className="text-right">

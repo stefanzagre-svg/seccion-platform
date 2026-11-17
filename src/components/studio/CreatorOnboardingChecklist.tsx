@@ -51,48 +51,48 @@ export default function CreatorOnboardingChecklist({
   const checklistItems = [
     {
       id: 'pricing',
-      title: t('creatorChecklist.items.pricing.title', 'Set Base VIP & PPV Rates'),
-      desc: t('creatorChecklist.items.pricing.desc', 'Configure monthly subscription and per-item PPV unlocks.'),
+      title: t('creatorChecklist.items.pricing.title', 'Set Your VIP & Post Prices'),
+      desc: t('creatorChecklist.items.pricing.desc', 'Set your single-creator VIP monthly subscription and pay-per-view prices.'),
       done: metrics.hasMonetization,
       action: () => onNavigateTab('settings'),
-      actionLabel: t('creatorChecklist.actions.configure', 'Configure'),
-      helpQuestion: 'How should I price my base VIP pass and PPV media for best conversion?'
+      actionLabel: t('creatorChecklist.actions.configure', 'Set Prices'),
+      helpQuestion: 'How should I price my single-creator VIP subscription and pay-per-view posts?'
     },
     {
       id: 'content',
-      title: t('creatorChecklist.items.content.title', 'Seed DRM Content Vault'),
-      desc: t('creatorChecklist.items.content.desc', 'Upload at least 2 exclusive posts or teasers for early members.'),
+      title: t('creatorChecklist.items.content.title', 'Upload Your First 2 Posts'),
+      desc: t('creatorChecklist.items.content.desc', 'Add at least 2 exclusive posts or previews with watermark & blur protection.'),
       done: metrics.hasSeedContent,
       action: () => onNavigateTab('content'),
       actionLabel: t('creatorChecklist.actions.upload', 'Upload'),
-      helpQuestion: 'How does progressive Face-Blur and DRM protection work for posts?'
+      helpQuestion: 'How do automatic Face Blur and anti-leak watermarks protect my posts?'
     },
     {
       id: 'vault',
-      title: t('creatorChecklist.items.vault.title', 'Define Copilot Second Brain'),
-      desc: t('creatorChecklist.items.vault.desc', 'Write your [[Persona]] and [[Boundaries]] note in the Obsidian Vault.'),
+      title: t('creatorChecklist.items.vault.title', 'Train Your AI Copilot'),
+      desc: t('creatorChecklist.items.vault.desc', 'Add simple notes about your personality, tone, and chat boundaries.'),
       done: metrics.hasVaultNote,
       action: onNavigateAiTools,
-      actionLabel: t('creatorChecklist.actions.writeVault', 'Edit Vault'),
-      helpQuestion: 'How do I train my AI Copilot using Obsidian Markdown notes?'
+      actionLabel: t('creatorChecklist.actions.writeVault', 'Set AI Rules'),
+      helpQuestion: 'How do I set my tone, favorite topics, and chat boundaries for my AI Copilot?'
     },
     {
       id: 'kyc',
-      title: t('creatorChecklist.items.kyc.title', 'Identity Shield (KYC 18+)'),
-      desc: t('creatorChecklist.items.kyc.desc', 'Verify zero-knowledge 18+ identity to unlock public live streams & payouts.'),
+      title: t('creatorChecklist.items.kyc.title', 'Verify Your Age (18+ ID)'),
+      desc: t('creatorChecklist.items.kyc.desc', 'Quick private ID check (never shown publicly) to unlock livestreams & payouts.'),
       done: metrics.hasKyc,
       action: onOpenKyc,
-      actionLabel: t('creatorChecklist.actions.verify', 'Verify'),
-      helpQuestion: 'Is my real identity kept confidential when I verify with DIDIT Zero-Knowledge?'
+      actionLabel: t('creatorChecklist.actions.verify', 'Verify ID'),
+      helpQuestion: 'Is my real ID kept confidential when I verify my age?'
     },
     {
       id: 'tax',
-      title: t('creatorChecklist.items.tax.title', 'Tax Profile & Payout Destination'),
-      desc: t('creatorChecklist.items.tax.desc', 'Register tax business name and TIN in settings for global DAC7/1099 compliance.'),
+      title: t('creatorChecklist.items.tax.title', 'Tax & Payout Details'),
+      desc: t('creatorChecklist.items.tax.desc', 'Add your legal name, Tax ID, and payout method to get paid automatically.'),
       done: metrics.hasTaxId,
       action: () => onNavigateTab('settings'),
-      actionLabel: t('creatorChecklist.actions.submitTax', 'Submit Tax'),
-      helpQuestion: 'What tax documents do I need to receive automated 90% payouts?'
+      actionLabel: t('creatorChecklist.actions.submitTax', 'Add Tax Info'),
+      helpQuestion: 'What tax and payout info do I need to receive my 90% earnings?'
     }
   ];
 
@@ -131,14 +131,14 @@ export default function CreatorOnboardingChecklist({
               </span>
               {aiFreeDateLabel && (
                 <span className="text-[11px] text-violet-200">
-                  {t('creatorChecklist.vipBanner.aiFreeLabel', 'AI Copilot & Content Ops Free Until')}:{' '}
+                  {t('creatorChecklist.vipBanner.aiFreeLabel', 'AI Copilot & Studio Tools Free Until')}:{' '}
                   <strong className="text-white">{aiFreeDateLabel}</strong>
                 </span>
               )}
               {vipFastTrack.moroccoShieldActive && (
                 <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-indigo-500/20 border border-indigo-400/30 text-indigo-200 text-[10px] font-bold">
                   <ShieldCheck className="w-3 h-3" />
-                  {t('creatorChecklist.vipBanner.moroccoShield', 'Morocco Domestic Shield (MA) Active')}
+                  {t('creatorChecklist.vipBanner.moroccoShield', 'Morocco Local Privacy Block (MA) Active')}
                 </span>
               )}
             </div>
@@ -159,7 +159,7 @@ export default function CreatorOnboardingChecklist({
               className="px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-[10px] font-black uppercase tracking-wider transition cursor-pointer inline-flex items-center gap-1"
             >
               <DollarSign className="w-3 h-3 text-emerald-300" />
-              {t('creatorChecklist.vipBanner.quickRatesGeo', 'Rates & Geo Shield')}
+              {t('creatorChecklist.vipBanner.quickRatesGeo', 'Pricing & Country Privacy')}
             </button>
             {!metrics.hasKyc && (
               <button
@@ -168,7 +168,7 @@ export default function CreatorOnboardingChecklist({
                 className="px-3 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black text-[10px] font-black uppercase tracking-wider transition cursor-pointer inline-flex items-center gap-1"
               >
                 <ShieldCheck className="w-3 h-3" />
-                {t('creatorChecklist.vipBanner.quickKyc', 'DIDIT 18+ KYC')}
+                {t('creatorChecklist.vipBanner.quickKyc', 'Verify 18+ ID')}
               </button>
             )}
           </div>
@@ -206,11 +206,11 @@ export default function CreatorOnboardingChecklist({
           <div>
             <div className="flex items-center gap-2">
               <h3 className="text-sm font-black uppercase tracking-wider text-white">
-                {t('creatorChecklist.header.title', 'Creator 1st Steps Cockpit')}
+                {t('creatorChecklist.header.title', 'Creator 1st Steps')}
               </h3>
               {isAllComplete ? (
                 <span className="text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-                  {t('creatorChecklist.status.ready', 'Portfolio Ready')}
+                  {t('creatorChecklist.status.ready', 'Ready to Launch')}
                 </span>
               ) : (
                 <span className="text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full bg-[#00fbfb]/10 text-[#00fbfb] border border-[#00fbfb]/20">
@@ -221,7 +221,7 @@ export default function CreatorOnboardingChecklist({
             <p className="text-[10px] text-white/50 font-medium mt-0.5">
               {t(
                 'creatorChecklist.header.sub',
-                'Complete your initial setup to unlock live streaming and start collecting your 90% founding revenue.'
+                'Finish these steps to go live and start keeping 90% of what you earn.'
               )}
             </p>
           </div>

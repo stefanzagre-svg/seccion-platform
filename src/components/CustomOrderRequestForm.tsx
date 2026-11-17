@@ -309,10 +309,10 @@ export default function CustomOrderRequestForm({
                       <ShieldAlert className="w-4 h-4 shrink-0 mt-0.5" />
                       <div>
                         <p className="text-[9px] font-black uppercase tracking-wider mb-0.5">
-                          💊 18+ Sovereign Red Pills Escrow Required
+                          💊 18+ Protected Order (18+ Tokens Required)
                         </p>
                         <p className="text-[8px] leading-relaxed text-red-200">
-                          {qualification.reason} Delivered media is verified via Sightengine AI &amp; 18 U.S.C. § 2257 consent rules.
+                          Custom 18+ requests require 18+ Tokens (Red Pills) held safely until your order is delivered and verified for performer consent.
                         </p>
                       </div>
                     </motion.div>
@@ -320,7 +320,7 @@ export default function CustomOrderRequestForm({
                     <div className="p-2.5 mt-2 bg-emerald-950/30 border border-emerald-500/20 rounded-xl flex items-center gap-2 text-emerald-400">
                       <Sparkles className="w-3.5 h-3.5 shrink-0" />
                       <p className="text-[8px] font-bold uppercase tracking-wider leading-relaxed">
-                        ✨ SFW Mainstream Escrow • Eligible for SFW Studio Credits &amp; All Rails
+                        ✨ Standard Order • Pay with Standard Credits, Card, or Instant Bank
                       </p>
                     </div>
                   );

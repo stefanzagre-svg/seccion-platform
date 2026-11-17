@@ -260,7 +260,7 @@ export default function VaultAndStrategyCockpit() {
             activeTab === 'vault' ? 'bg-primary text-black font-black' : 'text-white/40 hover:text-white'
           }`}
         >
-          <Network className="w-3.5 h-3.5" /> Obsidian Vault Graph
+          <Network className="w-3.5 h-3.5" /> Brand Notes & Voice
         </button>
         <button
           onClick={() => setActiveTab('goals')}
@@ -268,7 +268,7 @@ export default function VaultAndStrategyCockpit() {
             activeTab === 'goals' ? 'bg-primary text-black font-black' : 'text-white/40 hover:text-white'
           }`}
         >
-          <Target className="w-3.5 h-3.5" /> Goals & Restrictions
+          <Target className="w-3.5 h-3.5" /> Chat Goals & Limits
         </button>
         <button
           onClick={() => setActiveTab('media')}
@@ -276,28 +276,28 @@ export default function VaultAndStrategyCockpit() {
             activeTab === 'media' ? 'bg-primary text-black font-black' : 'text-white/40 hover:text-white'
           }`}
         >
-          <ImageIcon className="w-3.5 h-3.5" /> Copilot Media Vault
+          <ImageIcon className="w-3.5 h-3.5" /> Shareable Media
         </button>
       </div>
 
-      {/* ── TAB 1: OBSIDIAN GRAPH & VAULT EDITOR ─────────────────────────── */}
+      {/* ── TAB 1: BRAND NOTES & VOICE EDITOR ──────────────────────────── */}
       {activeTab === 'vault' && (
         <div className="grid lg:grid-cols-3 gap-6">
-          {/* Note List & Graph Overview */}
+          {/* Note List & Connections Overview */}
           <div className="glass-card p-5 rounded-2xl border border-white/5 space-y-4">
             <div className="flex items-center justify-between">
               <span className="text-[10px] font-black uppercase tracking-widest text-white/60">
-                Active Vault Nodes ({graph.nodes.length})
+                Your AI Notes ({graph.nodes.length})
               </span>
               <button
                 onClick={() => {
-                  const title = prompt('Enter new Note Title (e.g. [[Topic]]):');
+                  const title = prompt('Enter a note name (e.g. Weekend Promo or Chat Tone):');
                   if (!title) return;
                   const newNote: VaultMemoryNote = {
                     id: Date.now().toString(),
                     title: title.replace(/\[\[|\]\]/g, ''),
                     note_type: 'TOPIC',
-                    content: 'Define guidelines and context here using [[wikilinks]].',
+                    content: 'Write simple instructions or limits here for your AI assistant.',
                     status: 'active',
                     persisted: false,
                   };
@@ -306,7 +306,7 @@ export default function VaultAndStrategyCockpit() {
                   setVaultFeedback(null);
                 }}
                 className="p-1.5 bg-white/5 hover:bg-white/10 rounded-lg text-white/70 hover:text-white transition"
-                title="Add new provenance memory node"
+                title="Add new note for your AI assistant"
               >
                 <Plus className="w-3.5 h-3.5" />
               </button>
@@ -314,7 +314,7 @@ export default function VaultAndStrategyCockpit() {
 
             {isLoadingMemories && (
               <div className="text-[10px] font-mono text-white/40 uppercase tracking-widest">
-                Syncing creator memory ledger...
+                Loading your AI notes...
               </div>
             )}
 
@@ -337,7 +337,7 @@ export default function VaultAndStrategyCockpit() {
                     }`}
                   >
                     <div className="flex items-center justify-between gap-2 text-[11px] font-bold">
-                      <span className={isSuperseded ? 'line-through' : ''}>[[{n.title}]]</span>
+                      <span className={isSuperseded ? 'line-through' : ''}>{n.title.replace(/_/g, ' ')}</span>
                       <div className="flex items-center gap-1.5 shrink-0">
                         <span
                           className={`text-[8px] uppercase tracking-wider px-1.5 py-0.5 rounded ${
@@ -346,10 +346,10 @@ export default function VaultAndStrategyCockpit() {
                               : 'bg-emerald-500/15 text-emerald-300'
                           }`}
                         >
-                          {isSuperseded ? 'superseded' : 'active'}
+                          {isSuperseded ? 'archived' : 'active'}
                         </span>
                         <span className="text-[8px] uppercase tracking-wider bg-white/5 px-2 py-0.5 rounded text-white/40">
-                          {n.note_type}
+                          {n.note_type === 'MEMBER_DOSSIER' ? 'VIP NOTE' : n.note_type}
                         </span>
                       </div>
                     </div>
@@ -358,34 +358,34 @@ export default function VaultAndStrategyCockpit() {
               })}
             </div>
 
-            {/* Visual Edge Adjacency list */}
+            {/* Related Topic Links */}
             <div className="p-4 bg-black/40 rounded-xl border border-white/5 space-y-2">
               <span className="text-[9px] font-black uppercase tracking-widest text-white/40 block">
-                Detected [[Wikilink]] Edges
+                Connected Notes
               </span>
               <div className="space-y-1">
                 {graph.edges.map((e, idx) => (
                   <div key={idx} className="text-[10px] text-white/60 font-mono flex items-center gap-1.5">
-                    <span className="text-primary font-bold">[[{e.source}]]</span>
+                    <span className="text-primary font-bold">{e.source.replace(/_/g, ' ')}</span>
                     <span className="text-white/20">──▶</span>
-                    <span className="text-emerald-400 font-bold">[[{e.target}]]</span>
+                    <span className="text-emerald-400 font-bold">{e.target.replace(/_/g, ' ')}</span>
                   </div>
                 ))}
               </div>
             </div>
           </div>
 
-          {/* Markdown Note Editor */}
+          {/* Note Editor */}
           <div className="lg:col-span-2 glass-card p-6 rounded-2xl border border-white/5 space-y-4">
             <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-white/5">
               <div className="flex items-center gap-2">
                 <FileText className="w-4 h-4 text-primary" />
                 <span className="text-xs font-black uppercase tracking-widest text-white">
-                  Editing: [[{selectedNote.title}]]
+                  Editing: {selectedNote.title.replace(/_/g, ' ')}
                 </span>
                 {selectedNote.checkedAt && (
                   <span className="text-[9px] font-mono px-2 py-0.5 rounded bg-white/5 text-white/50">
-                    Checked {selectedNote.checkedAt.slice(0, 10)}
+                    Updated {selectedNote.checkedAt.slice(0, 10)}
                   </span>
                 )}
               </div>
@@ -400,13 +400,13 @@ export default function VaultAndStrategyCockpit() {
                     setSelectedNote(updated);
                     setNotes(notes.map((n) => (n.id === updated.id ? updated : n)));
                   }}
-                  aria-label="Memory category"
+                  aria-label="Note category"
                   className="bg-black/60 border border-white/10 rounded-lg px-2.5 py-1.5 text-[9px] font-black uppercase tracking-widest text-white/80 outline-none focus:border-primary/50"
                 >
-                  <option value="PERSONA">PERSONA (Brand Voice)</option>
-                  <option value="BOUNDARY">BOUNDARY (Hard Rule)</option>
-                  <option value="MEMBER_DOSSIER">MEMBER_DOSSIER (VIP)</option>
-                  <option value="TOPIC">TOPIC (Offer / Promo)</option>
+                  <option value="PERSONA">Brand Voice &amp; Style</option>
+                  <option value="BOUNDARY">Hard Boundary (Never Do)</option>
+                  <option value="MEMBER_DOSSIER">Fan Note (VIP)</option>
+                  <option value="TOPIC">Offer / Promo Topic</option>
                 </select>
                 <button
                   onClick={() => handleDeleteNote(selectedNote)}
@@ -453,11 +453,11 @@ export default function VaultAndStrategyCockpit() {
               }}
               rows={10}
               className="w-full bg-black/40 border border-white/10 rounded-xl p-4 text-sm font-mono text-white/90 outline-none focus:border-primary/50 resize-none"
-              placeholder="Use [[Page Name]] to create bi-directional links..."
+              placeholder="Write instructions for how your AI Copilot should talk, what it can offer, and what it should never say..."
             />
 
             <div className="flex items-center justify-between text-[9px] uppercase tracking-widest text-white/40 pt-2">
-              <span>Auto PII-Scrubbed • Active Provenance Injected into Copilot</span>
+              <span>Private to your AI Copilot · Sensitive info scrubbed automatically</span>
               <button
                 onClick={() => {
                   const blob = new Blob([selectedNote.content], { type: 'text/markdown' });
@@ -469,24 +469,24 @@ export default function VaultAndStrategyCockpit() {
                 }}
                 className="flex items-center gap-1 hover:text-white transition"
               >
-                <Download className="w-3 h-3" /> Export to Desktop Obsidian (.md)
+                <Download className="w-3 h-3" /> Download Note (.md)
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* ── TAB 2: GOALS & INTENT RESTRICTIONS ───────────────────────────── */}
+      {/* ── TAB 2: CHAT GOALS & BOUNDARIES ──────────────────────────────── */}
       {activeTab === 'goals' && (
         <div className="grid md:grid-cols-2 gap-6">
-          {/* Active Commercial Goals */}
+          {/* Active Chat Goals */}
           <div className="glass-card p-6 rounded-2xl border border-white/5 space-y-4">
             <div className="flex items-center gap-2 pb-3 border-b border-white/5 text-primary">
               <Target className="w-5 h-5" />
-              <h3 className="text-xs font-black uppercase tracking-widest text-white">Conversation Intent Goals</h3>
+              <h3 className="text-xs font-black uppercase tracking-widest text-white">AI Chat Objective</h3>
             </div>
             <p className="text-[10px] text-white/50 uppercase tracking-widest leading-relaxed">
-              Direct the AI Replicant's conversational strategy. It will naturally steer chats toward this objective using multi-turn ramps.
+              Choose what your AI Copilot naturally guides fan DMs toward.
             </p>
             <div className="space-y-2 pt-2">
               {[
@@ -578,16 +578,16 @@ export default function VaultAndStrategyCockpit() {
         </div>
       )}
 
-      {/* ── TAB 3: COPILOT MEDIA VAULT ───────────────────────────────────── */}
+      {/* ── TAB 3: SHAREABLE MEDIA LIBRARY ──────────────────────────────── */}
       {activeTab === 'media' && (
         <div className="glass-card p-6 rounded-2xl border border-white/5 space-y-5">
           <div className="flex items-center justify-between pb-3 border-b border-white/5">
             <div>
               <h3 className="text-xs font-black uppercase tracking-widest text-white flex items-center gap-2">
-                <ImageIcon className="w-4 h-4 text-primary" /> Pre-Approved Copilot Media Library
+                <ImageIcon className="w-4 h-4 text-primary" /> Pre-Approved AI Media Library
               </h3>
               <p className="text-[9px] text-white/40 uppercase tracking-widest mt-1">
-                Assets the AI Copilot can autonomously attach to fan chats when relevant.
+                Photos & clips your AI Copilot is allowed to send in fan chats when relevant.
               </p>
             </div>
             <button
@@ -601,7 +601,7 @@ export default function VaultAndStrategyCockpit() {
               }}
               className="flex items-center gap-2 px-4 py-2 bg-primary text-black font-black rounded-xl text-[9px] uppercase tracking-widest hover:brightness-110 transition"
             >
-              <Plus className="w-3.5 h-3.5" /> Upload Media to Vault
+              <Plus className="w-3.5 h-3.5" /> Add Shareable Media
             </button>
           </div>
 
@@ -618,7 +618,7 @@ export default function VaultAndStrategyCockpit() {
                       Tag: {m.tag}
                     </span>
                     <span className="text-[8px] bg-primary/10 text-primary px-2 py-0.5 rounded uppercase font-black">
-                      Min RLS: {m.minRls}
+                      Trust Level {Math.max(1, Math.round(m.minRls / 5))}+
                     </span>
                     {m.isPpv && (
                       <span className="text-[8px] bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded uppercase font-black">

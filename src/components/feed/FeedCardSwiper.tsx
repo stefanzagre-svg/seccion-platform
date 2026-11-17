@@ -397,7 +397,7 @@ export default function FeedCardSwiper({
                 }}
                 className="text-[9px] font-black text-white/30 hover:text-white uppercase tracking-widest cursor-pointer"
               >
-                {locale === 'es' ? 'Compartir Pulso' : 'Share Pulse'}
+                {locale === 'es' ? 'Me gusta' : locale === 'fr' ? 'J\'aime' : 'Like'}
               </button>
             )}
           </div>
