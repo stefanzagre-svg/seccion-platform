@@ -57,6 +57,14 @@ import { generateMetadata as esBlogPostGen } from '../app/es/blog/[slug]/page';
 import { generateMetadata as frBlogPostGen } from '../app/fr/blog/[slug]/page';
 import { metadata as esOnlyfansAltMeta } from '../app/es/creator-hub/onlyfans-alternative/page';
 import { metadata as frOnlyfansAltMeta } from '../app/fr/creator-hub/onlyfans-alternative/page';
+import { metadata as esHowWeDoMeta } from '../app/es/how-we-do/page';
+import { metadata as frHowWeDoMeta } from '../app/fr/how-we-do/page';
+import { metadata as esVibeRadarMeta } from '../app/es/vibe-radar/page';
+import { metadata as frVibeRadarMeta } from '../app/fr/vibe-radar/page';
+import { metadata as esAiCopilotMeta } from '../app/es/features/ai-copilot/page';
+import { metadata as frAiCopilotMeta } from '../app/fr/features/ai-copilot/page';
+import { metadata as esDrmMeta } from '../app/es/features/drm-protection/page';
+import { metadata as frDrmMeta } from '../app/fr/features/drm-protection/page';
 import { getAllBlogPosts } from './blog-data';
 import { isReservedUsername } from './reserved-usernames';
 import sitemap from '../app/sitemap';
@@ -203,14 +211,29 @@ describe('Bing & Search Engine Metadata Hygiene', () => {
         frOnlyfansAltMeta,
         'https://seccion.ai/fr/creator-hub/onlyfans-alternative',
       ],
+      ['/es/how-we-do', esHowWeDoMeta, 'https://seccion.ai/es/how-we-do'],
+      ['/fr/how-we-do', frHowWeDoMeta, 'https://seccion.ai/fr/how-we-do'],
+      ['/es/vibe-radar', esVibeRadarMeta, 'https://seccion.ai/es/vibe-radar'],
+      ['/fr/vibe-radar', frVibeRadarMeta, 'https://seccion.ai/fr/vibe-radar'],
+      ['/es/features/ai-copilot', esAiCopilotMeta, 'https://seccion.ai/es/features/ai-copilot'],
+      ['/fr/features/ai-copilot', frAiCopilotMeta, 'https://seccion.ai/fr/features/ai-copilot'],
+      ['/es/features/drm-protection', esDrmMeta, 'https://seccion.ai/es/features/drm-protection'],
+      ['/fr/features/drm-protection', frDrmMeta, 'https://seccion.ai/fr/features/drm-protection'],
     ];
+
+    const seenTitles = new Set<string>();
+    const seenDescs = new Set<string>();
 
     for (const [route, meta, canonicalUrl] of localizedHubs) {
       const titleStr = extractTitleString(meta.title).trim();
       const descStr = (meta.description || '').trim();
       expect(`${titleStr} | SECCION`.length, `${route} <title>`).toBeLessThanOrEqual(70);
+      expect(seenTitles.has(titleStr), `Duplicate localized title on ${route}`).toBe(false);
+      seenTitles.add(titleStr);
       expect(descStr.length, `${route} description min`).toBeGreaterThanOrEqual(125);
       expect(descStr.length, `${route} description max`).toBeLessThanOrEqual(165);
+      expect(seenDescs.has(descStr), `Duplicate localized description on ${route}`).toBe(false);
+      seenDescs.add(descStr);
       expect(meta.alternates?.canonical, `${route} canonical`).toBe(canonicalUrl);
       expect(meta.alternates?.languages?.es, `${route} hreflang es`).toBeDefined();
       expect(meta.alternates?.languages?.fr, `${route} hreflang fr`).toBeDefined();
@@ -221,6 +244,14 @@ describe('Bing & Search Engine Metadata Hygiene', () => {
     expect(urls).toContain('https://seccion.ai/fr/blog');
     expect(urls).toContain('https://seccion.ai/es/creator-hub/onlyfans-alternative');
     expect(urls).toContain('https://seccion.ai/fr/creator-hub/onlyfans-alternative');
+    expect(urls).toContain('https://seccion.ai/es/how-we-do');
+    expect(urls).toContain('https://seccion.ai/fr/how-we-do');
+    expect(urls).toContain('https://seccion.ai/es/vibe-radar');
+    expect(urls).toContain('https://seccion.ai/fr/vibe-radar');
+    expect(urls).toContain('https://seccion.ai/es/features/ai-copilot');
+    expect(urls).toContain('https://seccion.ai/fr/features/ai-copilot');
+    expect(urls).toContain('https://seccion.ai/es/features/drm-protection');
+    expect(urls).toContain('https://seccion.ai/fr/features/drm-protection');
 
     expect(isReservedUsername('es')).toBe(true);
     expect(isReservedUsername('fr')).toBe(true);

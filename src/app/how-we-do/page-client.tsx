@@ -6,6 +6,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import PublicNavbar from "@/components/PublicNavbar";
 import { useTranslation } from "@/context/LanguageContext";
+import type { SeoLocale } from "@/lib/localized-seo";
+import LocaleSwitchPills from "@/components/seo/LocaleSwitchPills";
 import { motion } from "framer-motion";
 import { 
   Compass, 
@@ -62,9 +64,14 @@ function MonoNumber({ value, suffix = "" }: { value: string | number; suffix?: s
   );
 }
 
-export default function HowWeDoPage() {
+export default function HowWeDoPage({
+  forcedLocale,
+}: {
+  forcedLocale?: SeoLocale;
+}) {
   const router = useRouter();
-  const { t, locale } = useTranslation();
+  const { t, locale: contextLocale } = useTranslation();
+  const locale = forcedLocale ?? contextLocale;
 
   // 1. Interactive Chemistry Meter State
   const [activeChemLevel, setActiveChemLevel] = useState<number>(3);
@@ -300,13 +307,16 @@ export default function HowWeDoPage() {
       <main className="relative z-10 pt-36 px-6 md:px-[84px] max-w-[1280px] mx-auto space-y-24">
         
         {/* Back navigation */}
-        <Link 
-          href="/" 
-          className="inline-flex items-center gap-2 text-xs font-mono font-bold text-white/40 hover:text-[#00fbfb] transition group"
-        >
-          <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-          <span>{locale === "fr" ? "Retour à l'accueil" : locale === "es" ? "Volver al Inicio" : "Back to Home"}</span>
-        </Link>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <Link 
+            href="/" 
+            className="inline-flex items-center gap-2 text-xs font-mono font-bold text-white/40 hover:text-[#00fbfb] transition group"
+          >
+            <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+            <span>{locale === "fr" ? "Retour à l'accueil" : locale === "es" ? "Volver al Inicio" : "Back to Home"}</span>
+          </Link>
+          <LocaleSwitchPills basePath="/how-we-do" currentLocale={locale} />
+        </div>
 
         {/* Hero Section */}
         <section className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">

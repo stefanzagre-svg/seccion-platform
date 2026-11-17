@@ -5,16 +5,24 @@ import Link from "next/link";
 import Script from "next/script";
 import { useTranslation } from "@/context/LanguageContext";
 import { BreadcrumbSchema } from "@/components/seo/JsonLd";
+import { getLocalizedUrl, type SeoLocale } from "@/lib/localized-seo";
+import LocaleSwitchPills from "@/components/seo/LocaleSwitchPills";
 
-export default function DRMProtectionClientPage() {
-  const { locale } = useTranslation();
+export default function DRMProtectionClientPage({
+  forcedLocale,
+}: {
+  forcedLocale?: SeoLocale;
+}) {
+  const { locale: contextLocale } = useTranslation();
+  const locale = forcedLocale ?? contextLocale;
   const isFr = locale === "fr";
   const isEs = locale === "es";
 
+  const pageUrl = getLocalizedUrl("/features/drm-protection", locale);
   const breadcrumbs = [
     { name: isFr ? "Accueil" : isEs ? "Inicio" : "Home", url: "https://seccion.ai" },
-    { name: isFr ? "Fonctionnalités" : isEs ? "Funciones" : "Features", url: "https://seccion.ai/features/drm-protection" },
-    { name: "DRM Content Vault", url: "https://seccion.ai/features/drm-protection" },
+    { name: isFr ? "Fonctionnalités" : isEs ? "Funciones" : "Features", url: pageUrl },
+    { name: "DRM Content Vault", url: pageUrl },
   ];
 
   const howToSchema = {
@@ -245,6 +253,9 @@ export default function DRMProtectionClientPage() {
         <div className="max-w-5xl mx-auto px-4 sm:px-6 py-16 sm:py-24">
           {/* Hero */}
           <div className="mb-16 text-center">
+            <div className="mb-4 flex justify-center">
+              <LocaleSwitchPills basePath="/features/drm-protection" currentLocale={locale} />
+            </div>
             <span className="inline-block px-4 py-1.5 rounded-full border border-[#39FF14]/30 bg-[#39FF14]/5 text-[#39FF14] text-xs font-mono font-bold uppercase tracking-widest mb-5">
               {isFr ? "Fonctionnalité — Sécurité des Contenus" : isEs ? "Función — Seguridad de Contenido" : "Feature — Content Security"}
             </span>

@@ -3,6 +3,8 @@
 import PublicFooter from "@/components/PublicFooter";
 import React, { useState, useEffect } from "react";
 import { useTranslation } from "@/context/LanguageContext";
+import type { SeoLocale } from "@/lib/localized-seo";
+import LocaleSwitchPills from "@/components/seo/LocaleSwitchPills";
 import PublicNavbar from "@/components/PublicNavbar";
 import { SpecializationFilter } from "@/components/SpecializationFilter";
 import Link from "next/link";
@@ -292,9 +294,14 @@ const getFaqs = (locale: string) => [
   }
 ];
 
-export default function VibeRadarPage() {
+export default function VibeRadarPage({
+  forcedLocale,
+}: {
+  forcedLocale?: SeoLocale;
+}) {
   const router = useRouter();
-  const { t, locale } = useTranslation();
+  const { t, locale: contextLocale } = useTranslation();
+  const locale = forcedLocale ?? contextLocale;
 
   const [selectedSpecialization, setSelectedSpecialization] = useState<string>("all");
   const [includeAdultContent, setIncludeAdultContent] = useState<boolean>(false);
@@ -385,29 +392,32 @@ export default function VibeRadarPage() {
           
           {/* Left Column: Core pitch */}
           <div className="col-span-12 lg:col-span-6 space-y-8 text-left">
-            <span className="text-[10px] font-mono font-bold text-[#00fbfb] bg-[#00fbfb]/5 border border-[#00fbfb]/25 px-3 py-1 rounded-full uppercase tracking-wider">
-              {locale === "fr" ? "Pourquoi le Matchmaking Doit Être Gratuit" : locale === "es" ? "Una Nueva Era de Conexión" : "A New Era of Connection"}
-            </span>
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <span className="text-[10px] font-mono font-bold text-[#00fbfb] bg-[#00fbfb]/5 border border-[#00fbfb]/25 px-3 py-1 rounded-full uppercase tracking-wider">
+                {locale === "fr" ? "Une Nouvelle Ère de Connexion" : locale === "es" ? "Una Nueva Era de Conexión" : "A New Era of Connection"}
+              </span>
+              <LocaleSwitchPills basePath="/vibe-radar" currentLocale={locale} />
+            </div>
             <h1 className="font-display font-black leading-[1.05] tracking-[-0.04em] text-white">
-              <span className="block text-[42px] sm:text-[62px] md:text-[80px]">{locale === "fr" ? "Les apps de rencontre traditionnelles exploitent les déséquilibres pour vous faire payer le simple droit d'être vu. Chez SECCION, notre plateforme est entièrement financée par les outils premium achetés par les créateurs et les membres VIP, garantissant que le matchmaking de qualité demeure 100 % gratuit pour tous." : locale === "es" ? "Deja de Pagar" : "Stop Paying"}</span>
-              <span className="block text-[#00fbfb] drop-shadow-[0_0_25px_rgba(0,251,251,0.3)] text-[36px] sm:text-[52px] md:text-[66px] mt-2">{locale === "fr" ? "Radar de Vibe en Direct" : locale === "es" ? "Para Ser Visto." : "To Be Seen."}</span>
+              <span className="block text-[42px] sm:text-[62px] md:text-[80px]">{locale === "fr" ? "Ne Payez Plus" : locale === "es" ? "Deja de Pagar" : "Stop Paying"}</span>
+              <span className="block text-[#00fbfb] drop-shadow-[0_0_25px_rgba(0,251,251,0.3)] text-[36px] sm:text-[52px] md:text-[66px] mt-2">{locale === "fr" ? "Pour Être Vu." : locale === "es" ? "Para Ser Visto." : "To Be Seen."}</span>
             </h1>
             <p className="text-sm sm:text-base text-[#b9cac9] leading-relaxed max-w-xl">
-              {locale === "fr" ? "Tous" : locale === "es" ? "Las apps de citas tradicionales explotan los desequilibrios de género, cobrándote solo por escapar del fondo de su pila. En SECCION, nuestra plataforma se financia en su totalidad por las herramientas de monetización de creadores. Esto nos permite mantener el matchmaking y el chat **100% gratis** para los miembros. No eres un objetivo al cual exprimir; eres un socio valioso en la comunidad." : "Traditional dating apps exploit gender imbalances, charging you just to escape the bottom of their stack. On SECCION, our platform is fully funded by our creator monetization features. This allows us to keep matching and chatting **100% free** for members. You are not a target to be squeezed; you are a valued partner in the community."}
+              {locale === "fr" ? "Les apps traditionnelles exploitent les déséquilibres en vous faisant payer simplement pour être vu. Sur SECCION, notre plateforme est entièrement financée par l'économie des créateurs : le matchmaking et le chat restent **100 % gratuits** pour les membres vérifiés." : locale === "es" ? "Las apps de citas tradicionales explotan los desequilibrios de género, cobrándote solo por escapar del fondo de su pila. En SECCION, nuestra plataforma se financia en su totalidad por las herramientas de monetización de creadores. Esto nos permite mantener el matchmaking y el chat **100% gratis** para los miembros. No eres un objetivo al cual exprimir; eres un socio valioso en la comunidad." : "Traditional dating apps exploit gender imbalances, charging you just to escape the bottom of their stack. On SECCION, our platform is fully funded by our creator monetization features. This allows us to keep matching and chatting **100% free** for members. You are not a target to be squeezed; you are a valued partner in the community."}
             </p>
             <div className="flex flex-wrap gap-4 pt-2">
               <Link 
                 href="/early-access"
                 className="px-8 py-3.5 rounded-full bg-[#00fbfb] text-black font-mono text-xs font-black uppercase tracking-wider hover:shadow-[0_0_20px_rgba(0,251,251,0.5)] transition active:scale-[0.98] cursor-pointer"
               >
-                {locale === "fr" ? "Filtres Vibe" : locale === "es" ? "Unirme al Quest de Onboarding" : "Join Onboarding Quest"}
+                {locale === "fr" ? "Rejoindre la Quête d'Onboarding" : locale === "es" ? "Unirme al Quest de Onboarding" : "Join Onboarding Quest"}
               </Link>
               <button 
                 type="button"
                 onClick={() => setIsTourOpen(true)}
                 className="px-8 py-3.5 rounded-full border-2 border-[#ffabf3] text-[#ffabf3] font-mono text-xs font-black uppercase tracking-wider bg-transparent hover:bg-[#ffabf3]/10 transition active:scale-[0.98] cursor-pointer shadow-[0_0_15px_rgba(255,171,243,0.3)] hover:shadow-[0_0_25px_rgba(255,171,243,0.5)]"
               >
-                {locale === "fr" ? "Distance Maximale" : locale === "es" ? "Vista Previa de Cabina de Miembro" : "Preview Member Cockpit"}
+                {locale === "fr" ? "Aperçu de l'Espace Membre" : locale === "es" ? "Vista Previa de Cabina de Miembro" : "Preview Member Cockpit"}
               </button>
             </div>
           </div>

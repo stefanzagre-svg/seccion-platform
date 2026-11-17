@@ -1,19 +1,11 @@
 import type { Metadata } from "next";
-import ClientPage from "./page-client";
+import {
+  getPhase2Metadata,
+  LocalizedPhase2View,
+} from "@/components/seo/LocalizedPhase2Views";
 
-export const metadata: Metadata = {
-  title: "Vibe Radar — Real-Time Creator Discovery & Live Streams",
-  description: "Explore verified creators, active live streams, and high-chemistry community connections in real time across interests and cities on SECCION Vibe Radar.",
-  alternates: {
-    canonical: "https://seccion.ai/vibe-radar",
-  },
-  openGraph: {
-    title: "Vibe Radar — Real-Time Creator Discovery & Live Streams | SECCION",
-    description: "Explore verified creators, active live streams, and high-chemistry community connections in real time across interests and cities on SECCION Vibe Radar.",
-    url: "https://seccion.ai/vibe-radar",
-  }
-};
+export const metadata: Metadata = getPhase2Metadata("vibe-radar", "en");
 
 export default function Page() {
-  return <ClientPage />;
+  return <LocalizedPhase2View routeKey="vibe-radar" locale="en" />;
 }

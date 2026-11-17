@@ -43,18 +43,20 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: 'monthly' as const,
       priority: 0.85,
     },
-    {
-      url: `${baseUrl}/features/ai-copilot`,
+    ...SEO_LOCALES.map((locale) => ({
+      url: getLocalizedUrl('/features/ai-copilot', locale),
       lastModified: CONTENT_REFRESH_DATE,
       changeFrequency: 'monthly' as const,
-      priority: 0.85,
-    },
-    {
-      url: `${baseUrl}/features/drm-protection`,
+      priority: locale === 'en' ? 0.85 : 0.8,
+      alternates: sitemapLanguages('/features/ai-copilot'),
+    })),
+    ...SEO_LOCALES.map((locale) => ({
+      url: getLocalizedUrl('/features/drm-protection', locale),
       lastModified: CONTENT_REFRESH_DATE,
       changeFrequency: 'monthly' as const,
-      priority: 0.85,
-    },
+      priority: locale === 'en' ? 0.85 : 0.8,
+      alternates: sitemapLanguages('/features/drm-protection'),
+    })),
     {
       url: `${baseUrl}/creator-hub`,
       lastModified: CONTENT_REFRESH_DATE,
@@ -68,18 +70,20 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: locale === 'en' ? 0.95 : 0.9,
       alternates: sitemapLanguages('/creator-hub/onlyfans-alternative'),
     })),
-    {
-      url: `${baseUrl}/how-we-do`,
+    ...SEO_LOCALES.map((locale) => ({
+      url: getLocalizedUrl('/how-we-do', locale),
       lastModified: CONTENT_REFRESH_DATE,
       changeFrequency: 'monthly' as const,
-      priority: 0.8,
-    },
-    {
-      url: `${baseUrl}/vibe-radar`,
+      priority: locale === 'en' ? 0.8 : 0.75,
+      alternates: sitemapLanguages('/how-we-do'),
+    })),
+    ...SEO_LOCALES.map((locale) => ({
+      url: getLocalizedUrl('/vibe-radar', locale),
       lastModified: CONTENT_REFRESH_DATE,
       changeFrequency: 'daily' as const,
-      priority: 0.85,
-    },
+      priority: locale === 'en' ? 0.85 : 0.8,
+      alternates: sitemapLanguages('/vibe-radar'),
+    })),
     ...SEO_LOCALES.map((locale) => ({
       url: getLocalizedUrl('/blog', locale),
       lastModified: CONTENT_REFRESH_DATE,

@@ -5,16 +5,24 @@ import Link from "next/link";
 import Script from "next/script";
 import { useTranslation } from "@/context/LanguageContext";
 import { BreadcrumbSchema } from "@/components/seo/JsonLd";
+import { getLocalizedUrl, type SeoLocale } from "@/lib/localized-seo";
+import LocaleSwitchPills from "@/components/seo/LocaleSwitchPills";
 
-export default function AICopilotClientPage() {
-  const { locale } = useTranslation();
+export default function AICopilotClientPage({
+  forcedLocale,
+}: {
+  forcedLocale?: SeoLocale;
+}) {
+  const { locale: contextLocale } = useTranslation();
+  const locale = forcedLocale ?? contextLocale;
   const isFr = locale === "fr";
   const isEs = locale === "es";
 
+  const pageUrl = getLocalizedUrl("/features/ai-copilot", locale);
   const breadcrumbs = [
     { name: isFr ? "Accueil" : isEs ? "Inicio" : "Home", url: "https://seccion.ai" },
-    { name: isFr ? "Fonctionnalités" : isEs ? "Funciones" : "Features", url: "https://seccion.ai/features/ai-copilot" },
-    { name: "AI Copilot", url: "https://seccion.ai/features/ai-copilot" },
+    { name: isFr ? "Fonctionnalités" : isEs ? "Funciones" : "Features", url: pageUrl },
+    { name: "AI Copilot", url: pageUrl },
   ];
 
   const howToSchema = {
@@ -158,6 +166,9 @@ export default function AICopilotClientPage() {
         <div className="max-w-5xl mx-auto px-4 sm:px-6 py-16 sm:py-24">
           {/* Hero */}
           <div className="mb-16 text-center">
+            <div className="mb-4 flex justify-center">
+              <LocaleSwitchPills basePath="/features/ai-copilot" currentLocale={locale} />
+            </div>
             <span className="inline-block px-4 py-1.5 rounded-full border border-[#00fbfb]/30 bg-[#00fbfb]/5 text-[#00fbfb] text-xs font-mono font-bold uppercase tracking-widest mb-5">
               {isFr ? "Fonctionnalité — Opérations IA" : isEs ? "Función — Operaciones de IA" : "Feature — AI Operations"}
             </span>
