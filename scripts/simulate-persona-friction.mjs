@@ -196,6 +196,8 @@ function buildPersonaFromArgs(args, presets) {
   return {
     ...base,
     name: args.name || base.name,
+    handle: args.handle || base.handle,
+    email: args.email || base.email,
     role: args.role || base.role,
     age: args.age ? Number(args.age) : base.age,
     country: (args.country || base.country).toUpperCase(),
@@ -206,6 +208,7 @@ function buildPersonaFromArgs(args, presets) {
     cryptoFamiliarity: args.crypto || base.cryptoFamiliarity,
     paymentPreference: args.payment || base.paymentPreference,
     vipCode: args.vip || base.vipCode,
+    stalledAtStep: args.stalled || base.stalledAtStep || null,
     hasPreApprovedFastTrack: parseBool(args['fast-track'], base.hasPreApprovedFastTrack),
     hasThreePhotosReady: parseBool(args['photos-ready'], base.hasThreePhotosReady),
     hasRegisteredTaxId: parseBool(args['tax-ready'], base.hasRegisteredTaxId),
@@ -251,6 +254,8 @@ async function main() {
   const baseUrl = args['base-url'] || 'http://localhost:3000';
   const useLiveDb = args['live-db'] === 'true';
   const useLiveDom = args['live-dom'] === 'true';
+  const jsonMode = args.json === 'true';
+  const skipReportFile = args['no-report'] === 'true';
 
   const targets =
     args.persona === 'all'
@@ -263,6 +268,29 @@ async function main() {
     const domStats = useLiveDom ? await inspectLiveDom(spec, baseUrl) : {};
     const mergedStats = { ...dbStats, ...domStats };
     reports.push(engine.simulatePersonaFriction(spec, mergedStats));
+  }
+
+  if (!skipReportFile) {
+    const outDir = path.join(webRoot, 'reports');
+    fs.mkdirSync(outDir, { recursive: true });
+    const outPath = path.join(outDir, 'friction-simulation-latest.md');
+    fs.writeFileSync(outPath, formatMarkdownReport(reports), 'utf-8');
+    if (!jsonMode) {
+      var savedReportPath = outPath;
+    }
+  }
+
+  if (jsonMode) {
+    process.stdout.write(
+      JSON.stringify({
+        ok: true,
+        generatedAt: new Date().toISOString(),
+        liveDbUsed: useLiveDb,
+        liveDomUsed: useLiveDom,
+        reports,
+      })
+    );
+    return;
   }
 
   console.log('\n======================================================================');
@@ -288,11 +316,9 @@ async function main() {
     console.log(`  Kate DM Addendum:\n  "${r.kateBriefing.tailoredDmAddendum}"`);
   }
 
-  const outDir = path.join(webRoot, 'reports');
-  fs.mkdirSync(outDir, { recursive: true });
-  const outPath = path.join(outDir, 'friction-simulation-latest.md');
-  fs.writeFileSync(outPath, formatMarkdownReport(reports), 'utf-8');
-  console.log(`\n✅ Saved detailed Markdown scorecard to ${outPath}\n`);
+  if (typeof savedReportPath === 'string') {
+    console.log(`\n✅ Saved detailed Markdown scorecard to ${savedReportPath}\n`);
+  }
 }
 
 main().catch((err) => {

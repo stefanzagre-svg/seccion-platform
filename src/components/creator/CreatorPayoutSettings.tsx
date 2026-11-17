@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Building2, Coins, Globe, CreditCard, Check, ShieldCheck, ArrowUpRight, Loader2, Sparkles, Landmark } from 'lucide-react';
+import { Building2, Coins, Globe, CreditCard, Check, ShieldCheck, ArrowUpRight, Loader2, Landmark } from 'lucide-react';
 import { useTranslation } from '@/context/LanguageContext';
 import { validateMoroccanRib, formatMoroccanRib, MoroccanBankInfo } from '@/lib/morocco-banking';
 
@@ -106,7 +106,7 @@ export default function CreatorPayoutSettings() {
     setSavedSuccess(false);
 
     try {
-      const payload: Record<string, any> = {
+      const payload: Record<string, unknown> = {
         preferredRail,
         sepaIban,
         accountHolderName,
@@ -166,7 +166,9 @@ export default function CreatorPayoutSettings() {
             </span>
           </div>
           <p className="text-xs text-[#C5C6C7] mt-1 max-w-lg">
-            {locale === 'es'
+            {locale === 'fr'
+              ? 'Vos fans débloquent vos contenus avec des Crédits ou Jetons 18+. Lorsqu’ils paient par Virement Instantané ou Dollar Numérique (USDC), les frais diminuent pour que vous gardiez plus.'
+              : locale === 'es'
               ? 'Tus fans desbloquean contenido con Créditos o Tokens 18+. Cuando pagan por Banco Instantáneo o Dólar Digital (USDC), las comisiones son mínimas.'
               : 'Fans unlock your content with Credits or 18+ Tokens. When they pay with Instant Bank or Digital USD (USDC), processing fees drop so you keep more.'}
           </p>
@@ -177,7 +179,7 @@ export default function CreatorPayoutSettings() {
           disabled={availableBalanceEur < 45}
           className="px-6 py-3 bg-[#00FFFF] hover:shadow-[0_0_20px_rgba(0,255,255,0.4)] text-black font-mono text-xs font-bold uppercase tracking-wider rounded-full transition disabled:opacity-40 disabled:pointer-events-none flex items-center gap-2"
         >
-          <span>{locale === 'es' ? 'Solicitar Retiro' : 'Request Payout'}</span>
+          <span>{locale === 'fr' ? 'Demander un retrait' : locale === 'es' ? 'Solicitar Retiro' : 'Request Payout'}</span>
           <ArrowUpRight className="w-4 h-4" />
         </button>
       </div>
@@ -187,10 +189,12 @@ export default function CreatorPayoutSettings() {
         <div>
           <h3 className="text-base font-bold text-white font-mono tracking-wider flex items-center gap-2">
             <Globe className="w-5 h-5 text-[#00FFFF]" />
-            <span>{locale === 'es' ? 'MÉTODO DE RETIRO PREFERIDO' : 'PREFERRED CASHOUT METHOD'}</span>
+            <span>{locale === 'fr' ? 'MÉTHODE DE RETRAIT PRÉFÉRÉE' : locale === 'es' ? 'MÉTODO DE RETIRO PREFERIDO' : 'PREFERRED CASHOUT METHOD'}</span>
           </h3>
           <p className="text-xs text-[#C5C6C7] mt-1">
-            {locale === 'es'
+            {locale === 'fr'
+              ? 'Choisissez comment recevoir vos revenus nets. Compatible en Europe, au Maghreb et aux Amériques.'
+              : locale === 'es'
               ? 'Configura cómo deseas recibir tus fondos netos. Compatible con creadores en Europa y Latinoamérica.'
               : 'Select how you want to receive your net creator earnings. Compatible globally across EU and Americas.'}
           </p>
@@ -516,7 +520,7 @@ export default function CreatorPayoutSettings() {
           {savedSuccess && (
             <span className="text-xs font-mono text-[#39FF14] flex items-center gap-1.5">
               <Check className="w-4 h-4" />
-              <span>{locale === 'es' ? 'Preferencias guardadas exitosamente.' : 'Preferences saved successfully.'}</span>
+              <span>{locale === 'fr' ? 'Préférences enregistrées.' : locale === 'es' ? 'Preferencias guardadas exitosamente.' : 'Preferences saved successfully.'}</span>
             </span>
           )}
           <div className="ml-auto">
@@ -526,7 +530,7 @@ export default function CreatorPayoutSettings() {
               className="px-6 py-2.5 bg-white text-black font-mono text-xs font-bold uppercase tracking-wider rounded-full hover:bg-white/90 transition flex items-center gap-2 cursor-pointer disabled:opacity-50"
             >
               {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
-              <span>{locale === 'es' ? 'Guardar Cambios' : 'Save Payout Preferences'}</span>
+              <span>{locale === 'fr' ? 'Enregistrer' : locale === 'es' ? 'Guardar Cambios' : 'Save Payout Preferences'}</span>
             </button>
           </div>
         </div>

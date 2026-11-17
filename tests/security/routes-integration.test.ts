@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { NextRequest } from 'next/server';
 
 describe('Adversarial Route Handlers Direct Invocations', () => {
@@ -317,6 +317,40 @@ describe('Adversarial Route Handlers Direct Invocations', () => {
       // Because user is null/invalid, redirected to /login safely
       expect(res.status).toBe(307);
       expect(res.headers.get('location')).toBe('http://localhost:3000/login');
+    });
+  });
+
+  // =========================================================================
+  // 6. Funnel Telemetry Read Access & Security Headers (Batch A Hardening)
+  // =========================================================================
+  describe('Batch A Security Hardening', () => {
+    it('blocks unauthenticated GET /api/v2/telemetry/funnel with 403', async () => {
+      vi.resetModules();
+      vi.doMock('@/lib/supabase/server', () => ({
+        createClient: async () => ({
+          auth: {
+            getUser: async () => ({ data: { user: null }, error: null }),
+          },
+        }),
+      }));
+      const { GET } = await import('../../src/app/api/v2/telemetry/funnel/route');
+      const req = new NextRequest('http://localhost:3000/api/v2/telemetry/funnel?vipCode=TESTVIP');
+      const res = await GET(req);
+      expect(res.status).toBe(403);
+      vi.doUnmock('@/lib/supabase/server');
+    });
+
+    it('declares baseline HTTP security headers globally in next.config.ts', async () => {
+      const nextConfig = (await import('../../next.config')).default;
+      const rules = await nextConfig.headers?.();
+      const globalRule = rules?.find((r) => r.source === '/(.*)');
+      expect(globalRule).toBeDefined();
+      const headerKeys = new Set(globalRule?.headers.map((h) => h.key));
+      expect(headerKeys.has('Strict-Transport-Security')).toBe(true);
+      expect(headerKeys.has('X-Content-Type-Options')).toBe(true);
+      expect(headerKeys.has('X-Frame-Options')).toBe(true);
+      expect(headerKeys.has('Referrer-Policy')).toBe(true);
+      expect(headerKeys.has('Permissions-Policy')).toBe(true);
     });
   });
 });

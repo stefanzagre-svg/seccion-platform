@@ -98,7 +98,7 @@ export async function middleware(request: NextRequest) {
   }
 
   let user = null;
-  let supabaseClient: any = null;
+  let supabaseClient: ReturnType<typeof createServerClient> | null = null;
 
   try {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -143,9 +143,6 @@ export async function middleware(request: NextRequest) {
   const isPublicApi = PUBLIC_API_ROUTES.some(route => pathname === route || pathname.startsWith(route + '/'));
   const isExplicitlyProtected = PROTECTED_ROUTES.some(route => pathname === route || pathname.startsWith(route + '/'));
 
-  // Single-segment public creator vanity profile detection (e.g. /magali or /@magali)
-  const isPotentialVanityPath = /^\/(@)?[a-zA-Z0-9_.]{3,30}$/.test(pathname) && !isExplicitlyProtected;
-
   if (!user) {
     // 1. If hitting an unauthenticated private API route, return 401 Unauthorized
     if (pathname.startsWith('/api/') && !isPublicApi) {
@@ -181,7 +178,7 @@ export async function middleware(request: NextRequest) {
     // Purpose Eligibility Checker (60-Second Synergy Calibration Compatible)
     // Note: Progressive gates for Dating (2 Album Photos + City + Biometric/ZKP) and +18 Explicit
     // are enforced in-app via RequirementGateModal & CreateDatePlanModal, never via full-site redirect traps.
-    const checkPurposeEligibility = (profile: any) => {
+    const checkPurposeEligibility = (profile: Parameters<typeof isOnboardingProfileComplete>[0] | null) => {
       if (isFounder) return true;
       if (!profile) return false;
       return isOnboardingProfileComplete(profile);
@@ -288,7 +285,24 @@ export async function middleware(request: NextRequest) {
 
   return supabaseResponse;
   } catch (err) {
-    console.error('[Middleware] Unexpected error in middleware, failing safely:', err);
+    console.error('[Middleware] Unexpected error in middleware, failing closed on protected routes:', err);
+    const { pathname } = request.nextUrl;
+    const isPublicApi = PUBLIC_API_ROUTES.some(route => pathname === route || pathname.startsWith(route + '/'));
+    const isExplicitlyProtected = PROTECTED_ROUTES.some(route => pathname === route || pathname.startsWith(route + '/'));
+
+    if ((pathname.startsWith('/api/') && !isPublicApi) || pathname.startsWith('/api/admin')) {
+      return NextResponse.json(
+        { error: 'Service temporarily unavailable while verifying session' },
+        { status: 503 }
+      );
+    }
+
+    if (isExplicitlyProtected || pathname.startsWith('/admin')) {
+      const url = request.nextUrl.clone();
+      url.pathname = '/login';
+      return NextResponse.redirect(url);
+    }
+
     return NextResponse.next({ request });
   }
 }

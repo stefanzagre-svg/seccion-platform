@@ -95,6 +95,15 @@ function FrictionSimulatorContent() {
     return PRESET_PERSONAS.colombia_ig_creator;
   }, [searchParams]);
 
+  return (
+    <FrictionSimulatorWorkspace
+      key={searchParams.toString() || 'default'}
+      initialPersona={initialPersona}
+    />
+  );
+}
+
+function FrictionSimulatorWorkspace({ initialPersona }: { initialPersona: PersonaSpec }) {
   const [persona, setPersona] = useState<PersonaSpec>(initialPersona);
   const [useLiveTelemetry, setUseLiveTelemetry] = useState(true);
   const [report, setReport] = useState<PersonaSimulationReport>(() =>
@@ -114,14 +123,18 @@ function FrictionSimulatorContent() {
   }>({ totalEvents: 0, uniqueSessions: 0 });
   const [isSimulating, setIsSimulating] = useState(false);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
-  const [selectedRecoveryStep, setSelectedRecoveryStep] = useState<FunnelStepId>('1_entry');
+  const [selectedRecoveryStep, setSelectedRecoveryStep] = useState<FunnelStepId>(() => {
+    const initialReport = simulatePersonaFriction(initialPersona);
+    return initialPersona.stalledAtStep || initialReport.highestFrictionStep.stepId;
+  });
 
   const runServerSimulation = useCallback(
-    async (spec: PersonaSpec, liveFlag: boolean) => {
-      // Immediate optimistic local calculation
-      const localReport = simulatePersonaFriction(spec);
-      setReport(localReport);
-      setSelectedRecoveryStep(spec.stalledAtStep || localReport.highestFrictionStep.stepId);
+    async (spec: PersonaSpec, liveFlag: boolean, optimistic = true) => {
+      if (optimistic) {
+        const localReport = simulatePersonaFriction(spec);
+        setReport(localReport);
+        setSelectedRecoveryStep(spec.stalledAtStep || localReport.highestFrictionStep.stepId);
+      }
 
       setIsSimulating(true);
       try {
@@ -156,20 +169,52 @@ function FrictionSimulatorContent() {
   );
 
   useEffect(() => {
-    setPersona(initialPersona);
-    runServerSimulation(initialPersona, useLiveTelemetry);
-  }, [initialPersona, useLiveTelemetry, runServerSimulation]);
+    let cancelled = false;
+    (async () => {
+      try {
+        const [overviewRes, simRes] = await Promise.all([
+          fetch('/api/admin/friction-simulate'),
+          fetch('/api/admin/friction-simulate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              persona: initialPersona,
+              vipCode: initialPersona.vipCode || undefined,
+              useLiveTelemetry: true,
+            }),
+          }),
+        ]);
 
-  useEffect(() => {
-    fetch('/api/admin/friction-simulate')
-      .then((r) => (r.ok ? r.json() : null))
-      .then((data) => {
-        if (data?.telemetryOverview) {
-          setGlobalOverview(data.telemetryOverview);
+        if (cancelled) return;
+
+        if (overviewRes.ok) {
+          const overviewData = await overviewRes.json();
+          if (!cancelled && overviewData?.telemetryOverview) {
+            setGlobalOverview(overviewData.telemetryOverview);
+          }
         }
-      })
-      .catch(() => {});
-  }, []);
+
+        if (simRes.ok) {
+          const simData = await simRes.json();
+          if (!cancelled && simData?.ok && simData?.report) {
+            setReport(simData.report);
+            if (simData.telemetryMeta) {
+              setTelemetryMeta(simData.telemetryMeta);
+              if (simData.telemetryMeta.latestStalledStep) {
+                setSelectedRecoveryStep(simData.telemetryMeta.latestStalledStep);
+              }
+            }
+          }
+        }
+      } catch {
+        // Keep local CRO prior report silently on initial network failure
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [initialPersona]);
 
   const copyText = (key: string, text: string) => {
     if (typeof navigator !== 'undefined' && navigator.clipboard) {
@@ -210,7 +255,11 @@ function FrictionSimulatorContent() {
 
           <button
             type="button"
-            onClick={() => setUseLiveTelemetry((prev) => !prev)}
+            onClick={() => {
+              const next = !useLiveTelemetry;
+              setUseLiveTelemetry(next);
+              void runServerSimulation(persona, next);
+            }}
             className={`px-3.5 py-2 rounded-xl border text-[10px] font-mono font-bold uppercase tracking-wider transition cursor-pointer flex items-center gap-2 ${
               useLiveTelemetry
                 ? 'bg-[#00fbfb]/15 border-[#00fbfb]/40 text-[#00fbfb]'

@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
+import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin-client';
-import { getClientIP } from '@/lib/admin-auth';
+import { getClientIP, unauthorizedResponse, verifyAdminAuth } from '@/lib/admin-auth';
 import { VIP_INVITE_COOKIE, checkPublicIpRateLimit } from '@/lib/vip-invites';
 import {
   detectPersonaDeviceFromUserAgent,
@@ -72,11 +73,25 @@ export async function POST(request: NextRequest) {
       ? 'creator'
       : 'member');
 
+  // Never trust an unverified userId in public telemetry beacons; verify against active Supabase session when provided.
+  let verifiedUserId: string | null = null;
+  if (data.userId) {
+    try {
+      const supabase = await createClient();
+      const { data: authData } = await supabase.auth.getUser();
+      if (authData?.user?.id === data.userId) {
+        verifiedUserId = authData.user.id;
+      }
+    } catch {
+      verifiedUserId = null;
+    }
+  }
+
   try {
     const adminDb = createAdminClient();
     const { error } = await adminDb.from('funnel_step_telemetry').insert({
       session_id: data.sessionId,
-      user_id: data.userId || null,
+      user_id: verifiedUserId,
       vip_code: vipCode,
       role,
       country_code: countryCode,
@@ -120,6 +135,11 @@ export async function POST(request: NextRequest) {
 }
 
 export async function GET(request: NextRequest) {
+  const admin = await verifyAdminAuth(request);
+  if (!admin) {
+    return unauthorizedResponse();
+  }
+
   const search = request.nextUrl.searchParams;
   const adminDb = createAdminClient();
 
