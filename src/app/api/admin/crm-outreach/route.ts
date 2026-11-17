@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin-client';
-import { verifyAdminAuth, unauthorizedResponse } from '@/lib/admin-auth';
+import { verifyAdminAuth, unauthorizedResponse, getAdminErrorMessage } from '@/lib/admin-auth';
 
 export async function GET(request: NextRequest) {
   try {
@@ -65,9 +65,9 @@ export async function GET(request: NextRequest) {
       page,
       limit
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error in GET /api/admin/crm-outreach:', error);
-    return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 });
+    return NextResponse.json({ error: getAdminErrorMessage(error, 'Internal Server Error') }, { status: 500 });
   }
 }
 
@@ -86,7 +86,7 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: 'Missing id' }, { status: 400 });
     }
 
-    const updateData: any = {
+    const updateData: Record<string, unknown> = {
       updated_at: new Date().toISOString()
     };
 
@@ -107,8 +107,8 @@ export async function PATCH(request: NextRequest) {
     }
 
     return NextResponse.json({ success: true, lead: data });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error in PATCH /api/admin/crm-outreach:', error);
-    return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 });
+    return NextResponse.json({ error: getAdminErrorMessage(error, 'Internal Server Error') }, { status: 500 });
   }
 }

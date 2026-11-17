@@ -458,11 +458,14 @@ export default function OnboardingFlow() {
       const sessionUrl = data.url;
 
       try {
-        const { DiditSdk } = await import("@didit-protocol/sdk-web");
+        const [{ DiditSdk }, { isDiditVerificationCompleted }] = await Promise.all([
+          import("@didit-protocol/sdk-web"),
+          import("@/lib/didit-client"),
+        ]);
         if (DiditSdk?.shared) {
-          DiditSdk.shared.onComplete = async (result: any) => {
-            console.log("[DIDIT Liveness Result]:", result?.status);
-            if (result?.status === "completed" || result?.status === "approved") {
+          DiditSdk.shared.onComplete = async (result) => {
+            console.log("[DIDIT Liveness Result]:", result?.type ?? result?.session?.status);
+            if (isDiditVerificationCompleted(result)) {
               setLivenessStep(4);
               setLivenessLog(
                 locale === "fr"

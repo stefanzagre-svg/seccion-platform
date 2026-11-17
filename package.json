@@ -26,8 +26,8 @@
     "simulate:friction": "node scripts/simulate-persona-friction.mjs"
   },
   "dependencies": {
-    "@didit-protocol/sdk-web": "^0.2.1",
-    "@google/genai": "^2.7.0",
+    "@didit-protocol/sdk-web": "^0.6.0",
+    "@google/genai": "^2.32.0",
     "@livekit/components-react": "^2.9.23",
     "@livekit/components-styles": "^1.2.0",
     "@opennextjs/cloudflare": "^1.20.17",

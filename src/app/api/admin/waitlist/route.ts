@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin-client';
-import { verifyAdminAuth, unauthorizedResponse } from '@/lib/admin-auth';
+import { verifyAdminAuth, unauthorizedResponse, getAdminErrorMessage } from '@/lib/admin-auth';
 
 /**
  * GET /api/admin/waitlist
@@ -54,7 +54,9 @@ export async function GET(request: NextRequest) {
       .from('member_waitlist')
       .select('city');
     
-    const uniqueCities = Array.from(new Set((cityRows || []).map((r: any) => r.city).filter(Boolean))).sort();
+    const uniqueCities = Array.from(
+      new Set((cityRows || []).map((r: { city?: string | null }) => r.city).filter(Boolean))
+    ).sort();
 
     return NextResponse.json({
       waitlist: waitlist || [],
@@ -66,8 +68,8 @@ export async function GET(request: NextRequest) {
         totalPages: Math.ceil((count || 0) / limit),
       },
     });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('[Admin Waitlist API] Exception:', err);
-    return NextResponse.json({ error: err.message || 'Internal server error' }, { status: 500 });
+    return NextResponse.json({ error: getAdminErrorMessage(err) }, { status: 500 });
   }
 }

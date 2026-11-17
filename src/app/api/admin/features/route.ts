@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin-client';
-import { verifyAdminAuth, unauthorizedResponse, getClientIP, logAdminAction } from '@/lib/admin-auth';
+import { verifyAdminAuth, unauthorizedResponse, getClientIP, logAdminAction, getAdminErrorMessage } from '@/lib/admin-auth';
 
 /**
  * GET /api/admin/features
@@ -68,8 +68,8 @@ export async function GET(request: NextRequest) {
       },
       timeseries,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[Admin Features API] Error:', error);
-    return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 });
+    return NextResponse.json({ error: getAdminErrorMessage(error) }, { status: 500 });
   }
 }

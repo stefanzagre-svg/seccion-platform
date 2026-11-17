@@ -4,6 +4,7 @@ import { cookies } from 'next/headers';
 import { createAdminClient } from '@/lib/supabase/admin-client';
 import { extractHandleFromLink, findAuthUserByEmail } from '@/lib/auth-admin';
 import { isOnboardingProfileComplete } from '@/lib/profile-visibility';
+import { getAdminErrorMessage } from '@/lib/admin-auth';
 
 export async function POST(req: NextRequest) {
   try {
@@ -16,7 +17,7 @@ export async function POST(req: NextRequest) {
     const cleanEmail = email.toLowerCase().trim();
     const isFounder = cleanEmail === 'stefan.zagre@gmail.com';
     const cookieStore = await cookies();
-    const pendingCookies: Array<{ name: string; value: string; options: any }> = [];
+    const pendingCookies: Array<{ name: string; value: string; options: Parameters<typeof cookieStore.set>[2] }> = [];
 
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -209,10 +210,10 @@ export async function POST(req: NextRequest) {
     }
 
     return response;
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('[Founder Auth API] Error:', err);
     return NextResponse.json(
-      { error: 'Server authentication error', details: err.message },
+      { error: 'Server authentication error', details: getAdminErrorMessage(err) },
       { status: 500 }
     );
   }

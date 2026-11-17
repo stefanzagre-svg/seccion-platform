@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin-client';
-import { verifyAdminAuth, unauthorizedResponse, getClientIP, logAdminAction } from '@/lib/admin-auth';
+import { verifyAdminAuth, unauthorizedResponse, getClientIP, logAdminAction, getAdminErrorMessage } from '@/lib/admin-auth';
 
 /**
  * GET /api/admin/users
@@ -60,9 +60,9 @@ export async function GET(request: NextRequest) {
         totalPages: Math.ceil((count || 0) / limit),
       },
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[Admin Users API] Error:', error);
-    return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 });
+    return NextResponse.json({ error: getAdminErrorMessage(error) }, { status: 500 });
   }
 }
 
@@ -163,8 +163,8 @@ export async function PATCH(request: NextRequest) {
       message: `${results.success.length} users updated, ${results.failed.length} failed`,
       results,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[Admin Users API] PATCH Error:', error);
-    return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 });
+    return NextResponse.json({ error: getAdminErrorMessage(error) }, { status: 500 });
   }
 }

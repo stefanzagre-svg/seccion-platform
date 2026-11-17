@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin-client';
+import { getAdminErrorMessage } from '@/lib/admin-auth';
 
 export async function POST(req: NextRequest) {
   try {
@@ -68,8 +69,8 @@ export async function POST(req: NextRequest) {
       messageRecord
     });
 
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('[Admin Message API] Unexpected error:', err);
-    return NextResponse.json({ error: 'Internal Server Error', details: err.message }, { status: 500 });
+    return NextResponse.json({ error: 'Internal Server Error', details: getAdminErrorMessage(err) }, { status: 500 });
   }
 }

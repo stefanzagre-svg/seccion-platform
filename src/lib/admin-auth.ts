@@ -142,3 +142,20 @@ export function getClientIP(request: NextRequest): string {
     'unknown'
   );
 }
+
+/**
+ * Safely extracts an error message from thrown Errors or Supabase/PostgREST error objects.
+ */
+export function getAdminErrorMessage(error: unknown, fallback = 'Internal server error'): string {
+  if (error instanceof Error && error.message) return error.message;
+  if (
+    error &&
+    typeof error === 'object' &&
+    'message' in error &&
+    typeof (error as { message?: unknown }).message === 'string' &&
+    (error as { message: string }).message.length > 0
+  ) {
+    return (error as { message: string }).message;
+  }
+  return fallback;
+}

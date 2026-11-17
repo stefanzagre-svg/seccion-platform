@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin-client';
-import { verifyAdminAuth, unauthorizedResponse, getClientIP, logAdminAction } from '@/lib/admin-auth';
+import { verifyAdminAuth, unauthorizedResponse, getClientIP, logAdminAction, getAdminErrorMessage } from '@/lib/admin-auth';
 
 /**
  * GET /api/admin/settings
@@ -29,9 +29,9 @@ export async function GET(request: NextRequest) {
     });
 
     return NextResponse.json({ settings: settingsMap, raw: settings });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[Admin Settings API] Error:', error);
-    return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 });
+    return NextResponse.json({ error: getAdminErrorMessage(error) }, { status: 500 });
   }
 }
 
@@ -90,8 +90,8 @@ export async function PATCH(request: NextRequest) {
     });
 
     return NextResponse.json({ success: true, key, value });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[Admin Settings API] PATCH Error:', error);
-    return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 });
+    return NextResponse.json({ error: getAdminErrorMessage(error) }, { status: 500 });
   }
 }

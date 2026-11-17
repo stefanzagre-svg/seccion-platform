@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin-client';
-import { verifyAdminAuth, unauthorizedResponse, getClientIP, logAdminAction } from '@/lib/admin-auth';
+import { verifyAdminAuth, unauthorizedResponse, getClientIP, logAdminAction, getAdminErrorMessage } from '@/lib/admin-auth';
 
 /**
  * GET /api/admin/users/[id]
@@ -76,9 +76,9 @@ export async function GET(
       moderation: moderationReports || [],
       auditLogs: targetAuditLogs || [],
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[Admin User Detail API] GET Error:', error);
-    return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 });
+    return NextResponse.json({ error: getAdminErrorMessage(error) }, { status: 500 });
   }
 }
 
@@ -115,7 +115,7 @@ export async function PATCH(
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    let updateData: Record<string, any> = {};
+    let updateData: Record<string, unknown> = {};
 
     switch (action) {
       case 'toggle_ultimate_pack':
@@ -170,8 +170,8 @@ export async function PATCH(
     });
 
     return NextResponse.json({ message: 'User updated successfully', updated: updateData });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[Admin User Detail API] PATCH Error:', error);
-    return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 });
+    return NextResponse.json({ error: getAdminErrorMessage(error) }, { status: 500 });
   }
 }

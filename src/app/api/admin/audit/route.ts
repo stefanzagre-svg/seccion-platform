@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin-client';
-import { verifyAdminAuth, unauthorizedResponse } from '@/lib/admin-auth';
+import { verifyAdminAuth, unauthorizedResponse, getAdminErrorMessage } from '@/lib/admin-auth';
 
 /**
  * GET /api/admin/audit
@@ -67,8 +67,8 @@ export async function GET(request: NextRequest) {
         totalPages: Math.ceil((count || 0) / limit),
       },
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[Admin Audit API] Error:', error);
-    return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 });
+    return NextResponse.json({ error: getAdminErrorMessage(error) }, { status: 500 });
   }
 }

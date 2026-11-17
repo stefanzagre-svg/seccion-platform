@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin-client';
-import { verifyAdminAuth, unauthorizedResponse, getClientIP, logAdminAction } from '@/lib/admin-auth';
+import { verifyAdminAuth, unauthorizedResponse, getClientIP, logAdminAction, getAdminErrorMessage } from '@/lib/admin-auth';
 
 /**
  * GET /api/admin/dashboard
@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
     const adminClient = createAdminClient();
 
     // Parallel fetch all dashboard data with safe query fallbacks
-    const safeQuery = async (promise: PromiseLike<{ data: Record<string, any>[] | null }>): Promise<Record<string, any>[]> => {
+    const safeQuery = async (promise: PromiseLike<{ data: Record<string, unknown>[] | null }>): Promise<Record<string, unknown>[]> => {
       try {
         const res = await promise;
         return res?.data || [];
@@ -71,7 +71,7 @@ export async function GET(request: NextRequest) {
     const totalRevenue = totalSubRevenue + translationRevenue + goalRevenue;
     const moderationPending = moderation.filter(m => m.status === 'pending').length;
     const activeLiveStreams = liveStreams.filter(ls => ls.is_live).length;
-    const totalViewers = liveStreams.filter(ls => ls.is_live).reduce((sum, ls) => sum + (ls.viewer_count || 0), 0);
+    const totalViewers = liveStreams.filter(ls => ls.is_live).reduce((sum, ls) => sum + Number(ls.viewer_count || 0), 0);
 
     // --- User Growth Timeseries (30 days) ---
     const growthMap: Record<string, number> = {};
@@ -82,7 +82,7 @@ export async function GET(request: NextRequest) {
     }
     recentUsers.forEach(u => {
       if (u.created_at) {
-        const dateStr = u.created_at.split('T')[0];
+        const dateStr = String(u.created_at).split('T')[0];
         if (dateStr in growthMap) growthMap[dateStr]++;
       }
     });
@@ -97,7 +97,7 @@ export async function GET(request: NextRequest) {
     }
     recentSubs.forEach(s => {
       if (s.created_at) {
-        const dateStr = s.created_at.split('T')[0];
+        const dateStr = String(s.created_at).split('T')[0];
         if (dateStr in revenueMap) revenueMap[dateStr] += Number(s.price_paid || 0);
       }
     });
@@ -106,7 +106,7 @@ export async function GET(request: NextRequest) {
     // --- Relationship Level Distribution ---
     const levelCounts: Record<string, number> = {};
     relationships.forEach(r => {
-      const level = r.current_level || 'undefined';
+      const level = String(r.current_level || 'undefined');
       levelCounts[level] = (levelCounts[level] || 0) + 1;
     });
     const relationshipDistribution = Object.entries(levelCounts).map(([level, count]) => ({ level, count }));
@@ -152,8 +152,8 @@ export async function GET(request: NextRequest) {
       relationshipDistribution,
       moderationStats,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[Admin Dashboard API] Error:', error);
-    return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 });
+    return NextResponse.json({ error: getAdminErrorMessage(error) }, { status: 500 });
   }
 }

@@ -46,11 +46,14 @@ export function DiditVerifyButton({
 
       // Dynamic import to prevent SSR issues
       try {
-        const { DiditSdk } = await import('@didit-protocol/sdk-web');
+        const [{ DiditSdk }, { isDiditVerificationCompleted }] = await Promise.all([
+          import('@didit-protocol/sdk-web'),
+          import('@/lib/didit-client'),
+        ]);
         if (DiditSdk?.shared) {
-          DiditSdk.shared.onComplete = (result: any) => {
-            console.log('[DIDIT SDK Completed]:', result?.status);
-            if ((result?.status === 'completed' || result?.status === 'approved') && onSuccess) {
+          DiditSdk.shared.onComplete = (result) => {
+            console.log('[DIDIT SDK Completed]:', result?.type ?? result?.session?.status);
+            if (isDiditVerificationCompleted(result) && onSuccess) {
               onSuccess();
             }
           };
@@ -67,9 +70,9 @@ export function DiditVerifyButton({
       window.open(sessionUrl, '_blank', 'noopener,noreferrer');
       setLoading(false);
       setStatusText(null);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Failed to start Didit verification:', err);
-      const msg = err?.message || 'Unable to connect to DIDIT Gateway.';
+      const msg = err instanceof Error && err.message ? err.message : 'Unable to connect to DIDIT Gateway.';
       setErrorMsg(msg);
       onError?.(msg);
       setLoading(false);

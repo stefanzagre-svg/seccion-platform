@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin-client';
 import { createClient } from '@/lib/supabase/server';
+import { getAdminErrorMessage } from '@/lib/admin-auth';
 
 export async function GET(req: NextRequest) {
   try {
@@ -67,8 +68,8 @@ export async function GET(req: NextRequest) {
     }
 
     return NextResponse.json({ success: true, reports: reports || [] });
-  } catch (error: any) {
-    return NextResponse.json({ error: error?.message || 'Server error' }, { status: 500 });
+  } catch (error: unknown) {
+    return NextResponse.json({ error: getAdminErrorMessage(error, 'Server error') }, { status: 500 });
   }
 }
 
@@ -184,7 +185,7 @@ export async function PATCH(req: NextRequest) {
     }
 
     // 3. Update Bug Report Record
-    const updates: Record<string, any> = {
+    const updates: Record<string, unknown> = {
       updated_at: new Date().toISOString(),
     };
     if (status) updates.status = status;
@@ -210,8 +211,8 @@ export async function PATCH(req: NextRequest) {
       rewardDistributed: rewardStatus === 'distributed'
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[Admin Bug Patch Error]:', error);
-    return NextResponse.json({ error: error?.message || 'Server error' }, { status: 500 });
+    return NextResponse.json({ error: getAdminErrorMessage(error, 'Server error') }, { status: 500 });
   }
 }

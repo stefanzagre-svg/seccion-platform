@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin-client';
-import { verifyAdminAuth, unauthorizedResponse } from '@/lib/admin-auth';
+import { verifyAdminAuth, unauthorizedResponse, getAdminErrorMessage } from '@/lib/admin-auth';
 import { extractHandleFromLink, findAuthUserByEmail } from '@/lib/auth-admin';
 import { sendCreatorApprovalEmail } from '@/lib/email';
 import { grantFoundingCreatorBenefits } from '@/lib/vip-invites';
@@ -48,9 +48,9 @@ export async function GET(request: NextRequest) {
       page,
       limit
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error in GET /api/admin/creator-applications:', error);
-    return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 });
+    return NextResponse.json({ error: getAdminErrorMessage(error, 'Internal Server Error') }, { status: 500 });
   }
 }
 
@@ -73,7 +73,7 @@ export async function PATCH(request: NextRequest) {
     else if (action === 'reject') status = 'rejected';
     else return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
 
-    const updateData: any = {
+    const updateData: Record<string, unknown> = {
       status,
       reviewed_at: new Date().toISOString()
     };
@@ -179,8 +179,8 @@ export async function PATCH(request: NextRequest) {
           fullName: data.full_name || cleanEmail.split('@')[0],
           locale: typeof body?.locale === 'string'
             ? body.locale
-            : typeof (data as any)?.locale === 'string'
-              ? (data as any).locale
+            : typeof (data as { locale?: unknown })?.locale === 'string'
+              ? String((data as { locale?: unknown }).locale)
               : request.headers.get('accept-language') || 'en',
           magicLinkUrl,
         });
@@ -190,9 +190,9 @@ export async function PATCH(request: NextRequest) {
     }
 
     return NextResponse.json({ success: true, application: data });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error in PATCH /api/admin/creator-applications:', error);
-    return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 });
+    return NextResponse.json({ error: getAdminErrorMessage(error, 'Internal Server Error') }, { status: 500 });
   }
 }
 
@@ -221,8 +221,8 @@ export async function DELETE(request: NextRequest) {
     if (error) throw error;
 
     return NextResponse.json({ success: true, message: 'Application deleted successfully' });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error in DELETE /api/admin/creator-applications:', error);
-    return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 });
+    return NextResponse.json({ error: getAdminErrorMessage(error, 'Internal Server Error') }, { status: 500 });
   }
 }
