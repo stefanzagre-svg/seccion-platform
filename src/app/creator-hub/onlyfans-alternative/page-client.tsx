@@ -5,6 +5,8 @@ import Link from "next/link";
 import PublicNavbar from "@/components/PublicNavbar";
 import PublicFooter from "@/components/PublicFooter";
 import { useTranslation } from "@/context/LanguageContext";
+import type { SeoLocale } from "@/lib/localized-seo";
+import LocaleSwitchPills from "@/components/seo/LocaleSwitchPills";
 import {
   ShieldCheck,
   Sparkles,
@@ -15,8 +17,13 @@ import {
   Scale
 } from "lucide-react";
 
-export default function OnlyFansAlternativeClient() {
-  const { locale } = useTranslation();
+export default function OnlyFansAlternativeClient({
+  forcedLocale,
+}: {
+  forcedLocale?: SeoLocale;
+}) {
+  const { locale: contextLocale } = useTranslation();
+  const locale = forcedLocale ?? contextLocale;
 
   const comparisonData = [
     {
@@ -126,6 +133,9 @@ export default function OnlyFansAlternativeClient() {
 
       {/* Hero Section */}
       <section className="relative pt-36 pb-20 px-4 sm:px-6 md:px-12 lg:px-20 max-w-6xl mx-auto text-center">
+        <div className="mb-4 flex justify-center">
+          <LocaleSwitchPills basePath="/creator-hub/onlyfans-alternative" currentLocale={locale} />
+        </div>
         <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#00fbfb]/10 border border-[#00fbfb]/30 text-[#00fbfb] text-xs font-mono uppercase tracking-wider mb-6">
           <Sparkles className="w-3.5 h-3.5" />
           <span>{locale === "fr" ? "La Meilleure Plateforme Créateur en 2026" : locale === "es" ? "La Mejor Plataforma de Creadores en 2026" : "The Best Creator Platform in 2026"}</span>

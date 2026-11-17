@@ -1,5 +1,16 @@
 import { MetadataRoute } from 'next';
 import { getAllBlogPosts } from '@/lib/blog-data';
+import { getLocalizedUrl, SEO_LOCALES } from '@/lib/localized-seo';
+
+function sitemapLanguages(basePath: string) {
+  return {
+    languages: {
+      en: getLocalizedUrl(basePath, 'en'),
+      es: getLocalizedUrl(basePath, 'es'),
+      fr: getLocalizedUrl(basePath, 'fr'),
+    },
+  };
+}
 
 // ── Static build dates ─────────────────────────────────────────────────────
 // Use fixed dates instead of new Date() to prevent lastmod changing on every
@@ -50,12 +61,13 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: 'weekly' as const,
       priority: 0.9,
     },
-    {
-      url: `${baseUrl}/creator-hub/onlyfans-alternative`,
+    ...SEO_LOCALES.map((locale) => ({
+      url: getLocalizedUrl('/creator-hub/onlyfans-alternative', locale),
       lastModified: CONTENT_REFRESH_DATE,
       changeFrequency: 'weekly' as const,
-      priority: 0.95,
-    },
+      priority: locale === 'en' ? 0.95 : 0.9,
+      alternates: sitemapLanguages('/creator-hub/onlyfans-alternative'),
+    })),
     {
       url: `${baseUrl}/how-we-do`,
       lastModified: CONTENT_REFRESH_DATE,
@@ -68,12 +80,13 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: 'daily' as const,
       priority: 0.85,
     },
-    {
-      url: `${baseUrl}/blog`,
+    ...SEO_LOCALES.map((locale) => ({
+      url: getLocalizedUrl('/blog', locale),
       lastModified: CONTENT_REFRESH_DATE,
       changeFrequency: 'weekly' as const,
-      priority: 0.9,
-    },
+      priority: locale === 'en' ? 0.9 : 0.85,
+      alternates: sitemapLanguages('/blog'),
+    })),
     {
       url: `${baseUrl}/now-streaming`,
       lastModified: CONTENT_REFRESH_DATE,
@@ -109,12 +122,18 @@ export default function sitemap(): MetadataRoute.Sitemap {
   // ── Dynamic blog articles ────────────────────────────────────────────────
   // Blog data includes real lastModified dates — use them directly.
   const blogPosts = getAllBlogPosts();
-  const blogRoutes: MetadataRoute.Sitemap = blogPosts.map((post) => ({
-    url: `${baseUrl}/blog/${post.slug}`,
-    lastModified: post.lastModified ? new Date(post.lastModified) : new Date(post.date),
-    changeFrequency: 'weekly' as const,
-    priority: 0.85,
-  }));
+  const blogRoutes: MetadataRoute.Sitemap = blogPosts.flatMap((post) => {
+    const basePath = `/blog/${post.slug}`;
+    const lastModified = post.lastModified ? new Date(post.lastModified) : new Date(post.date);
+    const alternates = sitemapLanguages(basePath);
+    return SEO_LOCALES.map((locale) => ({
+      url: getLocalizedUrl(basePath, locale),
+      lastModified,
+      changeFrequency: 'weekly' as const,
+      priority: locale === 'en' ? 0.85 : 0.8,
+      alternates,
+    }));
+  });
 
   return [...routes, ...blogRoutes];
 }

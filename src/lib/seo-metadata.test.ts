@@ -51,7 +51,15 @@ import { metadata as messagesMeta } from '../app/messages/page';
 import { metadata as pulseMeta } from '../app/pulse/page';
 import { metadata as pulseLiveMeta } from '../app/pulse/live/[id]/page';
 import { generateMetadata as blogPostGen } from '../app/blog/[slug]/page';
+import { metadata as esBlogMeta } from '../app/es/blog/page';
+import { metadata as frBlogMeta } from '../app/fr/blog/page';
+import { generateMetadata as esBlogPostGen } from '../app/es/blog/[slug]/page';
+import { generateMetadata as frBlogPostGen } from '../app/fr/blog/[slug]/page';
+import { metadata as esOnlyfansAltMeta } from '../app/es/creator-hub/onlyfans-alternative/page';
+import { metadata as frOnlyfansAltMeta } from '../app/fr/creator-hub/onlyfans-alternative/page';
 import { getAllBlogPosts } from './blog-data';
+import { isReservedUsername } from './reserved-usernames';
+import sitemap from '../app/sitemap';
 import robots from '../app/robots';
 
 function extractTitleString(title: Metadata['title']): string {
@@ -160,9 +168,61 @@ describe('Bing & Search Engine Metadata Hygiene', () => {
 
   it('keeps blog post metadata <title> including template within 70 characters', async () => {
     for (const post of getAllBlogPosts()) {
-      const meta = await blogPostGen({ params: Promise.resolve({ slug: post.slug }) });
-      const titleStr = extractTitleString(meta.title).trim();
-      expect(`${titleStr} | SECCION`.length, `${post.slug} full <title>`).toBeLessThanOrEqual(70);
+      for (const [loc, gen] of [
+        ['en', blogPostGen],
+        ['es', esBlogPostGen],
+        ['fr', frBlogPostGen],
+      ] as const) {
+        const meta = await gen({ params: Promise.resolve({ slug: post.slug }) });
+        const titleStr = extractTitleString(meta.title).trim();
+        const descStr = (meta.description || '').trim();
+        expect(`${titleStr} | SECCION`.length, `${loc}:${post.slug} full <title>`).toBeLessThanOrEqual(70);
+        expect(descStr.length, `${loc}:${post.slug} desc length`).toBeGreaterThanOrEqual(125);
+        expect(descStr.length, `${loc}:${post.slug} desc length`).toBeLessThanOrEqual(165);
+        expect(meta.alternates?.languages).toMatchObject({
+          en: `https://seccion.ai/blog/${post.slug}`,
+          es: `https://seccion.ai/es/blog/${post.slug}`,
+          fr: `https://seccion.ai/fr/blog/${post.slug}`,
+          'x-default': `https://seccion.ai/blog/${post.slug}`,
+        });
+      }
     }
+  });
+
+  it('emits localized ES/FR SSR metadata, hreflang alternates, sitemap URLs, and reserved prefix guards', () => {
+    const localizedHubs: Array<[string, Metadata, string]> = [
+      ['/es/blog', esBlogMeta, 'https://seccion.ai/es/blog'],
+      ['/fr/blog', frBlogMeta, 'https://seccion.ai/fr/blog'],
+      [
+        '/es/creator-hub/onlyfans-alternative',
+        esOnlyfansAltMeta,
+        'https://seccion.ai/es/creator-hub/onlyfans-alternative',
+      ],
+      [
+        '/fr/creator-hub/onlyfans-alternative',
+        frOnlyfansAltMeta,
+        'https://seccion.ai/fr/creator-hub/onlyfans-alternative',
+      ],
+    ];
+
+    for (const [route, meta, canonicalUrl] of localizedHubs) {
+      const titleStr = extractTitleString(meta.title).trim();
+      const descStr = (meta.description || '').trim();
+      expect(`${titleStr} | SECCION`.length, `${route} <title>`).toBeLessThanOrEqual(70);
+      expect(descStr.length, `${route} description min`).toBeGreaterThanOrEqual(125);
+      expect(descStr.length, `${route} description max`).toBeLessThanOrEqual(165);
+      expect(meta.alternates?.canonical, `${route} canonical`).toBe(canonicalUrl);
+      expect(meta.alternates?.languages?.es, `${route} hreflang es`).toBeDefined();
+      expect(meta.alternates?.languages?.fr, `${route} hreflang fr`).toBeDefined();
+    }
+
+    const urls = sitemap().map((entry) => entry.url);
+    expect(urls).toContain('https://seccion.ai/es/blog');
+    expect(urls).toContain('https://seccion.ai/fr/blog');
+    expect(urls).toContain('https://seccion.ai/es/creator-hub/onlyfans-alternative');
+    expect(urls).toContain('https://seccion.ai/fr/creator-hub/onlyfans-alternative');
+
+    expect(isReservedUsername('es')).toBe(true);
+    expect(isReservedUsername('fr')).toBe(true);
   });
 });

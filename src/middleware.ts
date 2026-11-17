@@ -14,6 +14,8 @@ const PUBLIC_ROUTES = [
   '/hit-us-up',
   '/early-access',
   '/blog',
+  '/es',
+  '/fr',
   '/faq',
   '/features',
   '/now-streaming',

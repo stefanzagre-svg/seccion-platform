@@ -17,11 +17,15 @@ export interface BlogPost {
   slug: string;
   title: string;
   metaTitle?: string;
+  metaTitleEs?: string;
+  metaTitleFr?: string;
   titleEs?: string;
   titleFr?: string;
   description: string;
   descriptionEs?: string;
   descriptionFr?: string;
+  metaDescriptionEs?: string;
+  metaDescriptionFr?: string;
   date: string;
   lastModified?: string;
   readTime: string;
@@ -67,6 +71,8 @@ export const BLOG_POSTS: BlogPost[] = [
     slug: 'creator-privacy-face-blur-drm-leak-protection-2026',
     title: 'Creator Privacy & Leak Protection (2026): ZKP Face Blur vs. Paid DMCA Tools',
     metaTitle: 'Creator Privacy: ZKP Face Blur & DRM (2026)',
+    metaTitleEs: 'Privacidad Creadores: Face Blur ZKP y DRM (2026)',
+    metaTitleFr: 'Confidentialité Créateur : Face Blur ZKP et DRM',
     titleEs: 'Privacidad para Creadores y Protección Anti-Filtraciones (2026): Face Blur ZKP y DRM',
     titleFr: 'Confidentialité Créateur et Protection DRM (2026) : Face Blur ZKP vs Outils DMCA',
     description: 'Protect your identity and stop leaks in 2026. Compare $300/mo DMCA add-ons against SECCION’s built-in ZKP Face Blur, 24/7 DRM Vault, and DIDIT KYC.',
@@ -301,6 +307,8 @@ export const BLOG_POSTS: BlogPost[] = [
     slug: 'how-creators-avoid-banking-fx-fees-usdc-sepa-2026',
     title: 'How Creators Avoid 13.5% Banking FX Spreads & Rolling Reserves with USDC & SEPA (2026)',
     metaTitle: 'Avoid Banking FX Fees: USDC & SEPA Payouts',
+    metaTitleEs: 'Evitar Comisiones FX Bancarias: USDC y SEPA 2026',
+    metaTitleFr: 'Éviter les Frais FX Bancaires : USDC et SEPA',
     titleEs: 'Cómo Evitar el 13.5% en Comisiones Cambiarias y Reservas Bancarias con USDC y SEPA (2026)',
     titleFr: 'Comment Éviter 13,5 % de Frais FX et Réserves Bancaires avec USDC et SEPA (2026)',
     description: 'Stop losing $1,375 per $10k to hidden 3.5% FX spreads and 10% rolling reserves. See how SECCION’s SEPA Instant and Circle USDC rails pay 90% cleanly.',
@@ -528,6 +536,8 @@ export const BLOG_POSTS: BlogPost[] = [
     slug: 'replace-40-percent-onlyfans-agency-with-ai-copilot-2026',
     title: 'How to Replace a 40% OnlyFans Chatting Agency with Your Own AI Copilot (2026)',
     metaTitle: 'Replace 40% Chatting Agencies with AI Copilot (2026)',
+    metaTitleEs: 'Reemplazar Agencias 40% con AI Copilot (2026)',
+    metaTitleFr: 'Remplacer une Agence à 40 % par l’AI Copilot',
     titleEs: 'Cómo Reemplazar una Agencia de OnlyFans del 40% con Tu Propio AI Copilot (2026)',
     titleFr: 'Remplacer une Agence OnlyFans à 40 % par Votre AI Copilot Vocal (2026)',
     description: 'Stop losing 60% of gross revenue to platform fees and chatting agencies. See the $10k math ($4,000 vs $9,000 net) plus voice & contract protections.',
@@ -777,6 +787,8 @@ export const BLOG_POSTS: BlogPost[] = [
     slug: 'seccion-vs-passes-vs-fanvue-vs-fansly-2026',
     title: 'SECCION vs. Passes vs. Fanvue vs. Fansly (2026): Best OnlyFans Alternative Compared',
     metaTitle: 'SECCION vs Passes, Fanvue & Fansly (2026)',
+    metaTitleEs: 'SECCION vs Passes, Fanvue y Fansly (2026)',
+    metaTitleFr: 'SECCION vs Passes, Fanvue et Fansly (2026)',
     titleEs: 'SECCION vs. Passes vs. Fanvue vs. Fansly (2026): Comparativa Real para Creadores',
     titleFr: 'SECCION vs Passes vs Fanvue vs Fansly (2026) : Quelle Alternative à OnlyFans Choisir ?',
     description: 'Comparing Passes, Fanvue, Fansly & SECCION in 2026: payout splits (90% vs 80%), content rules, voice-trained AI Copilot, DRM vault, and EUR/USDC cashouts.',
@@ -1087,11 +1099,15 @@ export const BLOG_POSTS: BlogPost[] = [
     slug: 'creator-platform-90-percent-payout-comparison-2026',
     title: 'Creator Platform Payout Comparison 2026: Who Lets You Keep the Most?',
     metaTitle: 'Creator Platform Payout Comparison 2026 (90% Split)',
+    metaTitleEs: 'Comparativa de Pagos Creadores 2026 (90% Neto)',
+    metaTitleFr: 'Comparatif Revenus Créateurs 2026 (90 % Net)',
     titleEs: 'Comparativa de Pagos para Creadores 2026: ¿Quién te Deja Ganar Más?',
     titleFr: 'Comparatif des Rémunérations Créateurs 2026 : Quelle Plateforme Vous Rémunère le Mieux ?',
     description: 'An empirical breakdown of creator platform take-rates, processing fees, agency cuts, and why SECCION’s 90% Founding Offer (+ Free AI Copilot) transforms creator unit economics.',
     descriptionEs: 'Desglose exhaustivo de comisiones de plataformas, costos de procesamiento, agencias y por qué la Oferta Fundadora del 90% de SECCION (+ Copiloto IA Gratis) revoluciona la economía del creador.',
     descriptionFr: 'Analyse approfondie des commissions de plateformes, des frais de traitement, des parts d’agences et de la façon dont l’Offre Fondatrice à 90 % de SECCION (+ Copilote IA Offert) transforme la rentabilité des créateurs.',
+    metaDescriptionEs: 'Compara comisiones, costos bancarios y agencias del 40%. Descubre cómo el 90% neto y el AI Copilot gratis de SECCION disparan tus ingresos reales.',
+    metaDescriptionFr: 'Comparez commissions, frais bancaires et agences à 40 %. Découvrez comment les 90 % nets et l’AI Copilot offert sur SECCION maximisent vos gains.',
     date: '2026-03-15',
     lastModified: '2026-03-15',
     readTime: '9 min read',
@@ -1245,11 +1261,15 @@ export const BLOG_POSTS: BlogPost[] = [
     slug: 'what-is-a-warm-paywall-creator-economy',
     title: 'What Is a Warm Paywall? Why Chemistry-First Monetization Beats Cold Paywalls',
     metaTitle: 'What Is a Warm Paywall? Creator Monetization Guide',
+    metaTitleEs: '¿Qué es un Warm Paywall? Guía para Creadores',
+    metaTitleFr: 'Qu’est-ce qu’un Warm Paywall ? Guide Créateur',
     titleEs: '¿Qué es un Warm Paywall? Por Qué la Monetización por Química Supera a los Paywalls Fríos',
     titleFr: 'Qu’est-ce qu’un Warm Paywall ? Pourquoi la Monétisation par la Complicité Surpasse les Paywalls Froids',
     description: 'Explore the Warm Paywall paradigm: how chemistry-first access, 8-level relationship mechanics, and anti-situationship progression eliminate 30%+ subscriber churn and maximize creator LTV.',
     descriptionEs: 'Explora el paradigma del Warm Paywall: cómo el acceso guiado por química, mecánicas de relación de 8 niveles y la eliminación del situationship limbo reducen el churn mensual del 30% y disparan el LTV.',
     descriptionFr: 'Découvrez le modèle du Warm Paywall : comment l’accès guidé par les affinités, les 8 niveaux relationnels et la fin du flou situationship réduisent le churn de 30 % et maximisent la valeur vie créateur.',
+    metaDescriptionEs: 'Descubre el Warm Paywall de SECCION: acceso guiado por química real en 8 niveles para eliminar la rotación de suscriptores y multiplicar el LTV.',
+    metaDescriptionFr: 'Découvrez le Warm Paywall de SECCION : connexion humaine sur 8 niveaux pour réduire le churn de 30 % et fidéliser durablement votre communauté.',
     date: '2026-03-12',
     lastModified: '2026-03-14',
     readTime: '8 min read',

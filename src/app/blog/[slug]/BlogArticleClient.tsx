@@ -4,6 +4,8 @@ import React from "react";
 import Link from "next/link";
 import { BlogPost } from "@/lib/blog-data";
 import { useTranslation } from "@/context/LanguageContext";
+import { getLocalizedPath, pickLocalized, type SeoLocale } from "@/lib/localized-seo";
+import LocaleSwitchPills from "@/components/seo/LocaleSwitchPills";
 import {
   ArrowLeft,
   Calendar,
@@ -17,19 +19,16 @@ import {
 interface BlogArticleClientProps {
   post: BlogPost;
   relatedPosts: BlogPost[];
-}
-
-function pickLocalized<T>(locale: string, en: T, es?: T, fr?: T): T {
-  if (locale === "fr" && fr) return fr;
-  if (locale === "es" && es) return es;
-  return en;
+  forcedLocale?: SeoLocale;
 }
 
 export default function BlogArticleClient({
   post,
   relatedPosts,
+  forcedLocale,
 }: BlogArticleClientProps) {
-  const { locale } = useTranslation();
+  const { locale: contextLocale } = useTranslation();
+  const locale = forcedLocale ?? contextLocale;
   const isFr = locale === "fr";
   const isEs = locale === "es";
 
@@ -62,9 +61,9 @@ export default function BlogArticleClient({
   return (
     <main className="relative z-10 pt-36 px-4 sm:px-6 md:px-12 lg:px-20 max-w-5xl mx-auto w-full space-y-12 mb-24">
       {/* Back navigation */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <Link
-          href="/blog"
+          href={getLocalizedPath("/blog", locale)}
           className="inline-flex items-center gap-2 text-xs font-mono font-bold text-white/40 hover:text-[#00fbfb] transition group"
         >
           <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
@@ -77,9 +76,12 @@ export default function BlogArticleClient({
           </span>
         </Link>
 
-        <span className="px-3 py-1 rounded-full bg-white/5 border border-white/10 font-mono text-[10px] font-bold uppercase tracking-wider text-[#00fbfb]">
-          {post.category}
-        </span>
+        <div className="flex items-center gap-2">
+          <LocaleSwitchPills basePath={`/blog/${post.slug}`} currentLocale={locale} />
+          <span className="px-3 py-1 rounded-full bg-white/5 border border-white/10 font-mono text-[10px] font-bold uppercase tracking-wider text-[#00fbfb]">
+            {post.category}
+          </span>
+        </div>
       </div>
 
       {/* Article Header */}
@@ -258,7 +260,7 @@ export default function BlogArticleClient({
               return (
                 <Link
                   key={rel.slug}
-                  href={`/blog/${rel.slug}`}
+                  href={getLocalizedPath(`/blog/${rel.slug}`, locale)}
                   className="p-6 rounded-3xl bg-[#0F0F1A]/80 border border-white/10 hover:border-[#00fbfb]/50 transition group block space-y-3 text-left"
                 >
                   <span className="font-mono text-[10px] text-[#00fbfb] font-bold uppercase tracking-wider">

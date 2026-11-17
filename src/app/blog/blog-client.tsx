@@ -8,6 +8,7 @@ import {
   BLOG_CATEGORIES 
 } from "@/lib/blog-data";
 import { useTranslation } from "@/context/LanguageContext";
+import { getLocalizedPath, type SeoLocale } from "@/lib/localized-seo";
 import { 
   Search, 
   Tag, 
@@ -24,10 +25,12 @@ import {
 
 interface BlogClientProps {
   posts: BlogPost[];
+  forcedLocale?: SeoLocale;
 }
 
-export default function BlogClient({ posts }: BlogClientProps) {
-  const { locale } = useTranslation();
+export default function BlogClient({ posts, forcedLocale }: BlogClientProps) {
+  const { locale: contextLocale } = useTranslation();
+  const locale = forcedLocale ?? contextLocale;
   const isFr = locale === "fr";
   const isEs = locale === "es";
 
@@ -246,7 +249,7 @@ export default function BlogClient({ posts }: BlogClientProps) {
                     </div>
 
                     {/* Title */}
-                    <Link href={`/blog/${post.slug}`} className="block group-hover:text-[#00fbfb] transition-colors">
+                    <Link href={getLocalizedPath(`/blog/${post.slug}`, locale)} className="block group-hover:text-[#00fbfb] transition-colors">
                       <h2 className="font-['Outfit'] text-xl sm:text-2xl font-black text-white leading-snug tracking-tight group-hover:text-[#00fbfb] transition-colors">
                         {title}
                       </h2>
@@ -290,7 +293,7 @@ export default function BlogClient({ posts }: BlogClientProps) {
                     </div>
 
                     <Link
-                      href={`/blog/${post.slug}`}
+                      href={getLocalizedPath(`/blog/${post.slug}`, locale)}
                       className="inline-flex items-center gap-2 font-mono text-xs font-bold text-[#00fbfb] group-hover:translate-x-1 transition-transform self-end sm:self-auto shrink-0"
                     >
                       <span>{isFr ? "Lire l'Article" : isEs ? "Leer Artículo" : "Read Article"}</span>
