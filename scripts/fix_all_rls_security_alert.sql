@@ -47,11 +47,10 @@ BEGIN
     END IF;
 END $$;
 
--- 3. Verification Query: Confirm all user tables have RLS enabled
+-- 3. Verification Query: Confirm all tables in public (including extension tables) have RLS enabled
 SELECT 
     tablename, 
     rowsecurity AS rls_enabled 
 FROM pg_tables 
 WHERE schemaname = 'public'
-  AND tablename NOT IN ('spatial_ref_sys', 'geography_columns', 'geometry_columns', 'raster_columns', 'raster_overviews')
 ORDER BY tablename ASC;

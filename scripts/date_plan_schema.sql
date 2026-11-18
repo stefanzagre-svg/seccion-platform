@@ -1,8 +1,10 @@
 -- SQL Migration: Date Plan Module & RLS Integration
 -- Defines the database schema for the Date Plan feature and extends the Relationship Level System (RLS) enums.
 
--- 1. Enable PostGIS extension (required for GEOGRAPHY type if not already enabled)
-CREATE EXTENSION IF NOT EXISTS postgis;
+-- 1. Enable PostGIS extension in the unexposed 'extensions' schema (prevents public.spatial_ref_sys & PostGIS RPC exposure)
+CREATE SCHEMA IF NOT EXISTS extensions;
+GRANT USAGE ON SCHEMA extensions TO postgres, anon, authenticated, service_role;
+CREATE EXTENSION IF NOT EXISTS postgis WITH SCHEMA extensions;
 
 -- 2. Extend the existing interaction_type enum to include Date Plan interactions
 -- Note: ALTER TYPE ... ADD VALUE cannot be executed inside a transaction block in older Postgres versions,
@@ -34,7 +36,7 @@ CREATE TABLE IF NOT EXISTS public.session_intent_plans (
     start_timestamp_utc TIMESTAMP WITH TIME ZONE NOT NULL,
     end_timestamp_utc TIMESTAMP WITH TIME ZONE NOT NULL,
     max_applications_int INTEGER DEFAULT 10 CHECK (max_applications_int <= 10),
-    plan_scope_geo_point GEOGRAPHY(Point, 4326),
+    plan_scope_geo_point extensions.GEOGRAPHY(Point, 4326),
     allowed_move_tags_array TEXT[], -- References to suggestion_moves keys/ids (e.g. 'coffee')
     description TEXT, -- Short description from the poster
     plan_status plan_status DEFAULT 'New' NOT NULL,
