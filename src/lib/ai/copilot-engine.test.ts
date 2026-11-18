@@ -5,9 +5,13 @@ import { analyzeMemberFriction } from '@/lib/ai/whale-friction-detector';
 import { resolveRampDirective, calculateTypingCadence } from '@/lib/ai/conversion-engine';
 import { extractWikilinks, buildVaultGraph } from '@/lib/vault/vault-graph-engine';
 import {
+  MAX_ACTIVE_BRAND_RULES,
+  DEFAULT_VIP_OFFER_TTL_DAYS,
   sanitizeAndPrepareMemoryInput,
   detectMemoryTopicConflict,
   formatProvenanceMemoryBlock,
+  isCopilotMemoryExpired,
+  selectOverflowBrandRuleIdsToSupersede,
   type CopilotMemoryRecord,
 } from '@/lib/ai/copilot-memory';
 
@@ -199,6 +203,59 @@ describe('AI Copilot 2.0 Security & Conversion Engine Suite', () => {
       expect(block).toContain('[BRAND | brand_voice | Checked 2026-11-13] Brand Voice');
       expect(block).not.toContain('SUPERSEDED 50% discount');
       expect(block).toContain('MEMORY RULE:');
+    });
+
+    it('expires vip_offer_decision notes after 7 days while keeping evergreen brand rules active', () => {
+      const refNow = new Date('2026-11-18T12:00:00Z');
+      const staleOffer: CopilotMemoryRecord = {
+        id: 'offer-stale',
+        creator_id: 'c1',
+        target_member_id: 'vip-1',
+        title: 'Weekend Promo',
+        memory_type: 'vip_offer_decision',
+        topic_slug: 'weekend-promo',
+        summary: 'Expired 20% bundle quote from 10 days ago.',
+        wikilinks: [],
+        status: 'active',
+        source_context: 'studio_cockpit',
+        checked_at: '2026-11-08T12:00:00Z',
+        recheck_when: 'Weekly',
+      };
+      const evergreenBoundary: CopilotMemoryRecord = {
+        id: 'rule-evergreen',
+        creator_id: 'c1',
+        target_member_id: null,
+        title: 'No Off-Platform Cash',
+        memory_type: 'boundary',
+        topic_slug: 'no-offplatform',
+        summary: 'Never move payments off SECCION.',
+        wikilinks: [],
+        status: 'active',
+        source_context: 'studio_cockpit',
+        checked_at: '2026-10-01T12:00:00Z',
+        recheck_when: 'Always',
+      };
+
+      expect(DEFAULT_VIP_OFFER_TTL_DAYS).toBe(7);
+      expect(isCopilotMemoryExpired(staleOffer, refNow)).toBe(true);
+      expect(isCopilotMemoryExpired(evergreenBoundary, refNow)).toBe(false);
+
+      const promptBlock = formatProvenanceMemoryBlock([staleOffer, evergreenBoundary], 6, refNow);
+      expect(promptBlock).toContain('No Off-Platform Cash');
+      expect(promptBlock).not.toContain('Expired 20% bundle quote');
+    });
+
+    it('enforces the 20-rule cap by selecting oldest active brand/boundary rules for overflow archival', () => {
+      const rules = Array.from({ length: MAX_ACTIVE_BRAND_RULES }, (_, i) => ({
+        id: `rule-${i}`,
+        memory_type: (i % 2 === 0 ? 'brand_voice' : 'boundary') as CopilotMemoryRecord['memory_type'],
+        status: 'active' as const,
+        checked_at: new Date(Date.UTC(2026, 10, 1 + i)).toISOString(),
+      }));
+
+      const overflowIds = selectOverflowBrandRuleIdsToSupersede(rules, 'boundary', []);
+      expect(MAX_ACTIVE_BRAND_RULES).toBe(20);
+      expect(overflowIds).toEqual(['rule-0']);
     });
   });
 });

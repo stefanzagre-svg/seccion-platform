@@ -18,10 +18,17 @@ import {
   AlertTriangle,
 } from 'lucide-react';
 import { buildVaultGraph, RawVaultNote } from '@/lib/vault/vault-graph-engine';
-import type { CopilotMemoryType } from '@/lib/ai/copilot-memory';
+import {
+  DEFAULT_VIP_OFFER_TTL_DAYS,
+  MAX_ACTIVE_BRAND_RULES,
+  getCopilotMemoryLifecycleState,
+  type CopilotMemoryLifecycleState,
+  type CopilotMemoryType,
+} from '@/lib/ai/copilot-memory';
 
 interface VaultMemoryNote extends RawVaultNote {
   status?: 'active' | 'superseded';
+  lifecycleState?: CopilotMemoryLifecycleState;
   checkedAt?: string;
   topicSlug?: string;
   sourceContext?: string;
@@ -92,19 +99,34 @@ export default function VaultAndStrategyCockpit() {
         const json = await res.json();
         if (cancelled) return;
         if (Array.isArray(json.memories) && json.memories.length > 0) {
-          const loaded: VaultMemoryNote[] = json.memories.map((m: any) => ({
+          const loaded: VaultMemoryNote[] = (json.memories as Array<{
+            id: string;
+            title: string;
+            memory_type: CopilotMemoryType;
+            summary: string;
+            status: 'active' | 'superseded';
+            lifecycle_state?: CopilotMemoryLifecycleState;
+            checked_at: string;
+            topic_slug: string;
+            source_context: string;
+          }>).map((m) => ({
             id: m.id,
             title: m.title,
-            note_type: MEMORY_TYPE_TO_NOTE_TYPE[m.memory_type as CopilotMemoryType] || 'TOPIC',
+            note_type: MEMORY_TYPE_TO_NOTE_TYPE[m.memory_type] || 'TOPIC',
             content: m.summary,
             status: m.status,
+            lifecycleState: m.lifecycle_state || getCopilotMemoryLifecycleState({
+              memory_type: m.memory_type,
+              checked_at: m.checked_at,
+              status: m.status,
+            }),
             checkedAt: m.checked_at,
             topicSlug: m.topic_slug,
             sourceContext: m.source_context,
             persisted: true,
           }));
           setNotes(loaded);
-          const firstActive = loaded.find((n) => n.status !== 'superseded') || loaded[0];
+          const firstActive = loaded.find((n) => (n.lifecycleState || n.status) === 'active') || loaded[0];
           setSelectedNote(firstActive);
         }
       } catch {
@@ -181,6 +203,12 @@ export default function VaultAndStrategyCockpit() {
       if (data.supersededCount > 0) {
         notesFlags.push(`superseded ${data.supersededCount} older rule(s)`);
       }
+      if (data.prunedOverflowCount > 0) {
+        notesFlags.push(`archived ${data.prunedOverflowCount} oldest rule(s) to keep ${MAX_ACTIVE_BRAND_RULES}-rule cap`);
+      }
+      if (data.prunedExpiredCount > 0) {
+        notesFlags.push(`cleaned ${data.prunedExpiredCount} expired offer note(s)`);
+      }
       if (data.piiRedacted) {
         notesFlags.push(`auto-scrubbed PII (${(data.redactedTypes || []).join(', ')})`);
       }
@@ -232,6 +260,33 @@ export default function VaultAndStrategyCockpit() {
     setVaultFeedback({ kind: 'success', text: 'Memory deleted from Copilot context.' });
   }
 
+  async function handleCleanStaleOffers() {
+    setVaultFeedback(null);
+    try {
+      const res = await fetch('/api/v2/copilot/memories?pruneExpired=true', {
+        method: 'DELETE',
+      });
+      if (!res.ok) {
+        setVaultFeedback({ kind: 'error', text: 'Failed to clean expired promo notes.' });
+        return;
+      }
+      const data = await res.json().catch(() => ({}));
+      setNotes((prev) =>
+        prev.map((n) =>
+          n.lifecycleState === 'expired'
+            ? { ...n, status: 'superseded', lifecycleState: 'superseded' }
+            : n
+        )
+      );
+      setVaultFeedback({
+        kind: 'success',
+        text: `Cleaned ${Number(data.prunedCount || 0)} expired offer note(s) older than ${DEFAULT_VIP_OFFER_TTL_DAYS} days.`,
+      });
+    } catch {
+      setVaultFeedback({ kind: 'error', text: 'Network error while cleaning stale notes.' });
+    }
+  }
+
   // Goal & restriction state
   const [globalGoal, setGlobalGoal] = useState('SUBSCRIBE_VIP');
   const [allowPhotos, setAllowPhotos] = useState(true);
@@ -247,7 +302,11 @@ export default function VaultAndStrategyCockpit() {
     { id: 'm3', title: 'Exclusive Studio BTS', tag: 'bts', type: 'video', minRls: 25, isPpv: true, price: 15 },
   ]);
 
-  const activeNotesForGraph = notes.filter((n) => n.status !== 'superseded');
+  const activeNotesForGraph = notes.filter((n) => (n.lifecycleState || n.status) === 'active');
+  const activeBrandRulesCount = activeNotesForGraph.filter(
+    (n) => n.note_type === 'PERSONA' || n.note_type === 'BOUNDARY'
+  ).length;
+  const expiredOfferCount = notes.filter((n) => n.lifecycleState === 'expired').length;
   const graph = buildVaultGraph(activeNotesForGraph);
 
   return (
@@ -285,32 +344,56 @@ export default function VaultAndStrategyCockpit() {
         <div className="grid lg:grid-cols-3 gap-6">
           {/* Note List & Connections Overview */}
           <div className="glass-card p-5 rounded-2xl border border-white/5 space-y-4">
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] font-black uppercase tracking-widest text-white/60">
-                Your AI Notes ({graph.nodes.length})
-              </span>
-              <button
-                onClick={() => {
-                  const title = prompt('Enter a note name (e.g. Weekend Promo or Chat Tone):');
-                  if (!title) return;
-                  const newNote: VaultMemoryNote = {
-                    id: Date.now().toString(),
-                    title: title.replace(/\[\[|\]\]/g, ''),
-                    note_type: 'TOPIC',
-                    content: 'Write simple instructions or limits here for your AI assistant.',
-                    status: 'active',
-                    persisted: false,
-                  };
-                  setNotes([newNote, ...notes]);
-                  setSelectedNote(newNote);
-                  setVaultFeedback(null);
-                }}
-                className="p-1.5 bg-white/5 hover:bg-white/10 rounded-lg text-white/70 hover:text-white transition"
-                title="Add new note for your AI assistant"
-              >
-                <Plus className="w-3.5 h-3.5" />
-              </button>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-black uppercase tracking-widest text-white/60">
+                  Your AI Notes ({graph.nodes.length})
+                </span>
+                <span
+                  className="text-[9px] font-mono px-2 py-0.5 rounded bg-primary/15 text-primary border border-primary/25"
+                  title={`Hard cap of ${MAX_ACTIVE_BRAND_RULES} active Brand Voice & Boundary rules keeps Copilot sharp`}
+                >
+                  Rules {activeBrandRulesCount}/{MAX_ACTIVE_BRAND_RULES}
+                </span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                {expiredOfferCount > 0 && (
+                  <button
+                    type="button"
+                    onClick={handleCleanStaleOffers}
+                    className="px-2 py-1 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-[9px] font-mono font-bold text-amber-200 transition"
+                    title={`Archive offer notes older than ${DEFAULT_VIP_OFFER_TTL_DAYS} days`}
+                  >
+                    Clean {expiredOfferCount} Stale
+                  </button>
+                )}
+                <button
+                  onClick={() => {
+                    const title = prompt('Enter a note name (e.g. Weekend Promo or Chat Tone):');
+                    if (!title) return;
+                    const newNote: VaultMemoryNote = {
+                      id: Date.now().toString(),
+                      title: title.replace(/\[\[|\]\]/g, ''),
+                      note_type: 'TOPIC',
+                      content: 'Write simple instructions or limits here for your AI assistant.',
+                      status: 'active',
+                      lifecycleState: 'active',
+                      persisted: false,
+                    };
+                    setNotes([newNote, ...notes]);
+                    setSelectedNote(newNote);
+                    setVaultFeedback(null);
+                  }}
+                  className="p-1.5 bg-white/5 hover:bg-white/10 rounded-lg text-white/70 hover:text-white transition"
+                  title="Add new note for your AI assistant"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                </button>
+              </div>
             </div>
+            <p className="text-[10px] font-mono text-white/40">
+              Weekly Review: keep &le; {MAX_ACTIVE_BRAND_RULES} active brand rules; temporary promos expire after {DEFAULT_VIP_OFFER_TTL_DAYS}d.
+            </p>
 
             {isLoadingMemories && (
               <div className="text-[10px] font-mono text-white/40 uppercase tracking-widest">
@@ -320,7 +403,9 @@ export default function VaultAndStrategyCockpit() {
 
             <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
               {notes.map((n) => {
-                const isSuperseded = n.status === 'superseded';
+                const state = n.lifecycleState || (n.status === 'superseded' ? 'superseded' : 'active');
+                const isSuperseded = state === 'superseded';
+                const isExpired = state === 'expired';
                 return (
                   <div
                     key={n.id}
@@ -331,22 +416,24 @@ export default function VaultAndStrategyCockpit() {
                     className={`p-3 rounded-xl border cursor-pointer transition-all ${
                       selectedNote.id === n.id
                         ? 'bg-primary/10 border-primary/40 text-white'
-                        : isSuperseded
-                          ? 'bg-black/20 border-white/5 text-white/40 opacity-70 hover:opacity-100'
+                        : isSuperseded || isExpired
+                          ? 'bg-black/20 border-white/5 text-white/40 opacity-75 hover:opacity-100'
                           : 'bg-black/30 border-white/5 text-white/60 hover:text-white'
                     }`}
                   >
                     <div className="flex items-center justify-between gap-2 text-[11px] font-bold">
-                      <span className={isSuperseded ? 'line-through' : ''}>{n.title.replace(/_/g, ' ')}</span>
+                      <span className={isSuperseded || isExpired ? 'line-through' : ''}>{n.title.replace(/_/g, ' ')}</span>
                       <div className="flex items-center gap-1.5 shrink-0">
                         <span
                           className={`text-[8px] uppercase tracking-wider px-1.5 py-0.5 rounded ${
                             isSuperseded
-                              ? 'bg-amber-500/15 text-amber-300'
-                              : 'bg-emerald-500/15 text-emerald-300'
+                              ? 'bg-white/10 text-white/50'
+                              : isExpired
+                                ? 'bg-amber-500/20 text-amber-300'
+                                : 'bg-emerald-500/15 text-emerald-300'
                           }`}
                         >
-                          {isSuperseded ? 'archived' : 'active'}
+                          {isSuperseded ? 'archived' : isExpired ? 'expired' : 'active'}
                         </span>
                         <span className="text-[8px] uppercase tracking-wider bg-white/5 px-2 py-0.5 rounded text-white/40">
                           {n.note_type === 'MEMBER_DOSSIER' ? 'VIP NOTE' : n.note_type}

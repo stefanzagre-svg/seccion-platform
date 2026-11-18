@@ -7,6 +7,7 @@
  *   3. Formats a compact, date-stamped provenance block for Gemini system instructions.
  */
 
+import type { SupabaseClient } from '@supabase/supabase-js';
 import { scrubPIIBeforeLLM } from '@/lib/ai/pii-scrubber';
 import { extractWikilinks } from '@/lib/vault/vault-graph-engine';
 
@@ -17,6 +18,16 @@ export type CopilotMemoryType =
   | 'vip_offer_decision';
 
 export type CopilotMemoryStatus = 'active' | 'superseded';
+
+export type CopilotMemoryLifecycleState = 'active' | 'expired' | 'superseded';
+
+/**
+ * Memory Engineering invariants (Distort 6-Part Loop):
+ * - Always-loaded Brand Voice + Hard Boundary rules are strictly capped at 20 per creator.
+ * - Temporary VIP offer/promo notes automatically expire after 7 days unless renewed.
+ */
+export const MAX_ACTIVE_BRAND_RULES = 20;
+export const DEFAULT_VIP_OFFER_TTL_DAYS = 7;
 
 export interface CopilotMemoryRecord {
   id: string;
@@ -32,6 +43,7 @@ export interface CopilotMemoryRecord {
   source_context: string;
   checked_at: string;
   recheck_when: string;
+  expires_at?: string | null;
 }
 
 export interface PrepareMemoryInput {
@@ -111,17 +123,126 @@ export function detectMemoryTopicConflict(
     .map((row) => row.id);
 }
 
+const BRAND_RULE_TYPES = new Set<CopilotMemoryType>(['brand_voice', 'boundary']);
+
+const MEMORY_PRIORITY_WEIGHT: Record<CopilotMemoryType, number> = {
+  boundary: 4,
+  brand_voice: 3,
+  vip_preference: 2,
+  vip_offer_decision: 1,
+};
+
+export function isBrandRuleMemoryType(memoryType: CopilotMemoryType): boolean {
+  return BRAND_RULE_TYPES.has(memoryType);
+}
+
 /**
- * Formats ONLY active, provenance-backed memories into a compact, non-bloated
- * system instruction block (< ~900 chars) with checked dates and strict honesty rules.
+ * Computes default expiration ISO timestamp:
+ * - `vip_offer_decision` expires after 7 days unless explicitly extended.
+ * - Evergreen `brand_voice`, `boundary`, and `vip_preference` return null.
+ */
+export function computeMemoryExpiresAt(
+  memoryType: CopilotMemoryType,
+  checkedAtIso?: string
+): string | null {
+  if (memoryType !== 'vip_offer_decision') {
+    return null;
+  }
+  const baseMs = checkedAtIso ? Date.parse(checkedAtIso) : Date.now();
+  const safeBaseMs = Number.isFinite(baseMs) ? baseMs : Date.now();
+  return new Date(safeBaseMs + DEFAULT_VIP_OFFER_TTL_DAYS * 86_400_000).toISOString();
+}
+
+/**
+ * Evaluates whether an active memory record has exceeded its TTL.
+ * Works both with explicit `expires_at` and without schema changes via `checked_at` + 7d TTL.
+ */
+export function isCopilotMemoryExpired(
+  memory: Pick<CopilotMemoryRecord, 'memory_type' | 'checked_at' | 'expires_at' | 'status'>,
+  now: Date = new Date()
+): boolean {
+  if (memory.status !== 'active') return false;
+  if (memory.expires_at) {
+    const expMs = Date.parse(memory.expires_at);
+    if (Number.isFinite(expMs)) {
+      return expMs <= now.getTime();
+    }
+  }
+  if (memory.memory_type === 'vip_offer_decision' && memory.checked_at) {
+    const checkedMs = Date.parse(memory.checked_at);
+    if (Number.isFinite(checkedMs)) {
+      return checkedMs + DEFAULT_VIP_OFFER_TTL_DAYS * 86_400_000 <= now.getTime();
+    }
+  }
+  return false;
+}
+
+export function getCopilotMemoryLifecycleState(
+  memory: Pick<CopilotMemoryRecord, 'memory_type' | 'checked_at' | 'expires_at' | 'status'>,
+  now: Date = new Date()
+): CopilotMemoryLifecycleState {
+  if (memory.status === 'superseded') return 'superseded';
+  if (isCopilotMemoryExpired(memory, now)) return 'expired';
+  return 'active';
+}
+
+/**
+ * Selects oldest active brand/boundary rule IDs to supersede when inserting a new rule
+ * would push the creator past `MAX_ACTIVE_BRAND_RULES` (20).
+ */
+export function selectOverflowBrandRuleIdsToSupersede(
+  existing: Pick<CopilotMemoryRecord, 'id' | 'memory_type' | 'status' | 'checked_at'>[],
+  nextMemoryType: CopilotMemoryType,
+  alreadyConflictingIds: string[],
+  cap: number = MAX_ACTIVE_BRAND_RULES
+): string[] {
+  if (!isBrandRuleMemoryType(nextMemoryType)) return [];
+  const conflictSet = new Set(alreadyConflictingIds);
+  const remainingBrandRules = existing
+    .filter(
+      (row) =>
+        row.status === 'active' &&
+        isBrandRuleMemoryType(row.memory_type) &&
+        !conflictSet.has(row.id)
+    )
+    .sort((a, b) => Date.parse(a.checked_at || '0') - Date.parse(b.checked_at || '0'));
+
+  const overflowCount = remainingBrandRules.length + 1 - cap;
+  if (overflowCount <= 0) return [];
+  return remainingBrandRules.slice(0, overflowCount).map((row) => row.id);
+}
+
+/**
+ * Filters out superseded and expired memories, sorting evergreen boundaries & brand rules
+ * ahead of temporary VIP offers within the compact prompt budget.
+ */
+export function prioritizeCopilotMemories(
+  memories: CopilotMemoryRecord[],
+  maxItems = 6,
+  now: Date = new Date()
+): CopilotMemoryRecord[] {
+  return memories
+    .filter((m) => getCopilotMemoryLifecycleState(m, now) === 'active')
+    .sort((a, b) => {
+      const weightDiff =
+        (MEMORY_PRIORITY_WEIGHT[b.memory_type] || 0) -
+        (MEMORY_PRIORITY_WEIGHT[a.memory_type] || 0);
+      if (weightDiff !== 0) return weightDiff;
+      return Date.parse(b.checked_at || '0') - Date.parse(a.checked_at || '0');
+    })
+    .slice(0, maxItems);
+}
+
+/**
+ * Formats ONLY active, non-expired, provenance-backed memories into a compact,
+ * non-bloated system instruction block with checked dates and strict honesty rules.
  */
 export function formatProvenanceMemoryBlock(
   memories: CopilotMemoryRecord[],
-  maxItems = 6
+  maxItems = 6,
+  now: Date = new Date()
 ): string {
-  const active = memories
-    .filter((m) => m.status === 'active')
-    .slice(0, maxItems);
+  const active = prioritizeCopilotMemories(memories, maxItems, now);
 
   if (active.length === 0) {
     return '';
@@ -142,16 +263,17 @@ export function formatProvenanceMemoryBlock(
 }
 
 /**
- * Loads compact active brand memories + optional target VIP memories from Supabase.
+ * Loads compact active, non-expired brand memories + optional target VIP memories from Supabase.
  * Fail-safe: returns empty list if table does not yet exist in sandbox/local DB.
  */
 export async function loadActiveCopilotMemories(
-  supabase: any,
+  supabase: Pick<SupabaseClient, 'from'>,
   creatorId: string,
   targetMemberId?: string | null,
   limit = 6
 ): Promise<CopilotMemoryRecord[]> {
   try {
+    const fetchWindow = Math.max(limit * 3, MAX_ACTIVE_BRAND_RULES + 5);
     let query = supabase
       .from('creator_copilot_memories')
       .select(
@@ -160,7 +282,7 @@ export async function loadActiveCopilotMemories(
       .eq('creator_id', creatorId)
       .eq('status', 'active')
       .order('checked_at', { ascending: false })
-      .limit(limit);
+      .limit(fetchWindow);
 
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     if (targetMemberId && uuidRegex.test(targetMemberId)) {
@@ -173,7 +295,7 @@ export async function loadActiveCopilotMemories(
     if (error || !Array.isArray(data)) {
       return [];
     }
-    return data as CopilotMemoryRecord[];
+    return prioritizeCopilotMemories(data as CopilotMemoryRecord[], limit);
   } catch {
     return [];
   }

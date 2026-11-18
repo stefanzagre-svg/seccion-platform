@@ -1,314 +1,57 @@
-# SECCION — Project & Brand Guidelines
+# SECCION — Core Agent Rules & Canonical Navigation (`web/`)
 
-## 🏷️ Brand Name & Pronunciation Rules
+> Synchronized mirror of `SESSION/AGENTS.md`. Structured by **6-Part Memory Engineering** (`RULES <= 20` | `FACTS` overwrite in place | `LOG` in maps).
 
-- **Branding Representation**: Always written in all caps as **SECCION** (standard Latin characters, no slashed 'Ø').
-- **Pronunciation by Language**:
-  - 🇬🇧 **English**: Pronounced *"Session"*
-  - 🇫🇷 **French**: Pronounced *"Session"*
-  - 🇪🇸 **Spanish**: Pronounced *"Sesión"*
-- **AI Voice Generators**: When pasting scripts into an AI voice generator, write SECCION phonetically as "Session" (or "Sesh-un") so the AI pronounces it flawlessly every time.
+## Always-Loaded RULES (Hard Cap <= 20)
 
-## 🎨 Official Branding Assets
-
-For all communication, design projects, and social media content creation, strictly use the following assets located in `web/public/assets/logo/`:
-- **Icon Logo (Light)**: `seccion-icon-light.png`
-- **Icon Logo (Dark)**: `seccion-icon-dark.jpg`
-- **Wordmark (Light)**: `seccion-wordmark-light.png`
-- **Wordmark (Dark)**: `seccion-wordmark-dark.png`
-
-Always use these files for any platform development or content requiring SECCION's branding.
+1. **Brand Representation**: Always write **SECCION** in all caps (no slashed `Ø`). Phonetic cue for EN/FR voice: `"Session"`; ES: `"Sesión"`. Strictly use logo files from `web/public/assets/logo/`.
+2. **Deep Reasoning & Zero Placeholders**: Verify security boundaries, `FOR UPDATE` concurrency invariants, and GDPR/DSA/EU AI Act/18 U.S.C. § 2257 liabilities before coding. Deliver complete code without `// TODO` stubs.
+3. **Math to Magic & Human-First Copy**: Translate technical architecture into plain human outcomes; frame AI strictly as an assistant for real people (never `"AI Dating"`, never pitch internal tool names like `"DRM"` or `"RLS"` in user copy).
+4. **3-Way Multilingual Parity (`EN`/`ES`/`FR`)**: Every user-facing string MUST use `t("key", "EN fallback")` with simultaneous `en.json`, `es.json`, and `fr.json` updates. Keep platform brand terms (`VIP`, `Creator`, `Studio`, `Wingman`, `SECCION`) untranslated; avoid false friends (`vibra`, never `vibración`).
+5. **Browser Baseline 2024 & WebView Safety**: Target Baseline 2024 on public/conversion routes (`/become-creator`, `/onboarding`, `/login`, `/[username]`); keep any fallback `<= 20` lines, zero external polyfills, and test WebKit + Chromium.
+6. **Outreach Account Isolation & Limits**: Never link banned `@seccionplatform` assets to `@seccion.ai`, `@steveseccion`, `seccioncreatorstudio`, or `seccion ai`. Enforce `18–22` actions/day, `.vault/STOP` check, zero URLs in cold DM #1, and Jaccard `< 0.45`.
+7. **Paid Ads vs. Organic DM Boundary**: Paid ad creatives/OCR (`X`, `Meta`, `TikTok`) must use B2B Studio framing only (`Creator Business Tools`, `AI Community Copilot`) with zero `90%`/`80%` claims or adult keywords; toggle TikTok `AI-generated content = ON` and `Your brand = ON`.
+8. **Cloudflare Worker Compatibility**: Keep `web/src/middleware.ts` on OpenNext’s officially supported edge runtime (do not migrate to `proxy.ts` while OpenNext flags Node middleware experimental). Keep Node-only modules (`node:crypto`) out of client bundles.
+9. **Atomic Verification & Deploy Sync**: Run `npx tsc --noEmit` and `npm test` before claiming passes; after any production deploy, atomically update matching `Production Cloudflare Version ID` across `SESSION/AGENTS.md`, `web/AGENTS.md`, `PROJECT_STATUS.md`, and `.harness/`.
+10. **Trace-to-Regression & Memory Hygiene**: Lock every real production/QA bug as a test (`web/**/*.test.ts` or `.harness/tests/`). Log 1-line lessons to maps (never transcripts); overwrite facts in place; expire 7d notes / archive 30d stale rules; run `.harness/` Monday human review.
 
 ---
 
-## 👤 Architect Profile & Working Contract: Stefan (Sole Builder)
+## SECCION Executive Team Roster
 
-- **Founder & Architect**: Stefan
-- **Core Directive**: **Deep Reasoning Over Speed**. Quality of thought, edge-case analysis, and architectural rigor always supersede superficial pace.
-- **Operating Imperatives for AI Models**:
-  1. **First-Principles Reasoning**: Before proposing implementations, analyze security boundaries, concurrency invariants (e.g. `FOR UPDATE` row locks), and regulatory liabilities (GDPR, EU AI Act, DSA, NY Art. 36).
-  2. **No Placeholders**: Deliver production-grade, complete code without hollow `// TODO` stubs.
-  3. **Obsidian-Style Cognitive Continuity**: Connect systems as bi-directional knowledge graphs (`[[Concept]]`, `[[Architecture]]`, `[[Decisions]]`).
-  4. **Math to Magic**: Complex backend precision must translate into an intuitive, high-status user experience with zero cognitive drag.
+- **Stefan** — Founder & Architect (final architecture & product direction)
+- **Kate** — Executive AI Outreach & Creator Acquisition (`CRM`, `/vip/[code]`, friction coaching)
+- **Sophia** — Platform SEO-AEO & Dual-Sided Trend Radar (`EN`/`ES`/`FR` growth & search intelligence)
+- **Pavel** — Software Product Engineer (resilience, efficiency, strict typing & security)
+- **Lukas** — Administrator & Financial Stack (Spanish S.L.U. admin, tax & 3-ring payouts)
 
 ---
 
-## 🚀 Platform Architecture & Audit Ledger (Synced with Antigravity 2.0 & IDE)
+## Canonical Live FACTS (Overwrite in Place)
 
-> **Last Synced**: 2026-11-17 (ES/FR SSR Localization Phase 2 Deployed Live + Dual-Sided SEO-AEO & Kate Trend Radar Active)
-> **Production Cloudflare Version ID**: 8401f062-23ce-46f0-84ec-09fbd47b153d (ES/FR SSR `/how-we-do`, `/vibe-radar`, `/features/ai-copilot`, `/features/drm-protection` Deployed Live)  
-> **Live Production URL**: `https://seccion.ai` & `https://www.seccion.ai`  
-> **Live Medium Editorial**: `https://medium.com/@seccionadmin/i-built-a-creator-platform-that-pays-90-and-replaces-40-management-agencies-with-ai-heres-what-2170851fa9ef`  
-> **Unit & Stress Test Suite**: 45 / 45 files, 461 / 461 tests PASSING (`npm test` / `vitest run --globals`)  
-> **E2E Certification Suite**: 20 / 20 PASSING across 7 Stages (`npm run test:e2e`)  
-> **Scale Stability & Reliability Ratio**: **99.45% Target Verified [Production Certified]**  
-> **Active Languages**: English (`EN`), Spanish (`ES`), French (`FR`) with 100% 3-way parity across all 34 sections  
-> **Primary Social Platform**: `@steveseccion` on X (Twitter) — Instagram `@seccionplatform` terminated (Sept 2026)  
-> **Official Social Accounts**: Instagram `@seccion.ai` (keep strictly isolated from terminated `@seccionplatform`) | X `@steveseccion` | TikTok `@seccioncreatorstudio` (`https://www.tiktok.com/@seccioncreatorstudio`) | Facebook `seccion ai` (`https://www.facebook.com/profile.php?id=61588742763454`) | YouTube Seccion Platform (`@Seccion-Platform` / `https://www.youtube.com/@Seccion-Platform`) | WhatsApp Concierge `+34 662 907 153` (`@seccionplatform`) | Telegram Concierge +34 662 907 153 (@seccionplatform) | VKontakte Steve Seccion (https://vk.ru/id200006515840)
-
-### 🏆 Audit Execution Scorecard
-
-- 🔴 **CRITICAL (5/5 ALL RESOLVED 🏆)**:
-  - `[✓]` **C1**: Server-side `getUser()` ownership validation in `/api/kyc/verify`
-  - `[✓]` **C2**: `getUser()` session spoofing fix applied across all API routes
-  - `[✓]` **C3**: Authenticated user check in `/api/v2/messages/analyze`
-  - `[✓]` **C4**: Distributed rate-limiting in Supabase database
-  - `[✓]` **C5**: Wired real 3rd-party KYC provider via **DIDIT Zero-Knowledge Identity Gateway** (`verify.didit.me`) + webhook handler (`/api/kyc/didit-webhook`) & Sightengine Age/Liveness.
-
-- 🟠 **HIGH (6/6 ALL RESOLVED 🏆)**:
-  - `[✓]` **H1**: Eliminated un-cached middleware DB query on every request
-  - `[✓]` **H2 / M2**: Zero-overhead Sentry Store API error logging (`src/lib/error-logger.ts`)
-  - `[✓]` **H3**: Dynamic pricing fallback when DB is offline
-  - `[✓]` **H4**: Webhook signature verification in Telegram & Cloudflare endpoints
-  - `[✓]` **H5**: Content DRM security on premium media uploads
-  - `[✓]` **H6**: Atomic credit balance check before assistant query execution
-
-- 🟡 **MEDIUM (8/8 ALL RESOLVED 🏆)**:
-  - `[✓]` **M1 / M3**: Shared TypeScript API contracts barrel (`src/types/api-responses.ts`)
-  - `[✓]` **M4**: Dynamic stream buffer handling in AI assistant
-  - `[✓]` **M5**: SHA-256 Web Crypto consent hash in `SuggestionMovesModal.tsx`
-  - `[✓]` **M6**: Dark glassmorphism skeleton & error boundaries (`loading.tsx`, `error.tsx`)
-  - `[✓]` **M7**: Dynamic import code-splitting for heavy feed modals (`PlatformFeed.tsx`)
-  - `[✓]` **M8**: 60fps GPU particle canvas with reduced-motion detection (`MatchParticleCanvas.tsx`)
-
-- 🟢 **LOW (6/6 ALL RESOLVED 🏆)**:
-  - `[✓]` **L1**: 74 Vitest unit tests in `src/lib/*.test.ts` (pricing-service, date-plan-db, profile-utils, nowpayments, rating-engine, fusion-engine)
-  - `[✓]` **L2**: Strong TypeScript typing in `src/lib/supabase-safe.ts`
-  - `[✓]` **L3**: Removed unauthenticated `x-dev-user-id` header bypasses across all routes
-  - `[✓]` **L4**: Expanded middleware matcher regex for static assets, favicons, and `llms.txt`
-  - `[✓]` **L5**: PII log sanitization across all Segpay billing endpoints
-  - `[✓]` **L6**: Typed `RatingTargetProfile` interface in `src/lib/rating-engine.ts`
-
-### 📱 Mobile Ergonomics Status (iOS & Android)
-- **Safe Area Bottom Inset**: `pb-[calc(0.625rem+env(safe-area-inset-bottom,0px))]` applied on `.mobile-bottom-nav`
-- **Native Touch Target Compliance**: Min 48dp / 44pt target sizes across all swipe actions
-- **Mobile Card Swiper Haptics**: `navigator.vibrate([20, 50, 20])` enabled for card swipes
-
-### 🆕 Post-Audit Feature Additions (Aug 6–10)
-- **[✓] CreatorQuest**: 5-stage identity onboarding quest with Health & Psychology specialization
-- **[✓] Member Purpose Logic**: Minimum required field enforcement before feed access
-- **[✓] Advanced Search Filters**: Profile Status (Member/Creator), age/height min/max
-- **[✓] SEO Infrastructure**: Native `sitemap.ts` + `robots.ts` + canonical URL de-indexing fix
-- **[✓] AI Wingman Tests**: Cookie-based JWT auth test suite, 18/18 assertions passing
-- **[✓] Match Engine Stability**: Null guard on `ARCHETYPE_PROFILES` lookup
-- **[✓] PWA Auto-Close**: `about:blank` redirect after native app install
-- **[✓] Slop Cleanup (Wave 1 & 2)**: Dead code removed, weak types eliminated, scoring constants standardized
-- **[✓] Clean Code Audit (Tasks 3.1, 3.2, 3.3, 2.1, 2.2, 2.3)**: `MemberMediaTab`, `CreatorGoalsTab`, `useAvatarUpload`, and pricing tests completed
-- **[✓] SEO Content & AI Crawlers**: AI-SEO / GEO strategy, `robots.txt` updated for GPTBot/ClaudeBot/PerplexityBot, JSON-LD schema integration
-
-### 🧹 Platform Integrity & Global Outreach (Aug 11–26)
-- **[✓] Demo Login Removal**: Removed `handleDemoLogin` (113 lines), `isMockPhoneMode`, `123456` OTP bypass from `RegistrationGate.tsx` — no more ghost Supabase accounts
-- **[✓] Creator Onboarding Fix**: `?role=creator` URL param + `useEffect` mount fix in `onboarding/page.tsx`; both `/become-creator` CTAs now pass `?role=creator` correctly
-- **[✓] Mock Profiles Purged**: Removed all `elena/sofia/valentina` hardcoded data + `mock-user-id` fallbacks from `member/page.tsx` — empty states replace mock match/goal injection
-- **[✓] Photo Copy Corrected**: Onboarding requirement now reads **1 profile avatar + 2 public album photos** (was ambiguous "min 2 photos")
-- **[✓] `/stream-demo` Auth-Gated**: Added to middleware `PROTECTED_ROUTES` — unauthenticated → `/login`
-- **[✓] NOWPayments Crypto Gateway (`b2722db`)**: USDT (TRC20/Polygon), USDC, BTC gateway with automated 90%/80% revenue split & Creator Studio payout wallet settings
-- **[✓] Global Creator Outreach**: Worldwide option (`global_other`) added to `become-creator`, smart handle/URL normalizer, multilingual FAQ explaining Day 1 worldwide access
-- **[✓] 18 Specialization Filters**: Added full category chip coverage (including AI & Tech, Fashion, Career, Wellness) with EN/ES labels and archetype bindings
-- **[✓] Creator Approval Messaging Protocol**: Confirmation emails, WhatsApp, and Telegram approval notifications MUST include direct links to `/onboarding?role=creator&email={email}` or `/login?email={email}` redirecting creators directly to the Registration Gate with their approved status pre-loaded.
-- **[✓] Supabase Universal RLS Security Remediation**: Enabled RLS and strict ownership/gating policies across all 23 database tables (`web/scripts/enable_universal_rls.sql`), resolving `rls_disabled_in_public` warning while preserving anonymous pre-launch signups and feed discovery.
-- **[✓] C5 KYC Provider**: Live **DIDIT Zero-Knowledge Identity Gateway** (`verify.didit.me`) & Sightengine AI integrated
-- **[✓] Creator 1st Steps Guide & Onboarding Cockpit (Oct 2026)**: Interactive 5-step tour modal (`CreatorTourModal.tsx`), reactive completion checklist HUD (`CreatorOnboardingChecklist.tsx`), full Math-to-Magic EN/ES localization, Playwright E2E certified, deployed live to Cloudflare production (`721f0f1b-ed9d-4694-b405-c5864625937a`).
-- **[✓] Paid Ads & Social Platform Compliance Engine (Oct 2026)**: Established zero-ban targeting, copy, and OCR matrix for X Ads, Meta (Instagram/Facebook), and TikTok Ads (`AD_TARGETING_PLAYBOOK_INSTAGRAM_X.md`). Sanitized all paid ad creative OCR to B2B Creator Studio language (`Creator Business Tools`, `AI Community Copilot`, `Global S2S Translation`, `DRM Privacy Protection`), removing financial percentage triggers (`90%`, `80%`) and adult heuristics (`agencias`, `propinas`, `fans`). Deployed 9:16 vertical and 4:5 feed formats with UTM analytics tracking.
-- **[✓] Autonomous Stealth Creator Outreach Suite (Oct 20, 2026)**: Built & validated `/seccion-autonomous-outreach-suite` (`6/6` golden evals passing) with Dual-Mode Zero-Password Browser Control (CDP port `9222` attach + `storage_state.json`), 70/30 Portfolio Barbell + X New Adult Creator Fast-Track, 6-Stage Fake/Bot/OFM Agency Shield (`TreeSHAP` $\tau = 0.70$), and **Steve Seccion's Creator Account Assistant** native messaging across `EN`, `ES` (`Spain`/`Paisa`/`Rolo`/`Costeño`), `FR`, `PT-BR`, `DE`, `IT`, `PL`, `RO`, and `BG`.
-- **[✓] Platform-Wide 3-Way French FR & Spanish Localization Complete (Nov 2026)**: 100% 3-way parity achieved across all platform annex, legal, creator hub, feature, and public pages (`/become-creator`, `/how-we-do`, `/vibe-radar`, `/rules`, `/privacy`, `/creator-hub`, `/creator-hub/onlyfans-alternative`, `/hit-us-up`, `/faq`, `/features/ai-copilot`, `/features/drm-protection`, `/now-streaming`, `/login`, and `/blog`). Zero binary ternaries remaining. 31/31 unit test files passing (330/330 tests), 120/120 pages compiled.
-- **[✓] YouTube Outreach & Competitor Switcher Engine (Oct 2026)**: Integrated official channel `@Seccion-Platform` (`UCHvUnr0_82uDEASR9jzeUKw`) into autonomous suite (20 touches/day policy, 8:00–23:00 CET). Implemented multi-seed parser harvesting **300 qualified female creators** (sensual dance/heels, sensual yoga, bikini/lingerie try-on hauls, fitness aesthetic, and SWCEO/OnlyFans creator coaching commenters) with 100% external bio link extraction, 73 direct business emails in `.vault/creator_promotion_contacts.csv` (802 total vault leads), subtle-platform-anchored comments (`"— Steve & Team Seccion"`), and automated cross-platform priority routing (Priority A: direct DM via X/TikTok; Priority B: YouTube subscribe/like/comment warmup; Priority C: staged for Instagram DM post-Nov 10).
-- **[⏳] Run cleanup_demo_accounts.sql**: Execute once in Supabase SQL Editor (service role) to purge existing ghost rows
-- **[✓] Teamwork 705-Creator Pipeline Harvest**: Successfully populated 705 qualified creator records across 12 platforms (+41% surplus) into SQLite vault (`outreach_vault.db`) and `.vault/creator_promotion_contacts.csv`, certified VICTORY CONFIRMED by independent victory audit.
-- **[⏳] Dynamic Founding Spots Counter**: Trigger display when creator applications hit 50 milestone
-- **[⏳] Company Web3 Wallet in NOWPayments**: Configure SECCION treasury wallet (USDT Polygon / TRC20) in NOWPayments payout settings
-- **[⏳] NCMEC ESP Registration**: Register `SECCION AI CONCEPT S.L.` on `report.cybertip.org` as an Electronic Service Provider once company tax number (CIF) is issued
-- **[✓] Financial Architecture V3.0 (Anti-Cartel & 3-Ring Isolation) Locked**: Rejected legacy adult card processors (Segpay, CCBill, Centrobill — 6.5%–13.5% MDR + $1,450/yr Visa VIRP/MC BRAM fees). Locked **True 3-Ring Isolation**: **Ring 1 (5 Zero-Robbery Inflows, $0/yr card fees)** via **Coinflow/Wert** (Apple Pay/Cards/US ACH $\rightarrow$ Instant USDC, 2.5%–3.5% split 50-50, 100% chargeback indemnified), **Noda/Brite** (EU/UK Open Banking A2A QR, 0.5%–1.2%), **NOWPayments** (Web3 USDT/USDC, 0.5%), **Rewarble/Cryptovoucher** (PayPal/Klarna E-Pin, 0.5%–1.5%), and **Nuvei/UpGate** (`MCC 5818` strictly gated to Sightengine-verified `sfw_credits` ✨ vs `sovereign_red_pills` 💊); **Ring 2 (Creator 90% Mass Payouts)** via **NOWPayments Mass Payout / Coinflow Split** + **Paxum Business / Noda Balance Netting**; **Ring 3 (Insulated Spanish Corporate Treasury)** via **Banco Sabadell / BBVA (Alicante)** + **Bit2Me Corporate / Kraken Business** (0.16% USDC $\rightarrow$ EUR ramp) + **Revolut Business (`ES` IBAN)** (pure B2B SaaS virtual cards). Includes Geo-IP Checkout VAT Add-On (+21% EU / 0% Non-EU) & Automated Creator Self-Billing (`Autofacturación` Art. 5 RD 1619/2012 via ROI `ESB05765441`). Documented in `[[Architecture/Financial-Stack-And-Inflow-Outflow-Isolation]]`.
-
+- **Live Production URL**: `https://seccion.ai` & `https://www.seccion.ai` (`www` -> `301` apex)
+- **Production Cloudflare Version ID**: 40ed6810-dcae-426e-bb01-6785a26d93a3
+- **Medium Editorial**: `https://medium.com/@seccionadmin/i-built-a-creator-platform-that-pays-90-and-replaces-40-management-agencies-with-ai-heres-what-2170851fa9ef`
+- **Unit & Stress Test Suite**: `45 / 45` files, `463 / 463` tests PASSING (`npm test -- --run` in `web/`)
+- **E2E Certification Suite**: `20 / 20` PASSING across Stages 1–6 + onboarding guide (`npm run test:e2e`)
+- **Active Locales**: `EN`, `ES`, `FR` (100% 3-way parity)
+- **Official Social Accounts**: Instagram `@seccion.ai` | X `@steveseccion` | TikTok `@seccioncreatorstudio` | Facebook `seccion ai` (`61588742763454`) | YouTube `@Seccion-Platform` | WhatsApp & Telegram `+34 662 907 153` | VKontakte `vk.ru/id200006515840`
+- **Open Pre-Launch Backlog**:
+  - `[⏳]` Execute `web/scripts/cleanup_demo_accounts.sql` once in Supabase SQL Editor (service role)
+  - `[⏳]` Configure NOWPayments company Web3 wallet (Circle `USDC` Polygon/Solana — MiCA compliant)
+  - `[⏳]` Complete NCMEC ESP verification (`report.cybertip.org`) & IURE `Titularidad Real`
 
 ---
 
-## 🎯 Architectural Refactoring Roadmap (Component Decomposition Sprints — ALL COMPLETE 🏆)
+## Progressive Context Recall Index (`../.harness/maps/` & `../Obsidian/`)
 
-### ⚡ Sprint 1: Feed Decomposition (`PlatformFeed.tsx` — 100% COMPLETE 🏆)
-- **[✓] `FeedCardSwiper.tsx`**: Extracted Framer Motion gesture physics, ZKP face-blur, DRM previews, and synergy tooltips.
-- **[✓] `FeedFilterBar.tsx`**: Extracted purpose, vibe, archetype, and all 18 specialization filter controls + advanced search drawer.
-- **[✓] `FeedPaywallModal.tsx`**: Extracted tier gating, PPV unlocking dialog, and subscription unlock dialogs.
-
-### ⚡ Sprint 2: Member Dashboard Modularization (`profile/member/page.tsx` — 100% COMPLETE 🏆)
-- **[✓] `MemberMediaTab.tsx`**: Extracted media gallery, upload inputs, and relationship level gating.
-- **[✓] `MemberConnectionsTab.tsx`**: Extracted dual-gauge harmonic relationship tracker with all 8 RLS relationship levels, active matches, and Suggestion Moves.
-- **[✓] `MemberRosterTab.tsx`**: Extracted active subscription management, tier breakdown, and auto-renew cancellation controls.
-- **[✓] `MemberInsightsTab.tsx`**: Extracted AI profile vectors, emotional aura bento cards, and prompt answer displays.
-
-### ⚡ Sprint 3: Creator Studio Modularization (`studio/page.tsx` — 100% COMPLETE 🏆)
-- **[✓] `CreatorGoalsTab.tsx`**: Extracted crowdfunding campaigns and backer feed.
-- **[✓] `StudioStreamTab.tsx`**: Extracted live broadcast cockpit, viewer chat feed, and 18 U.S.C. § 2257 co-performer consent management.
-- **[✓] `StudioContentOpsTab.tsx`**: Extracted DRM upload manager, ZKP face blur, and Content Provenance selector.
-- **[✓] `StudioAnalyticsTab.tsx`**: Extracted 90% Founding Creator net revenue split metrics, conversion graphs, and escrow payout settlement tables.
-
----
-
-## 🌐 Multilingual Deployment Protocol
-
-> **Rule**: Any new text, label, error message, button, placeholder, hint, or UI copy added in English **MUST** be simultaneously translated into all active languages. Currently active: **ES (Spanish)**.
-
-### ⚙️ Implementation Pattern
-
-Every user-facing string in a component MUST use the `t()` helper from `useTranslation()` with an inline English fallback:
-
-```tsx
-// ✅ CORRECT — translatable, fallback safe
-t("onboarding.creatorExt.bioLabel", "Creator Bio")
-
-// ❌ WRONG — hardcoded, not translatable
-"Creator Bio"
-```
-
-Translation keys are stored in:
-- `web/src/locales/en.json` — English source
-- `web/src/locales/es.json` — Spanish translation
-
-Both files MUST be updated atomically in the same commit as the feature.
-
----
-
-### 🗣️ Translation Quality Rules (via `/seccion-math-to-magic-skill`)
-
-1. **Use natural, culturally fluent Spanish** — not machine-translated output. Phrasing must match Gen Z creator & member vernacular in Latin America and Spain.
-2. **Apply Math to Magic tone** — technical jargon in EN gets human, financial, or social equivalents in ES (e.g., *Synergy Engine* → *Motor de Sinergia*, not *Motor de Sincronía Algorítmica*).
-3. **Never translate globally recognized EN brand/platform words** — the following stay in English across all locales:
-   - Platform terms: `VIP`, `Creator`, `Studio`, `Creator Studio`, `Wingman`, `Synergy`, `Feed`, `Stream`, `Quest`
-   - UI/Tech universals: `Bio`, `DM`, `URL`, `VIP`, `FAQ`, `OnlyFans`, `Vimeo`, `YouTube`
-   - SECCION brand terms: `SECCION`, `Warm Paywall`, `Face Blur`, `Match`, `Roster`
-4. **Avoid false friends** — e.g., do not translate `"vibe"` as `"vibración"` (wrong connotation); use `"vibra"` or `"onda"`.
-5. **Tone**: Peer-level, high-status, warm — never cold corporate or robotic helpdesk language.
-6. **Human-First Connection & AI-as-Assistant Positioning (`[[Architecture/Human-First-Connection-And-AI-Assistant-Positioning]]`)**:
-   - **Replace standalone `"Dating"`** on top-level positioning with multi-sphere human connection: *"Connect with people who share your interests"*, *"Enlarge your circle"*, or *"Learn / Teach New Skills"*.
-   - **NEVER use `"AI Dating"`**: `"AI Dating"` implies synthetic/fake chatbot profiles. AI in SECCION must **always** be framed as an **integrated assistant agent for real people**.
-   - **Canonical Framing**: *"Discover—with the help of next-generation AI matchmaking—real people that fit you best for Education, Lifestyle, Romance, Economy, or Business."*
-
----
-
-### 🔁 Trigger Checklist for Any Agent
-
-When adding or editing any UI text:
-- [ ] Wrap string in `t("section.key", "EN fallback")`
-- [ ] Add key + EN value to `web/src/locales/en.json`
-- [ ] Add key + ES translation to `web/src/locales/es.json`
-- [ ] Validate both JSON files parse correctly (`ConvertFrom-Json`)
-- [ ] ES translation reviewed against Math to Magic tone imperatives
-
----
-
-## 🎨 Creator Intent & Content Synergy Protocol (via `/seccion-creator-intent-protocol`)
-
-When introducing a new **Creator Intent, Content Synergy, or Specialization** (e.g. `ai_tech`, `fitness`, `beauty`), execute the mandatory 5-stage pipeline:
-1. **Constants & Prompts (`constants.ts`)**: Add to `CREATOR_SPECIALIZATIONS`, plus symmetrical EN & ES prompt questions in `PURPOSE_PROMPTS` & `PURPOSE_PROMPTS_ES`.
-2. **Onboarding & Quests**: Update `SPECIALIZATIONS` & `SPECIALIZATIONS_ES` in `CreatorQuest.tsx`, and `INTENTS` / `CORE_PASSIONS` in `IntentSelector.tsx`.
-3. **Filters & Feed Discovery**: Update `SHORT_TITLES` & `SHORT_TITLES_ES` in `SpecializationFilter.tsx` and add mock showcase archetypes in discovery.
-4. **Multilingual Sync**: Sync translation keys across `en.json` & `es.json` using Math-to-Magic tone.
-5. **Validation**: Verify type-safety with `npx tsc --noEmit`.
-
----
-
-## 📢 Social Media Outreach & Paid Acquisition Guardrails (Learned Memory)
-
-> **Cross-System Obsidian Links**: `[[Outreach/Autonomous-Creator-Outreach-Charter-2026]]` · `[[Outreach/Campaign-Postmortems-2026]]` · `[[Outreach/Three-Regional-Archetype-Strategy-LATAM-CIS-Asia]]` · `[[Outreach/Eastern-Europe-S2S-Wedge]]` · `[[Outreach/Authority-First-Pull-Psychology]]` · `[[Compliance/Platform-Character-Limits]]`
-
-1. **Account Isolation & Anti-Spam Discipline**:
-   - Never link legacy/banned `@seccionplatform` emails, phone numbers, or Meta Accounts Center profiles to active assets (`@seccion.ai`, `@steveseccion`, `steve.seccionplatform`, `seccion ai` / `id=61588742763454`).
-   - Enforce a **14-day warmup**, hard cap of **18–22 outbound actions/day** per platform, 3-touch organic warmup (Story View + Like + Contextual Comment) before DMing, **zero raw URLs in cold DM #1**, and **Jaccard similarity $< 0.45$** across every rolling 20-message window via `/seccion-autonomous-outreach-suite`.
-2. **Paid Ads vs. Organic DM Compliance Boundary**:
-   - **Paid Ad Creatives & OCR (X / Meta / TikTok)**: Strictly use B2B Creator Studio framing (`Creator Business Tools`, `AI Community Copilot`, `Global S2S Translation`, `DRM Privacy Protection`). Never include `90%`/`80%` financial promises or adult/dating triggers (`OnlyFans`, `Fansly`, `Dating`, `Citas`, `agencias`, `propinas`, `fans`) in paid ad OCR or keyword targeting. Use Trojan Horse B2B look-alikes (`@OBSProject`, `@Streamlabs`, `@Patreon`, `@Twitch`, `@KickStreaming`).
-   - **TikTok Mandatory Upload Toggles**: Always switch **`AI-generated content` = ON** and **`Disclose post content` (`Your brand`) = ON** to prevent 0-view shadowbans. Never place URLs in TikTok captions or comments.
-   - **Geographic Ad-Set Isolation & Conversion Routing**: Never combine Tier-1 English (`US`/`UK`/`CA`) with Eastern Europe (`PL`/`RO`/`BG`) or LATAM (`CO`/`MX`/`AR`) in the same ad set. Prioritize **Meta/TikTok Native Instant Lead Forms** (`APPLICATION US-CA` benchmark: 100% completion rate) and **Click-to-WhatsApp Concierge (`+34 662 907 153`)** over cold mobile webviews (`96.7%` drop-off), and always anchor web destinations to `https://seccion.ai/become-creator#apply`.
-3. **Target Qualification & Multilingual Wedge (`Steve Seccion's Creator Account Assistant`)**:
-   - **#1 Competitor-Platform High-Intent Fast-Track (`OnlyFans`, `Fansly`, `Fanvue`, `Patreon`, `Twitch`, `Chaturbate`)**: Creators or female profiles mentioning, following, or registered on competitor platforms (`OnlyFans`, `Fansly`, `Fanvue`, `Patreon`, `Twitch`, `Chaturbate`, `Kick`, `LoyalFans`, `ManyVids`) have the highest conversion likelihood and receive an automatic `+0.18` confidence boost and `TOP_PRIORITY_COMPETITOR_SWITCHER` fast-track across Instagram, TikTok, Facebook, and X. While browsing, always harvest available **Emails**, **Telegram**, **WhatsApp**, and **Native Language** into `.vault/creator_promotion_contacts.csv` for future promotion campaigns.
-   - **70/30 Portfolio Barbell**: $70\%$ daily quota in $5\text{K}–50\text{K}$ unmanaged Fan-Drivers; $30\%$ in $1\text{K}–5\text{K}$ Rising Stars ($\ge 6.0\%$ ER).
-   - **X New Adult Creator Fast-Track**: On X (`@steveseccion`), newly created or sub-$5\text{K}$ profiles are qualified **only** if verified as independent explicit/adult content creators (skipping OFM chatter farms via `/seccion-autonomous-outreach-suite`).
-   - **Eastern European Wedge (`PL`, `RO`, `BG`)**: Polish, Romanian, and Bulgarian female creators are top-priority targets. Pitch **SECCION's Real-Time AI Voice & Text Translation (75+ languages) + 90% Founding Split + Free Year-1 AI Copilot** in their native language so they can monetize US/EU fans directly without predatory 50%-cut translation agencies.
-   - **Authority-First Value Delivery**: Overcome creator Status-Quo Bias (`PLFS +14`) by framing DM #1 as a zero-link peer observation from **Steve Seccion's Creator Account Assistant**, delivering the Medium founder editorial (`https://medium.com/@seccionadmin/i-built-a-creator-platform-that-pays-90-and-replaces-40-management-agencies-with-ai-heres-what-2170851fa9ef`), comparison benchmark (`https://seccion.ai/creator-hub/onlyfans-alternative`), or `#apply` link only in DM #2 after engagement.
-4. **Sunday 10:00 AM Weekly Direct Outreach Dispatch Engine**:
-   - Every Sunday at 10:00 AM CET, automatically audit and compile all newly harvested email, Telegram, and off-platform creator contacts captured during the rolling week (`.vault/creator_promotion_contacts.csv` and `.vault/outreach_vault.db`).
-   - Cross-reference and deduplicate against `.vault/sent_emails_ledger.json` and platform touch logs to guarantee zero repeat messaging.
-   - Draft and dispatch curated, niche-specific outreach packages signed as **Steve Assistant Creator** via the authenticated Gmail in-page composer on Chrome CDP port 9222 (Option A anti-throttling spacing) and dispatch/stage Telegram engagements via active Telegram Web.
-
----
-
-## ⚡ Antigravity 2.0 Deployment Synchronization Protocol
-
-> **Mandatory Contract Rule**: After every production deployment (Cloudflare Worker/OpenNext release, database RLS migration, or test certification update), execute the following synchronization steps atomically:
-> 1. **Update Root & Sub-app Ledgers**: Sync `Production Cloudflare Version ID`, commit hash, test count, and deployment timestamp across `AGENTS.md`, `web/AGENTS.md`, and `PROJECT_STATUS.md`.
-> 2. **Session Chronology Entry**: Add a detailed session ledger entry into `PROJECT_STATUS.md` recording all features shipped, test metrics, and live URLs.
-> 3. **Verification**: Confirm Cloudflare cold-start metrics and verify HTTP 200 response on `https://seccion.ai`.
-
-
-
-
-
----
-
-## ⚙️ Agent Harness Engineering Protocol (`.harness/` — IPC-620 Class 3 Governance)
-
-> **Core Equation**: $\text{Agent} = \text{Model (Brain)} + \text{Harness (Operating System)}$
-> Every AI agent and `/teamwork` subagent operating in this workspace MUST execute within the `.harness/` control loop rather than relying on unconstrained conversational execution.
-
-### 1. Progressive Disclosure Spatial Maps (`.harness/maps/`)
-Load only the domain map required for your active sub-task:
-- [`architecture-web.md`](file:///c:/Users/USER/Documents/AI/PROJECT%20CONTENT%20PLATFORM/SESSION/.harness/maps/architecture-web.md) — Next.js 16, Cloudflare OpenNext, LiveKit, Gemini & SynthID provenance
-- [`security-and-rls.md`](file:///c:/Users/USER/Documents/AI/PROJECT%20CONTENT%20PLATFORM/SESSION/.harness/maps/security-and-rls.md) — Zero-Trust Supabase RLS (`rowsecurity = true`), DIDIT KYC, atomic `FOR UPDATE` locks
-- [`i18n-math-to-magic.md`](file:///c:/Users/USER/Documents/AI/PROJECT%20CONTENT%20PLATFORM/SESSION/.harness/maps/i18n-math-to-magic.md) — EN/ES key symmetry, preserved vocabulary, false-friend rules
-- [`outreach-and-stealth.md`](file:///c:/Users/USER/Documents/AI/PROJECT%20CONTENT%20PLATFORM/SESSION/.harness/maps/outreach-and-stealth.md) — 12-platform creator outreach, TreeSHAP $\tau \ge 0.70$, Jaccard $< 0.45$, `.vault/STOP` lock
-- [`deployment-ledger.md`](file:///c:/Users/USER/Documents/AI/PROJECT%20CONTENT%20PLATFORM/SESSION/.harness/maps/deployment-ledger.md) — Cross-ledger synchronization invariants
-
-### 2. Mandatory 4-Step Harness Execution Loop
-1. **Step 1 — Initialize Contract & Run 12-Point Pre-Flight (`NO`-Count Reliability Gate)**:
-   ```powershell
-   python .harness/harness_cli.py init-contract --goal "<task goal>" --domain full_stack
-   python .harness/harness_cli.py preflight --auto-remediate
-   ```
-   - **$0\text{ NOs}$ ($100\%$ Reliability — Class 3)**: `AUTO_PROCEED`
-   - **$1\text{–}2\text{ NOs}$ (Non-critical)**: `AUTO_REMEDIATE_OR_RESTRICT`
-   - **Any Critical Gate `NO` (`C01, C04, C06, C07, C12`)**: `HOLD_FOR_CRITICAL_FIX`
-   - **$\ge 3\text{ NOs}$ ($\le 75\%$ Reliability)**: `HARD_BLOCK_ESCALATE` (Aborts before spending tokens)
-2. **Step 2 — Policy Interception Before Risky Tools**:
-   ```powershell
-   python .harness/harness_cli.py check-policy --tool WRITE_CODE --args "{\"target_path\": \"src/...\"}"
-   ```
-3. **Step 3 — Non-Bypassable Mechanical Sensor Verification (`max_retries = 3`)**:
-   ```powershell
-   python .harness/harness_cli.py verify
-   ```
-   Runs `sensor_i18n_parity.py`, `sensor_sql_rls.py`, `sensor_outreach_safety.py`, and `sensor_ledger_sync.py`.
-4. **Step 4 — Emit Immutable Change Receipt**:
-   ```powershell
-   python .harness/harness_cli.py emit-receipt --artifact "<deliverable>"
-   ```
-
----
-
-## 🇲🇦 Moroccan & Francophone Creator Expansion Protocol
-
-> **Cross-System Obsidian Reference**: `[[Architecture/Moroccan-And-Francophone-Creator-Expansion]]`
-
-1. **French (`FR`) Language Localization Pipeline**:
-   - Platform-wide translation dictionary (`web/src/locales/fr.json`) to be added alongside `en.json` and `es.json`.
-   - Extends platform accessibility to North Africa (Morocco, Algeria, Tunisia), France, Belgium, Switzerland, and Francophone West Africa.
-   - Enforce Math-to-Magic tone adapted to contemporary Parisian & North African French.
-2. **Morocco (`MA` / `+212`) 1-Click Geo-Restriction**:
-   - `MA` added to `SUGGESTED_COUNTRIES` in `web/src/app/studio/page.tsx`.
-   - Enables Moroccan creators to 1-click geoblock all domestic Moroccan IP addresses, rendering their profile and livestreams cryptographically invisible inside Morocco.
-3. **5-Layer Domestic Shielding for Moroccan Sensual / NSFW Creators**:
-   - **Layer 1 (Domestic Geoblock)**: 1-click `MA` geofencing hides the creator from local traffic.
-   - **Layer 2 (ZKP Progressive Face Blur)**: Facial masking active on all public teasers until VIP/trust thresholds are unlocked.
-   - **Layer 3 (Forensic Canvas DRM Watermarking)**: Unique session hash + viewer ID stamped on all decrypted video/photo frames.
-   - **Layer 4 (Alias & Vaulted Real Identity)**: Legal name and CNI held strictly in encrypted DIDIT vault; never displayed publicly.
-   - **Layer 5 (Zero-Adult Invoicing Isolation)**: Automated B2B self-billing (*Autofacturación*) and payout payment descriptors strictly use neutral digital export terminology (*"Prestation de services de création et production audiovisuelle numérique"*).
-
----
-
-## 🌐 Browser Support Policy (Modern Web Guidance)
-
-- **Baseline Target**: Target **Baseline 2024** or earlier. Omit fallbacks and `@supports` blocks for features that reached Baseline in or before 2024.
-- **Outreach Funnel & Mobile In-App WebView Protection**: On creator acquisition and auth routes clicked from X, Instagram, TikTok, Telegram, or WhatsApp (`/become-creator`, `/onboarding`, `/login`, `/[username]`), never ship unguarded **Limited availability** features that can break iOS WebKit or Android in-app WebViews.
-- **Fallback Budget (`Baseline Newly available` / `2025+`)**: Allow Baseline Newly available features only when non-breaking via CSS progressive enhancement, a `@supports` guard, or a custom zero-dependency fallback of **20 lines or fewer**.
-- **Zero Polyfill Dependencies**: Do not add external polyfill libraries; prefer CSS `@supports` rules or native HTML fallbacks.
-- **Cross-Engine Verification**: When modifying modals, dialogs, forms, or layout primitives on conversion routes, verify both modern and fallback paths across **Chromium** and **WebKit (Safari/iOS)**.
-
-
+Load only the domain map matching your current task:
+- `../.harness/maps/architecture-web.md` — Next.js 16.4, OpenNext Cloudflare 1.20, LiveKit, Gemini & SynthID
+- `../.harness/maps/security-and-rls.md` — Supabase RLS, DIDIT SDK `0.6.0` KYC, HSTS headers, `FOR UPDATE` ledger locks
+- `../.harness/maps/i18n-math-to-magic.md` — EN/ES/FR parity, preserved brand terms, Creator Intent pipeline
+- `../.harness/maps/outreach-and-stealth.md` — 12-platform acquisition, TreeSHAP $\tau \ge 0.70$, CDP port `9222`, Kate pacing
+- `../.harness/maps/deployment-ledger.md` — Cross-ledger sync rules & `sensor_ledger_sync.py`
+- `../.harness/maps/memory-engineering-sop.md` — 6-part memory cycle, trace-to-regression loop & Copilot Cap/TTL
+- `../.harness/maps/platform-audit-and-history.md` — Resolved C1–L6 audit archive, ship history, FinStack V3.1 & Morocco 5-layer shield
+- `../.harness/maps/learned-guardrails.md` — Auto-promoted guardrails, deadlines & regression alerts
+- `../Obsidian/HOME.md` — Executive Second Brain (`[[decisions]]`, `[[Architecture/Financial-Stack-And-Inflow-Outflow-Isolation]]`, `[[inbox]]`)
