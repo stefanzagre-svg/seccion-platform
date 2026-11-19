@@ -45,19 +45,35 @@ export default function RequirementGateModal({
     if (!isOpen || !needsHighTrust) return;
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (!session?.user?.id) return;
-      const { data: prof } = await supabase
+      const { data: prof, error } = await supabase
         .from('profiles')
-        .select('is_kyc_verified')
+        .select('is_age_verified, is_kyc_verified')
         .eq('id', session.user.id)
         .maybeSingle();
-      setIsHighTrustVerified(Boolean(prof?.is_kyc_verified));
+
+      if (error && (error.code === '42703' || error.message?.includes('is_age_verified'))) {
+        const { data: legacyProf } = await supabase
+          .from('profiles')
+          .select('is_kyc_verified')
+          .eq('id', session.user.id)
+          .maybeSingle();
+        setIsHighTrustVerified(Boolean(legacyProf?.is_kyc_verified));
+        return;
+      }
+
+      setIsHighTrustVerified(Boolean(prof?.is_age_verified || prof?.is_kyc_verified));
     });
   }, [isOpen, needsHighTrust]);
 
   const handleStartServerKyc = async () => {
     setLaunchingDidit(true);
     try {
-      const res = await fetch('/api/kyc/didit-session', { method: 'POST' });
+      const returnPath = typeof window !== 'undefined' ? window.location.pathname : '/feed';
+      const res = await fetch('/api/kyc/didit-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mode: 'member_age', returnTo: returnPath }),
+      });
       const data = await res.json();
       if (data?.url) {
         window.location.href = data.url;

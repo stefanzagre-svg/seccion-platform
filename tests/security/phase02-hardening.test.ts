@@ -249,7 +249,25 @@ describe('Phase 2 Security, Privacy & Readiness Hardening', () => {
           headers: { 'cf-ipcountry': 'ma' },
         })
       );
-      expect(await maRes.json()).toEqual({ country: 'MA' });
+      expect(await maRes.json()).toMatchObject({
+        country: 'MA',
+        region: null,
+        isStrictUsState: false,
+        recommendedAgeMethod: 'didit_age',
+      });
+
+      const txRes = await GET(
+        new NextRequest('https://seccion.ai/api/v2/geo', {
+          headers: { 'cf-ipcountry': 'us', 'cf-region-code': 'tx' },
+        })
+      );
+      expect(await txRes.json()).toMatchObject({
+        country: 'US',
+        region: 'TX',
+        isStrictUsState: true,
+        recommendedAgeMethod: 'us_transactional',
+      });
+
       expect(normalizeCountryCode('XX')).toBeNull();
     });
 

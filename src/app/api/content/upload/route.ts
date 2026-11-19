@@ -2,12 +2,14 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin-client';
 import {
+  checkCreatorUploadKycGate,
   classifyOrderIntent,
-  detectSightengineProvenance,
-  qualifyDeliveredMedia,
+  inspectUploadedMedia,
   type ContentSafetyRating,
   type WalletLedgerType,
 } from '@/lib/sightengine';
+import { detectSynthId } from '@/lib/synthid';
+import { sendTelegramNotification } from '@/lib/telegram';
 
 export async function POST(request: Request) {
   try {
@@ -61,7 +63,7 @@ export async function POST(request: Request) {
 
     const { data: creator, error: creatorError } = await admin
       .from('profiles')
-      .select('id, display_name')
+      .select('id, display_name, is_kyc_verified')
       .eq('id', user.id)
       .single();
 
@@ -77,13 +79,34 @@ export async function POST(request: Request) {
       explicitFlag,
     });
 
-    // Stage 2: Real Sightengine AI safety & provenance inspection (no fake delay)
-    const [mediaVerdict, provenanceDetection] = await Promise.all([
-      qualifyDeliveredMedia(mediaUrl, stage1.rating),
-      detectSightengineProvenance(mediaUrl, mediaType),
-    ]);
+    // Stage 2A: Free local / SynthID provenance check first; only pay Sightengine genai ops if inconclusive
+    let synthIdDetection = null;
+    if (mediaType === 'image' && provenanceLevel !== 'ai_generated') {
+      synthIdDetection = await detectSynthId(mediaUrl, mediaType).catch(() => null);
+    }
+
+    const needsSightengineGenAi = !synthIdDetection && provenanceLevel !== 'ai_generated';
+
+    // Stage 2B: Single consolidated Sightengine HTTP call (nudity-2.1, wad, gore-2.0, face-age + conditional genai)
+    const { mediaVerdict, provenanceDetection: sightengineProvenance } =
+      await inspectUploadedMedia(mediaUrl, stage1.rating, {
+        isVerifiedCreator: Boolean(creator.is_kyc_verified),
+        includeGenAi: needsSightengineGenAi,
+      });
+
+    const provenanceDetection = synthIdDetection || sightengineProvenance;
 
     if (mediaVerdict.isBlockedProhibited) {
+      if (mediaVerdict.safetyFlags?.includes('minor_suspected')) {
+        sendTelegramNotification(
+          `🚨 *MINOR SAFETY QUARANTINE (Sightengine face-age)*\n\n` +
+            `👤 *Uploader:* ${creator.display_name || user.id}\n` +
+            `🆔 *KYC Verified:* ${creator.is_kyc_verified ? 'YES' : 'NO'}\n` +
+            `📊 *Minor Confidence:* ${((mediaVerdict.minorScore ?? 0) * 100).toFixed(1)}%\n` +
+            `⛔ *Action:* Upload blocked (HTTP 422)`
+        ).catch((err) => console.warn('[Upload Minor Alert Error]:', err));
+      }
+
       return NextResponse.json(
         {
           success: false,
@@ -98,6 +121,24 @@ export async function POST(request: Request) {
     // Server-Lock V3.1 classification & required payment ledger
     const finalRating: ContentSafetyRating =
       stage1.rating === 'NSFW_18' || mediaVerdict.rating === 'NSFW_18' ? 'NSFW_18' : 'SFW';
+
+    // 18 U.S.C. § 2257 Gate: SFW teasers/posts are allowed pre-KYC, NSFW_18 requires verified Creator KYC
+    const kycGate = checkCreatorUploadKycGate({
+      finalRating,
+      isKycVerified: Boolean(creator.is_kyc_verified),
+    });
+    if (!kycGate.allowed) {
+      return NextResponse.json(
+        {
+          success: false,
+          errorType: kycGate.errorType,
+          contentRating: finalRating,
+          message: kycGate.message,
+        },
+        { status: kycGate.status }
+      );
+    }
+
     const finalLedger: WalletLedgerType =
       finalRating === 'NSFW_18' ? 'sovereign_red_pills' : 'sfw_credits';
 
@@ -108,9 +149,12 @@ export async function POST(request: Request) {
       rawNudityScore: mediaVerdict.rawNudityScore,
       partialNudityScore: mediaVerdict.partialNudityScore,
       safeScore: mediaVerdict.safeScore,
+      minorScore: mediaVerdict.minorScore ?? 0,
+      requiresManualAgeReview: Boolean(mediaVerdict.requiresManualAgeReview),
       safetyFlags: mediaVerdict.safetyFlags || [],
       provenanceSubmitted: provenanceLevel,
       provenanceDetected: provenanceDetection?.suggestedLevel || null,
+      provenanceSource: provenanceDetection?.source || null,
       checkedAt: new Date().toISOString(),
     };
 
@@ -189,7 +233,8 @@ export async function POST(request: Request) {
           : 'Media passed safety checks and was locked to SFW Credits moderation queue.',
     });
   } catch (error: unknown) {
-    const errMsg = error instanceof Error ? error.message : 'Internal server error during upload validation';
+    const errMsg =
+      error instanceof Error ? error.message : 'Internal server error during upload validation';
     console.error('[CONTENT UPLOAD API] Error:', error);
     return NextResponse.json({ error: errMsg }, { status: 500 });
   }

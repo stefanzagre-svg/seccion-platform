@@ -30,9 +30,9 @@
 ## Canonical Live FACTS (Overwrite in Place)
 
 - **Live Production URL**: `https://seccion.ai` & `https://www.seccion.ai` (`www` -> `301` apex)
-- **Production Cloudflare Version ID**: 40ed6810-dcae-426e-bb01-6785a26d93a3
+- **Production Cloudflare Version ID**: 91b1170c-8493-4754-afbd-2341319ba8c0
 - **Medium Editorial**: `https://medium.com/@seccionadmin/i-built-a-creator-platform-that-pays-90-and-replaces-40-management-agencies-with-ai-heres-what-2170851fa9ef`
-- **Unit & Stress Test Suite**: `45 / 45` files, `463 / 463` tests PASSING (`npm test -- --run` in `web/`)
+- **Unit & Stress Test Suite**: `46 / 46` files, `476 / 476` tests PASSING (`npm test -- --run` in `web/`)
 - **E2E Certification Suite**: `20 / 20` PASSING across Stages 1–6 + onboarding guide (`npm run test:e2e`)
 - **Active Locales**: `EN`, `ES`, `FR` (100% 3-way parity)
 - **Official Social Accounts**: Instagram `@seccion.ai` | X `@steveseccion` | TikTok `@seccioncreatorstudio` | Facebook `seccion ai` (`61588742763454`) | YouTube `@Seccion-Platform` | WhatsApp & Telegram `+34 662 907 153` | VKontakte `vk.ru/id200006515840`

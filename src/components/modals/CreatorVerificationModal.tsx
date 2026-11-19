@@ -40,31 +40,29 @@ export default function CreatorVerificationModal({ isOpen, onClose, userId }: Cr
         status: 'pending'
       });
 
-      // Create KYC intent
-      const res = await fetch('/api/kyc/shufti-webhook', {
+      // Create real DIDIT Creator KYC session (18 U.S.C. § 2257 + AML)
+      const res = await fetch('/api/kyc/didit-session', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'create_intent', userId })
+        body: JSON.stringify({
+          mode: 'creator_kyc',
+          returnTo: '/onboarding/kyc?session_done=true',
+        }),
       });
       
       const data = await res.json();
       
-      if (!res.ok) {
-        throw new Error(data.error || 'Failed to initialize verification.');
+      if (!res.ok || !data?.url) {
+        throw new Error(data?.error || 'Failed to initialize DIDIT verification session.');
       }
 
-      // Normally here you would redirect the user to the Shufti Pro URL or open their SDK
-      // For this implementation, we will simulate the Shufti Pro flow
       setStep(2);
+      window.location.href = data.url;
       
-      // Simulate verification processing
-      setTimeout(() => {
-        setStep(3);
-      }, 3000);
-      
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('KYC init error:', err);
-      setVerificationError(err.message || 'An unexpected error occurred.');
+      const message = err instanceof Error ? err.message : 'An unexpected error occurred.';
+      setVerificationError(message);
     } finally {
       setIsVerifying(false);
     }
@@ -100,7 +98,7 @@ export default function CreatorVerificationModal({ isOpen, onClose, userId }: Cr
                 </div>
                 <div>
                   <h2 className="text-sm font-black uppercase tracking-widest text-white">Creator Identity Verification</h2>
-                  <p className="text-[10px] text-white/40 uppercase font-bold">Powered by Shufti Pro</p>
+                  <p className="text-[10px] text-white/40 uppercase font-bold">Powered by DIDIT Zero-Knowledge KYC</p>
                 </div>
               </div>
               {step !== 2 && (

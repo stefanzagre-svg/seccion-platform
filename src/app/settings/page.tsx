@@ -134,20 +134,32 @@ export default function SettingsPage() {
                   </div>
                   <div>
                     <h3 className="text-sm font-extrabold uppercase tracking-wider text-white flex items-center gap-2">
-                      <span>{locale === 'es' ? 'Verificación de Edad & Protocolo ZKP' : 'Age Verification & ZKP Privacy'}</span>
+                      <span>
+                        {locale === 'fr'
+                          ? 'Vérification d’Âge & Confidentialité'
+                          : locale === 'es'
+                          ? 'Verificación de Edad & Privacidad'
+                          : 'Age Verification & Privacy'}
+                      </span>
                       <span className="text-[9px] font-mono bg-[#00fbfb]/20 text-[#00fbfb] px-2 py-0.5 rounded-full uppercase font-bold">
                         DSA Compliant
                       </span>
                     </h3>
                     <p className="text-[10px] text-[#00fbfb] font-mono">
-                      {locale === 'es' ? 'Pruebas de Conocimiento Cero & Privacidad Soberana' : 'Zero-Knowledge Proofs & Sovereign Privacy'}
+                      {locale === 'fr'
+                        ? 'Vérification Éphémère DIDIT & Feuille de Route EU Wallet (eIDAS 2.0)'
+                        : locale === 'es'
+                        ? 'Verificación Efímera DIDIT & Hoja de Ruta EU Wallet (eIDAS 2.0)'
+                        : 'Ephemeral DIDIT Verification & EU Age Wallet Roadmap (eIDAS 2.0)'}
                     </p>
                   </div>
                 </div>
                 <p className="text-xs text-white/70 leading-relaxed pt-1">
-                  {locale === 'es'
-                    ? 'SECCION cumple con la Ley de Servicios Digitales (DSA Art. 28) y las leyes internacionales. Puedes verificar tu mayoría de edad de forma 100% anónima conectando una billetera de identidad ZKP (Privado ID / Polygon ID / zkPass) sin subir tu documento de identidad ni compartir tu fecha de nacimiento.'
-                    : 'SECCION complies with the EU Digital Services Act (DSA Art. 28) and international mandates. You can verify your legal age 100% anonymously using a ZKP identity wallet (Privado ID / Polygon ID / zkPass) with zero personal data leakage.'}
+                  {locale === 'fr'
+                    ? 'SECCION respecte le règlement européen DSA (Art. 28) et les normes internationales. La vérification 18+ s’effectue par selfie éphémère via DIDIT (sans stockage de document sur nos serveurs), par registre US pour les États américains concernés, et intégrera prochainement les portefeuilles officiels EU Age Wallet (eIDAS 2.0).'
+                    : locale === 'es'
+                    ? 'SECCION cumple con la Ley de Servicios Digitales (DSA Art. 28) y los estándares internacionales. La verificación 18+ se realiza mediante selfie efímero con DIDIT (sin almacenar documentos en nuestros servidores), registro público en estados de EE. UU. y próximamente mediante el EU Age Wallet oficial (eIDAS 2.0).'
+                    : 'SECCION complies with the EU Digital Services Act (DSA Art. 28) and international mandates. 18+ verification runs via an ephemeral DIDIT selfie check (zero document storage on SECCION servers), US registry lookup in regulated US states, and will soon support official EU Age Verification Wallets (eIDAS 2.0).'}
                 </p>
               </div>
 
@@ -157,7 +169,13 @@ export default function SettingsPage() {
                   className="px-4 py-2.5 rounded-xl bg-[#00fbfb] hover:bg-[#00fbfb]/90 text-black text-xs font-mono font-black uppercase tracking-wider transition shadow-[0_0_15px_rgba(0,251,251,0.3)] flex items-center justify-center gap-1.5 cursor-pointer"
                 >
                   <Cpu className="w-4 h-4" />
-                  <span>{locale === 'es' ? 'Guía de Billeteras ZKP' : 'ZKP Wallet Guide'}</span>
+                  <span>
+                    {locale === 'fr'
+                      ? 'Guide Confidentialité & EU Wallet'
+                      : locale === 'es'
+                      ? 'Guía de Privacidad & EU Wallet'
+                      : 'Privacy & EU Wallet Guide'}
+                  </span>
                 </button>
               </div>
             </div>

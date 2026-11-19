@@ -3,7 +3,9 @@ import {
   verifyMemberSelfie,
   analyzeImage,
   classifyOrderIntent,
-  qualifyDeliveredMedia
+  qualifyDeliveredMedia,
+  inspectUploadedMedia,
+  checkCreatorUploadKycGate,
 } from './sightengine';
 
 describe('Sightengine Service Module', () => {
@@ -126,6 +128,117 @@ describe('Sightengine Service Module', () => {
       expect(res.contentSafetyPass).toBe(false);
       expect(res.safetyFlags).toEqual(expect.arrayContaining(['weapon', 'gore']));
       expect(res.isBlockedForSfwLedger).toBe(true);
+    });
+
+    it('Phase 1: inspectUploadedMedia executes ONE Sightengine call with nudity-2.1, wad, gore-2.0, face-age and conditional genai', async () => {
+      process.env.SIGHTENGINE_API_USER = 'test_user';
+      process.env.SIGHTENGINE_API_SECRET = 'test_secret';
+      const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          status: 'success',
+          nudity: { sexual_display: 0.42, very_suggestive: 0.12, none: 0.46 },
+          weapon: 0.01,
+          drugs: 0.01,
+          gore: { prob: 0.01 },
+          faces: [{ attributes: { minor: 0.02 } }],
+        }),
+      } as Response);
+
+      const { mediaVerdict, provenanceDetection } = await inspectUploadedMedia(
+        'https://cdn.seccion.ai/uploads/editorial.jpg',
+        'NSFW_18',
+        { isVerifiedCreator: true, includeGenAi: false }
+      );
+
+      expect(fetchSpy).toHaveBeenCalledTimes(1);
+      const calledUrl = String(fetchSpy.mock.calls[0][0]);
+      expect(calledUrl).toContain('models=nudity-2.1%2Cwad%2Cgore-2.0%2Cface-age');
+      expect(calledUrl).not.toContain('genai');
+      expect(mediaVerdict.rating).toBe('NSFW_18');
+      expect(mediaVerdict.isBlockedProhibited).toBe(false);
+      expect(provenanceDetection).toBeNull();
+    });
+
+    it('Phase 1 Tiered face-age Shield: hard-blocks minor > 0.50 even for KYC-verified creators, soft-flags 0.15-0.50 for verified creators, hard-blocks unverified', async () => {
+      process.env.SIGHTENGINE_API_USER = 'test_user';
+      process.env.SIGHTENGINE_API_SECRET = 'test_secret';
+
+      // Case 1: High confidence minor (> 0.50) -> hard block even for verified creator
+      vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          status: 'success',
+          nudity: { none: 0.99 },
+          faces: [{ attributes: { minor: 0.78 } }],
+        }),
+      } as Response);
+      const highMinor = await inspectUploadedMedia(
+        'https://cdn.seccion.ai/uploads/high_minor.jpg',
+        'SFW',
+        { isVerifiedCreator: true, includeGenAi: false }
+      );
+      expect(highMinor.mediaVerdict.isBlockedProhibited).toBe(true);
+      expect(highMinor.mediaVerdict.safetyFlags).toContain('minor_suspected');
+
+      // Case 2: Borderline minor (0.15..0.50) + verified 2257 creator -> soft manual review, NOT hard blocked
+      vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          status: 'success',
+          nudity: { none: 0.99 },
+          faces: [{ attributes: { minor: 0.28 } }],
+        }),
+      } as Response);
+      const borderlineVerified = await inspectUploadedMedia(
+        'https://cdn.seccion.ai/uploads/young_adult_creator.jpg',
+        'SFW',
+        { isVerifiedCreator: true, includeGenAi: false }
+      );
+      expect(borderlineVerified.mediaVerdict.isBlockedProhibited).toBe(false);
+      expect(borderlineVerified.mediaVerdict.requiresManualAgeReview).toBe(true);
+      expect(borderlineVerified.mediaVerdict.safetyFlags).toContain('minor_borderline_review');
+
+      // Case 3: Borderline minor (0.15..0.50) + unverified account -> hard blocked
+      vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          status: 'success',
+          nudity: { none: 0.99 },
+          faces: [{ attributes: { minor: 0.28 } }],
+        }),
+      } as Response);
+      const borderlineUnverified = await inspectUploadedMedia(
+        'https://cdn.seccion.ai/uploads/unverified_avatar.jpg',
+        'SFW',
+        { isVerifiedCreator: false, includeGenAi: false }
+      );
+      expect(borderlineUnverified.mediaVerdict.isBlockedProhibited).toBe(true);
+      expect(borderlineUnverified.mediaVerdict.safetyFlags).toContain('minor_suspected');
+    });
+
+    it('18 U.S.C. 2257 Upload Gate: permits SFW uploads pre-KYC, blocks NSFW_18 uploads until KYC verified', () => {
+      const sfwUnverified = checkCreatorUploadKycGate({
+        finalRating: 'SFW',
+        isKycVerified: false,
+      });
+      expect(sfwUnverified.allowed).toBe(true);
+      expect(sfwUnverified.status).toBe(200);
+
+      const nsfwUnverified = checkCreatorUploadKycGate({
+        finalRating: 'NSFW_18',
+        isKycVerified: false,
+      });
+      expect(nsfwUnverified.allowed).toBe(false);
+      expect(nsfwUnverified.status).toBe(403);
+      expect(nsfwUnverified.errorType).toBe('kyc_required_for_nsfw');
+
+      const nsfwVerified = checkCreatorUploadKycGate({
+        finalRating: 'NSFW_18',
+        isKycVerified: true,
+      });
+      expect(nsfwVerified.allowed).toBe(true);
+      expect(nsfwVerified.status).toBe(200);
     });
   });
 });

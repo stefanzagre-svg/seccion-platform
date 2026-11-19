@@ -1,13 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-
-// Official Didit Compliance Workflow ID
-const WORKFLOW_ID = process.env.DIDIT_WORKFLOW_ID || '6cfcca5f-5f49-4226-b005-cbb22fd92b6b';
+import {
+  resolveDiditWorkflowId,
+  resolveGeoAgeContext,
+  type VerificationMode,
+} from '@/lib/age-assurance';
 
 export async function POST(req: NextRequest) {
   try {
     const supabase = await createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
 
     if (authError || !user) {
       return NextResponse.json(
@@ -25,7 +30,10 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const rawBody = await req.json().catch(() => ({}));
+    const rawBody = (await req.json().catch(() => ({}))) as Record<string, unknown>;
+    const mode: VerificationMode =
+      rawBody?.mode === 'member_age' ? 'member_age' : 'creator_kyc';
+
     const requestedReturnTo =
       typeof rawBody?.returnTo === 'string' &&
       rawBody.returnTo.startsWith('/') &&
@@ -36,6 +44,13 @@ export async function POST(req: NextRequest) {
     const origin = req.headers.get('origin') || 'https://seccion.ai';
     const callbackUrl = `${origin}${requestedReturnTo}`;
 
+    const geo = resolveGeoAgeContext({
+      countryCode: req.headers.get('cf-ipcountry'),
+      regionCode: req.headers.get('cf-region-code'),
+    });
+
+    const { workflowId, isDedicatedMemberWorkflow } = resolveDiditWorkflowId(mode);
+
     const res = await fetch('https://verification.didit.me/v3/session/', {
       method: 'POST',
       headers: {
@@ -43,7 +58,7 @@ export async function POST(req: NextRequest) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        workflow_id: WORKFLOW_ID,
+        workflow_id: workflowId,
         vendor_data: user.id,
         callback: callbackUrl,
         contact_details: {
@@ -52,6 +67,9 @@ export async function POST(req: NextRequest) {
         metadata: {
           user_id: user.id,
           platform: 'SECCION',
+          verification_mode: mode,
+          country_code: geo.countryCode,
+          region_code: geo.regionCode,
         },
       }),
     });
@@ -65,12 +83,14 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const session = await res.json();
+    const session = (await res.json()) as { url?: string; session_id?: string };
     return NextResponse.json({
       url: session.url,
       session_id: session.session_id,
+      mode,
+      dedicated_member_workflow: isDedicatedMemberWorkflow,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[DIDIT Session API Error]:', error);
     return NextResponse.json(
       { error: 'Identity verification session failed to initialize.' },

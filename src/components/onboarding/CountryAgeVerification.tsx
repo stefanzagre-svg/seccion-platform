@@ -22,10 +22,37 @@ import {
 import { useTranslation } from '@/context/LanguageContext';
 import ZkpWalletGuideModal from '@/components/onboarding/ZkpWalletGuideModal';
 
+interface AgeCheckerWidget {
+  open: (options: {
+    key: string;
+    onSuccess: (response: { uuid?: string; dob?: string; country?: string }) => void | Promise<void>;
+    onCancel: () => void;
+    onError: (err: unknown) => void;
+  }) => void;
+}
+
 declare global {
   interface Window {
-    AgeChecker?: any;
-    AgeCheckerAPI?: any;
+    AgeChecker?: AgeCheckerWidget;
+    AgeCheckerAPI?: Record<string, unknown>;
+  }
+}
+
+function detectInitialTimezoneCountry(): string {
+  if (typeof window === 'undefined') return 'ES';
+  try {
+    const userTz = Intl.DateTimeFormat().resolvedOptions().timeZone || '';
+    if (userTz.includes('Madrid') || userTz.includes('Canary')) return 'ES';
+    if (userTz.includes('Paris')) return 'FR';
+    if (userTz.includes('Berlin')) return 'DE';
+    if (userTz.includes('London')) return 'GB';
+    if (userTz.includes('New_York') || userTz.includes('Los_Angeles') || userTz.includes('Chicago')) return 'US';
+    if (userTz.includes('Mexico')) return 'MX';
+    if (userTz.includes('Sao_Paulo')) return 'BR';
+    if (userTz.includes('Casablanca')) return 'MA';
+    return 'ES';
+  } catch {
+    return 'ES';
   }
 }
 
@@ -95,10 +122,10 @@ const REGULATORY_RULES: Record<string, CountryRegulation> = {
     nameFr: 'Royaume-Uni',
     flag: '🇬🇧',
     minAge: 18,
-    lawName: 'Online Safety Act 2023 (Ofcom)',
-    description: '1-Tap DOB declaration or anonymous ZKP proof compliant with UK OSA guidelines.',
-    descriptionEs: 'Declaración en 1 toque o prueba anónima ZKP conforme a las directivas UK OSA.',
-    descriptionFr: 'Déclaration en 1 touche ou preuve anonyme ZKP conforme aux directives UK OSA.',
+    lawName: 'Online Safety Act 2023 (Ofcom HEAA)',
+    description: '1-Tap DOB covers SFW account setup only. Unlocking 18+ content or dating requires ephemeral DIDIT facial age assurance (Ofcom HEAA).',
+    descriptionEs: 'El registro 1-Toque cubre solo acceso SFW. Desbloquear contenido +18 o citas requiere verificación facial efímera DIDIT (Ofcom HEAA).',
+    descriptionFr: 'La déclaration 1-Touche couvre uniquement l’accès SFW. Le contenu 18+ ou les rencontres exigent une estimation faciale éphémère DIDIT (Ofcom HEAA).',
     requiresStrictProof: true,
   },
   US: {
@@ -108,10 +135,10 @@ const REGULATORY_RULES: Record<string, CountryRegulation> = {
     nameFr: 'États-Unis',
     flag: '🇺🇸',
     minAge: 18,
-    lawName: 'COPPA & State Age Mandates (TX, VA, UT)',
-    description: 'Strict age-verification mandates: choose fast DOB self-attestation or anonymous ZKP wallet proof.',
-    descriptionEs: 'Mandatos estrictos por estado: elige auto-declaración rápida o prueba anónima ZKP en billetera.',
-    descriptionFr: 'Obligations strictes par État : choisissez la déclaration rapide ou la preuve anonyme par portefeuille ZKP.',
+    lawName: 'US State Age Mandates (TX HB 1181, FL, VA, UT…)',
+    description: '1-Tap DOB covers SFW signup only. Regulated US states use instant US public-record verification (AgeChecker) or DIDIT 18+ verification before 18+ access.',
+    descriptionEs: 'El registro 1-Toque cubre solo acceso SFW. Los estados regulados de EE. UU. usan registro público instantáneo (AgeChecker) o verificación DIDIT antes de acceder a +18.',
+    descriptionFr: 'La déclaration 1-Touche couvre uniquement l’accès SFW. Les États américains réglementés utilisent une vérification par registre public (AgeChecker) ou DIDIT avant tout accès 18+.',
     requiresStrictProof: true,
   },
   MX: {
@@ -170,10 +197,12 @@ const REGULATORY_RULES: Record<string, CountryRegulation> = {
 
 export default function CountryAgeVerification({ onVerified, isCreatorMode = false }: CountryAgeVerificationProps) {
   const { t, locale } = useTranslation();
-  const [countryCode, setCountryCode] = useState<string>('ES');
+  const [countryCode, setCountryCode] = useState<string>(detectInitialTimezoneCountry);
   const [method, setMethod] = useState<'standard' | 'agechecker' | 'zkp'>('standard');
   const [isZkpGuideOpen, setIsZkpGuideOpen] = useState(false);
-  const [ageCheckerLoaded, setAgeCheckerLoaded] = useState(false);
+  const [ageCheckerLoaded, setAgeCheckerLoaded] = useState(() =>
+    typeof window !== 'undefined' ? Boolean(window.AgeChecker) : false
+  );
   const [isAgeCheckerLoading, setIsAgeCheckerLoading] = useState(false);
 
   // Standard DOB states
@@ -187,26 +216,31 @@ export default function CountryAgeVerification({ onVerified, isCreatorMode = fal
   const [zkpStep, setZkpStep] = useState<'idle' | 'scanning' | 'generating' | 'verified'>('idle');
   const [zkpProofHash, setZkpProofHash] = useState<string>('');
 
-  // Auto-detect user timezone / locale country on mount & check AgeChecker window object
-  useEffect(() => {
-    try {
-      const userTz = Intl.DateTimeFormat().resolvedOptions().timeZone || '';
-      if (userTz.includes('Madrid') || userTz.includes('Canary')) setCountryCode('ES');
-      else if (userTz.includes('Paris')) setCountryCode('FR');
-      else if (userTz.includes('Berlin')) setCountryCode('DE');
-      else if (userTz.includes('London')) setCountryCode('GB');
-      else if (userTz.includes('New_York') || userTz.includes('Los_Angeles') || userTz.includes('Chicago')) setCountryCode('US');
-      else if (userTz.includes('Mexico')) setCountryCode('MX');
-      else if (userTz.includes('Sao_Paulo')) setCountryCode('BR');
-      else if (userTz.includes('Casablanca')) setCountryCode('MA');
-      else setCountryCode('ES'); // Default to Spain
-    } catch (e) {
-      setCountryCode('ES');
-    }
+  // Refine country & US state with Cloudflare edge headers (cf-ipcountry + cf-region-code)
+  const [isStrictUsState, setIsStrictUsState] = useState<boolean>(true);
+  const [detectedRegion, setDetectedRegion] = useState<string | null>(null);
+  const ageCheckerPublicKey = process.env.NEXT_PUBLIC_AGECHECKER_KEY || '';
+  const showUsAgeCheckerTab = countryCode === 'US' && isStrictUsState && Boolean(ageCheckerPublicKey);
+  const activeMethod = method === 'agechecker' && !showUsAgeCheckerTab ? 'standard' : method;
 
-    if (typeof window !== 'undefined' && window.AgeChecker) {
-      setAgeCheckerLoaded(true);
-    }
+  useEffect(() => {
+    fetch('/api/v2/geo')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((geo: { country?: string; region?: string | null; isStrictUsState?: boolean } | null) => {
+        if (!geo) return;
+        if (geo.country && geo.country in REGULATORY_RULES) {
+          setCountryCode(geo.country);
+        }
+        if (typeof geo.isStrictUsState === 'boolean') {
+          setIsStrictUsState(geo.isStrictUsState);
+        }
+        if (typeof geo.region === 'string') {
+          setDetectedRegion(geo.region);
+        }
+      })
+      .catch(() => {
+        // Timezone fallback already active
+      });
   }, []);
 
   const isFr = locale === 'fr';
@@ -250,13 +284,24 @@ export default function CountryAgeVerification({ onVerified, isCreatorMode = fal
   };
 
   const handleTriggerAgeChecker = () => {
+    if (!ageCheckerPublicKey) {
+      setErrorMsg(
+        isFr
+          ? 'Le registre public US n’est pas configuré sur cet environnement. Utilisez la vérification 18+ DIDIT.'
+          : isEs
+          ? 'El registro público de EE. UU. no está configurado en este entorno. Usa la verificación 18+ DIDIT.'
+          : 'US public-record verification is not configured in this environment. Please use DIDIT 18+ verification.'
+      );
+      return;
+    }
+
     if (typeof window === 'undefined' || !window.AgeChecker) {
       setErrorMsg(
         isFr
-          ? 'Chargement du module sécurisé AgeChecker.net… Patientez un instant ou utilisez la vérification standard.'
+          ? 'Chargement du module sécurisé AgeChecker.net… Patientez un instant ou utilisez la vérification DIDIT.'
           : isEs
-          ? 'Cargando el módulo seguro de AgeChecker.net... Por favor espera un momento o usa verificación estándar.'
-          : 'Loading secure AgeChecker.net module... Please wait a moment or use standard verification.'
+          ? 'Cargando el módulo seguro de AgeChecker.net... Por favor espera un momento o usa verificación DIDIT.'
+          : 'Loading secure AgeChecker.net module... Please wait a moment or use DIDIT verification.'
       );
       return;
     }
@@ -264,33 +309,48 @@ export default function CountryAgeVerification({ onVerified, isCreatorMode = fal
     setErrorMsg(null);
     setIsAgeCheckerLoading(true);
 
-    const apiKey = process.env.NEXT_PUBLIC_AGECHECKER_KEY || 'mpQGEPkUEFzj11gyaN746i228P11Dj0p';
-
     window.AgeChecker.open({
-      key: apiKey,
-      onSuccess: function (response: any) {
-        setIsAgeCheckerLoading(false);
+      key: ageCheckerPublicKey,
+      onSuccess: async function (response: { uuid?: string; dob?: string; country?: string }) {
         const dobString = typeof response?.dob === 'string' ? response.dob : '';
         const detectedCountry = response?.country || countryCode;
+        const uuid = typeof response?.uuid === 'string' ? response.uuid.trim() : '';
 
+        let verifiedTier: 'declared' | 'agechecker' = 'declared';
+        if (uuid) {
+          try {
+            const verifyRes = await fetch('/api/kyc/agechecker-verify', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ uuid }),
+            });
+            if (verifyRes.ok) {
+              verifiedTier = 'agechecker';
+            }
+          } catch {
+            // Unauthenticated pre-signup flow safely stays 'declared' until account exists
+          }
+        }
+
+        setIsAgeCheckerLoading(false);
         onVerified({
           birthDate: dobString,
           countryCode: detectedCountry,
-          verificationTier: 'declared',
+          verificationTier: verifiedTier,
         });
       },
       onCancel: function () {
         setIsAgeCheckerLoading(false);
       },
-      onError: function (err: any) {
+      onError: function (err: unknown) {
         setIsAgeCheckerLoading(false);
         console.error('AgeChecker error:', err);
         setErrorMsg(
           isFr
-            ? 'La vérification automatique a été annulée ou a échoué. Vous pouvez vérifier via la date manuelle.'
+            ? 'La vérification par registre US a été annulée ou a échoué. Vous pouvez utiliser la vérification 18+ DIDIT.'
             : isEs
-            ? 'La verificación automática fue cancelada o presentó un problema. Puedes verificar con fecha manual.'
-            : 'Automatic verification was cancelled or encountered an issue. You can verify via manual date.'
+            ? 'La verificación por registro de EE. UU. fue cancelada o falló. Puedes usar la verificación 18+ DIDIT.'
+            : 'US registry verification was cancelled or encountered an issue. You can verify via DIDIT 18+ check.'
         );
       }
     });
@@ -300,17 +360,22 @@ export default function CountryAgeVerification({ onVerified, isCreatorMode = fal
     setErrorMsg(null);
     setZkpStep('scanning');
     try {
-      const res = await fetch('/api/kyc/didit-session', { method: 'POST' });
+      const returnPath = typeof window !== 'undefined' ? window.location.pathname : '/feed';
+      const res = await fetch('/api/kyc/didit-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mode: 'member_age', returnTo: returnPath }),
+      });
       const data = await res.json().catch(() => ({}));
       if (res.ok && data?.url && typeof window !== 'undefined') {
         window.open(data.url, '_blank', 'noopener,noreferrer');
         setZkpStep('idle');
         setErrorMsg(
           isFr
-            ? 'Portail officiel DIDIT Zero-Knowledge 18+ ouvert. Une fois terminé, notre webhook sécurisé mettra votre statut à jour automatiquement.'
+            ? 'Portail éphémère DIDIT 18+ ouvert. Une fois terminé, notre webhook sécurisé mettra votre statut à jour automatiquement.'
             : isEs
-            ? 'Se abrió el portal oficial DIDIT Zero-Knowledge 18+. Una vez completado, el webhook seguro actualizará tu estado automáticamente.'
-            : 'Opened official DIDIT Zero-Knowledge 18+ gateway. Once completed, our secure webhook will update your verified status automatically.'
+            ? 'Se abrió el portal efímero DIDIT 18+. Una vez completado, nuestro webhook seguro actualizará tu estado automáticamente.'
+            : 'Opened ephemeral DIDIT 18+ age check. Once completed, our signed server webhook updates your verified status automatically.'
         );
         return;
       }
@@ -319,10 +384,10 @@ export default function CountryAgeVerification({ onVerified, isCreatorMode = fal
       setErrorMsg(
         data?.error ||
           (isFr
-            ? 'Connexion requise ou session DIDIT indisponible. Connectez-vous d’abord ou utilisez la vérification d’âge 1-Touche / AgeChecker.'
+            ? 'Créez d’abord votre compte SFW avec 1-Touche, puis validez votre âge 18+ via DIDIT en 3 secondes.'
             : isEs
-            ? 'Se requiere iniciar sesión o DIDIT no está disponible. Inicia sesión primero o usa verificación de edad 1-Toque / AgeChecker.'
-            : 'Sign in first or retry DIDIT session setup. You can also use 1-Tap or AgeChecker verification above.')
+            ? 'Crea primero tu cuenta SFW con 1-Toque y luego valida tu edad 18+ con DIDIT en 3 segundos.'
+            : 'Complete your fast SFW signup with 1-Tap first, then verify 18+ via DIDIT in 3 seconds.')
       );
     } catch {
       setZkpStep('idle');
@@ -338,11 +403,13 @@ export default function CountryAgeVerification({ onVerified, isCreatorMode = fal
 
   return (
     <>
-      <Script
-        src="https://agechecker.net/api/v1/agechecker.js"
-        strategy="lazyOnload"
-        onLoad={() => setAgeCheckerLoaded(true)}
-      />
+      {showUsAgeCheckerTab && (
+        <Script
+          src="https://agechecker.net/api/v1/agechecker.js"
+          strategy="lazyOnload"
+          onLoad={() => setAgeCheckerLoaded(true)}
+        />
+      )}
 
       <div className="w-full bg-[#0c1017] border border-[#00fbfb]/30 rounded-3xl p-5 sm:p-6 shadow-2xl relative overflow-hidden text-white font-sans space-y-5">
         <ZkpWalletGuideModal isOpen={isZkpGuideOpen} onClose={() => setIsZkpGuideOpen(false)} />
@@ -376,8 +443,10 @@ export default function CountryAgeVerification({ onVerified, isCreatorMode = fal
           </select>
         </div>
 
-        {/* Method Selector (1-Tap vs AgeChecker Certified vs Sovereign ZKP) */}
-        <div className="grid grid-cols-3 bg-black/50 p-1 rounded-2xl border border-white/10 gap-1">
+        {/* Method Selector (1-Tap SFW vs US Registry [US strict states only] vs DIDIT 18+ Selfie) */}
+        <div
+          className={`grid ${showUsAgeCheckerTab ? 'grid-cols-3' : 'grid-cols-2'} bg-black/50 p-1 rounded-2xl border border-white/10 gap-1`}
+        >
           <button
             type="button"
             onClick={() => {
@@ -385,7 +454,7 @@ export default function CountryAgeVerification({ onVerified, isCreatorMode = fal
               setErrorMsg(null);
             }}
             className={`py-2 rounded-xl text-[11px] font-mono font-bold uppercase tracking-wider transition-all cursor-pointer flex items-center justify-center gap-1 ${
-              method === 'standard'
+              activeMethod === 'standard'
                 ? 'bg-[#00fbfb] text-black shadow-[0_0_15px_rgba(0,251,251,0.3)]'
                 : 'text-white/60 hover:text-white'
             }`}
@@ -394,21 +463,23 @@ export default function CountryAgeVerification({ onVerified, isCreatorMode = fal
             <span>{isFr ? '1-Touche' : isEs ? '1-Toque' : '1-Tap'}</span>
           </button>
 
-          <button
-            type="button"
-            onClick={() => {
-              setMethod('agechecker');
-              setErrorMsg(null);
-            }}
-            className={`py-2 rounded-xl text-[11px] font-mono font-bold uppercase tracking-wider transition-all cursor-pointer flex items-center justify-center gap-1 ${
-              method === 'agechecker'
-                ? 'bg-gradient-to-r from-[#00fbfb] to-[#22c55e] text-black shadow-[0_0_15px_rgba(34,197,94,0.3)]'
-                : 'text-white/60 hover:text-white'
-            }`}
-          >
-            <BadgeCheck className="w-3.5 h-3.5" />
-            <span>AgeChecker</span>
-          </button>
+          {showUsAgeCheckerTab && (
+            <button
+              type="button"
+              onClick={() => {
+                setMethod('agechecker');
+                setErrorMsg(null);
+              }}
+              className={`py-2 rounded-xl text-[11px] font-mono font-bold uppercase tracking-wider transition-all cursor-pointer flex items-center justify-center gap-1 ${
+                activeMethod === 'agechecker'
+                  ? 'bg-gradient-to-r from-[#00fbfb] to-[#22c55e] text-black shadow-[0_0_15px_rgba(34,197,94,0.3)]'
+                  : 'text-white/60 hover:text-white'
+              }`}
+            >
+              <BadgeCheck className="w-3.5 h-3.5" />
+              <span>{isFr ? 'Registre US' : isEs ? 'Registro US' : 'US Registry'}</span>
+            </button>
+          )}
 
           <button
             type="button"
@@ -417,17 +488,17 @@ export default function CountryAgeVerification({ onVerified, isCreatorMode = fal
               setErrorMsg(null);
             }}
             className={`py-2 rounded-xl text-[11px] font-mono font-bold uppercase tracking-wider transition-all cursor-pointer flex items-center justify-center gap-1 ${
-              method === 'zkp'
+              activeMethod === 'zkp'
                 ? 'bg-gradient-to-r from-[#00fbfb] to-[#ffabf3] text-black shadow-[0_0_20px_rgba(255,171,243,0.4)]'
                 : 'text-white/60 hover:text-white'
             }`}
           >
             <Cpu className="w-3.5 h-3.5" />
-            <span>ZKP 🛡️</span>
+            <span>{isFr ? 'DIDIT 18+ 🛡️' : isEs ? 'DIDIT 18+ 🛡️' : 'DIDIT 18+ 🛡️'}</span>
           </button>
         </div>
 
-      {method === 'standard' ? (
+      {activeMethod === 'standard' ? (
         <>
           {/* Regulation Explanation */}
           <div className="p-3 bg-white/[0.02] border-l-2 border-[#00fbfb] rounded-r-xl space-y-1">
@@ -559,7 +630,7 @@ export default function CountryAgeVerification({ onVerified, isCreatorMode = fal
             </button>
           </form>
         </>
-      ) : method === 'agechecker' ? (
+      ) : activeMethod === 'agechecker' ? (
         /* AgeChecker.net Certified Verification View */
         <div className="space-y-4 text-left">
           <div className="p-5 bg-gradient-to-br from-emerald-500/10 via-[#00fbfb]/5 to-black border border-emerald-500/30 rounded-2xl space-y-4">
@@ -616,14 +687,18 @@ export default function CountryAgeVerification({ onVerified, isCreatorMode = fal
           </div>
         </div>
       ) : (
-        /* ZKP Autonomous Verification View */
+        /* DIDIT Ephemeral 18+ Age Assurance View (Clear Information Card) */
         <div className="space-y-4 text-left">
           <div className="p-4 bg-gradient-to-br from-[#00fbfb]/10 to-[#ffabf3]/10 border border-[#00fbfb]/30 rounded-2xl space-y-3">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-2 text-[#00fbfb]">
                 <Cpu className="w-4 h-4" />
                 <span className="text-xs font-mono font-black uppercase tracking-wider text-white">
-                  {isFr ? 'Preuve à Divulgation Nulle (zk-SNARK)' : isEs ? 'Prueba de Conocimiento Cero (zk-SNARK)' : 'Zero-Knowledge Proof (zk-SNARK)'}
+                  {isFr
+                    ? 'Vérification Éphémère 18+ (DIDIT)'
+                    : isEs
+                    ? 'Verificación Efímera 18+ (DIDIT)'
+                    : 'Ephemeral 18+ Age Check (DIDIT)'}
                 </span>
               </div>
               <button
@@ -632,17 +707,47 @@ export default function CountryAgeVerification({ onVerified, isCreatorMode = fal
                 className="text-[10px] font-mono text-[#ffabf3] hover:underline flex items-center gap-1 cursor-pointer font-bold"
               >
                 <Info className="w-3.5 h-3.5" />
-                <span>{isFr ? 'Obtenir un Portefeuille ?' : isEs ? '¿Cómo obtener Billetera?' : 'How to get a Wallet?'}</span>
+                <span>{isFr ? 'Comment ça marche ?' : isEs ? '¿Cómo funciona?' : 'How it works?'}</span>
               </button>
             </div>
 
-            <p className="text-[11px] text-[#b9cac9] leading-relaxed">
-              {isFr
-                ? 'Prouvez que vous avez >= 18 ans en connectant votre portefeuille d’identité numérique (Privado ID, Polygon ID ou zkPass). Aucun document, nom ou date de naissance n’est jamais partagé avec nous.'
-                : isEs
-                ? 'Verifica que tienes >= 18 años conectando tu billetera de identidad digital (Privado ID, Polygon ID o zkPass). Ningún documento, nombre o fecha es compartido con nosotros.'
-                : 'Verify you are >= 18 by connecting your digital identity wallet (Privado ID, Polygon ID, or zkPass). No ID document, name, or birthdate is ever shared with us.'}
-            </p>
+            {/* Clear Information Card */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[10px] font-mono bg-black/40 border border-white/10 rounded-xl p-3 text-[#b9cac9]">
+              <div>
+                <span className="text-white/50 block uppercase">
+                  {isFr ? 'Temps & Méthode' : isEs ? 'Tiempo y Método' : 'Time & Method'}
+                </span>
+                <span className="text-white font-bold">
+                  {isFr
+                    ? '~3 s · Selfie passif (pièce requise uniquement si âge limite)'
+                    : isEs
+                    ? '~3 s · Selfie pasivo (ID solo si la edad estimada es límite)'
+                    : '~3s · Passive selfie (ID fallback only if borderline 18–21)'}
+                </span>
+              </div>
+              <div>
+                <span className="text-white/50 block uppercase">
+                  {isFr ? 'Ce que SECCION reçoit' : isEs ? 'Qué recibe SECCION' : 'What SECCION Receives'}
+                </span>
+                <span className="text-emerald-300 font-bold">
+                  {isFr
+                    ? 'Uniquement « 18+ = Oui » (zéro photo ou document stocké)'
+                    : isEs
+                    ? 'Solo «18+ = Sí» (cero fotos ni documentos guardados)'
+                    : 'Only "18+ = Yes" receipt (zero selfie or ID stored)'}
+                </span>
+              </div>
+            </div>
+
+            {detectedRegion && countryCode === 'US' && (
+              <p className="text-[10px] font-mono text-white/50">
+                {isFr
+                  ? `Région détectée : US-${detectedRegion}`
+                  : isEs
+                  ? `Región detectada: US-${detectedRegion}`
+                  : `Detected region: US-${detectedRegion}`}
+              </p>
+            )}
 
             {errorMsg && (
               <div className="p-3 bg-white/5 border border-white/15 rounded-xl text-xs text-[#b9cac9] flex items-center gap-2 font-mono">
@@ -658,8 +763,14 @@ export default function CountryAgeVerification({ onVerified, isCreatorMode = fal
                   onClick={handleZkpVerify}
                   className="flex-1 py-3 px-4 bg-gradient-to-r from-[#00fbfb] to-[#00d2d2] hover:brightness-110 text-black font-mono text-xs font-black uppercase tracking-wider rounded-xl transition flex items-center justify-center gap-2 cursor-pointer shadow-[0_0_20px_rgba(0,251,251,0.4)]"
                 >
-                  <QrCode className="w-4 h-4" />
-                  <span>{isFr ? 'Scanner QR / Connecter Wallet' : isEs ? 'Escanear QR / Conectar Billetera' : 'Scan QR / Connect Wallet'}</span>
+                  <ShieldCheck className="w-4 h-4" />
+                  <span>
+                    {isFr
+                      ? 'Vérifier 18+ avec DIDIT (~3 s)'
+                      : isEs
+                      ? 'Verificar 18+ con DIDIT (~3 s)'
+                      : 'Verify 18+ with DIDIT (~3s)'}
+                  </span>
                 </button>
 
                 <button
@@ -667,7 +778,9 @@ export default function CountryAgeVerification({ onVerified, isCreatorMode = fal
                   onClick={() => setIsZkpGuideOpen(true)}
                   className="py-3 px-4 bg-white/5 hover:bg-white/10 text-white font-mono text-xs font-bold uppercase tracking-wider rounded-xl transition border border-white/10 text-center cursor-pointer"
                 >
-                  <span>{isFr ? 'Guide Portefeuille ZKP' : isEs ? 'Guía de Billeteras ZKP' : 'ZKP Wallet Guide'}</span>
+                  <span>
+                    {isFr ? 'Guide & EU Wallet' : isEs ? 'Guía & EU Wallet' : 'Privacy & EU Wallet'}
+                  </span>
                 </button>
               </div>
             )}

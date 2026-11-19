@@ -22,25 +22,35 @@ export default function OnboardingStepTwo() {
   const [direction, setDirection] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [userId, setUserId] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(() => {
+    if (typeof window === 'undefined') return null;
+    try {
+      const storedCore = localStorage.getItem('fusion_onboarding_core');
+      if (storedCore) {
+        const parsed = JSON.parse(storedCore) as { userId?: string };
+        return parsed.userId ?? null;
+      }
+    } catch {
+      // ignore malformed local cache
+    }
+    return null;
+  });
 
   const currentHabit = HABIT_KEYS[currentHabitIndex];
   const habitOptions = HABIT_CHOICES[currentHabit as keyof typeof HABIT_CHOICES] || [];
 
-  // Retrieve userId from localStorage or session
+  // Fallback to Supabase auth session if local onboarding core wasn't populated
   useEffect(() => {
-    const storedCore = localStorage.getItem('fusion_onboarding_core');
-    if (storedCore) {
-      const parsed = JSON.parse(storedCore);
-      if (parsed.userId) setUserId(parsed.userId);
-    } else {
-      supabase.auth.getUser().then(({ data }) => {
-        if (data.user) setUserId(data.user.id);
-      });
-    }
-  }, []);
+    if (userId) return;
+    supabase.auth.getUser().then(({ data }) => {
+      if (data.user) setUserId(data.user.id);
+    });
+  }, [supabase, userId]);
 
-  const handleArchetypeSelect = async (archId: string, alignmentData: any) => {
+  const handleArchetypeSelect = async (
+    archId: string,
+    alignmentData: Parameters<typeof updateProfileArchetype>[1]
+  ) => {
     if (!userId) {
       setError('Session expired. Please return to step 1.');
       return;
@@ -57,8 +67,9 @@ export default function OnboardingStepTwo() {
       if (arch?.defaultHabits) {
         setLifestyle(arch.defaultHabits);
       }
-    } catch (err: any) {
-      setError(err.message || 'Failed to update archetype.');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to update archetype.';
+      setError(message);
       throw err;
     }
   };
@@ -105,7 +116,7 @@ export default function OnboardingStepTwo() {
 
       const isCreatorSignup = localStorage.getItem('is_creator_signup') === 'true';
       if (isCreatorSignup) {
-        router.push('/onboarding/kyc');
+        router.push('/studio');
       } else {
         router.push('/dashboard');
       }
@@ -260,7 +271,7 @@ export default function OnboardingStepTwo() {
               <div>
                 <h2 className="text-4xl font-black tracking-tighter mb-4">VIBE LOCKED IN</h2>
                 <p className="text-sm text-white/60 font-medium leading-relaxed max-w-xs mx-auto">
-                  "Your vibe profile is live. Time to see who's out there."
+                  &ldquo;Your vibe profile is live. Time to see who&apos;s out there.&rdquo;
                 </p>
               </div>
 

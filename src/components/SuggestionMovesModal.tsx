@@ -102,7 +102,7 @@ export default function SuggestionMovesModal({
       const res = await fetch('/api/kyc/didit-session', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ returnTo: returnPath }),
+        body: JSON.stringify({ mode: 'member_age', returnTo: returnPath }),
       });
       const data = await res.json().catch(() => null);
       if (data?.url) {

@@ -54,13 +54,27 @@ export default function CreateDatePlanModal({
         checkUserQuota(userId, userRole),
         supabase
           .from('profiles')
-          .select('is_kyc_verified')
+          .select('is_age_verified, is_kyc_verified')
           .eq('id', userId)
           .maybeSingle(),
       ]);
       setQuotaAllowed(res.allowed);
       setQuotaCount(res.count);
-      setIsHighTrustVerified(Boolean(profileRes.data?.is_kyc_verified));
+      if (
+        profileRes.error &&
+        (profileRes.error.code === '42703' || profileRes.error.message?.includes('is_age_verified'))
+      ) {
+        const legacyRes = await supabase
+          .from('profiles')
+          .select('is_kyc_verified')
+          .eq('id', userId)
+          .maybeSingle();
+        setIsHighTrustVerified(Boolean(legacyRes.data?.is_kyc_verified));
+      } else {
+        setIsHighTrustVerified(
+          Boolean(profileRes.data?.is_age_verified || profileRes.data?.is_kyc_verified)
+        );
+      }
       setCheckingQuota(false);
     };
 
@@ -106,7 +120,7 @@ export default function CreateDatePlanModal({
 
     // Validation
     if ((planScope === 'In-Person' || planScope === 'Hybrid') && !isHighTrustVerified) {
-      setFormError('For member safety, Real-Life (In-Person / Hybrid) Date Plans require Biometric Liveness, ZKP, or AgeChecker verification.');
+      setFormError('For member safety, Real-Life (In-Person / Hybrid) Date Plans require a one-time server-verified 18+ DIDIT liveness check.');
       return;
     }
     if (!description.trim()) {
@@ -325,7 +339,12 @@ export default function CreateDatePlanModal({
                       onClick={async () => {
                         setLaunchingDidit(true);
                         try {
-                          const res = await fetch('/api/kyc/didit-session', { method: 'POST' });
+                          const returnPath = typeof window !== 'undefined' ? window.location.pathname : '/feed';
+                          const res = await fetch('/api/kyc/didit-session', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ mode: 'member_age', returnTo: returnPath }),
+                          });
                           const data = await res.json();
                           if (data?.url) {
                             window.location.href = data.url;
